@@ -4,58 +4,116 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: beauty_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: beauty_user
       POSTGRES_PASSWORD: beauty_pass
       POSTGRES_DB: beauty_salon_db
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U beauty_user"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U beauty_user -d beauty_salon_db"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - beauty_network
 
   redis:
     image: redis:7-alpine
     container_name: beauty_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - beauty_network
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: beauty_backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        while ! nc -z postgres 5432; do sleep 1; done &&
+        echo 'PostgreSQL is ready!' &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting server...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
     volumes:
       - ./backend:/app
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
     ports:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://beauty_user:beauty_pass@postgres:5432/beauty_salon_db
+      - REDIS_URL=redis://redis:6379/0
+      - YANDEX_MAPS_API_KEY=${YANDEX_MAPS_API_KEY:-99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - beauty_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: beauty_frontend
-    command: npm run dev -- --host
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+      - VITE_YANDEX_MAPS_API_KEY=${VITE_YANDEX_MAPS_API_KEY:-99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0}
     depends_on:
       - backend
+    networks:
+      - beauty_network
+
+networks:
+  beauty_network:
+    driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_uploads:
+    driver: local
+  frontend_node_modules:
+    driver: local

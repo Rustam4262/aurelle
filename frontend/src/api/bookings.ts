@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import { Booking } from './types'
+import { Booking, BookingDetailed } from './types'
 
 export const bookingsApi = {
   getBookings: async (params?: {
@@ -8,6 +8,16 @@ export const bookingsApi = {
     status_filter?: string
   }): Promise<Booking[]> => {
     const response = await apiClient.get('/bookings', { params })
+    return response.data
+  },
+
+  // Получить детальные бронирования с информацией о салоне, услуге и мастере
+  getMyBookingsDetailed: async (params?: {
+    skip?: number
+    limit?: number
+    status_filter?: string
+  }): Promise<BookingDetailed[]> => {
+    const response = await apiClient.get('/bookings/my-bookings', { params })
     return response.data
   },
 

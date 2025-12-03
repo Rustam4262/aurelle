@@ -7,7 +7,7 @@ from app.models.booking import Booking, BookingStatus
 from app.models.salon import Salon
 from app.models.master import Master
 from app.models.user import User
-from app.schemas.review import ReviewCreate, ReviewResponse
+from app.schemas.review import ReviewCreate, ReviewResponse, ReviewDetailedResponse
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -120,3 +120,42 @@ def get_review(review_id: int, db: Session = Depends(get_db)):
         )
 
     return ReviewResponse.model_validate(review)
+
+
+@router.get("/detailed/all", response_model=List[ReviewDetailedResponse])
+def get_reviews_detailed(
+    db: Session = Depends(get_db),
+    salon_id: Optional[int] = None,
+    master_id: Optional[int] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """Получить список отзывов с детальной информацией о клиентах"""
+
+    query = db.query(Review)
+
+    if salon_id:
+        query = query.filter(Review.salon_id == salon_id)
+
+    if master_id:
+        query = query.filter(Review.master_id == master_id)
+
+    reviews = query.order_by(Review.created_at.desc()).offset(skip).limit(limit).all()
+
+    # Формируем детальные ответы с вложенными объектами
+    detailed_reviews = []
+    for review in reviews:
+        review_dict = ReviewDetailedResponse.model_validate(review).model_dump()
+
+        # Добавляем информацию о клиенте
+        client = db.query(User).filter(User.id == review.client_id).first()
+        if client:
+            review_dict['client'] = {
+                'id': client.id,
+                'name': client.name,
+                'email': client.email
+            }
+
+        detailed_reviews.append(ReviewDetailedResponse(**review_dict))
+
+    return detailed_reviews

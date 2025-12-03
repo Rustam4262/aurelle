@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
+import { formatPhoneInput, getPhoneError, getEmailError } from '../utils/validation'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -11,20 +12,57 @@ export default function RegisterPage() {
   const isSalonOwner = searchParams.get('type') === 'salon'
 
   const [formData, setFormData] = useState({
-    phone: '',
+    phone: '+998',
     email: '',
     name: '',
     password: '',
     confirmPassword: '',
-    role: (isSalonOwner ? 'salon_owner' : 'client') as 'client' | 'salon_owner',
+    role: (isSalonOwner ? 'salon_owner' : 'client') as 'client' | 'salon_owner' | 'admin',
   })
 
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{phone?: string, email?: string}>({})
   const [loading, setLoading] = useState(false)
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhoneInput(value)
+    setFormData({ ...formData, phone: formatted })
+
+    // Очистить ошибку при изменении
+    if (fieldErrors.phone) {
+      setFieldErrors({ ...fieldErrors, phone: undefined })
+    }
+  }
+
+  const handleEmailChange = (value: string) => {
+    setFormData({ ...formData, email: value })
+
+    // Очистить ошибку при изменении
+    if (fieldErrors.email) {
+      setFieldErrors({ ...fieldErrors, email: undefined })
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
+
+    // Валидация телефона
+    const phoneError = getPhoneError(formData.phone)
+    if (phoneError) {
+      setFieldErrors({ phone: phoneError })
+      setError('Пожалуйста, исправьте ошибки в форме')
+      return
+    }
+
+    // Валидация email (если заполнен)
+    const emailError = getEmailError(formData.email)
+    if (emailError) {
+      setFieldErrors({ email: emailError })
+      setError('Пожалуйста, исправьте ошибки в форме')
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают')
@@ -46,6 +84,8 @@ export default function RegisterPage() {
 
       if (response.user.role === 'salon_owner') {
         navigate('/salon/dashboard')
+      } else if (response.user.role === 'admin') {
+        navigate('/admin/dashboard')
       } else {
         navigate('/client/dashboard')
       }
@@ -90,11 +130,17 @@ export default function RegisterPage() {
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => handlePhoneChange(e.target.value)}
               placeholder="+998901234567"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                fieldErrors.phone ? 'border-red-500' : 'border-gray-300'
+              }`}
               required
             />
+            {fieldErrors.phone && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Формат: +998XXXXXXXXX (9 цифр после +998)</p>
           </div>
 
           <div>
@@ -104,9 +150,15 @@ export default function RegisterPage() {
             <input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="example@mail.com"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                fieldErrors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {fieldErrors.email && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
+            )}
           </div>
 
           <div>
@@ -135,6 +187,22 @@ export default function RegisterPage() {
               required
             />
           </div>
+
+          {!isSalonOwner && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Роль
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'client' | 'salon_owner' })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="client">Клиент</option>
+                <option value="salon_owner">Владелец салона</option>
+              </select>
+            </div>
+          )}
 
           <button
             type="submit"

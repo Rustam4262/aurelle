@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.models.booking import Booking, BookingStatus
-from app.models.service import Service
+from app.models.service import Service, ServiceMaster
 from app.models.master import Master
 from app.models.salon import Salon
 from app.models.user import User, UserRole
@@ -36,6 +36,25 @@ def create_booking(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Master not found"
+        )
+
+    # Проверка, что мастер назначен на эту услугу
+    service_master_link = db.query(ServiceMaster).filter(
+        ServiceMaster.service_id == booking_data.service_id,
+        ServiceMaster.master_id == booking_data.master_id
+    ).first()
+
+    if not service_master_link:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This master is not assigned to the selected service"
+        )
+
+    # Проверка, что мастер активен
+    if not master.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Master is not currently available"
         )
 
     # Вычисление end_at
@@ -92,7 +111,16 @@ def get_bookings(
     elif current_user.role == UserRole.SALON_OWNER:
         # Получить брони для салонов владельца
         salon_ids = [salon.id for salon in current_user.owned_salons]
+        if not salon_ids:
+            # Владелец салона без салонов - вернуть пустой список
+            return []
         query = query.filter(Booking.salon_id.in_(salon_ids))
+    # TODO: Добавить поддержку роли MASTER после добавления поля user_id в модель Master
+    # elif current_user.role == UserRole.MASTER:
+    #     master = db.query(Master).filter(Master.user_id == current_user.id).first()
+    #     if not master:
+    #         return []
+    #     query = query.filter(Booking.master_id == master.id)
 
     # Фильтр по статусу
     if status_filter:

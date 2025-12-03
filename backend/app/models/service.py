@@ -18,9 +18,14 @@ class Service(Base):
     category = Column(String(100), nullable=True, index=True)
 
     is_active = Column(Boolean, default=True)
+    is_home_service = Column(Boolean, default=False, nullable=False)  # Услуга с выездом на дом
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Audit fields
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
     salon = relationship("Salon", back_populates="services")

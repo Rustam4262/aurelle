@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.models.salon import Salon
 from app.models.user import User, UserRole
-from app.schemas.salon import SalonCreate, SalonResponse, SalonUpdate
+from app.schemas.salon import SalonCreate, SalonResponse, SalonUpdate, SalonMapResponse
 from app.api.deps import get_current_user, require_role
 from math import radians, cos, sin, asin, sqrt
 
@@ -43,6 +43,29 @@ def create_salon(
     return SalonResponse.model_validate(new_salon)
 
 
+@router.get("/for-map", response_model=List[SalonMapResponse])
+def get_salons_for_map(
+    db: Session = Depends(get_db),
+    search: Optional[str] = None
+):
+    """Получить салоны для отображения на карте"""
+
+    query = db.query(Salon).filter(
+        Salon.is_active == True,
+        Salon.latitude.isnot(None),
+        Salon.longitude.isnot(None)
+    )
+
+    # Поиск по названию или адресу
+    if search:
+        query = query.filter(
+            (Salon.name.ilike(f"%{search}%")) | (Salon.address.ilike(f"%{search}%"))
+        )
+
+    salons = query.all()
+    return [SalonMapResponse.model_validate(salon) for salon in salons]
+
+
 @router.get("/", response_model=List[SalonResponse])
 def get_salons(
     db: Session = Depends(get_db),
@@ -53,9 +76,11 @@ def get_salons(
     longitude: Optional[float] = None,
     radius_km: Optional[float] = Query(None, ge=0, le=50),
     min_rating: Optional[float] = Query(None, ge=0, le=5),
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None, regex="^(rating|reviews_count|name)$"),
+    sort_order: Optional[str] = Query("desc", regex="^(asc|desc)$")
 ):
-    """Получить список салонов с фильтрами"""
+    """Получить список салонов с фильтрами и сортировкой"""
 
     query = db.query(Salon).filter(Salon.is_active == True)
 
@@ -66,6 +91,17 @@ def get_salons(
     # Фильтр по рейтингу
     if min_rating:
         query = query.filter(Salon.rating >= min_rating)
+
+    # Сортировка
+    if sort_by:
+        order_column = getattr(Salon, sort_by)
+        if sort_order == "desc":
+            query = query.order_by(order_column.desc())
+        else:
+            query = query.order_by(order_column.asc())
+    else:
+        # По умолчанию сортируем по рейтингу
+        query = query.order_by(Salon.rating.desc())
 
     salons = query.offset(skip).limit(limit).all()
 
@@ -79,6 +115,23 @@ def get_salons(
                     filtered_salons.append(salon)
         salons = filtered_salons
 
+    return [SalonResponse.model_validate(salon) for salon in salons]
+
+
+@router.get("/my/salons", response_model=List[SalonResponse])
+def get_my_salons(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Получить салоны текущего пользователя (владельца)"""
+
+    if current_user.role not in [UserRole.SALON_OWNER, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only salon owners can access their salons"
+        )
+
+    salons = db.query(Salon).filter(Salon.owner_id == current_user.id).all()
     return [SalonResponse.model_validate(salon) for salon in salons]
 
 

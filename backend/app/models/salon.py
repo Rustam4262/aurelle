@@ -15,8 +15,8 @@ class Salon(Base):
     phone = Column(String(20), nullable=False)
 
     # Геолокация
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
+    latitude = Column(Float, nullable=True)  # Будет обязательным для активации
+    longitude = Column(Float, nullable=True)  # Будет обязательным для активации
 
     # Рейтинг
     rating = Column(Float, default=0.0)
@@ -24,6 +24,7 @@ class Salon(Base):
 
     # Фото
     logo_url = Column(String(500), nullable=True)
+    external_photo_url = Column(String(500), nullable=True)  # Фото фасада (обязательно для активации)
     photos = Column(Text, nullable=True)  # JSON array of URLs
 
     # Статус
@@ -32,6 +33,10 @@ class Salon(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Audit fields
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
     owner = relationship("User", back_populates="owned_salons", foreign_keys=[owner_id])

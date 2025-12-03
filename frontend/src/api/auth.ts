@@ -7,7 +7,7 @@ export const authApi = {
     email?: string
     name: string
     password: string
-    role?: 'client' | 'salon_owner'
+    role?: 'admin' | 'salon_owner' | 'master' | 'client'
   }): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/register', data)
     return response.data
@@ -18,6 +18,14 @@ export const authApi = {
     password: string
   }): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', data)
+    return response.data
+  },
+
+  changePassword: async (data: {
+    current_password: string
+    new_password: string
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/change-password', data)
     return response.data
   },
 }

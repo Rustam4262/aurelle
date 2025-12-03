@@ -30,3 +30,4 @@ class User(Base):
     owned_salons = relationship("Salon", back_populates="owner", foreign_keys="Salon.owner_id")
     bookings = relationship("Booking", back_populates="client", foreign_keys="Booking.client_id")
     reviews = relationship("Review", back_populates="client")
+    master_profile = relationship("Master", back_populates="user", foreign_keys="Master.user_id", uselist=False)

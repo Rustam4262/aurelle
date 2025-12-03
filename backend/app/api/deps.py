@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -10,6 +10,7 @@ security = HTTPBearer()
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
@@ -43,6 +44,9 @@ def get_current_user(
             detail="User is inactive"
         )
 
+    # Сохраняем user_id в request.state для middleware аудита
+    request.state.user_id = user.id
+
     return user
 
 
@@ -56,3 +60,13 @@ def require_role(allowed_roles: list[UserRole]):
             )
         return current_user
     return role_checker
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """Получить текущего пользователя с проверкой роли администратора"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user

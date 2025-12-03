@@ -7,6 +7,8 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  maxRedirects: 5,
+  validateStatus: (status) => status < 400, // Принимать все статусы < 400
 })
 
 // Interceptor для добавления токена

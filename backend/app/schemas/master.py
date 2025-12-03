@@ -15,6 +15,16 @@ class MasterCreate(MasterBase):
     salon_id: int
 
 
+class MasterUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    description: Optional[str] = None
+    specialization: Optional[str] = None
+    experience_years: Optional[int] = None
+    avatar_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class MasterResponse(MasterBase):
     id: int
     salon_id: int

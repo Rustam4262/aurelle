@@ -1,0 +1,8 @@
+{
+  "day_of_week": 0,
+  "start_time": "09:00",
+  "end_time": "18:00",
+  "break_start": "13:00",
+  "break_end": "14:00",
+  "is_active": true
+}

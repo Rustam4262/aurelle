@@ -51,9 +51,14 @@ class Booking(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Audit fields
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
     # Relationships
     client = relationship("User", back_populates="bookings", foreign_keys=[client_id])
     salon = relationship("Salon", back_populates="bookings")
     master = relationship("Master", back_populates="bookings")
     service = relationship("Service", back_populates="bookings")
     review = relationship("Review", back_populates="booking", uselist=False)
+    payments = relationship("Payment", back_populates="booking")
