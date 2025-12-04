@@ -102,10 +102,10 @@ export default function Layout({ children }: LayoutProps) {
   )
 
   const getTitle = () => {
-    if (user?.role === 'client') return 'Beauty Salon'
-    if (user?.role === 'salon_owner') return 'Beauty Salon - Кабинет салона'
-    if (user?.role === 'admin') return 'Beauty Salon - Админ-панель'
-    return 'Beauty Salon'
+    if (user?.role === 'client') return 'AURELLE'
+    if (user?.role === 'salon_owner') return 'AURELLE - Кабинет салона'
+    if (user?.role === 'admin') return 'AURELLE - Админ-панель'
+    return 'AURELLE'
   }
 
   const getDashboardPath = () => {
@@ -127,8 +127,9 @@ export default function Layout({ children }: LayoutProps) {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link to={getDashboardPath()} className="text-2xl font-bold text-primary-600">
-              {getTitle()}
+            <Link to={getDashboardPath()} className="flex items-center space-x-3">
+              <img src="/logo.png" alt="AURELLE" className="h-10 w-auto" />
+              <span className="text-2xl font-bold text-primary-600">{getTitle()}</span>
             </Link>
             <div className="flex items-center space-x-4">
               <LanguageSwitcher />

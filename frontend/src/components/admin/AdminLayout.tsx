@@ -61,10 +61,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
           {!sidebarCollapsed && (
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="font-bold text-white text-lg">A</span>
-              </div>
-              <span className="font-bold text-lg">Admin</span>
+              <img src="/logo.png" alt="AURELLE" className="h-8 w-auto" />
+              <span className="font-bold text-lg">AURELLE Admin</span>
             </div>
           )}
           <button

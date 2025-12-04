@@ -78,31 +78,42 @@ export default function YandexMap({
   useEffect(() => {
     if (!ymaps || !mapRef.current) return
 
-    const {
-      YMap,
-      YMapDefaultSchemeLayer,
-      YMapDefaultFeaturesLayer
-    } = ymaps
+    let map: any = null
 
-    // Создаем карту
-    const map = new YMap(mapRef.current, {
-      location: {
-        center: [center[1], center[0]], // Yandex использует [longitude, latitude]
-        zoom: zoom
-      },
-      mode: 'vector'
-    })
+    try {
+      const {
+        YMap,
+        YMapDefaultSchemeLayer,
+        YMapDefaultFeaturesLayer
+      } = ymaps
 
-    // Добавляем базовые слои
-    map.addChild(new YMapDefaultSchemeLayer())
-    map.addChild(new YMapDefaultFeaturesLayer())
+      // Создаем карту
+      map = new YMap(mapRef.current, {
+        location: {
+          center: [center[1], center[0]], // Yandex использует [longitude, latitude]
+          zoom: zoom
+        },
+        mode: 'vector'
+      })
 
-    setMapInstance(map)
+      // Добавляем базовые слои
+      map.addChild(new YMapDefaultSchemeLayer())
+      map.addChild(new YMapDefaultFeaturesLayer())
+
+      setMapInstance(map)
+    } catch (err) {
+      console.error('Error initializing map:', err)
+      setError('Не удалось инициализировать карту. Попробуйте обновить страницу.')
+    }
 
     // Cleanup при unmount
     return () => {
-      if (map) {
-        map.destroy()
+      try {
+        if (map) {
+          map.destroy()
+        }
+      } catch (err) {
+        console.error('Error destroying map:', err)
       }
     }
   }, [ymaps, center, zoom])
@@ -111,72 +122,92 @@ export default function YandexMap({
   useEffect(() => {
     if (!mapInstance || !ymaps || !markers.length) return
 
-    const { YMapMarker } = ymaps
+    try {
+      const { YMapMarker } = ymaps
 
-    // Очищаем старые маркеры
-    const children = mapInstance.children.getIterator()
-    for (const child of children) {
-      if (child.constructor.name === 'YMapMarker') {
-        mapInstance.removeChild(child)
+      // Очищаем старые маркеры
+      try {
+        const children = mapInstance.children.getIterator()
+        for (const child of children) {
+          if (child.constructor.name === 'YMapMarker') {
+            try {
+              mapInstance.removeChild(child)
+            } catch (err) {
+              console.error('Error removing marker:', err)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error clearing markers:', err)
       }
-    }
 
-    // Добавляем новые маркеры
-    markers.forEach((marker) => {
-      const isSelected = selectedMarkerId === marker.id
+      // Добавляем новые маркеры
+      markers.forEach((marker) => {
+        try {
+          const isSelected = selectedMarkerId === marker.id
 
-      // Создаем контент маркера
-      const markerElement = document.createElement('div')
-      markerElement.className = `yandex-marker ${isSelected ? 'selected' : ''}`
-      markerElement.style.cursor = 'pointer'
-      markerElement.style.position = 'relative'
+          // Создаем контент маркера
+          const markerElement = document.createElement('div')
+          markerElement.className = `yandex-marker ${isSelected ? 'selected' : ''}`
+          markerElement.style.cursor = 'pointer'
+          markerElement.style.position = 'relative'
 
-      // Простой маркер (можно кастомизировать)
-      markerElement.innerHTML = `
-        <div style="
-          width: 40px;
-          height: 40px;
-          background-color: ${isSelected ? '#e91e63' : '#ff4081'};
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-        </div>
-      `
+          // Простой маркер (можно кастомизировать)
+          markerElement.innerHTML = `
+            <div style="
+              width: 40px;
+              height: 40px;
+              background-color: ${isSelected ? '#e91e63' : '#ff4081'};
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+            ">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+            </div>
+          `
 
-      // Hover эффекты
-      markerElement.addEventListener('mouseenter', () => {
-        markerElement.style.transform = 'scale(1.1)'
-      })
-      markerElement.addEventListener('mouseleave', () => {
-        markerElement.style.transform = 'scale(1)'
-      })
+          // Hover эффекты
+          markerElement.addEventListener('mouseenter', () => {
+            markerElement.style.transform = 'scale(1.1)'
+          })
+          markerElement.addEventListener('mouseleave', () => {
+            markerElement.style.transform = 'scale(1)'
+          })
 
-      // Клик по маркеру
-      markerElement.addEventListener('click', () => {
-        if (onMarkerClick) {
-          onMarkerClick(marker.id)
+          // Клик по маркеру
+          markerElement.addEventListener('click', () => {
+            try {
+              if (onMarkerClick) {
+                onMarkerClick(marker.id)
+              }
+            } catch (err) {
+              console.error('Error handling marker click:', err)
+            }
+          })
+
+          // Создаем YMapMarker
+          const yMapMarker = new YMapMarker(
+            {
+              coordinates: [marker.position[1], marker.position[0]], // [longitude, latitude]
+              draggable: false
+            },
+            markerElement
+          )
+
+          mapInstance.addChild(yMapMarker)
+        } catch (err) {
+          console.error('Error adding marker:', err)
         }
       })
-
-      // Создаем YMapMarker
-      const yMapMarker = new YMapMarker(
-        {
-          coordinates: [marker.position[1], marker.position[0]], // [longitude, latitude]
-          draggable: false
-        },
-        markerElement
-      )
-
-      mapInstance.addChild(yMapMarker)
-    })
+    } catch (err) {
+      console.error('Error updating markers:', err)
+    }
   }, [mapInstance, ymaps, markers, selectedMarkerId, onMarkerClick])
 
   // Обновление центра и зума при изменении

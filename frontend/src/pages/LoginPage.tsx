@@ -55,6 +55,9 @@ export default function LoginPage() {
         <LanguageSwitcher />
       </div>
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="flex justify-center mb-6">
+          <img src="/logo.png" alt="AURELLE" className="h-16 w-auto" />
+        </div>
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">{t('auth.loginTitle')}</h2>
 
         {error && (

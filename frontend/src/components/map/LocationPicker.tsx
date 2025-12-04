@@ -65,47 +65,62 @@ export default function LocationPicker({
   useEffect(() => {
     if (!ymaps || !mapRef.current) return
 
-    const {
-      YMap,
-      YMapDefaultSchemeLayer,
-      YMapDefaultFeaturesLayer,
-      YMapListener
-    } = ymaps
+    let map: any = null
 
-    // Создаем карту
-    const map = new YMap(mapRef.current, {
-      location: {
-        center: [initialCenter[1], initialCenter[0]], // [longitude, latitude]
-        zoom: initialZoom
-      },
-      mode: 'vector'
-    })
+    try {
+      const {
+        YMap,
+        YMapDefaultSchemeLayer,
+        YMapDefaultFeaturesLayer,
+        YMapListener
+      } = ymaps
 
-    // Добавляем базовые слои
-    map.addChild(new YMapDefaultSchemeLayer())
-    map.addChild(new YMapDefaultFeaturesLayer())
+      // Создаем карту
+      map = new YMap(mapRef.current, {
+        location: {
+          center: [initialCenter[1], initialCenter[0]], // [longitude, latitude]
+          zoom: initialZoom
+        },
+        mode: 'vector'
+      })
 
-    // Добавляем слушатель кликов
-    const handleMapClick = (object: any, event: any) => {
-      if (!event || !event.coordinates) return
+      // Добавляем базовые слои
+      map.addChild(new YMapDefaultSchemeLayer())
+      map.addChild(new YMapDefaultFeaturesLayer())
 
-      const [lon, lat] = event.coordinates
-      onLocationSelect(lat, lon)
+      // Добавляем слушатель кликов
+      const handleMapClick = (_object: any, event: any) => {
+        try {
+          if (!event || !event.coordinates) return
+
+          const [lon, lat] = event.coordinates
+          onLocationSelect(lat, lon)
+        } catch (err) {
+          console.error('Error handling map click:', err)
+        }
+      }
+
+      const listener = new YMapListener({
+        layer: 'any',
+        onClick: handleMapClick
+      })
+
+      map.addChild(listener)
+
+      setMapInstance(map)
+    } catch (err) {
+      console.error('Error initializing map:', err)
+      setError('Не удалось инициализировать карту. Попробуйте обновить страницу.')
     }
-
-    const listener = new YMapListener({
-      layer: 'any',
-      onClick: handleMapClick
-    })
-
-    map.addChild(listener)
-
-    setMapInstance(map)
 
     // Cleanup при unmount
     return () => {
-      if (map) {
-        map.destroy()
+      try {
+        if (map) {
+          map.destroy()
+        }
+      } catch (err) {
+        console.error('Error destroying map:', err)
       }
     }
   }, [ymaps, initialCenter, initialZoom, onLocationSelect])
@@ -114,69 +129,82 @@ export default function LocationPicker({
   useEffect(() => {
     if (!mapInstance || !ymaps || !selectedLocation) return
 
-    const { YMapMarker } = ymaps
+    try {
+      const { YMapMarker } = ymaps
 
-    // Удаляем старый маркер
-    if (markerInstance) {
-      mapInstance.removeChild(markerInstance)
-    }
-
-    // Создаем контент маркера
-    const markerElement = document.createElement('div')
-    markerElement.style.cursor = 'pointer'
-
-    markerElement.innerHTML = `
-      <div style="
-        width: 50px;
-        height: 50px;
-        background-color: #e91e63;
-        border: 4px solid white;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: bounce 0.5s ease-out;
-      ">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="transform: rotate(45deg)">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </div>
-    `
-
-    // Добавляем CSS анимацию
-    const style = document.createElement('style')
-    style.textContent = `
-      @keyframes bounce {
-        0% { transform: rotate(-45deg) translateY(-20px); opacity: 0; }
-        50% { transform: rotate(-45deg) translateY(5px); }
-        100% { transform: rotate(-45deg) translateY(0); }
+      // Удаляем старый маркер
+      if (markerInstance) {
+        try {
+          mapInstance.removeChild(markerInstance)
+        } catch (err) {
+          console.error('Error removing old marker:', err)
+        }
       }
-    `
-    document.head.appendChild(style)
 
-    // Создаем YMapMarker
-    const marker = new YMapMarker(
-      {
-        coordinates: [selectedLocation[1], selectedLocation[0]], // [longitude, latitude]
-        draggable: false
-      },
-      markerElement
-    )
+      // Создаем контент маркера
+      const markerElement = document.createElement('div')
+      markerElement.style.cursor = 'pointer'
 
-    mapInstance.addChild(marker)
-    setMarkerInstance(marker)
+      markerElement.innerHTML = `
+        <div style="
+          width: 50px;
+          height: 50px;
+          background-color: #e91e63;
+          border: 4px solid white;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: bounce 0.5s ease-out;
+        ">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="transform: rotate(45deg)">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>
+      `
 
-    // Центрируем карту на новом маркере
-    mapInstance.setLocation({
-      center: [selectedLocation[1], selectedLocation[0]],
-      zoom: 14,
-      duration: 500
-    })
+      // Добавляем CSS анимацию
+      const style = document.createElement('style')
+      style.textContent = `
+        @keyframes bounce {
+          0% { transform: rotate(-45deg) translateY(-20px); opacity: 0; }
+          50% { transform: rotate(-45deg) translateY(5px); }
+          100% { transform: rotate(-45deg) translateY(0); }
+        }
+      `
+      document.head.appendChild(style)
 
-    return () => {
-      document.head.removeChild(style)
+      // Создаем YMapMarker
+      const marker = new YMapMarker(
+        {
+          coordinates: [selectedLocation[1], selectedLocation[0]], // [longitude, latitude]
+          draggable: false
+        },
+        markerElement
+      )
+
+      mapInstance.addChild(marker)
+      setMarkerInstance(marker)
+
+      // Центрируем карту на новом маркере
+      mapInstance.setLocation({
+        center: [selectedLocation[1], selectedLocation[0]],
+        zoom: 14,
+        duration: 500
+      })
+
+      return () => {
+        try {
+          document.head.removeChild(style)
+        } catch (err) {
+          console.error('Error removing style:', err)
+        }
+      }
+    } catch (err) {
+      console.error('Error updating marker:', err)
+      setError('Ошибка при обновлении маркера на карте')
     }
   }, [mapInstance, ymaps, selectedLocation])
 

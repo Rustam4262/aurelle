@@ -7,7 +7,10 @@ export default function LandingPage() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-primary-600">Beauty Salon</div>
+          <div className="flex items-center space-x-3">
+            <img src="/logo.png" alt="AURELLE" className="h-10 w-auto" />
+            <span className="text-2xl font-bold text-primary-600">AURELLE</span>
+          </div>
           <div className="space-x-4">
             <Link to="/login" className="text-gray-700 hover:text-primary-600">
               Войти
@@ -24,8 +27,11 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="mb-8 flex justify-center">
+          <img src="/logo.png" alt="AURELLE" className="h-24 w-auto" />
+        </div>
         <h1 className="text-5xl font-bold text-gray-900 mb-6">
-          Запись в салоны красоты онлайн
+          AURELLE - Запись в салоны красоты онлайн
         </h1>
         <p className="text-xl text-gray-600 mb-8">
           Найдите лучшие салоны рядом с вами. Сравните цены, выберите мастера и запишитесь онлайн

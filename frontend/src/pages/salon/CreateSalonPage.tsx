@@ -277,6 +277,7 @@ export default function CreateSalonPage() {
 
               <div className="border-2 border-gray-200 rounded-lg overflow-hidden" style={{ height: '500px' }}>
                 <LocationPicker
+                  key={`map-${step}`}
                   initialCenter={defaultCenter}
                   initialZoom={formData.latitude && formData.longitude ? 15 : 11}
                   selectedLocation={

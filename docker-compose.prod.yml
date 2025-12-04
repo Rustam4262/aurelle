@@ -14,7 +14,7 @@ services:
   # ==========================================
   postgres:
     image: postgres:15-alpine
-    container_name: beauty_db_prod
+    container_name: aurelle_db_prod
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-beauty_user}
@@ -32,7 +32,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - beauty_network_prod
+      - aurelle_network_prod
     # Security: ограничиваем ресурсы
     deploy:
       resources:
@@ -48,7 +48,7 @@ services:
   # ==========================================
   redis:
     image: redis:7-alpine
-    container_name: beauty_redis_prod
+    container_name: aurelle_redis_prod
     restart: always
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -61,7 +61,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - beauty_network_prod
+      - aurelle_network_prod
     deploy:
       resources:
         limits:
@@ -80,7 +80,7 @@ services:
       dockerfile: Dockerfile
       args:
         - ENVIRONMENT=production
-    container_name: beauty_backend_prod
+    container_name: aurelle_backend_prod
     restart: always
     command: >
       sh -c "
@@ -120,7 +120,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_network_prod
+      - aurelle_network_prod
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -145,7 +145,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         - VITE_API_URL=${VITE_API_URL:-http://localhost/api}
-    container_name: beauty_frontend_prod
+    container_name: aurelle_frontend_prod
     restart: always
     # НЕ монтируем исходный код в продакшн!
     # ports:  # Порт не нужен, т.к. доступ через nginx
@@ -153,7 +153,7 @@ services:
     depends_on:
       - backend
     networks:
-      - beauty_network_prod
+      - aurelle_network_prod
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -174,7 +174,7 @@ services:
   # ==========================================
   nginx:
     image: nginx:alpine
-    container_name: beauty_nginx_prod
+    container_name: aurelle_nginx_prod
     restart: always
     ports:
       - "80:80"
@@ -189,7 +189,7 @@ services:
       - backend
       - frontend
     networks:
-      - beauty_network_prod
+      - aurelle_network_prod
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -208,7 +208,7 @@ services:
 # NETWORKS
 # ==========================================
 networks:
-  beauty_network_prod:
+  aurelle_network_prod:
     driver: bridge
     ipam:
       driver: default
