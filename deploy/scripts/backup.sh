@@ -38,7 +38,7 @@ fi
 
 DB_NAME=${POSTGRES_DB:-beauty_salon_db}
 DB_USER=${POSTGRES_USER:-beauty_user}
-CONTAINER_NAME="beauty_db_prod"
+CONTAINER_NAME="aurelle_db_prod"
 
 # Create backup directory
 mkdir -p "$BACKUP_DIR"
