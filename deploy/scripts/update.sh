@@ -57,8 +57,19 @@ log_info "  AURELLE - SAFE UPDATE PROCESS"
 log_info "============================================"
 log_info ""
 
+# Step 0: Validate environment
+log_step "0/8 Validating environment..."
+source .env
+bash ./deploy/scripts/validate_env.sh || {
+    log_error "Environment validation failed!"
+    log_warn "Please fix .env file and try again"
+    exit 1
+}
+log_success "Environment validated"
+echo ""
+
 # Step 1: Create backup
-log_step "1/7 Creating database backup..."
+log_step "1/8 Creating database backup..."
 bash ./deploy/scripts/backup.sh || {
     log_error "Backup failed! Aborting update."
     exit 1
@@ -68,7 +79,7 @@ echo ""
 
 # Step 2: Pull latest code (if using git)
 if [ -d ".git" ]; then
-    log_step "2/7 Pulling latest code from git..."
+    log_step "2/8 Pulling latest code from git..."
 
     # Check if there are uncommitted changes
     if ! git diff-index --quiet HEAD --; then
@@ -101,12 +112,12 @@ if [ -d ".git" ]; then
         git log --oneline $CURRENT_COMMIT..$NEW_COMMIT
     fi
 else
-    log_step "2/7 Skipping git pull (not a git repository)"
+    log_step "2/8 Skipping git pull (not a git repository)"
 fi
 echo ""
 
 # Step 3: Check Docker containers health before update
-log_step "3/7 Checking current system health..."
+log_step "3/8 Checking current system health..."
 if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
     log_success "Containers are running"
 else
@@ -115,7 +126,7 @@ fi
 echo ""
 
 # Step 4: Build new images
-log_step "4/7 Building new Docker images..."
+log_step "4/8 Building new Docker images..."
 log_info "This may take a few minutes..."
 docker-compose -f docker-compose.prod.yml build --no-cache || {
     log_error "Failed to build Docker images!"
@@ -126,7 +137,7 @@ log_success "Images built successfully"
 echo ""
 
 # Step 5: Stop current containers
-log_step "5/7 Stopping current containers..."
+log_step "5/8 Stopping current containers..."
 docker-compose -f docker-compose.prod.yml down || {
     log_error "Failed to stop containers!"
     exit 1
@@ -135,7 +146,7 @@ log_success "Containers stopped"
 echo ""
 
 # Step 6: Start new containers
-log_step "6/7 Starting updated containers..."
+log_step "6/8 Starting updated containers..."
 docker-compose -f docker-compose.prod.yml up -d || {
     log_error "Failed to start containers!"
     log_warn "Attempting rollback..."
@@ -150,7 +161,7 @@ log_info "Waiting for services to initialize..."
 sleep 10
 
 # Step 7: Run migrations and health checks
-log_step "7/7 Running database migrations and health checks..."
+log_step "7/8 Running database migrations and health checks..."
 
 # Run migrations
 log_info "Running database migrations..."
@@ -183,6 +194,15 @@ done
 # Check all containers
 log_info "Checking all containers..."
 docker-compose -f docker-compose.prod.yml ps
+
+# Step 8: Send notification
+log_step "8/8 Sending notification..."
+if [ -f "./deploy/scripts/send_telegram.sh" ] && [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+    bash ./deploy/scripts/send_telegram.sh "✅ AURELLE обновлён успешно! $(date '+%Y-%m-%d %H:%M')" || true
+    log_success "Notification sent"
+else
+    log_info "Telegram not configured (skipped)"
+fi
 
 echo ""
 log_info "============================================"

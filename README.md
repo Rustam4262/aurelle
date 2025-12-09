@@ -88,11 +88,26 @@ docker-compose exec backend python init_db.py
 - **Docker Compose** - оркестрация
 - **Nginx** - reverse proxy (production)
 
-## 📊 API Документация
+## 📚 Документация
 
+### Быстрый старт:
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Быстрая справка по командам
+- **[FIRST_RUN.md](docs/FIRST_RUN.md)** - Первый запуск проекта
+
+### Деплой и продакшен:
+- **[DEPLOYMENT_READY.md](DEPLOYMENT_READY.md)** - 🎉 Готовность к деплою (НАЧНИТЕ ОТСЮДА!)
+- **[DEPLOY_UPDATES.md](DEPLOY_UPDATES.md)** - Быстрое обновление продакшена
+- **[FRONTEND_DEPLOYMENT.md](FRONTEND_DEPLOYMENT.md)** - Подробное руководство по деплою фронтенда
+- **[docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)** - Полное руководство по продакшн деплою
+
+### Разработка:
+- **[IMPROVEMENTS.md](IMPROVEMENTS.md)** - Список технических улучшений
+- **[ROADMAP.md](ROADMAP.md)** - План развития функционала (v1.1, v1.2)
+
+### API:
 После запуска доступна интерактивная документация:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- **Swagger UI:** http://localhost:8000/docs (dev) | https://api.aurelle.uz/docs (prod)
+- **ReDoc:** http://localhost:8000/redoc (dev) | https://api.aurelle.uz/redoc (prod)
 
 ## 🔐 Безопасность
 
