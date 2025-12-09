@@ -1,9 +1,12 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+// API_BASE_URL получаем из переменной окружения или используем относительный путь
+// В продакшене VITE_API_URL будет https://api.aurelle.uz
+// В разработке можно указать http://localhost:8000
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

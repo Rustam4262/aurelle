@@ -71,7 +71,15 @@ ls -lh ./backups/daily/
 ### Обновление
 
 ```bash
+# Подготовка git (один раз)
+git config core.filemode false
+echo "backups/" >> .git/info/exclude
+echo "frontend/.env*" >> .git/info/exclude
+
 # Безопасное обновление (с автоматическим бэкапом)
+git fetch origin
+git reset --hard origin/main
+chmod +x deploy/scripts/*.sh
 bash ./deploy/scripts/update.sh
 
 # Ручное обновление

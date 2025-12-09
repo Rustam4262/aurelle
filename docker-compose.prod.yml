@@ -144,7 +144,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost/api}
+        - VITE_API_URL=https://api.aurelle.uz
+        - VITE_YANDEX_MAPS_API_KEY=${VITE_YANDEX_MAPS_API_KEY}
     container_name: aurelle_frontend_prod
     restart: always
     # НЕ монтируем исходный код в продакшн!

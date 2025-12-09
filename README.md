@@ -230,6 +230,8 @@ chmod +x deploy/scripts/deploy.sh
 
 **Подробнее:**
 - [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Полное руководство по развёртыванию
+- [DEPLOY_UPDATES.md](DEPLOY_UPDATES.md) ⭐ - Быстрый деплой обновлений
+- [FRONTEND_DEPLOYMENT.md](FRONTEND_DEPLOYMENT.md) - Настройка фронтенда для продакшена
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Быстрая шпаргалка команд
 - [deploy/scripts/deploy.sh](deploy/scripts/deploy.sh) - Скрипт деплоя
 - [deploy/scripts/backup.sh](deploy/scripts/backup.sh) - Backup БД
