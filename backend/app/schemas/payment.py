@@ -135,6 +135,7 @@ class UzumCallbackRequest(BaseModel):
     status: str
     amount: float
     merchant_trans_id: str
+    signature: str  # HMAC signature для проверки
 
 
 class UzumCallbackResponse(BaseModel):

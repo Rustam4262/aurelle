@@ -37,18 +37,94 @@ def calculate_commission(amount: float, payment_method: PaymentMethodModel) -> f
     return round(amount * rate, 2)
 
 
-def verify_payme_signature(request_data: dict) -> bool:
-    """Проверить подпись Payme"""
-    # TODO: Реализовать проверку подписи Payme
-    # Требуется PAYME_SECRET_KEY из настроек
-    return True
+def verify_payme_signature(request_data: dict, authorization: str) -> bool:
+    """
+    Проверить подпись Payme через HTTP Basic Auth
+
+    Payme использует HTTP Basic Authentication где:
+    - Username: "Paycom"
+    - Password: PAYME_SECRET_KEY (base64 encoded)
+    """
+    try:
+        import base64
+
+        if not authorization or not authorization.startswith("Basic "):
+            return False
+
+        # Декодировать Base64
+        encoded_credentials = authorization.replace("Basic ", "")
+        decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
+
+        # Формат: "Paycom:SECRET_KEY"
+        username, password = decoded_credentials.split(':', 1)
+
+        # Проверить учетные данные
+        if username != "Paycom":
+            return False
+
+        # Сравнить с настроенным ключом (constant-time comparison)
+        expected_key = settings.PAYME_SECRET_KEY
+        return hmac.compare_digest(password, expected_key)
+
+    except Exception:
+        return False
 
 
 def verify_click_signature(request: ClickRequest) -> bool:
-    """Проверить подпись Click"""
-    # TODO: Реализовать проверку подписи Click
-    # sign_string = MD5(click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + sign_time)
-    return True
+    """
+    Проверить подпись Click
+
+    Формула: MD5(click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + sign_time)
+    """
+    try:
+        # Составить строку для подписи
+        sign_string = (
+            f"{request.click_trans_id}"
+            f"{settings.CLICK_SERVICE_ID}"
+            f"{settings.CLICK_SECRET_KEY}"
+            f"{request.merchant_trans_id}"
+            f"{request.amount}"
+            f"{request.action}"
+            f"{request.sign_time}"
+        )
+
+        # Вычислить MD5
+        expected_signature = hashlib.md5(sign_string.encode()).hexdigest()
+
+        # Constant-time comparison
+        return hmac.compare_digest(request.sign_string, expected_signature)
+
+    except Exception:
+        return False
+
+
+def verify_uzum_signature(request: UzumCallbackRequest) -> bool:
+    """
+    Проверить подпись Uzum
+
+    Формула: HMAC-SHA256(transaction_id + status + amount + merchant_trans_id, SECRET_KEY)
+    """
+    try:
+        # Составить строку для подписи
+        message = (
+            f"{request.transaction_id}"
+            f"{request.status}"
+            f"{request.amount}"
+            f"{request.merchant_trans_id}"
+        )
+
+        # Вычислить HMAC-SHA256
+        expected_signature = hmac.new(
+            settings.UZUM_SECRET_KEY.encode(),
+            message.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Constant-time comparison
+        return hmac.compare_digest(request.signature, expected_signature)
+
+    except Exception:
+        return False
 
 
 # Основные endpoints
@@ -212,9 +288,17 @@ def refund_payment(
 @router.post("/payme/callback", response_model=PaymeResponse)
 def payme_callback(
     request: PaymeRequest,
+    authorization: str = Depends(lambda request: request.headers.get("Authorization", "")),
     db: Session = Depends(get_db)
 ):
     """Webhook для Payme"""
+
+    # 🔐 ПРОВЕРКА ПОДПИСИ - КРИТИЧНО ДЛЯ БЕЗОПАСНОСТИ!
+    if not verify_payme_signature(request.dict(), authorization):
+        return PaymeResponse(error=PaymeError(
+            code=-32504,
+            message="Insufficient privilege to perform this method"
+        ))
 
     try:
         method = request.method
@@ -353,15 +437,16 @@ def click_callback(
 ):
     """Webhook для Click"""
 
+    # 🔐 ПРОВЕРКА ПОДПИСИ - КРИТИЧНО ДЛЯ БЕЗОПАСНОСТИ!
+    if not verify_click_signature(request):
+        return ClickResponse(
+            click_trans_id=request.click_trans_id,
+            merchant_trans_id=request.merchant_trans_id,
+            error=-1,
+            error_note="Invalid signature"
+        )
+
     try:
-        # Проверить подпись (TODO: реализовать проверку)
-        # if not verify_click_signature(request):
-        #     return ClickResponse(
-        #         click_trans_id=request.click_trans_id,
-        #         merchant_trans_id=request.merchant_trans_id,
-        #         error=-1,
-        #         error_note="Invalid signature"
-        #     )
 
         booking_id = int(request.merchant_trans_id)
 
@@ -481,8 +566,47 @@ def uzum_callback(
     db: Session = Depends(get_db)
 ):
     """Webhook для Uzum"""
-    # TODO: Реализовать обработку callback от Uzum
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Uzum integration is not yet implemented"
-    )
+
+    # 🔐 ПРОВЕРКА ПОДПИСИ - КРИТИЧНО ДЛЯ БЕЗОПАСНОСТИ!
+    if not verify_uzum_signature(request):
+        return UzumCallbackResponse(
+            status="error",
+            message="Invalid signature"
+        )
+
+    try:
+        # Найти платеж по merchant_trans_id (booking_id)
+        booking_id = int(request.merchant_trans_id)
+        payment = db.query(Payment).filter(Payment.booking_id == booking_id).first()
+
+        if not payment:
+            return UzumCallbackResponse(
+                status="error",
+                message="Payment not found"
+            )
+
+        # Обновить статус платежа
+        if request.status == "success":
+            payment.status = PaymentStatusModel.COMPLETED
+            payment.paid_at = datetime.now(timezone.utc)
+            payment.transaction_id = request.transaction_id
+
+            # Обновить статус бронирования
+            booking = payment.booking
+            booking.status = BookingStatus.CONFIRMED
+
+        elif request.status == "cancelled":
+            payment.status = PaymentStatusModel.CANCELLED
+
+        db.commit()
+
+        return UzumCallbackResponse(
+            status="success",
+            message="Payment updated successfully"
+        )
+
+    except Exception as e:
+        return UzumCallbackResponse(
+            status="error",
+            message=str(e)
+        )

@@ -2,9 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
-from app.api import auth, salons, bookings, reviews, users, services, masters, bookings_detailed, availability, uploads, statistics, favorites, service_masters, chat, promo_codes, recommendations, notifications, admin, master_dashboard, geocoding, schedule, payments
+from app.core.sentry import init_sentry, SentryBreadcrumbMiddleware
+from app.api import auth, salons, bookings, reviews, users, services, masters, bookings_detailed, availability, uploads, statistics, favorites, service_masters, chat, promo_codes, recommendations, notifications, admin, master_dashboard, geocoding, schedule, payments, consents
 from app.middleware import AuditMiddleware
+from app.middleware.rate_limiter import RateLimitMiddleware
+from app.middleware.security import SecurityHeadersMiddleware, RequestValidationMiddleware
+from app.middleware.idempotency import IdempotencyMiddleware
 from pathlib import Path
+
+# Initialize Sentry for error monitoring
+init_sentry()
 
 app = FastAPI(
     title="Beauty Salon Marketplace API",
@@ -12,7 +19,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
+# Security Middleware (порядок важен!)
+# 1. Sentry Breadcrumbs - отслеживание последовательности действий
+app.add_middleware(SentryBreadcrumbMiddleware)
+
+# 2. Security Headers - добавляет защитные заголовки
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 3. Request Validation - валидация размера и содержимого запросов
+app.add_middleware(RequestValidationMiddleware)
+
+# 4. Rate Limiting - защита от DDoS и brute-force
+app.add_middleware(RateLimitMiddleware, enabled=settings.RATE_LIMIT_ENABLED)
+
+# 5. Idempotency - защита от дублирования операций
+app.add_middleware(IdempotencyMiddleware)
+
+# 6. CORS - должен быть после rate limiting и idempotency
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -21,7 +44,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Audit logging middleware
+# 7. Audit logging - должен быть последним для логирования всех запросов
 app.add_middleware(AuditMiddleware)
 
 # Routes
@@ -47,6 +70,7 @@ app.include_router(master_dashboard.router, prefix="/api/master", tags=["Master 
 app.include_router(geocoding.router, prefix="/api/geocoding", tags=["Geocoding"])
 app.include_router(schedule.router, prefix="/api/schedule", tags=["Schedule"])
 app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
+app.include_router(consents.router, prefix="/api/consents", tags=["User Consents"])
 
 # Static files for uploads
 UPLOAD_DIR = Path("uploads")

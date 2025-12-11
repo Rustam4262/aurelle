@@ -117,3 +117,30 @@ def toggle_user_active(
     db.refresh(user)
 
     return UserResponse.model_validate(user)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_current_user(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Удалить аккаунт текущего пользователя (soft delete)
+
+    ВАЖНО: Используется мягкое удаление для:
+    - Соблюдения требований о хранении данных о транзакциях
+    - Возможности восстановления случайно удаленных аккаунтов
+    - Аудита и расследований
+
+    Физического удаления НЕ происходит!
+    """
+
+    # Soft delete вместо физического удаления
+    current_user.soft_delete()
+
+    # Деактивировать аккаунт
+    current_user.is_active = False
+
+    db.commit()
+
+    return None

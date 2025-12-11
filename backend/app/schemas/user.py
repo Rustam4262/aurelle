@@ -43,5 +43,10 @@ class PasswordChange(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str  # Добавлен refresh token для rotation
     token_type: str = "bearer"
     user: UserResponse
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
