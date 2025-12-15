@@ -137,6 +137,140 @@ services:
           memory: 1G
 
   # ==========================================
+  # CELERY - ОТКЛЮЧЕНО ДЛЯ MVP
+  # Включить после 22.12.2025
+  # ==========================================
+
+  # ==========================================
+  # CELERY WORKER - Background Tasks
+  # ==========================================
+  # НЕ НУЖНО ДЛЯ MVP - ЗАКОММЕНТИРОВАНО
+  # celery_worker:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - ENVIRONMENT=production
+  #   container_name: aurelle_celery_worker_prod
+  #   restart: always
+  #   command: >
+  #     sh -c "
+  #       echo 'Waiting for Redis...' &&
+  #       while ! nc -z redis 6379; do sleep 1; done &&
+  #       echo 'Starting Celery worker...' &&
+  #       celery -A app.core.celery_app worker \
+  #         --loglevel=info \
+  #         --concurrency=4 \
+  #         --max-tasks-per-child=1000
+  #     "
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - ENVIRONMENT=production
+  #     - DATABASE_URL=postgresql://${POSTGRES_USER:-beauty_user}:${POSTGRES_PASSWORD:-beauty_pass}@postgres:5432/${POSTGRES_DB:-beauty_salon_db}
+  #     - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_pass}@redis:6379/0
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - aurelle_network_prod
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '1.0'
+  #         memory: 1G
+  #       reservations:
+  #         cpus: '0.5'
+  #         memory: 512M
+
+  # ==========================================
+  # CELERY BEAT - Scheduled Tasks
+  # ==========================================
+  # НЕ НУЖНО ДЛЯ MVP - ЗАКОММЕНТИРОВАНО
+  # celery_beat:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - ENVIRONMENT=production
+  #   container_name: aurelle_celery_beat_prod
+  #   restart: always
+  #   command: >
+  #     sh -c "
+  #       echo 'Waiting for Redis...' &&
+  #       while ! nc -z redis 6379; do sleep 1; done &&
+  #       echo 'Starting Celery beat...' &&
+  #       celery -A app.core.celery_app beat \
+  #         --loglevel=info \
+  #         --scheduler celery.beat:PersistentScheduler
+  #     "
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - ENVIRONMENT=production
+  #     - DATABASE_URL=postgresql://${POSTGRES_USER:-beauty_user}:${POSTGRES_PASSWORD:-beauty_pass}@postgres:5432/${POSTGRES_DB:-beauty_salon_db}
+  #     - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_pass}@redis:6379/0
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - aurelle_network_prod
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 256M
+  #       reservations:
+  #         cpus: '0.25'
+  #         memory: 128M
+
+  # ==========================================
+  # FLOWER - Celery Monitoring (Optional)
+  # ==========================================
+  # НЕ НУЖНО ДЛЯ MVP - ЗАКОММЕНТИРОВАНО
+  # flower:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - ENVIRONMENT=production
+  #   container_name: aurelle_flower_prod
+  #   restart: always
+  #   command: >
+  #     sh -c "
+  #       echo 'Waiting for Redis...' &&
+  #       while ! nc -z redis 6379; do sleep 1; done &&
+  #       echo 'Starting Flower...' &&
+  #       celery -A app.core.celery_app flower \
+  #         --port=5555 \
+  #         --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+  #     "
+  #   ports:
+  #     - "5555:5555"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - ENVIRONMENT=production
+  #     - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_pass}@redis:6379/0
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - aurelle_network_prod
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 256M
+  #       reservations:
+  #         cpus: '0.25'
+  #         memory: 128M
+
+  # ==========================================
   # FRONTEND - React SPA (production build)
   # ==========================================
   frontend:
