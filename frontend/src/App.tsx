@@ -8,38 +8,43 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 
-// Client
+// ========================================
+// MVP CLIENT PAGES - ТОЛЬКО ЭТИ ИМПОРТЫ
+// ========================================
 import ClientDashboard from './pages/client/ClientDashboard'
 import SalonsPage from './pages/client/SalonsPage'
 import SalonDetailPage from './pages/client/SalonDetailPage'
 import MyBookingsPage from './pages/client/MyBookingsPage'
 import ProfilePage from './pages/client/ProfilePage'
-import FavoritesPage from './pages/client/FavoritesPage'
-import ChangePasswordPage from './pages/client/ChangePasswordPage'
+// import FavoritesPage from './pages/client/FavoritesPage' // НЕ В MVP
+// import ChangePasswordPage from './pages/client/ChangePasswordPage' // НЕ В MVP
 
+// ========================================
+// ОТКЛЮЧЕНО ДО 22.12.2025
+// ========================================
 // Salon Owner
-import SalonDashboard from './pages/salon/SalonDashboard'
-import CreateSalonPage from './pages/salon/CreateSalonPage'
-import EditSalonPage from './pages/salon/EditSalonPage'
-import ManageServicesPage from './pages/salon/ManageServicesPage'
-import ManageMastersPage from './pages/salon/ManageMastersPage'
-import SalonManageBookingsPage from './pages/salon/ManageBookingsPage'
-import ManageSchedulePage from './pages/salon/ManageSchedulePage'
-import ManageSalonPhotosPage from './pages/salon/ManageSalonPhotosPage'
-import SalonReviewsPage from './pages/salon/SalonReviewsPage'
+// import SalonDashboard from './pages/salon/SalonDashboard'
+// import CreateSalonPage from './pages/salon/CreateSalonPage'
+// import EditSalonPage from './pages/salon/EditSalonPage'
+// import ManageServicesPage from './pages/salon/ManageServicesPage'
+// import ManageMastersPage from './pages/salon/ManageMastersPage'
+// import SalonManageBookingsPage from './pages/salon/ManageBookingsPage'
+// import ManageSchedulePage from './pages/salon/ManageSchedulePage'
+// import ManageSalonPhotosPage from './pages/salon/ManageSalonPhotosPage'
+// import SalonReviewsPage from './pages/salon/SalonReviewsPage'
 
 // Admin
-import AdminLayout from './components/admin/AdminLayout'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import ManageUsersPage from './pages/admin/ManageUsersPage'
-import ManageSalonsPage from './pages/admin/ManageSalonsPage'
-import AdminManageBookingsPage from './pages/admin/ManageBookingsPage'
+// import AdminLayout from './components/admin/AdminLayout'
+// import AdminDashboard from './pages/admin/AdminDashboard'
+// import ManageUsersPage from './pages/admin/ManageUsersPage'
+// import ManageSalonsPage from './pages/admin/ManageSalonsPage'
+// import AdminManageBookingsPage from './pages/admin/ManageBookingsPage'
 
 // Master
-import MasterDashboard from './pages/master/MasterDashboard'
-import MasterCalendar from './pages/master/MasterCalendar'
-import MasterBookingsPage from './pages/master/MasterBookingsPage'
-import MasterScheduleSettings from './pages/master/MasterScheduleSettings'
+// import MasterDashboard from './pages/master/MasterDashboard'
+// import MasterCalendar from './pages/master/MasterCalendar'
+// import MasterBookingsPage from './pages/master/MasterBookingsPage'
+// import MasterScheduleSettings from './pages/master/MasterScheduleSettings'
 
 function App() {
   const { user } = useAuthStore()
@@ -52,20 +57,27 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Client routes */}
+        {/* ========================================
+            MVP CLIENT ROUTES - ТОЛЬКО ЭТИ ВКЛЮЧЕНЫ
+            ======================================== */}
         <Route
           path="/client/*"
           element={
             user?.role === 'client' ? (
               <Layout>
                 <Routes>
-                  <Route path="dashboard" element={<ClientDashboard />} />
+                  {/* MVP ROUTES */}
                   <Route path="salons" element={<SalonsPage />} />
                   <Route path="salons/:id" element={<SalonDetailPage />} />
                   <Route path="bookings" element={<MyBookingsPage />} />
+
+                  {/* БАЗОВЫЕ РОУТЫ (для MVP) */}
+                  <Route path="dashboard" element={<ClientDashboard />} />
                   <Route path="profile" element={<ProfilePage />} />
-                  <Route path="change-password" element={<ChangePasswordPage />} />
-                  <Route path="favorites" element={<FavoritesPage />} />
+
+                  {/* ОТКЛЮЧЕНО ДО 22.12.2025 */}
+                  {/* <Route path="change-password" element={<ChangePasswordPage />} /> */}
+                  {/* <Route path="favorites" element={<FavoritesPage />} /> */}
                 </Routes>
               </Layout>
             ) : (
@@ -74,8 +86,13 @@ function App() {
           }
         />
 
-        {/* Salon owner routes */}
-        <Route
+        {/* ========================================
+            ОТКЛЮЧЕНО ДО 22.12.2025
+            НЕ УДАЛЯТЬ - ПРОСТО ЗАКОММЕНТИРОВАНО
+            ======================================== */}
+
+        {/* SALON OWNER ROUTES - DISABLED FOR MVP */}
+        {/* <Route
           path="/salon/*"
           element={
             user?.role === 'salon_owner' ? (
@@ -96,10 +113,10 @@ function App() {
               <Navigate to="/login" />
             )
           }
-        />
+        /> */}
 
-        {/* Master routes */}
-        <Route
+        {/* MASTER ROUTES - DISABLED FOR MVP */}
+        {/* <Route
           path="/master/*"
           element={
             user?.role === 'master' ? (
@@ -115,10 +132,10 @@ function App() {
               <Navigate to="/login" />
             )
           }
-        />
+        /> */}
 
-        {/* Admin routes */}
-        <Route
+        {/* ADMIN ROUTES - DISABLED FOR MVP */}
+        {/* <Route
           path="/admin/*"
           element={
             user?.role === 'admin' ? (
@@ -139,7 +156,7 @@ function App() {
               <Navigate to="/login" />
             )
           }
-        />
+        /> */}
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
