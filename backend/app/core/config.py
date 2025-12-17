@@ -37,6 +37,27 @@ class Settings(BaseSettings):
     # Yandex Maps API
     YANDEX_MAPS_API_KEY: str = "99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0"
 
+    # Email / SMTP Settings
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    FROM_EMAIL: str = "noreply@aurelle.uz"
+    FROM_NAME: str = "aurelle.uz"
+    EMAIL_ENABLED: bool = False  # Enable when SMTP is configured
+
+    # SMS Settings
+    SMS_PROVIDER: str = "eskiz"  # eskiz, smsru, twilio
+    SMS_API_KEY: str = ""
+    SMS_API_URL: str = "https://notify.eskiz.uz/api"
+    SMS_SENDER_NAME: str = "aurelle.uz"
+    SMS_ENABLED: bool = False  # Enable when SMS provider is configured
+
+    # Twilio (if using Twilio as SMS provider)
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+
     # Sentry Error Monitoring
     SENTRY_DSN: str = ""  # Set in .env for error monitoring
     SENTRY_ENVIRONMENT: str = "development"

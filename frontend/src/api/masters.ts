@@ -8,7 +8,8 @@ export const mastersApi = {
     limit?: number
   }): Promise<Master[]> => {
     const response = await apiClient.get('/masters', { params })
-    return response.data
+    // MVP FIX: Backend returns {items: [...]} not array directly
+    return response.data.items || response.data
   },
 
   getMaster: async (id: number): Promise<Master> => {

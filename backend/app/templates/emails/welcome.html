@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать в aurelle.uz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+        .logo {
+            font-size: 64px;
+            margin: 10px 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .feature-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .feature-title {
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">💆‍♀️</div>
+        <h1>Добро пожаловать!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px;">Спасибо за регистрацию на aurelle.uz</p>
+    </div>
+    <div class="content">
+        <p>Здравствуйте, {{ user_name }}! 👋</p>
+
+        <p>Мы рады приветствовать вас на платформе <strong>aurelle.uz</strong> - вашем помощнике в мире красоты!</p>
+
+        <p><strong>Что вы можете делать на нашей платформе:</strong></p>
+
+        <div class="feature-box">
+            <div class="feature-icon">🔍</div>
+            <div class="feature-title">Находите лучшие салоны</div>
+            <p>Выбирайте из сотен проверенных салонов красоты с реальными отзывами клиентов.</p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">📅</div>
+            <div class="feature-title">Бронируйте онлайн</div>
+            <p>Записывайтесь на удобное время в пару кликов. Никаких звонков и ожиданий!</p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">⭐</div>
+            <div class="feature-title">Выбирайте мастеров</div>
+            <p>Смотрите портфолио мастеров, читайте отзывы и выбирайте лучших специалистов.</p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">💳</div>
+            <div class="feature-title">Удобная оплата</div>
+            <p>Оплачивайте услуги онлайн или в салоне - как вам удобнее.</p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">🔔</div>
+            <div class="feature-title">Напоминания</div>
+            <p>Получайте уведомления о предстоящих визитах, чтобы ничего не забыть.</p>
+        </div>
+
+        <p style="text-align: center;">
+            <a href="{{ platform_url }}" class="button">Начать пользоваться</a>
+        </p>
+
+        <p style="background: #e7f3ff; padding: 15px; border-radius: 5px; border-left: 4px solid #0066cc;">
+            <strong>💡 Совет:</strong> Заполните свой профиль, чтобы салоны могли лучше подготовиться к вашему визиту.
+        </p>
+
+        <p>Если у вас возникнут вопросы, наша служба поддержки всегда готова помочь!</p>
+
+        <p>Желаем вам приятных визитов!<br>Команда <strong>aurelle.uz</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>Вы получили это письмо, потому что зарегистрировались на платформе aurelle.uz</p>
+        <p>Если это сделали не вы, просто проигнорируйте это письмо.</p>
+        <p>&copy; 2024 aurelle.uz - Платформа для бронирования услуг красоты</p>
+    </div>
+</body>
+</html>

@@ -16,6 +16,12 @@ pydantic[email]==2.5.3
 # Redis / Celery
 redis==5.0.1
 celery==5.3.6
+flower==2.0.1  # Celery monitoring UI
+
+# Email
+aiosmtplib==3.0.1
+email-validator==2.1.0
+jinja2==3.1.3  # For email templates
 
 # Utils
 python-dotenv==1.0.0
@@ -29,7 +35,7 @@ slowapi==0.1.9
 loguru==0.7.2
 
 # Error Monitoring
-sentry-sdk==1.40.0
+sentry-sdk[fastapi]==1.40.0
 
 # Testing
 pytest==7.4.3

@@ -42,14 +42,14 @@ def create_master(
     return MasterResponse.model_validate(new_master)
 
 
-@router.get("/", response_model=List[MasterResponse])
+@router.get("/")
 def get_masters(
     db: Session = Depends(get_db),
     salon_id: Optional[int] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100)
 ):
-    """Получить список мастеров"""
+    """Получить список мастеров (MVP: minimal fields, no schema validation)"""
 
     query = db.query(Master).filter(Master.is_active == True)
 
@@ -58,7 +58,20 @@ def get_masters(
 
     masters = query.offset(skip).limit(limit).all()
 
-    return [MasterResponse.model_validate(master) for master in masters]
+    # MVP FIX: Return minimal fields to avoid NULL rating/reviews_count validation errors
+    return {
+        "items": [
+            {
+                "id": m.id,
+                "salon_id": m.salon_id,
+                "name": m.name,
+                "phone": m.phone,
+                "specialization": m.specialization,
+                "is_active": m.is_active,
+            }
+            for m in masters
+        ]
+    }
 
 
 @router.get("/{master_id}", response_model=MasterResponse)

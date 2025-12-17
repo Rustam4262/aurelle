@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from app.core.database import get_db
 from app.core.security import verify_password, get_password_hash, create_token_pair
 from app.models.user import User, UserRole
-from app.models.audit_log import LoginLog
+# from app.models.audit_log import LoginLog  # DISABLED FOR MVP
 from app.models.refresh_token import RefreshToken
 from app.schemas.user import UserCreate, UserLogin, Token, UserResponse, PasswordChange, RefreshTokenRequest
 from app.api.deps import get_current_user
@@ -76,77 +76,88 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     """Вход пользователя"""
 
-    user = db.query(User).filter(User.phone == credentials.phone).first()
+    # MVP FIX: Accept email OR phone for login
+    if credentials.email:
+        user = db.query(User).filter(User.email == credentials.email).first()
+        identifier = credentials.email
+    elif credentials.phone:
+        user = db.query(User).filter(User.phone == credentials.phone).first()
+        identifier = credentials.phone
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or phone required"
+        )
 
     # Получаем данные для логирования
     request_ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent", None)
 
     if not user:
-        # Логируем неудачную попытку - пользователь не найден
-        login_log = LoginLog(
-            user_id=None,
-            phone=credentials.phone,
-            success=0,
-            failure_reason="user_not_found",
-            request_ip=request_ip,
-            user_agent=user_agent
-        )
-        db.add(login_log)
-        db.commit()
+        # MVP: LoginLog disabled
+        # login_log = LoginLog(
+        #     user_id=None,
+        #     phone=credentials.phone or credentials.email,
+        #     success=0,
+        #     failure_reason="user_not_found",
+        #     request_ip=request_ip,
+        #     user_agent=user_agent
+        # )
+        # db.add(login_log)
+        # db.commit()
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect phone or password"
+            detail="Incorrect email or password"
         )
 
     if not verify_password(credentials.password, user.hashed_password):
-        # Логируем неудачную попытку - неверный пароль
-        login_log = LoginLog(
-            user_id=user.id,
-            phone=credentials.phone,
-            success=0,
-            failure_reason="incorrect_password",
-            request_ip=request_ip,
-            user_agent=user_agent
-        )
-        db.add(login_log)
-        db.commit()
+        # MVP: LoginLog disabled
+        # login_log = LoginLog(
+        #     user_id=user.id,
+        #     phone=credentials.phone,
+        #     success=0,
+        #     failure_reason="incorrect_password",
+        #     request_ip=request_ip,
+        #     user_agent=user_agent
+        # )
+        # db.add(login_log)
+        # db.commit()
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect phone or password"
+            detail="Incorrect email or password"
         )
 
     if not user.is_active:
-        # Логируем неудачную попытку - аккаунт неактивен
-        login_log = LoginLog(
-            user_id=user.id,
-            phone=credentials.phone,
-            success=0,
-            failure_reason="account_inactive",
-            request_ip=request_ip,
-            user_agent=user_agent
-        )
-        db.add(login_log)
-        db.commit()
+        # MVP: LoginLog disabled
+        # login_log = LoginLog(
+        #     user_id=user.id,
+        #     phone=credentials.phone,
+        #     success=0,
+        #     failure_reason="account_inactive",
+        #     request_ip=request_ip,
+        #     user_agent=user_agent
+        # )
+        # db.add(login_log)
+        # db.commit()
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
 
-    # Логируем успешный вход
-    login_log = LoginLog(
-        user_id=user.id,
-        phone=credentials.phone,
-        success=1,
-        failure_reason=None,
-        request_ip=request_ip,
-        user_agent=user_agent
-    )
-    db.add(login_log)
-    db.commit()
+    # MVP: LoginLog disabled
+    # login_log = LoginLog(
+    #     user_id=user.id,
+    #     phone=credentials.phone,
+    #     success=1,
+    #     failure_reason=None,
+    #     request_ip=request_ip,
+    #     user_agent=user_agent
+    # )
+    # db.add(login_log)
+    # db.commit()
 
     # Генерация пары токенов (access + refresh)
     access_token, refresh_token, refresh_expires_at = create_token_pair(user.id)

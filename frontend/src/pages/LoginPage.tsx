@@ -4,14 +4,14 @@ import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../components/LanguageSwitcher'
-import { formatPhoneInput } from '../utils/validation'
+// import { formatPhoneInput } from '../utils/validation'  // MVP: unused
 import '../i18n/config'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
   const { t } = useTranslation()
-  const [phone, setPhone] = useState('+998')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +22,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await authApi.login({ phone, password })
+      // MVP FIX: Support both email and phone login
+      const loginData = phone.includes('@')
+        ? { email: phone, password }
+        : { phone, password }
+      const response = await authApi.login(loginData)
       setAuth(response.user, response.access_token)
 
       // Redirect based on role
@@ -69,17 +73,17 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('auth.phoneLabel')}
+              Email or Phone
             </label>
             <input
-              type="tel"
+              type="text"
               value={phone}
-              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-              placeholder="+998901234567"
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="client@test.uz or +998901234567"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
-            <p className="mt-1 text-xs text-gray-500">Формат: +998XXXXXXXXX</p>
+            <p className="mt-1 text-xs text-gray-500">MVP: Enter email or phone</p>
           </div>
 
           <div>

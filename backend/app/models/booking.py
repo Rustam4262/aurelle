@@ -60,5 +60,5 @@ class Booking(Base):
     salon = relationship("Salon", back_populates="bookings")
     master = relationship("Master", back_populates="bookings")
     service = relationship("Service", back_populates="bookings")
-    review = relationship("Review", back_populates="booking", uselist=False)
-    payments = relationship("Payment", back_populates="booking")
+    # review = relationship("Review", back_populates="booking", uselist=False)  # DISABLED FOR MVP
+    # payments = relationship("Payment", back_populates="booking")  # DISABLED FOR MVP

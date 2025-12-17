@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование отменено</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .booking-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-row {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #596164;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Бронирование отменено</h1>
+    </div>
+    <div class="content">
+        <div class="icon">❌</div>
+
+        <p>Здравствуйте, {{ client_name }}!</p>
+
+        <p>Ваше бронирование было отменено.</p>
+
+        <div class="booking-info">
+            <div class="info-row">
+                <span class="label">Номер бронирования:</span> #{{ booking_id }}
+            </div>
+            <div class="info-row">
+                <span class="label">Дата:</span> {{ date }}
+            </div>
+            <div class="info-row">
+                <span class="label">Время:</span> {{ time }}
+            </div>
+            <div class="info-row">
+                <span class="label">Услуга:</span> {{ service_name }}
+            </div>
+            <div class="info-row">
+                <span class="label">Мастер:</span> {{ master_name }}
+            </div>
+            <div class="info-row">
+                <span class="label">Салон:</span> {{ salon_name }}
+            </div>
+            {% if cancelled_by %}
+            <div class="info-row">
+                <span class="label">Отменено:</span> {{ cancelled_by }}
+            </div>
+            {% endif %}
+            {% if cancellation_reason %}
+            <div class="info-row">
+                <span class="label">Причина:</span> {{ cancellation_reason }}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if refund_info %}
+        <p style="background: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; color: #155724;">
+            <strong>💰 Возврат средств:</strong> {{ refund_info }}
+        </p>
+        {% endif %}
+
+        <p>Вы можете забронировать другое время, которое вам подходит:</p>
+
+        <p style="text-align: center;">
+            <a href="{{ search_url }}" class="button">Найти другое время</a>
+        </p>
+
+        <p>Если у вас есть вопросы, свяжитесь с нами.</p>
+
+        <p>С уважением,<br>Команда <strong>aurelle.uz</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>Вы получили это письмо в связи с отменой бронирования на платформе aurelle.uz</p>
+        <p>&copy; 2024 aurelle.uz - Платформа для бронирования услуг красоты</p>
+    </div>
+</body>
+</html>

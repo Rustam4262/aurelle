@@ -149,18 +149,38 @@ def delete_service_master_link(
     return {"message": "Link deleted successfully"}
 
 
-@router.get("/service/{service_id}/masters", response_model=List[int])
+@router.get("/service/{service_id}/masters")
 def get_masters_by_service(
     service_id: int,
     db: Session = Depends(get_db)
 ):
-    """Получить список ID мастеров, предоставляющих услугу"""
+    """Получить список мастеров, предоставляющих услугу (MVP: returns full master objects)"""
 
     links = db.query(ServiceMaster).filter(
         ServiceMaster.service_id == service_id
     ).all()
 
-    return [link.master_id for link in links]
+    master_ids = [link.master_id for link in links]
+
+    if not master_ids:
+        return {"items": []}
+
+    masters = db.query(Master).filter(Master.id.in_(master_ids), Master.is_active == True).all()
+
+    # MVP FIX: Return minimal fields like /api/masters endpoint
+    return {
+        "items": [
+            {
+                "id": m.id,
+                "salon_id": m.salon_id,
+                "name": m.name,
+                "phone": m.phone,
+                "specialization": m.specialization,
+                "is_active": m.is_active,
+            }
+            for m in masters
+        ]
+    }
 
 
 @router.get("/master/{master_id}/services", response_model=List[int])

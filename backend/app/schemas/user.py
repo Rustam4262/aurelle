@@ -16,7 +16,8 @@ class UserCreate(UserBase):
 
 
 class UserLogin(BaseModel):
-    phone: str
+    phone: Optional[str] = None  # MVP: Accept phone OR email
+    email: Optional[str] = None  # MVP: Accept phone OR email
     password: str
 
 

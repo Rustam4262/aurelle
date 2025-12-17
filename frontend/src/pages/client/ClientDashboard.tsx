@@ -4,14 +4,14 @@ import { useAuthStore } from '../../store/authStore'
 import { LogOut, User, Bell, Calendar, Heart, Clock, TrendingUp, Star, MapPin, Sparkles } from 'lucide-react'
 import { bookingsApi, type DetailedBooking } from '../../api/bookings'
 import { salonsApi } from '../../api/salons'
-import { favoritesApi } from '../../api/favorites'
-import { recommendationsApi } from '../../api/recommendations'
+// import { favoritesApi } from '../../api/favorites'  // MVP: disabled
+// import { recommendationsApi } from '../../api/recommendations'  // MVP: disabled
 import { Salon } from '../../api/types'
 import UpcomingBookingCard from '../../components/dashboard/UpcomingBookingCard'
 import QuickActions from '../../components/dashboard/QuickActions'
 import RecentBookings from '../../components/dashboard/RecentBookings'
-import FavoriteSalons from '../../components/dashboard/FavoriteSalons'
-import RecommendedSalons from '../../components/dashboard/RecommendedSalons'
+// import FavoriteSalons from '../../components/dashboard/FavoriteSalons'  // MVP: disabled
+// import RecommendedSalons from '../../components/dashboard/RecommendedSalons'  // MVP: disabled
 import VisitHistory from '../../components/history/VisitHistory'
 import UpcomingReminders from '../../components/notifications/UpcomingReminders'
 
@@ -20,8 +20,8 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true)
   const [upcomingBooking, setUpcomingBooking] = useState<DetailedBooking | null>(null)
   const [recentBookings, setRecentBookings] = useState<DetailedBooking[]>([])
-  const [favoriteSalons, setFavoriteSalons] = useState<Salon[]>([])
-  const [recommendedSalons, setRecommendedSalons] = useState<Salon[]>([])
+  // const [favoriteSalons, setFavoriteSalons] = useState<Salon[]>([])  // MVP: disabled
+  // const [recommendedSalons, setRecommendedSalons] = useState<Salon[]>([])  // MVP: disabled
   const [stats, setStats] = useState({
     activeBookings: 0,
     favoritesCount: 0
@@ -59,18 +59,18 @@ export default function ClientDashboard() {
       ).length
       setStats(prev => ({ ...prev, activeBookings: activeCount }))
 
-      // Load personalized recommendations based on booking history
-      const recommendations = await recommendationsApi.getPersonalized(6)
-      setRecommendedSalons(recommendations)
+      // MVP: Recommendations disabled
+      // const recommendations = await recommendationsApi.getPersonalized(6)
+      // setRecommendedSalons(recommendations)
 
-      // Load favorites
-      try {
-        const favorites = await favoritesApi.getFavorites()
-        setFavoriteSalons(favorites)
-        setStats(prev => ({ ...prev, favoritesCount: favorites.length }))
-      } catch (error) {
-        console.error('Error loading favorites:', error)
-      }
+      // MVP: Favorites disabled
+      // try {
+      //   const favorites = await favoritesApi.getFavorites()
+      //   setFavoriteSalons(favorites)
+      //   setStats(prev => ({ ...prev, favoritesCount: favorites.length }))
+      // } catch (error) {
+      //   console.error('Error loading favorites:', error)
+      // }
 
     } catch (error) {
       console.error('Error loading dashboard data:', error)
@@ -173,11 +173,12 @@ export default function ClientDashboard() {
         {/* Two Column Grid - Recent Bookings and Favorites */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           <RecentBookings bookings={recentBookings} />
-          <FavoriteSalons salons={favoriteSalons} />
+          {/* MVP: Favorites disabled */}
+          {/* <FavoriteSalons salons={favoriteSalons} /> */}
         </div>
 
-        {/* Recommended Salons */}
-        <RecommendedSalons salons={recommendedSalons} />
+        {/* MVP: Recommended Salons disabled */}
+        {/* <RecommendedSalons salons={recommendedSalons} /> */}
 
         {/* Visit History */}
         <div className="mt-12">

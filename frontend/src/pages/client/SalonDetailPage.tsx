@@ -8,10 +8,11 @@ import { serviceMastersApi } from '../../api/serviceMasters'
 import { Salon, Service, Master } from '../../api/types'
 import { Star, MapPin, Phone, ArrowLeft, User, Clock, X, Users, MessageCircle } from 'lucide-react'
 import ErrorAlert from '../../components/ErrorAlert'
-import ReviewsList from '../../components/reviews/ReviewsList'
+// import ReviewsList from '../../components/reviews/ReviewsList'  // MVP: disabled
 import PhotoGallery from '../../components/gallery/PhotoGallery'
-import ChatModal from '../../components/chat/ChatModal'
+// import ChatModal from '../../components/chat/ChatModal'  // MVP: disabled
 import SlotPicker from '../../components/SlotPicker'
+import { formatPrice } from '../../utils/currency'
 
 export default function SalonDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -34,8 +35,8 @@ export default function SalonDetailPage() {
   const [bookingNotes, setBookingNotes] = useState('')
   const [bookingLoading, setBookingLoading] = useState(false)
 
-  // Chat modal state
-  const [showChatModal, setShowChatModal] = useState(false)
+  // MVP: Chat modal disabled
+  // const [showChatModal, setShowChatModal] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -193,8 +194,8 @@ export default function SalonDetailPage() {
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{salon.name}</h1>
                 <div className="flex items-center mb-2">
                   <Star className="w-5 h-5 text-yellow-400 fill-current mr-1" />
-                  <span className="font-semibold text-lg">{salon.rating.toFixed(1)}</span>
-                  <span className="text-gray-600 ml-1">({salon.reviews_count} отзывов)</span>
+                  <span className="font-semibold text-lg">{(salon.rating ?? 0).toFixed(1)}</span>
+                  <span className="text-gray-600 ml-1">({salon.reviews_count ?? 0} отзывов)</span>
                 </div>
               </div>
               {salon.is_verified && (
@@ -226,14 +227,14 @@ export default function SalonDetailPage() {
               </div>
             </div>
 
-            {/* Chat Button */}
-            <button
+            {/* MVP: Chat disabled */}
+            {/* <button
               onClick={() => setShowChatModal(true)}
               className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all transform hover:scale-105"
             >
               <MessageCircle className="w-5 h-5" />
               Написать салону
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -293,7 +294,7 @@ export default function SalonDetailPage() {
                           )}
                           <div className="flex items-center mt-1">
                             <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                            <span className="text-sm font-semibold">{master.rating.toFixed(1)}</span>
+                            <span className="text-sm font-semibold">{(master.rating ?? 0).toFixed(1)}</span>
                           </div>
                         </div>
                       </div>
@@ -343,7 +344,7 @@ export default function SalonDetailPage() {
                           </div>
                           <div className="text-right ml-4">
                             <p className="text-2xl font-bold text-primary-600">
-                              {service.price.toLocaleString()} ₸
+                              {formatPrice(service.price)}
                             </p>
                             <button
                               onClick={() => handleBookService(service)}
@@ -368,10 +369,10 @@ export default function SalonDetailPage() {
           </div>
         </div>
 
-        {/* Отзывы */}
-        <div className="mt-8">
+        {/* MVP: Reviews disabled until post-launch */}
+        {/* <div className="mt-8">
           {salon && <ReviewsList salonId={salon.id} />}
-        </div>
+        </div> */}
       </div>
 
       {/* Модальное окно для записи */}
@@ -395,7 +396,7 @@ export default function SalonDetailPage() {
                   <p className="text-sm text-gray-600">Услуга</p>
                   <p className="font-semibold">{selectedService.title}</p>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedService.duration_minutes} мин • {selectedService.price.toLocaleString()} ₸
+                    {selectedService.duration_minutes} мин • {formatPrice(selectedService.price)}
                   </p>
                 </div>
 
@@ -473,8 +474,8 @@ export default function SalonDetailPage() {
         </div>
       )}
 
-      {/* Chat Modal */}
-      {showChatModal && salon && (
+      {/* MVP: Chat Modal disabled */}
+      {/* {showChatModal && salon && (
         <ChatModal
           receiverId={salon.owner_id}
           receiverName={salon.name}
@@ -482,7 +483,7 @@ export default function SalonDetailPage() {
           salonName={salon.name}
           onClose={() => setShowChatModal(false)}
         />
-      )}
+      )} */}
     </div>
   )
 }

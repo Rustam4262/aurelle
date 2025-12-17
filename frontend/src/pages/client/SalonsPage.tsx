@@ -17,7 +17,7 @@ export default function SalonsPage() {
   const [sortBy, setSortBy] = useState<string>('rating')
   const [sortOrder, setSortOrder] = useState<string>('desc')
   const [showFilters, setShowFilters] = useState(false)
-  const [showMap, setShowMap] = useState(true)
+  const [showMap, setShowMap] = useState(false)  // MVP: Maps disabled by default
   const [selectedSalonId, setSelectedSalonId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [favoriteSalonIds, setFavoriteSalonIds] = useState<Set<number>>(new Set())
@@ -135,13 +135,14 @@ export default function SalonsPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Салоны красоты</h1>
           <div className="flex space-x-3">
-            <button
+            {/* MVP: Map toggle disabled */}
+            {/* <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <MapIcon className="w-5 h-5 mr-2" />
               {showMap ? 'Скрыть карту' : 'Показать карту'}
-            </button>
+            </button> */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"

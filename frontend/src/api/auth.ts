@@ -14,7 +14,8 @@ export const authApi = {
   },
 
   login: async (data: {
-    phone: string
+    phone?: string
+    email?: string
     password: string
   }): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', data)

@@ -2,13 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.review import Review
 from app.models.booking import Booking, BookingStatus
 from app.models.salon import Salon
 from app.models.master import Master
 from app.models.user import User
+from app.models.notification import Notification
 from app.schemas.review import ReviewCreate, ReviewResponse, ReviewDetailedResponse
 from app.api.deps import get_current_user
+from app.tasks.email_tasks import send_new_review_email
+from app.websocket.notifications import send_notification_to_user, send_new_review_notification
+import asyncio
 
 router = APIRouter()
 
@@ -80,6 +85,51 @@ def create_review(
 
     db.commit()
     db.refresh(new_review)
+
+    # Отправить уведомление владельцу салона о новом отзыве
+    if salon and salon.owner_id:
+        # Подготовить данные для email
+        review_email_data = {
+            "salon_owner_name": salon.owner.name if salon.owner else "Владелец",
+            "salon_name": salon.name,
+            "rating": review_data.rating,
+            "comment": review_data.comment or "",
+            "client_name": current_user.name,
+            "service_name": booking.service.name if booking.service else "",
+            "master_name": master.name if master else "",
+            "review_date": new_review.created_at.strftime("%d.%m.%Y %H:%M")
+        }
+
+        # Отправить email владельцу салона
+        if settings.EMAIL_ENABLED and salon.owner and salon.owner.email:
+            send_new_review_email.delay(salon.owner.email, review_email_data)
+
+        # Создать уведомление в БД
+        notification = Notification(
+            user_id=salon.owner_id,
+            type="review",
+            title=f"Новый отзыв ({review_data.rating}⭐)",
+            message=f"Новый отзыв на салон {salon.name}: {review_data.rating} звезд"
+        )
+        db.add(notification)
+        db.commit()
+        db.refresh(notification)
+
+        # Отправить WebSocket уведомления
+        try:
+            asyncio.create_task(
+                send_new_review_notification(
+                    salon.owner_id,
+                    new_review.id,
+                    salon.id,
+                    review_data.rating
+                )
+            )
+            asyncio.create_task(
+                send_notification_to_user(salon.owner_id, notification, db)
+            )
+        except:
+            pass  # WebSocket notification is optional
 
     return ReviewResponse.model_validate(new_review)
 

@@ -27,7 +27,13 @@ export const serviceMastersApi = {
   // Получить список ID мастеров для услуги
   getMastersByService: async (serviceId: number): Promise<number[]> => {
     const response = await apiClient.get(`/service-masters/service/${serviceId}/masters`)
-    return response.data
+    // MVP FIX: Backend returns {items: [{id, ...}]}, extract IDs
+    const data = response.data
+    if (data.items && Array.isArray(data.items)) {
+      return data.items.map((master: any) => master.id)
+    }
+    // Fallback for old format
+    return Array.isArray(data) ? data : []
   },
 
   // Получить список ID услуг для мастера
