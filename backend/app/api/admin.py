@@ -3,9 +3,10 @@ Admin API endpoints для управления платформой
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from typing import List, Optional
 from datetime import datetime, timedelta
+import json
 
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_role
@@ -15,7 +16,14 @@ from app.models.booking import Booking, BookingStatus
 from app.models.master import Master
 from app.models.service import Service
 from app.models.review import Review
-from app.schemas.salon import SalonResponse
+from app.schemas.salon import SalonResponse, SalonRejectRequest
+from app.schemas.user import UserResponse, UserRoleChangeRequest, PasswordResetResponse
+from app.schemas.booking import BookingResponse
+from app.schemas.common import PaginatedResponse
+from app.models.audit_log import AuditLog
+from app.core.security import get_password_hash
+import secrets
+import string
 
 router = APIRouter(prefix="/admin")
 
@@ -76,7 +84,7 @@ def get_platform_stats(
     }
 
 
-@router.get("/salons", response_model=List[SalonResponse])
+@router.get("/salons", response_model=PaginatedResponse[SalonResponse])
 def get_all_salons_admin(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role([UserRole.ADMIN])),
@@ -101,9 +109,18 @@ def get_all_salons_admin(
     if is_active is not None:
         query = query.filter(Salon.is_active == is_active)
 
+    # Получаем total ДО применения offset/limit
+    total = query.count()
+
+    # Применяем пагинацию
     salons = query.order_by(Salon.created_at.desc()).offset(skip).limit(limit).all()
 
-    return salons
+    return {
+        "items": salons,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
 
 
 @router.post("/salons/{salon_id}/toggle-active")
@@ -158,15 +175,185 @@ def delete_salon_admin(
     }
 
 
-@router.get("/users")
+@router.post("/salons/{salon_id}/approve")
+def approve_salon(
+    salon_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    """Одобрить салон для показа в поиске"""
+
+    salon = db.query(Salon).filter(Salon.id == salon_id).first()
+    if not salon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Salon not found"
+        )
+
+    # Валидация: уже одобрен
+    if salon.is_verified and salon.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Salon is already approved"
+        )
+
+    # Approve: is_verified=TRUE, is_active=TRUE
+    salon.is_verified = True
+    salon.is_active = True
+    salon.approved_at = datetime.now()
+    salon.approved_by = current_user.id
+    salon.rejection_reason = None  # Очищаем причину отклонения
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action="SALON_APPROVE",
+        entity_type="salon",
+        entity_id=salon_id,
+        details=json.dumps({"approved_by": current_user.id, "salon_name": salon.name})
+    )
+    db.add(audit_log)
+
+    db.commit()
+    db.refresh(salon)
+
+    return {
+        "success": True,
+        "salon_id": salon.id,
+        "is_verified": salon.is_verified,
+        "is_active": salon.is_active,
+        "approved_at": salon.approved_at,
+        "message": f"Салон '{salon.name}' одобрен"
+    }
+
+
+@router.post("/salons/{salon_id}/reject")
+def reject_salon(
+    salon_id: int,
+    reject_data: SalonRejectRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    """Отклонить салон с указанием причины"""
+
+    salon = db.query(Salon).filter(Salon.id == salon_id).first()
+    if not salon:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Salon not found"
+        )
+
+    # Валидация: нельзя reject уже approved салон (MVP)
+    if salon.is_verified and salon.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot reject an approved salon. Deactivate it first."
+        )
+
+    # Reject: is_verified=FALSE, is_active=FALSE
+    salon.is_verified = False
+    salon.is_active = False
+    salon.rejection_reason = reject_data.reason
+    salon.approved_at = None
+    salon.approved_by = None
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action="SALON_REJECT",
+        entity_type="salon",
+        entity_id=salon_id,
+        details=json.dumps({"reason": reject_data.reason, "salon_name": salon.name})
+    )
+    db.add(audit_log)
+
+    db.commit()
+    db.refresh(salon)
+
+    return {
+        "success": True,
+        "salon_id": salon.id,
+        "is_verified": salon.is_verified,
+        "is_active": salon.is_active,
+        "rejection_reason": salon.rejection_reason,
+        "message": f"Салон '{salon.name}' отклонён"
+    }
+
+
+@router.patch("/users/{user_id}/role")
+def change_user_role(
+    user_id: int,
+    role_data: UserRoleChangeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    """Изменить роль пользователя (только для админа)"""
+
+    # Найти целевого пользователя
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Запрет: снять последнего ADMIN
+    if target_user.role == UserRole.ADMIN and role_data.role != UserRole.ADMIN:
+        # Проверяем, сколько админов осталось
+        admins_count = db.query(User).filter(
+            User.role == UserRole.ADMIN,
+            User.is_active == True
+        ).count()
+
+        if admins_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot remove the last admin. System must have at least one active admin."
+            )
+
+    # Сохраняем старую роль для audit log
+    old_role = target_user.role
+
+    # Меняем роль
+    target_user.role = role_data.role
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action="USER_ROLE_CHANGED",
+        entity_type="user",
+        entity_id=user_id,
+        details=json.dumps({
+            "from": old_role.value,
+            "to": role_data.role.value,
+            "changed_by": current_user.id,
+            "target_user_name": target_user.name
+        })
+    )
+    db.add(audit_log)
+
+    db.commit()
+    db.refresh(target_user)
+
+    return {
+        "success": True,
+        "user_id": target_user.id,
+        "old_role": old_role.value,
+        "new_role": target_user.role.value,
+        "message": f"Роль пользователя '{target_user.name}' изменена с '{old_role.value}' на '{target_user.role.value}'"
+    }
+
+
+@router.get("/users", response_model=PaginatedResponse[UserResponse])
 def get_all_users_admin(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role([UserRole.ADMIN])),
     role: Optional[UserRole] = None,
+    query_search: Optional[str] = Query(None, alias="query"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500)
 ):
-    """Получить список всех пользователей"""
+    """Получить список всех пользователей с поиском и пагинацией"""
 
     query = db.query(User)
 
@@ -174,20 +361,29 @@ def get_all_users_admin(
     if role:
         query = query.filter(User.role == role)
 
+    # Поиск по имени, телефону, email
+    if query_search:
+        search_term = f"%{query_search}%"
+        query = query.filter(
+            or_(
+                User.name.ilike(search_term),
+                User.phone.ilike(search_term),
+                User.email.ilike(search_term)
+            )
+        )
+
+    # Получаем total ДО применения offset/limit
+    total = query.count()
+
+    # Применяем пагинацию
     users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
 
-    return [
-        {
-            "id": user.id,
-            "name": user.name,
-            "phone": user.phone,
-            "email": user.email,
-            "role": user.role,
-            "is_active": user.is_active,
-            "created_at": user.created_at
-        }
-        for user in users
-    ]
+    return {
+        "items": users,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
 
 
 @router.post("/users/{user_id}/toggle-active")
@@ -224,35 +420,87 @@ def toggle_user_active(
     }
 
 
-@router.get("/bookings")
+@router.get("/bookings", response_model=PaginatedResponse[BookingResponse])
 def get_all_bookings_admin(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role([UserRole.ADMIN])),
     status_filter: Optional[BookingStatus] = None,
+    salon_id: Optional[int] = None,
+    master_id: Optional[int] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500)
 ):
-    """Получить список всех бронирований"""
+    """Получить список всех бронирований с фильтрами"""
 
     query = db.query(Booking)
 
+    # Фильтры
     if status_filter:
         query = query.filter(Booking.status == status_filter)
 
+    if salon_id:
+        query = query.filter(Booking.salon_id == salon_id)
+
+    if master_id:
+        query = query.filter(Booking.master_id == master_id)
+
+    # Получаем total ДО применения offset/limit
+    total = query.count()
+
+    # Применяем пагинацию
     bookings = query.order_by(Booking.created_at.desc()).offset(skip).limit(limit).all()
 
-    return [
-        {
-            "id": booking.id,
-            "client_id": booking.client_id,
-            "salon_id": booking.salon_id,
-            "master_id": booking.master_id,
-            "service_id": booking.service_id,
-            "start_at": booking.start_at,
-            "end_at": booking.end_at,
-            "status": booking.status,
-            "price": booking.price,
-            "created_at": booking.created_at
-        }
-        for booking in bookings
-    ]
+    return {
+        "items": bookings,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.post("/users/{user_id}/reset-password", response_model=PasswordResetResponse)
+def reset_user_password(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    """Сбросить пароль пользователя и выдать временный (только для админа)"""
+
+    # Найти целевого пользователя
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Генерация временного пароля (8 символов: буквы + цифры)
+    alphabet = string.ascii_letters + string.digits
+    temporary_password = ''.join(secrets.choice(alphabet) for _ in range(8))
+
+    # Хешируем и сохраняем новый пароль
+    target_user.hashed_password = get_password_hash(temporary_password)
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action="PASSWORD_RESET",
+        entity_type="user",
+        entity_id=user_id,
+        details=json.dumps({
+            "reset_by": current_user.id,
+            "target_user_name": target_user.name,
+            "target_user_phone": target_user.phone
+        })
+    )
+    db.add(audit_log)
+
+    db.commit()
+    db.refresh(target_user)
+
+    return {
+        "success": True,
+        "user_id": target_user.id,
+        "temporary_password": temporary_password,
+        "message": f"Пароль для пользователя '{target_user.name}' ({target_user.phone}) сброшен. Временный пароль: {temporary_password}"
+    }

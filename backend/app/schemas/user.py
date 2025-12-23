@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from app.models.user import UserRole
@@ -51,3 +51,21 @@ class Token(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class UserRoleChangeRequest(BaseModel):
+    """Запрос на смену роли пользователя (только для админа)"""
+    role: UserRole = Field(..., description="Новая роль пользователя")
+
+
+class PasswordResetRequest(BaseModel):
+    """Запрос на сброс пароля (только для админа)"""
+    user_id: int = Field(..., description="ID пользователя для сброса пароля")
+
+
+class PasswordResetResponse(BaseModel):
+    """Ответ со сгенерированным временным паролем"""
+    success: bool
+    user_id: int
+    temporary_password: str
+    message: str

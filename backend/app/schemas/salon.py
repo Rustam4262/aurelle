@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, constr, confloat
+from pydantic import BaseModel, Field, constr, confloat, field_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -28,16 +28,39 @@ class SalonUpdate(BaseModel):
     external_photo_url: Optional[str] = None
 
 
+class SalonRejectRequest(BaseModel):
+    """Запрос на отклонение салона"""
+    reason: constr(min_length=10, max_length=500) = Field(..., description="Причина отклонения")
+
+
 class SalonResponse(SalonBase):
     id: int
     owner_id: int
-    rating: float
-    reviews_count: int
+    rating: float = 0.0
+    reviews_count: int = 0
     logo_url: Optional[str] = None
     external_photo_url: Optional[str] = None
-    is_verified: bool
+    is_verified: bool = False
     is_active: bool
+    rejection_reason: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[int] = None
     created_at: datetime
+
+    @field_validator('rating', mode='before')
+    @classmethod
+    def default_rating(cls, v):
+        return v if v is not None else 0.0
+
+    @field_validator('reviews_count', mode='before')
+    @classmethod
+    def default_reviews_count(cls, v):
+        return v if v is not None else 0
+
+    @field_validator('is_verified', mode='before')
+    @classmethod
+    def default_is_verified(cls, v):
+        return v if v is not None else False
 
     class Config:
         from_attributes = True

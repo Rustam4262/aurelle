@@ -48,9 +48,10 @@ def get_salons_for_map(
     db: Session = Depends(get_db),
     search: Optional[str] = None
 ):
-    """Получить салоны для отображения на карте"""
+    """Получить салоны для отображения на карте (только одобренные)"""
 
     query = db.query(Salon).filter(
+        Salon.is_verified == True,  # Только одобренные админом
         Salon.is_active == True,
         Salon.latitude.isnot(None),
         Salon.longitude.isnot(None)
@@ -80,9 +81,12 @@ def get_salons(
     sort_by: Optional[str] = Query(None, regex="^(rating|reviews_count|name)$"),
     sort_order: Optional[str] = Query("desc", regex="^(asc|desc)$")
 ):
-    """Получить список салонов с фильтрами и сортировкой"""
+    """Получить список салонов с фильтрами и сортировкой (только одобренные)"""
 
-    query = db.query(Salon).filter(Salon.is_active == True)
+    query = db.query(Salon).filter(
+        Salon.is_verified == True,  # Только одобренные админом
+        Salon.is_active == True
+    )
 
     # Поиск по названию
     if search:
@@ -137,9 +141,13 @@ def get_my_salons(
 
 @router.get("/{salon_id}", response_model=SalonResponse)
 def get_salon(salon_id: int, db: Session = Depends(get_db)):
-    """Получить салон по ID"""
+    """Получить салон по ID (только одобренные для публичного доступа)"""
 
-    salon = db.query(Salon).filter(Salon.id == salon_id).first()
+    salon = db.query(Salon).filter(
+        Salon.id == salon_id,
+        Salon.is_verified == True,  # Только одобренные
+        Salon.is_active == True
+    ).first()
 
     if not salon:
         raise HTTPException(

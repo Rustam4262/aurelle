@@ -34,11 +34,11 @@ import ProfilePage from './pages/client/ProfilePage'
 // import SalonReviewsPage from './pages/salon/SalonReviewsPage'
 
 // Admin
-// import AdminLayout from './components/admin/AdminLayout'
-// import AdminDashboard from './pages/admin/AdminDashboard'
-// import ManageUsersPage from './pages/admin/ManageUsersPage'
-// import ManageSalonsPage from './pages/admin/ManageSalonsPage'
-// import AdminManageBookingsPage from './pages/admin/ManageBookingsPage'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import ManageUsersPage from './pages/admin/ManageUsersPage'
+import ManageSalonsPage from './pages/admin/ManageSalonsPage'
+import AdminManageBookingsPage from './pages/admin/ManageBookingsPage'
 
 // Master
 // import MasterDashboard from './pages/master/MasterDashboard'
@@ -95,7 +95,7 @@ function App() {
         {/* <Route
           path="/salon/*"
           element={
-            user?.role === 'salon_owner' ? (
+            user?.role === 'SALON_OWNER' ? (
               <Layout>
                 <Routes>
                   <Route path="dashboard" element={<SalonDashboard />} />
@@ -119,7 +119,7 @@ function App() {
         {/* <Route
           path="/master/*"
           element={
-            user?.role === 'master' ? (
+            user?.role === 'MASTER' ? (
               <Layout>
                 <Routes>
                   <Route path="dashboard" element={<MasterDashboard />} />
@@ -134,8 +134,8 @@ function App() {
           }
         /> */}
 
-        {/* ADMIN ROUTES - DISABLED FOR MVP */}
-        {/* <Route
+        {/* ADMIN ROUTES - ENABLED FOR PLATFORM MANAGEMENT */}
+        <Route
           path="/admin/*"
           element={
             user?.role === 'admin' ? (
@@ -156,7 +156,7 @@ function App() {
               <Navigate to="/login" />
             )
           }
-        /> */}
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />

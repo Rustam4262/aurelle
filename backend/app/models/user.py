@@ -8,10 +8,10 @@ import enum
 
 class UserRole(str, enum.Enum):
     """Роли пользователей"""
-    ADMIN = "admin"
-    SALON_OWNER = "salon_owner"
-    MASTER = "master"
-    CLIENT = "client"
+    ADMIN = "ADMIN"
+    SALON_OWNER = "SALON_OWNER"
+    MASTER = "MASTER"
+    CLIENT = "CLIENT"
 
 
 class User(SoftDeleteMixin, Base):

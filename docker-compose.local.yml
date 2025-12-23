@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database (LOCAL - identical to production schema)
+  db:
+    image: postgres:15-alpine
+    container_name: aurelle_db_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: beauty_salon
+      POSTGRES_USER: beauty_user
+      POSTGRES_PASSWORD: beauty_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - aurelle_pg_local:/var/lib/postgresql/data
+      # Schema initialization (runs only on first container creation)
+      - ./db/schema:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beauty_user -d beauty_salon"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - aurelle_local
+
+  # FastAPI Backend (LOCAL)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aurelle_backend_local
+    restart: unless-stopped
+    environment:
+      # Database connection (matches db service)
+      DATABASE_URL: "postgresql://beauty_user:beauty_pass@db:5432/beauty_salon"
+
+      # JWT secrets (CHANGE IN PRODUCTION!)
+      SECRET_KEY: "local-dev-secret-key-change-in-production"
+      REFRESH_SECRET_KEY: "local-dev-refresh-secret-key"
+
+      # Environment
+      ENVIRONMENT: "development"
+      DEBUG: "true"
+
+      # CORS (allow localhost for development)
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000","http://127.0.0.1:5173"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot reload for development
+      - ./backend/app:/app/app:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aurelle_local
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend (LOCAL)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: aurelle_frontend_local
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: "http://localhost:8000"
+    ports:
+      - "5173:5173"
+    volumes:
+      # Hot reload for development
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    networks:
+      - aurelle_local
+    command: npm run dev -- --host 0.0.0.0
+
+networks:
+  aurelle_local:
+    driver: bridge
+
+volumes:
+  aurelle_pg_local:
+    driver: local
