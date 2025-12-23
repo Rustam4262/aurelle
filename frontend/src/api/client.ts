@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 // API_BASE_URL получаем из переменной окружения или используем относительный путь
-// В продакшене VITE_API_URL будет https://api.aurelle.uz/api
-// В разработке VITE_API_URL = http://localhost:8000/api (уже включает /api)
+// В продакшене VITE_API_URL=/api, nginx проксирует на backend
+// В разработке VITE_API_URL=http://localhost:8000/api
 const API_BASE_URL = import.meta.env.VITE_API_URL || `${window.location.origin}/api`
 
 export const apiClient = axios.create({

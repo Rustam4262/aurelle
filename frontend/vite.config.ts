@@ -14,4 +14,14 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Force new hash for cache busting
+        entryFileNames: `assets/[name]-[hash]-v${Date.now()}.js`,
+        chunkFileNames: `assets/[name]-[hash]-v${Date.now()}.js`,
+        assetFileNames: `assets/[name]-[hash]-v${Date.now()}.[ext]`
+      }
+    }
+  }
 })
