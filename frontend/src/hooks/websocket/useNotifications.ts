@@ -4,12 +4,12 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { NotificationWebSocket, Notification, BookingUpdate, NewReview } from '../../services/websocket';
+import { NotificationWebSocket, type Notification as NotificationType, BookingUpdate, NewReview } from '../../services/websocket';
 
 interface UseNotificationsReturn {
   isConnected: boolean;
   unreadCount: number;
-  notifications: Notification[];
+  notifications: NotificationType[];
   markAsRead: (notificationId: number) => void;
   onBookingUpdate: (callback: (update: BookingUpdate) => void) => void;
   onNewReview: (callback: (review: NewReview) => void) => void;
@@ -18,7 +18,7 @@ interface UseNotificationsReturn {
 export function useNotifications(token: string | null): UseNotificationsReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [ws, setWs] = useState<NotificationWebSocket | null>(null);
 
   useEffect(() => {
@@ -44,13 +44,13 @@ export function useNotifications(token: string | null): UseNotificationsReturn {
     });
 
     // Notification handlers
-    const unsubNotification = websocket.onNotification((notification: Notification) => {
+    const unsubNotification = websocket.onNotification((notification: NotificationType) => {
       console.log('[Notifications] New notification:', notification);
       setNotifications(prev => [notification, ...prev]);
 
       // Show browser notification if permission granted
-      if (Notification.permission === 'granted') {
-        new Notification(notification.title, {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new window.Notification(notification.title, {
           body: notification.message,
           icon: '/logo.png',
           tag: `notification-${notification.id}`,
@@ -111,7 +111,7 @@ export function useNotifications(token: string | null): UseNotificationsReturn {
  * Request browser notification permission
  */
 export function requestNotificationPermission(): void {
-  if ('Notification' in window && Notification.permission === 'default') {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
     Notification.requestPermission().then((permission) => {
       console.log('[Notifications] Permission:', permission);
     });

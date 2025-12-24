@@ -3,19 +3,19 @@
  * Displays notification icon with unread count badge
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNotifications, requestNotificationPermission } from '../hooks/websocket';
-import { useAuth } from '../store/authStore'; // Adjust import based on your auth setup
+import { useAuthStore } from '../store/authStore'
 
 export function NotificationBell() {
-  const { token } = useAuth(); // Get auth token from your store
+  const { token } = useAuthStore()
   const [isOpen, setIsOpen] = useState(false);
   const { isConnected, unreadCount, notifications, markAsRead } = useNotifications(token);
 
   // Request browser notification permission on mount
-  useState(() => {
+  useEffect(() => {
     requestNotificationPermission();
-  });
+  }, []);
 
   const handleNotificationClick = (notificationId: number) => {
     markAsRead(notificationId);

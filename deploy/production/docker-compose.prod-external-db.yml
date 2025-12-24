@@ -1,0 +1,148 @@
+version: '3.8'
+
+# ============================================
+# PRODUCTION CONFIGURATION WITH EXTERNAL DATABASE
+# ============================================
+# Использует внешнюю базу данных вместо контейнера PostgreSQL
+# ============================================
+
+services:
+  # ==========================================
+  # КЕШИРОВАНИЕ - Redis (опционально)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: aurelle_redis_prod
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"  # Только локальный доступ
+    volumes:
+      - redis_data_prod:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aurelle_network_prod
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==========================================
+  # BACKEND - FastAPI
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: aurelle_backend_prod
+    restart: always
+    # Команда запуска находится в Dockerfile.prod (gunicorn)
+    # Миграции выполняются отдельной командой после запуска контейнера
+    volumes:
+      - backend_uploads_prod:/app/uploads
+      - backend_logs_prod:/app/logs
+    ports:
+      - "127.0.0.1:8000:8000"  # Только локальный доступ (через nginx)
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - redis
+    networks:
+      - aurelle_network_prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  # ==========================================
+  # FRONTEND - React SPA (production build)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://89.39.94.194/api}
+        - VITE_YANDEX_MAPS_API_KEY=${VITE_YANDEX_MAPS_API_KEY}
+    container_name: aurelle_frontend_prod
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - aurelle_network_prod
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ==========================================
+  # NGINX - Reverse Proxy
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: aurelle_nginx_prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_cache_prod:/var/cache/nginx
+      - nginx_logs_prod:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - aurelle_network_prod
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  aurelle_network_prod:
+    driver: bridge
+
+volumes:
+  redis_data_prod:
+    driver: local
+  backend_uploads_prod:
+    driver: local
+  backend_logs_prod:
+    driver: local
+  nginx_cache_prod:
+    driver: local
+  nginx_logs_prod:
+    driver: local
+

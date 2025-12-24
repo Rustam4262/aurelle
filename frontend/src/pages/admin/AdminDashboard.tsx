@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { salonsApi } from '../../api/salons'
-import { bookingsApi, DetailedBooking } from '../../api/bookings'
+import { bookingsApi } from '../../api/bookings'
+import { type DetailedBooking } from '../../api/types'
 import { Salon } from '../../api/types'
 import {
   Users, Building2, Calendar, TrendingUp,
