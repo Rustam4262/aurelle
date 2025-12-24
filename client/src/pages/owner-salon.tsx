@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -117,6 +117,20 @@ export default function OwnerSalonPage() {
     queryKey: ["/api/owner/salons", salonId, "hours"],
     enabled: !!user && !!salonId,
   });
+
+  useEffect(() => {
+    if (savedHours && savedHours.length > 0) {
+      const hoursMap: { [key: number]: { open: string; close: string; closed: boolean } } = {};
+      savedHours.forEach((h) => {
+        hoursMap[h.dayOfWeek] = {
+          open: h.openTime,
+          close: h.closeTime,
+          closed: h.isClosed,
+        };
+      });
+      setWorkingHours((prev) => ({ ...prev, ...hoursMap }));
+    }
+  }, [savedHours]);
 
   const createServiceMutation = useMutation({
     mutationFn: async (data: any) => {
