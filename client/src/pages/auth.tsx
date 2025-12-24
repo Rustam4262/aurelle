@@ -114,13 +114,13 @@ export default function AuthPage() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({
         title: t("marketplace.auth.loginSuccess"),
         description: t("marketplace.auth.welcomeBack"),
       });
-      window.location.href = "/auth";
     },
     onError: (error: Error) => {
       toast({
@@ -145,13 +145,13 @@ export default function AuthPage() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({
         title: t("marketplace.auth.registerSuccess"),
         description: t("marketplace.auth.accountCreated"),
       });
-      window.location.href = "/auth";
     },
     onError: (error: Error) => {
       toast({
