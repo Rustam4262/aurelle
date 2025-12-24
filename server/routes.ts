@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { setupYandexAuth, isYandexConfigured } from "./yandexAuth";
+import { setupLocalAuth } from "./localAuth";
 import { db } from "./db";
 import { 
   contactSchema, 
@@ -34,6 +35,9 @@ export async function registerRoutes(
   
   // Setup Yandex OAuth (if configured)
   await setupYandexAuth(app);
+
+  // Setup local auth (login/password)
+  setupLocalAuth(app);
 
   // Auth providers status endpoint
   app.get("/api/auth/providers", (req, res) => {
