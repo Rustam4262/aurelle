@@ -199,6 +199,8 @@ export default function AuthPage() {
     if (user && profile?.exists && profile?.isProfileComplete) {
       if (profile.role === "owner") {
         navigate("/owner");
+      } else if (profile.role === "master") {
+        navigate("/master");
       } else {
         navigate("/profile");
       }

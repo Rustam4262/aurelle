@@ -127,7 +127,7 @@ export default function OwnerSalonPage() {
         hoursMap[h.dayOfWeek] = {
           open: h.openTime,
           close: h.closeTime,
-          closed: h.isClosed,
+          closed: h.isClosed ?? false,
         };
       });
       setWorkingHours((prev) => ({ ...prev, ...hoursMap }));

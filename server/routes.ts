@@ -254,6 +254,53 @@ export async function registerRoutes(
     }
   });
 
+  // Get master dashboard data (for masters)
+  app.get("/api/master/me", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Verify user has master role
+      const [profile] = await db.select().from(userProfiles)
+        .where(eq(userProfiles.userId, userId));
+      
+      if (!profile || profile.role !== "master") {
+        return res.status(403).json({ error: "Access denied - master role required" });
+      }
+      
+      // Find master linked to this user
+      const [master] = await db.select().from(masters)
+        .where(eq(masters.userId, userId));
+      
+      if (!master) {
+        return res.status(404).json({ error: "Master account not found" });
+      }
+
+      // Get the salon
+      const [salon] = await db.select().from(salons)
+        .where(eq(salons.id, master.salonId));
+
+      // Get bookings for this master
+      const masterBookings = await db.select().from(bookings)
+        .where(eq(bookings.masterId, master.id))
+        .orderBy(desc(bookings.bookingDate));
+
+      // Get reviews for this master
+      const masterReviews = await db.select().from(reviews)
+        .where(eq(reviews.masterId, master.id))
+        .orderBy(desc(reviews.createdAt));
+
+      return res.json({
+        master,
+        salon,
+        bookings: masterBookings,
+        reviews: masterReviews,
+      });
+    } catch (error) {
+      console.error("Get master dashboard error:", error);
+      return res.status(500).json({ error: "Failed to get master data" });
+    }
+  });
+
   // Create booking
   app.post("/api/bookings", isAuthenticated, async (req: any, res) => {
     try {

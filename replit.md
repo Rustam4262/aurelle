@@ -27,11 +27,16 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: Express.js with TypeScript
 - **HTTP Server**: Node.js http module wrapping Express
 - **API Pattern**: RESTful JSON API under `/api` prefix
-- **Current Endpoints**:
-  - `POST /api/contact` - Submit contact form
-  - `GET /api/contact` - Retrieve contact submissions
-  - `POST /api/newsletter` - Subscribe to newsletter
-  - `GET /api/newsletter` - Retrieve subscriptions
+- **Authentication**: Multiple auth providers (Replit OAuth, Yandex OAuth, Local email/password)
+- **Key Endpoints**:
+  - `POST /api/owner/salons/:salonId/masters` - Add staff with optional login credentials (bcrypt password hashing)
+  - `GET /api/master/me` - Master dashboard data (requires role="master")
+  - Various salon, booking, and review endpoints
+
+### User Roles
+- **client**: Can browse salons, book appointments, leave reviews
+- **owner**: Can register and manage salons, add staff with login credentials
+- **master**: Staff accounts created by owners with personal dashboards (route: /master)
 
 ### Data Storage
 - **Current**: In-memory storage (MemStorage class) using JavaScript Maps
