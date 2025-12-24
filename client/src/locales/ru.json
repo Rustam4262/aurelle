@@ -313,6 +313,15 @@
       "noData": "Нет данных",
       "error": "Произошла ошибка"
     },
+    "notifications": {
+      "title": "Уведомления",
+      "markAllRead": "Отметить все как прочитанные",
+      "noNotifications": "Нет уведомлений",
+      "newBooking": "Новая запись",
+      "newBookingMessage": "Запрос на запись на {{date}} в {{time}}",
+      "newBookingFallback": "У вас новый запрос на запись",
+      "viewBooking": "Посмотреть запись"
+    },
     "days": {
       "monday": "Понедельник",
       "tuesday": "Вторник",

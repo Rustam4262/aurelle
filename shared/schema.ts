@@ -251,6 +251,41 @@ export const favorites = pgTable("favorites", {
   index("idx_favorites_user").on(table.userId),
 ]);
 
+// ============ NOTIFICATIONS ============
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // "new_booking", "booking_confirmed", etc.
+  message: text("message"), // Legacy field, kept for backwards compatibility
+  metadata: jsonb("metadata").$type<{ bookingDate?: string; startTime?: string; [key: string]: any }>(), // Structured data for client-side translation
+  isRead: boolean("is_read").default(false),
+  relatedId: varchar("related_id"), // booking ID or other related entity
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_notifications_user").on(table.userId),
+  index("idx_notifications_created").on(table.createdAt),
+]);
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const newBookingNotificationSchema = z.object({
+  userId: z.string().min(1),
+  type: z.literal("new_booking"),
+  metadata: z.object({
+    bookingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "bookingDate must be in YYYY-MM-DD format"),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "startTime must be in HH:MM format"),
+  }),
+  isRead: z.boolean().default(false),
+  relatedId: z.string().optional(),
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type NewBookingNotification = z.infer<typeof newBookingNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
 // ============ CONTACT SUBMISSIONS (kept from original) ============
 export const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),

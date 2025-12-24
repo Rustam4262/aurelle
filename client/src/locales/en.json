@@ -313,6 +313,15 @@
       "noData": "No data available",
       "error": "An error occurred"
     },
+    "notifications": {
+      "title": "Notifications",
+      "markAllRead": "Mark all as read",
+      "noNotifications": "No notifications",
+      "newBooking": "New Booking",
+      "newBookingMessage": "Booking request for {{date}} at {{time}}",
+      "newBookingFallback": "You have a new booking request",
+      "viewBooking": "View booking"
+    },
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",

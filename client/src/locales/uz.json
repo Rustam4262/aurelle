@@ -313,6 +313,15 @@
       "noData": "Ma'lumotlar mavjud emas",
       "error": "Xatolik yuz berdi"
     },
+    "notifications": {
+      "title": "Bildirishnomalar",
+      "markAllRead": "Hammasini o'qilgan deb belgilash",
+      "noNotifications": "Bildirishnomalar yo'q",
+      "newBooking": "Yangi bron",
+      "newBookingMessage": "{{date}} kuni soat {{time}} ga bron so'rovi",
+      "newBookingFallback": "Sizda yangi bron so'rovi bor",
+      "viewBooking": "Bronni ko'rish"
+    },
     "days": {
       "monday": "Dushanba",
       "tuesday": "Seshanba",

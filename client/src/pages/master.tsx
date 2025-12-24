@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Master, Salon, Booking, Review, MasterWorkingHours, MasterPortfolio, Service } from "@shared/schema";
+import type { Master, Salon, Booking, Review, MasterWorkingHours, MasterPortfolio, Service, Notification } from "@shared/schema";
 import {
   ArrowLeft,
   Calendar,
@@ -32,7 +32,9 @@ import {
   Plus,
   Trash2,
   Loader2,
+  Bell,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   BarChart,
   Bar,
@@ -129,6 +131,32 @@ export default function MasterPage() {
     queryKey: ["/api/master/portfolio"],
     enabled: !!user && activeTab === "portfolio",
   });
+
+  const { data: notificationsData } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
+  const markNotificationReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("PATCH", `/api/notifications/${id}/read`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const markAllNotificationsReadMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("PATCH", "/api/notifications/read-all", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const unreadCount = notificationsData?.filter(n => !n.isRead).length || 0;
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status, cancellationReason }: { bookingId: string; status: string; cancellationReason?: string }) => {
@@ -353,9 +381,126 @@ export default function MasterPage() {
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-master">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative" data-testid="button-notifications">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center" data-testid="notification-badge">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <div className="flex items-center justify-between gap-2 px-4 py-3 border-b">
+                    <h4 className="font-medium text-sm">{t("marketplace.notifications.title")}</h4>
+                    {unreadCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAllNotificationsReadMutation.mutate()}
+                        data-testid="button-mark-all-read"
+                      >
+                        {t("marketplace.notifications.markAllRead")}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notificationsData && notificationsData.length > 0 ? (
+                      notificationsData.slice(0, 10).map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`px-4 py-3 border-b last:border-b-0 cursor-pointer hover-elevate ${
+                            !notification.isRead ? "bg-muted/50" : ""
+                          }`}
+                          onClick={() => {
+                            if (!notification.isRead) {
+                              markNotificationReadMutation.mutate(notification.id);
+                            }
+                            if (notification.relatedId) {
+                              setActiveTab("bookings");
+                            }
+                          }}
+                          data-testid={`notification-item-${notification.id}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground">
+                                {t("marketplace.notifications.newBooking")}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                {(() => {
+                                  // 1. First try structured metadata for new_booking
+                                  if (notification.type === "new_booking" && notification.metadata?.bookingDate) {
+                                    try {
+                                      const parsedDate = new Date(notification.metadata.bookingDate);
+                                      if (isNaN(parsedDate.getTime())) {
+                                        throw new Error("Invalid date");
+                                      }
+                                      return t("marketplace.notifications.newBookingMessage", {
+                                        date: parsedDate.toLocaleDateString(
+                                          currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US"
+                                        ),
+                                        time: notification.metadata.startTime || "",
+                                      });
+                                    } catch (error) {
+                                      console.error("Failed to parse notification metadata:", error, notification.metadata);
+                                    }
+                                  }
+                                  // 2. Try legacy message field
+                                  if (notification.message) {
+                                    return notification.message;
+                                  }
+                                  // 3. Try to extract any useful info from raw metadata
+                                  if (notification.metadata && typeof notification.metadata === "object") {
+                                    const meta = notification.metadata;
+                                    const parts: string[] = [];
+                                    if (meta.bookingDate) parts.push(`Date: ${meta.bookingDate}`);
+                                    if (meta.startTime) parts.push(`Time: ${meta.startTime}`);
+                                    if (parts.length > 0) {
+                                      return parts.join(", ");
+                                    }
+                                    // Show raw JSON if has other data
+                                    const otherKeys = Object.keys(meta).filter(k => k !== "bookingDate" && k !== "startTime");
+                                    if (otherKeys.length > 0) {
+                                      try {
+                                        return JSON.stringify(meta);
+                                      } catch {
+                                        // ignore
+                                      }
+                                    }
+                                  }
+                                  // 4. Generic fallback
+                                  return t("marketplace.notifications.newBookingFallback");
+                                })()}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(notification.createdAt!).toLocaleString()}
+                              </p>
+                            </div>
+                            {!notification.isRead && (
+                              <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" />
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        {t("marketplace.notifications.noNotifications")}
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-master">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
