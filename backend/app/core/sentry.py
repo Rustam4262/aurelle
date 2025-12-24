@@ -14,9 +14,16 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 import logging
+
+# Опциональный импорт Celery - только если установлен
+try:
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    CELERY_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    CELERY_AVAILABLE = False
+    CeleryIntegration = None
 
 from app.core.config import settings
 
@@ -92,7 +99,7 @@ def init_sentry():
             FastApiIntegration(transaction_style="url"),
             SqlalchemyIntegration(),
             RedisIntegration(),
-            CeleryIntegration(),
+            *([CeleryIntegration()] if CELERY_AVAILABLE else []),  # Добавляем только если Celery установлен
             sentry_logging,
         ],
 
