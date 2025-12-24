@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ArrowLeft, Sparkles, User, Store, Check } from "lucide-react";
+import { SiGoogle, SiGithub, SiApple } from "react-icons/si";
 
 function YandexIcon({ className }: { className?: string }) {
   return (
@@ -318,6 +319,39 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-3">
+              <Button
+                className="w-full"
+                size="lg"
+                variant="outline"
+                onClick={loginWithReplit}
+                data-testid="button-login-google"
+              >
+                <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
+                {t("marketplace.auth.signInWithGoogle")}
+              </Button>
+
+              <Button
+                className="w-full"
+                size="lg"
+                variant="outline"
+                onClick={loginWithReplit}
+                data-testid="button-login-github"
+              >
+                <SiGithub className="mr-2 h-5 w-5" />
+                {t("marketplace.auth.signInWithGitHub")}
+              </Button>
+
+              <Button
+                className="w-full"
+                size="lg"
+                variant="outline"
+                onClick={loginWithReplit}
+                data-testid="button-login-apple"
+              >
+                <SiApple className="mr-2 h-5 w-5" />
+                {t("marketplace.auth.signInWithApple")}
+              </Button>
+
               {providers?.yandex && (
                 <Button
                   className="w-full"
@@ -330,15 +364,6 @@ export default function AuthPage() {
                   {t("marketplace.auth.signInWithYandex")}
                 </Button>
               )}
-
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={loginWithReplit}
-                data-testid="button-login-replit"
-              >
-                {t("marketplace.auth.signInWithReplit")}
-              </Button>
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
