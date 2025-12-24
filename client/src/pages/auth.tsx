@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -203,13 +203,22 @@ export default function AuthPage() {
     );
   }
 
-  if (user && profile?.exists && profile?.isProfileComplete) {
-    if (profile.role === "owner") {
-      navigate("/owner");
-    } else {
-      navigate("/profile");
+  useEffect(() => {
+    if (user && profile?.exists && profile?.isProfileComplete) {
+      if (profile.role === "owner") {
+        navigate("/owner");
+      } else {
+        navigate("/profile");
+      }
     }
-    return null;
+  }, [user, profile, navigate]);
+
+  if (user && profile?.exists && profile?.isProfileComplete) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Redirecting...</div>
+      </div>
+    );
   }
 
   if (user && (!profile?.exists || !profile?.isProfileComplete)) {
