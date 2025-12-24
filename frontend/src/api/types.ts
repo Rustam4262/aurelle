@@ -53,6 +53,8 @@ export interface Master {
   created_at: string
 }
 
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled_by_client' | 'cancelled_by_salon' | 'completed' | 'no_show'
+
 export interface Booking {
   id: number
   client_id: number
@@ -61,7 +63,7 @@ export interface Booking {
   service_id: number
   start_at: string
   end_at: string
-  status: 'pending' | 'confirmed' | 'cancelled_by_client' | 'cancelled_by_salon' | 'completed' | 'no_show'
+  status: BookingStatus
   price: number
   payment_status: 'pending' | 'paid' | 'refunded' | 'failed'
   payment_method?: string
@@ -74,6 +76,7 @@ export interface Booking {
 export interface BookingServiceInfo {
   id: number
   title: string
+  description?: string
   duration_minutes: number
   category?: string
 }
@@ -99,6 +102,9 @@ export interface BookingDetailed extends Booking {
   salon?: BookingSalonInfo
 }
 
+// Alias for backward compatibility
+export type DetailedBooking = BookingDetailed
+
 export interface Review {
   id: number
   booking_id: number
@@ -112,6 +118,7 @@ export interface Review {
 
 export interface AuthResponse {
   access_token: string
+  refresh_token?: string  // Optional для обратной совместимости
   token_type: string
   user: User
 }

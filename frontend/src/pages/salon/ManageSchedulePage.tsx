@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Calendar, Clock, Save, AlertCircle, CheckCircle, Users } from 'lucide-react'
 import { salonsApi } from '../../api/salons'
-import { mastersApi, Master } from '../../api/masters'
+import { mastersApi } from '../../api/masters'
+import { Master } from '../../api/types'
 
 interface DaySchedule {
   isWorking: boolean

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Users, AlertCircle, CheckCircle } from 'lucide-react'
-import { Master, mastersApi } from '../api/masters'
+import { mastersApi } from '../api/masters'
+import { Master } from '../api/types'
 import { serviceMastersApi } from '../api/serviceMasters'
 
 interface ServiceMastersModalProps {

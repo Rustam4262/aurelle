@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { LogOut, User, Bell, Calendar, Heart, Clock, TrendingUp, Star, MapPin, Sparkles } from 'lucide-react'
-import { bookingsApi, type DetailedBooking } from '../../api/bookings'
+import { bookingsApi } from '../../api/bookings'
+import { type DetailedBooking } from '../../api/types'
 import { salonsApi } from '../../api/salons'
 // import { favoritesApi } from '../../api/favorites'  // MVP: disabled
 // import { recommendationsApi } from '../../api/recommendations'  // MVP: disabled

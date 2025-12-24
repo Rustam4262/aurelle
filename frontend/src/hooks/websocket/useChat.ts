@@ -22,7 +22,7 @@ export function useChat(token: string | null): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map());
   const [ws, setWs] = useState<ChatWebSocket | null>(null);
-  const typingTimeoutRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const typingTimeoutRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     if (!token) return;
