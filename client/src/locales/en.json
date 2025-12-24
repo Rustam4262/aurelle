@@ -1,0 +1,147 @@
+{
+  "nav": {
+    "services": "Services",
+    "team": "Team",
+    "gallery": "Gallery",
+    "testimonials": "Testimonials",
+    "contact": "Contact",
+    "book": "Book Now"
+  },
+  "hero": {
+    "title": "Where Beauty Meets Artistry",
+    "subtitle": "Experience luxury beauty treatments in a relaxing, sophisticated environment. Our expert stylists create personalized looks that enhance your natural radiance.",
+    "cta": "Book Appointment",
+    "explore": "Explore Services"
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Indulge in our comprehensive range of premium beauty treatments, each designed to enhance your natural beauty.",
+    "from": "from",
+    "minutes": "min",
+    "priceTo": "to",
+    "hairStyling": {
+      "title": "Hair Styling",
+      "description": "Expert cuts, coloring, and styling for all hair types. Our master stylists create personalized looks."
+    },
+    "facialTreatments": {
+      "title": "Facial Treatments",
+      "description": "Rejuvenating facials using premium skincare products to restore your natural glow."
+    },
+    "nailArt": {
+      "title": "Nail Art",
+      "description": "Manicures, pedicures, and artistic nail designs using top-quality products."
+    },
+    "makeup": {
+      "title": "Makeup Artistry",
+      "description": "Professional makeup for any occasion, from natural everyday looks to glamorous events."
+    },
+    "spa": {
+      "title": "Spa & Wellness",
+      "description": "Relaxing massages and body treatments to rejuvenate your body and mind."
+    },
+    "bridal": {
+      "title": "Bridal Services",
+      "description": "Complete bridal packages including hair, makeup, and spa treatments for your special day."
+    }
+  },
+  "gallery": {
+    "title": "Our Work",
+    "subtitle": "Browse through our portfolio of stunning transformations and beautiful results."
+  },
+  "team": {
+    "title": "Meet Our Artists",
+    "subtitle": "Our team of skilled professionals is dedicated to bringing out your best self.",
+    "experience": "years experience",
+    "members": {
+      "sofia": {
+        "name": "Sofia Rodriguez",
+        "role": "Master Stylist & Founder",
+        "bio": "With over 15 years of experience, Sofia brings creative vision and technical mastery to every client."
+      },
+      "alex": {
+        "name": "Alexander Chen",
+        "role": "Color Specialist",
+        "bio": "Alex specializes in balayage, ombre, and creative color techniques that enhance natural beauty."
+      },
+      "maria": {
+        "name": "Maria Volkov",
+        "role": "Skincare Expert",
+        "bio": "Maria's holistic approach to skincare combines traditional techniques with modern innovations."
+      },
+      "james": {
+        "name": "James Mitchell",
+        "role": "Makeup Artist",
+        "bio": "James creates stunning looks for weddings, photoshoots, and special occasions."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What Our Clients Say",
+    "subtitle": "Discover why our clients keep coming back for their beauty needs.",
+    "reviews": {
+      "review1": {
+        "name": "Emma Thompson",
+        "text": "Absolutely love my new hair! Sofia really listened to what I wanted and the result exceeded my expectations. The salon atmosphere is so relaxing too."
+      },
+      "review2": {
+        "name": "Dilnoza Karimova",
+        "text": "The facial treatment was incredible. My skin has never looked better. Maria really knows her craft and makes you feel so comfortable."
+      },
+      "review3": {
+        "name": "Olga Petrova",
+        "text": "I've been coming here for years and wouldn't go anywhere else. The team is professional, friendly, and always up-to-date with the latest trends."
+      }
+    }
+  },
+  "contact": {
+    "title": "Book Your Experience",
+    "subtitle": "Ready to transform your look? Get in touch with us to schedule your appointment.",
+    "form": {
+      "name": "Your Name",
+      "namePlaceholder": "Enter your full name",
+      "email": "Email Address",
+      "emailPlaceholder": "your@email.com",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+998 XX XXX XX XX",
+      "service": "Service Interest",
+      "servicePlaceholder": "Select a service",
+      "message": "Message",
+      "messagePlaceholder": "Tell us about your beauty goals...",
+      "submit": "Send Message",
+      "sending": "Sending..."
+    },
+    "info": {
+      "title": "Visit Us",
+      "address": "123 Amir Temur Street",
+      "city": "Tashkent, Uzbekistan 100000",
+      "phone": "+998 71 123 45 67",
+      "email": "hello@lumiere.uz",
+      "hours": "Opening Hours",
+      "weekdays": "Mon - Fri: 9:00 - 20:00",
+      "saturday": "Saturday: 10:00 - 18:00",
+      "sunday": "Sunday: Closed",
+      "getDirections": "Get Directions",
+      "followUs": "Follow us:"
+    },
+    "success": {
+      "title": "Message Sent!",
+      "description": "We'll get back to you within 24 hours."
+    },
+    "error": {
+      "title": "Error",
+      "description": "Failed to send message. Please try again."
+    }
+  },
+  "footer": {
+    "tagline": "Where beauty meets artistry. Experience luxury beauty treatments in a relaxing, sophisticated environment.",
+    "newsletter": "Enter your email for beauty tips",
+    "subscribe": "Subscribe",
+    "subscribed": {
+      "title": "Subscribed!",
+      "description": "Thank you for joining our newsletter."
+    },
+    "quickLinks": "Quick Links",
+    "contactTitle": "Contact",
+    "copyright": "© {year} Lumiere Beauty Salon. All rights reserved."
+  }
+}

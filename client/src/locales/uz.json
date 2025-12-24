@@ -1,0 +1,147 @@
+{
+  "nav": {
+    "services": "Xizmatlar",
+    "team": "Jamoa",
+    "gallery": "Galereya",
+    "testimonials": "Sharhlar",
+    "contact": "Aloqa",
+    "book": "Yozilish"
+  },
+  "hero": {
+    "title": "Go'zallik san'at bilan uchrashadigan joy",
+    "subtitle": "Qulay va nafis muhitda hashamatli go'zallik xizmatlaridan bahramand bo'ling. Bizning mutaxassislarimiz sizning tabiiy jozibangizni oshiradigan shaxsiy uslublar yaratadilar.",
+    "cta": "Yozilish",
+    "explore": "Xizmatlarni ko'rish"
+  },
+  "services": {
+    "title": "Bizning xizmatlar",
+    "subtitle": "Tabiiy go'zalligingizni oshirish uchun mo'ljallangan premium go'zallik xizmatlarimizdan bahramand bo'ling.",
+    "from": "dan",
+    "minutes": "daq",
+    "priceTo": "gacha",
+    "hairStyling": {
+      "title": "Soch turmagi",
+      "description": "Barcha soch turlari uchun professional kesish, bo'yash va turmaklash. Ustalarimiz individual uslublar yaratadilar."
+    },
+    "facialTreatments": {
+      "title": "Yuz parvarishi",
+      "description": "Tabiiy porlashingizni tiklash uchun premium kosmetika yordamida yoshartiruvchi protseduralar."
+    },
+    "nailArt": {
+      "title": "Tirnoq xizmati",
+      "description": "Sifatli materiallar yordamida manikur, pedikur va badiiy tirnoq dizayni."
+    },
+    "makeup": {
+      "title": "Makiyaj",
+      "description": "Har qanday voqea uchun professional makiyaj — kundalik tabiiydan bayramona uslubgacha."
+    },
+    "spa": {
+      "title": "SPA va salomatlik",
+      "description": "Tana va ruhni tiklash uchun bo'shashtiruvchi massaj va tana proseduralari."
+    },
+    "bridal": {
+      "title": "To'y xizmatlari",
+      "description": "Maxsus kuningiz uchun to'liq to'y paketi: soch turmagi, makiyaj va SPA."
+    }
+  },
+  "gallery": {
+    "title": "Bizning ishlarimiz",
+    "subtitle": "Ajoyib o'zgarishlar va go'zal natijalar portfoliosini ko'ring."
+  },
+  "team": {
+    "title": "Bizning ustalarimiz",
+    "subtitle": "Professional jamoamiz sizning eng yaxshi tomoningizni namoyon qilishga bag'ishlangan.",
+    "experience": "yillik tajriba",
+    "members": {
+      "sofia": {
+        "name": "Sofia Rodriges",
+        "role": "Bosh stilist va asoschisi",
+        "bio": "15 yildan ortiq tajriba bilan Sofia har bir mijozga ijodiy ko'rish va texnik mahorat olib keladi."
+      },
+      "alex": {
+        "name": "Aleksandr Chen",
+        "role": "Rang mutaxassisi",
+        "bio": "Aleks balayaj, ombre va ijodiy bo'yash texnikalariga ixtisoslashgan."
+      },
+      "maria": {
+        "name": "Mariya Volkova",
+        "role": "Teri parvarishi bo'yicha ekspert",
+        "bio": "Mariya an'anaviy usullarni zamonaviy innovatsiyalar bilan birlashtiradi."
+      },
+      "james": {
+        "name": "Jeyms Mitchell",
+        "role": "Vizajist",
+        "bio": "Jeyms to'ylar, fotosessiyalar va maxsus voqealar uchun ajoyib obrazlar yaratadi."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Mijozlarimiz fikrlari",
+    "subtitle": "Mijozlarimiz nega bizga qayta-qayta kelishlarini bilib oling.",
+    "reviews": {
+      "review1": {
+        "name": "Emma Tompson",
+        "text": "Yangi soch turmagimni juda yaxshi ko'raman! Sofia mening xohishlarimni diqqat bilan tingladi va natija kutilganidan ham yaxshi bo'ldi."
+      },
+      "review2": {
+        "name": "Dilnoza Karimova",
+        "text": "Yuz parvarishi protsedurasi ajoyib edi. Terim hech qachon bunday yaxshi ko'rinmagan edi. Mariya o'z ishining ustasi."
+      },
+      "review3": {
+        "name": "Olga Petrova",
+        "text": "Men bu yerga ko'p yillardan beri kelaman va boshqa joyga bormayman. Jamoa professional va do'stona."
+      }
+    }
+  },
+  "contact": {
+    "title": "Tajribangizni band qiling",
+    "subtitle": "Obrazingizni o'zgartirishga tayyormisiz? Uchrashuv belgilash uchun biz bilan bog'laning.",
+    "form": {
+      "name": "Ismingiz",
+      "namePlaceholder": "To'liq ismingizni kiriting",
+      "email": "Elektron pochta",
+      "emailPlaceholder": "sizning@pochta.com",
+      "phone": "Telefon raqami",
+      "phonePlaceholder": "+998 XX XXX XX XX",
+      "service": "Qiziqtirgan xizmat",
+      "servicePlaceholder": "Xizmatni tanlang",
+      "message": "Xabar",
+      "messagePlaceholder": "Go'zallik maqsadlaringiz haqida aytib bering...",
+      "submit": "Xabar yuborish",
+      "sending": "Yuborilmoqda..."
+    },
+    "info": {
+      "title": "Bizga tashrif buyuring",
+      "address": "Amir Temur ko'chasi, 123",
+      "city": "Toshkent, O'zbekiston 100000",
+      "phone": "+998 71 123 45 67",
+      "email": "hello@lumiere.uz",
+      "hours": "Ish vaqti",
+      "weekdays": "Du - Ju: 9:00 - 20:00",
+      "saturday": "Shanba: 10:00 - 18:00",
+      "sunday": "Yakshanba: Dam olish",
+      "getDirections": "Yo'nalishni olish",
+      "followUs": "Bizni kuzating:"
+    },
+    "success": {
+      "title": "Xabar yuborildi!",
+      "description": "24 soat ichida siz bilan bog'lanamiz."
+    },
+    "error": {
+      "title": "Xatolik",
+      "description": "Xabarni yuborib bo'lmadi. Iltimos, qayta urinib ko'ring."
+    }
+  },
+  "footer": {
+    "tagline": "Go'zallik san'at bilan uchrashadigan joy. Qulay va nafis muhitda hashamatli go'zallik xizmatlaridan bahramand bo'ling.",
+    "newsletter": "Go'zallik maslahatlari uchun emailingizni kiriting",
+    "subscribe": "Obuna bo'lish",
+    "subscribed": {
+      "title": "Obuna bo'ldingiz!",
+      "description": "Bizning xabar yozuvimizga qo'shilganingiz uchun rahmat."
+    },
+    "quickLinks": "Tezkor havolalar",
+    "contactTitle": "Aloqa",
+    "copyright": "© {year} Lumiere Beauty Salon. Barcha huquqlar himoyalangan."
+  }
+}
