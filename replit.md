@@ -1,8 +1,10 @@
-# Lumiere Beauty Salon
+# AURELLE - Beauty Salon Marketplace
 
 ## Overview
 
-A premium beauty salon website built with React and Express. The application serves as a marketing and contact platform for a luxury beauty salon, featuring service showcases, team profiles, testimonials, and contact/newsletter functionality. The design emphasizes sophisticated minimalism with a warm, elegant aesthetic inspired by premium wellness brands.
+A marketplace platform for beauty salons in Uzbekistan where salon owners can register salons (with location, photos, services, staff, working hours) and clients can browse salons on Yandex Map, view services/prices, book appointments, and leave reviews. Multi-language support (English, Russian, Uzbek) with all prices in Uzbek Sum (UZS). Features universal authentication (Replit Auth, Yandex OAuth, local email/password) with role-based access (client, owner, master). Both masters and clients have comprehensive personal dashboards.
+
+**Platform Branding**: AURELLE (used throughout the UI)
 
 ## User Preferences
 
