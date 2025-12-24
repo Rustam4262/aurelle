@@ -45,9 +45,10 @@ DATABASE_URL=postgresql://beauty_user:beauty_pass@beauty_db_prod:5432/beauty_sal
 
 ### Test 1: Login API ✅
 ```bash
+# ⚠️ НЕ ИСПОЛЬЗУЙТЕ ХАРДКОЖЕННЫЕ УЧЕТНЫЕ ДАННЫЕ В КОДЕ!
 curl -X POST 'https://aurelle.uz/api/auth/login' \
   -H 'Content-Type: application/json' \
-  -d '{"phone":"+998932611804","password":"lWSrQE4a"}'
+  -d '{"phone":"YOUR_PHONE","password":"YOUR_PASSWORD"}'
 
 Response: 200 OK
 {
@@ -103,10 +104,9 @@ beauty_redis_prod     → Up 5 days, Port 6379, Healthy
 
 ### Admin Credentials
 ```
-URL: https://aurelle.uz/login
-Phone: +998932611804
-Password: lWSrQE4a
-Role: ADMIN
+⚠️ ВАЖНО: Учетные данные НЕ должны храниться в git!
+Используйте менеджер паролей или безопасное хранилище.
+См. ADMIN_SECURITY.md для инструкций по смене пароля.
 ```
 
 ### Architecture

@@ -1,16 +1,42 @@
 # ============================================
 # AUTOMATIC PRODUCTION DEPLOYMENT SCRIPT
 # AURELLE Beauty Salon Marketplace
-# Server: 89.39.94.194
+# ============================================
+# IMPORTANT: Create .env.deploy file with your credentials
+# Copy .env.deploy.example to .env.deploy and fill in values
 # ============================================
 
 $ErrorActionPreference = "Stop"
 
-# Server credentials
-$serverIP = "89.39.94.194"
-$serverUser = "root"
-$serverPassword = "w2@nT*6D"
-$serverPath = "/var/www/beauty_salon"
+# Load deployment credentials from .env.deploy
+$envFile = ".env.deploy"
+if (-not (Test-Path $envFile)) {
+    Write-Host "[ERROR] .env.deploy file not found!" -ForegroundColor Red
+    Write-Host "Please copy .env.deploy.example to .env.deploy and fill in your credentials" -ForegroundColor Yellow
+    Write-Host "cp .env.deploy.example .env.deploy" -ForegroundColor White
+    Write-Host "nano .env.deploy  # Fill in your server credentials" -ForegroundColor White
+    exit 1
+}
+
+# Read .env.deploy file
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)\s*=\s*(.+)\s*$') {
+        $key = $matches[1].Trim()
+        $value = $matches[2].Trim()
+        [Environment]::SetEnvironmentVariable($key, $value, "Process")
+    }
+}
+
+# Server credentials from environment
+$serverIP = $env:DEPLOY_SERVER_IP
+$serverUser = $env:DEPLOY_SERVER_USER
+$serverPath = $env:DEPLOY_SERVER_PATH
+
+if (-not $serverIP -or -not $serverUser -or -not $serverPath) {
+    Write-Host "[ERROR] Missing required credentials in .env.deploy!" -ForegroundColor Red
+    Write-Host "Required: DEPLOY_SERVER_IP, DEPLOY_SERVER_USER, DEPLOY_SERVER_PATH" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "AURELLE Production Deployment" -ForegroundColor Cyan
@@ -66,6 +92,7 @@ if (-not $connected) {
     Write-Host "  1. Server is accessible: $serverIP" -ForegroundColor Yellow
     Write-Host "  2. SSH key is configured or password auth is enabled" -ForegroundColor Yellow
     Write-Host "  3. Firewall allows SSH connections" -ForegroundColor Yellow
+    Write-Host "  4. Credentials in .env.deploy are correct" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "You can manually connect first:" -ForegroundColor Yellow
     Write-Host "  ssh $serverUser@$serverIP" -ForegroundColor White
@@ -160,12 +187,19 @@ if ($dbPassword) {
     # Generate SECRET_KEY
     $secretKey = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
     
-    $envContent = @"
-DATABASE_URL=postgresql://aurelleu_aurelle_user:$dbPassword@localhost:5432/aurelleu_aurelle_db
+        $dbHost = $env:DEPLOY_DB_HOST ?? "localhost"
+        $dbPort = $env:DEPLOY_DB_PORT ?? "5432"
+        $dbName = $env:DEPLOY_DB_NAME ?? "aurelleu_aurelle_db"
+        $dbUser = $env:DEPLOY_DB_USER ?? "aurelleu_aurelle_user"
+        $appUrl = $env:DEPLOY_APP_URL ?? "http://$serverIP"
+        $apiUrl = $env:DEPLOY_API_URL ?? "$appUrl/api"
+        
+        $envContent = @"
+DATABASE_URL=postgresql://${dbUser}:$dbPassword@${dbHost}:${dbPort}/${dbName}
 SECRET_KEY=$secretKey
-CORS_ORIGINS=http://89.39.94.194
-ALLOWED_HOSTS=89.39.94.194
-VITE_API_URL=http://89.39.94.194/api
+CORS_ORIGINS=$appUrl
+ALLOWED_HOSTS=$serverIP
+VITE_API_URL=$apiUrl
 ENVIRONMENT=production
 REDIS_URL=redis://redis:6379/0
 YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0

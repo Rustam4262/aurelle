@@ -2,12 +2,19 @@
 
 ## 🎯 Минимальные шаги для деплоя
 
-### 1. На сервере (89.39.94.194):
+### 0. Настройте учетные данные (на вашем компьютере):
+
+```bash
+cp .env.deploy.example .env.deploy
+nano .env.deploy  # Заполните данные вашего сервера
+```
+
+### 1. На сервере:
 
 ```bash
 # Подключиться
-ssh root@89.39.94.194
-# Пароль: w2@nT*6D
+ssh YOUR_USER@YOUR_SERVER_IP
+# Введите пароль при запросе
 
 # Установить Docker (если нет)
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
@@ -20,10 +27,14 @@ cd /var/www/beauty_salon
 
 ### 2. Загрузить проект
 
-**С вашей машины:**
+**С вашей машины (используйте данные из .env.deploy):**
 ```bash
+# Используйте автоматический скрипт (рекомендуется):
+.\deploy-to-prod.ps1
+
+# Или вручную через rsync:
 rsync -avz --exclude 'node_modules' --exclude '.git' --exclude 'venv' \
-  . root@89.39.94.194:/var/www/beauty_salon/
+  . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
 ```
 
 ### 3. Создать .env файл
@@ -38,9 +49,9 @@ nano .env
 ```env
 DATABASE_URL=postgresql://aurelleu_aurelle_user:ВАШ_ПАРОЛЬ@localhost:5432/aurelleu_aurelle_db
 SECRET_KEY=$(openssl rand -hex 32)
-CORS_ORIGINS=http://89.39.94.194
-ALLOWED_HOSTS=89.39.94.194
-VITE_API_URL=http://89.39.94.194/api
+CORS_ORIGINS=http://YOUR_SERVER_IP
+ALLOWED_HOSTS=YOUR_SERVER_IP
+VITE_API_URL=http://YOUR_SERVER_IP/api
 ENVIRONMENT=production
 ```
 
@@ -66,7 +77,7 @@ curl http://localhost/health
 curl http://localhost/api/salons
 ```
 
-**Откройте в браузере:** http://89.39.94.194
+**Откройте в браузере:** http://YOUR_SERVER_IP (замените на ваш IP)
 
 ---
 

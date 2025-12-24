@@ -1,6 +1,30 @@
 # Quick deployment script
-$server = "root@89.39.94.194"
-$path = "/var/www/beauty_salon"
+# IMPORTANT: Create .env.deploy file first!
+# cp .env.deploy.example .env.deploy
+
+# Load credentials from .env.deploy
+if (Test-Path ".env.deploy") {
+    Get-Content ".env.deploy" | ForEach-Object {
+        if ($_ -match '^\s*([^#][^=]+)\s*=\s*(.+)\s*$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            [Environment]::SetEnvironmentVariable($key, $value, "Process")
+        }
+    }
+    $serverIP = $env:DEPLOY_SERVER_IP
+    $serverUser = $env:DEPLOY_SERVER_USER ?? "root"
+    $path = $env:DEPLOY_SERVER_PATH ?? "/var/www/beauty_salon"
+    
+    if (-not $serverIP) {
+        Write-Host "ERROR: DEPLOY_SERVER_IP not set in .env.deploy" -ForegroundColor Red
+        exit 1
+    }
+    $server = "${serverUser}@${serverIP}"
+} else {
+    Write-Host "ERROR: .env.deploy not found!" -ForegroundColor Red
+    Write-Host "Create it: cp .env.deploy.example .env.deploy" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "AURELLE Deployment Script" -ForegroundColor Cyan
 Write-Host "Server: $server" -ForegroundColor Cyan

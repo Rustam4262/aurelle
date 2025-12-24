@@ -89,7 +89,7 @@ Bookings: 0
 
 **After:**
 - ✅ Daily automated backups
-- ✅ Secure admin password (`lWSrQE4a` - auto-generated)
+- ✅ Secure admin password (auto-generated, НЕ в git!)
 - ✅ Audit logs for all admin actions
 - ✅ Admin can reset any user password
 - ✅ Last admin protection (cannot remove)
@@ -109,11 +109,9 @@ Status: Clean, ready for real data
 
 ### Admin User
 ```
-ID: 14
-Phone: +998932611804
-Password: lWSrQE4a (NEW - secure)
-Role: ADMIN
-Active: true
+⚠️ ВАЖНО: Учетные данные НЕ должны храниться в git!
+Используйте менеджер паролей или безопасное хранилище.
+См. ADMIN_SECURITY.md для инструкций по смене пароля.
 ```
 
 ### Backend

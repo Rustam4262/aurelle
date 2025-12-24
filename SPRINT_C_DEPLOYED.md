@@ -36,8 +36,8 @@
 {
   "success": true,
   "user_id": 14,
-  "temporary_password": "lWSrQE4a",
-  "message": "Пароль для пользователя 'Salon Owner' (+998932611804) сброшен..."
+  "temporary_password": "***REMOVED***",  # ⚠️ Пароль не должен быть в git!
+  "message": "Пароль для пользователя сброшен..."
 }
 ```
 
@@ -98,14 +98,14 @@ target_user.hashed_password = get_password_hash(temporary_password)
 **Test 1: Reset Admin Password**
 ```bash
 POST /api/admin/users/14/reset-password
-Result: {"temporary_password": "lWSrQE4a"}
+Result: {"temporary_password": "***REMOVED***"}  # ⚠️ Пароль не должен быть в git!
 Status: 200 OK ✅
 ```
 
 **Test 2: Login with New Password**
 ```bash
 POST /api/auth/login
-Body: {"phone": "+998932611804", "password": "lWSrQE4a"}
+Body: {"phone": "YOUR_PHONE", "password": "YOUR_PASSWORD"}  # ⚠️ Используйте переменные окружения!
 Result: access_token received
 Status: 200 OK ✅
 ```
@@ -125,9 +125,9 @@ Status: 401 Unauthorized ✅
 **⚠️ IMPORTANT - Update Your Records**
 
 ```
-Phone: +998932611804
-Password: lWSrQE4a  ← NEW (changed from Admin2025)
-Role: ADMIN
+⚠️ ВАЖНО: Учетные данные НЕ должны храниться в git!
+Используйте менеджер паролей или безопасное хранилище.
+См. ADMIN_SECURITY.md для инструкций по смене пароля.
 ```
 
 **Security:** This password was generated via C2 endpoint and is cryptographically secure.

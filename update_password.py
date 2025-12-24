@@ -1,11 +1,14 @@
 import sys
+import os
 sys.path.insert(0, '/app')
 from app.core.database import SessionLocal
 from sqlalchemy import text
 
-# Bcrypt hash for password "Admin2025"
-password_hash = "$2b$12$TgcBaqtG2hQ5SQsb.o4vYeHRy3iVryYNa0K2SjrUONTIpnaJos5y."
-phone = "+998932611804"
+# ⚠️ ВАЖНО: НЕ храните реальные пароли или их хэши в git!
+# Этот файл - только пример. Используйте переменные окружения.
+# Bcrypt hash - должен быть сгенерирован во время выполнения
+password_hash = os.getenv("ADMIN_PASSWORD_HASH", "CHANGE_THIS")
+phone = os.getenv("ADMIN_PHONE", "CHANGE_THIS")
 
 session = SessionLocal()
 try:

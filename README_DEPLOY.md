@@ -2,11 +2,19 @@
 
 ## ⚡ Быстрый старт
 
-### 1. На сервере (89.39.94.194):
+### 0. Настройте учетные данные (на вашем компьютере):
 
 ```bash
-ssh root@89.39.94.194
-# Пароль: w2@nT*6D
+# Создайте файл с учетными данными (НЕ коммитьте в git!)
+cp .env.deploy.example .env.deploy
+nano .env.deploy  # Заполните ваши данные сервера
+```
+
+### 1. На сервере:
+
+```bash
+ssh YOUR_USER@YOUR_SERVER_IP
+# Введите пароль при запросе
 
 # Установить Docker (если нет)
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
@@ -21,14 +29,20 @@ cd /var/www/beauty_salon
 
 **С вашей машины (Windows PowerShell):**
 ```powershell
-# Загрузить проект на сервер (замените путь на ваш)
-scp -r -o StrictHostKeyChecking=no . root@89.39.94.194:/var/www/beauty_salon/
+# Загрузить проект на сервер (используйте данные из .env.deploy)
+# Или используйте автоматический скрипт:
+.\deploy-to-prod.ps1
+```
+
+Или вручную через **scp**:
+```powershell
+scp -r . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
 ```
 
 Или через **rsync** (если установлен):
 ```bash
 rsync -avz --exclude 'node_modules' --exclude '.git' --exclude 'venv' \
-  . root@89.39.94.194:/var/www/beauty_salon/
+  . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
 ```
 
 ### 3. Создать .env файл:
@@ -39,13 +53,13 @@ cd /var/www/beauty_salon
 nano .env
 ```
 
-**Содержимое .env (ЗАМЕНИТЕ ПАРОЛЬ БД!):**
+**Содержимое .env (ЗАМЕНИТЕ ПАРОЛЬ БД и IP!):**
 ```env
 DATABASE_URL=postgresql://aurelleu_aurelle_user:ВАШ_ПАРОЛЬ_БД@localhost:5432/aurelleu_aurelle_db
 SECRET_KEY=$(openssl rand -hex 32)
-CORS_ORIGINS=http://89.39.94.194
-ALLOWED_HOSTS=89.39.94.194
-VITE_API_URL=http://89.39.94.194/api
+CORS_ORIGINS=http://YOUR_SERVER_IP
+ALLOWED_HOSTS=YOUR_SERVER_IP
+VITE_API_URL=http://YOUR_SERVER_IP/api
 ENVIRONMENT=production
 REDIS_URL=redis://redis:6379/0
 YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0
@@ -75,7 +89,7 @@ curl http://localhost/api/health
 curl http://localhost/api/salons
 ```
 
-**Откройте в браузере:** http://89.39.94.194
+**Откройте в браузере:** http://YOUR_SERVER_IP (замените на ваш IP или домен)
 
 ---
 

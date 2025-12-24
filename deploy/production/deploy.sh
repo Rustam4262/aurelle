@@ -3,7 +3,6 @@
 # ============================================
 # PRODUCTION DEPLOYMENT SCRIPT
 # AURELLE - Beauty Salon Marketplace
-# Server: 89.39.94.194
 # ============================================
 
 set -e  # Exit on error
@@ -115,9 +114,9 @@ docker-compose -f deploy/production/docker-compose.prod-external-db.yml ps
 
 echo ""
 log_info "Access URLs:"
-log_info "  Frontend: http://89.39.94.194"
-log_info "  Backend API: http://89.39.94.194/api"
-log_info "  API Docs: http://89.39.94.194/api/docs"
+log_info "  Frontend: Check your server IP or domain"
+log_info "  Backend API: Check your server IP or domain/api"
+log_info "  API Docs: Check your server IP or domain/api/docs"
 echo ""
 log_info "To view logs:"
 log_info "  docker-compose -f deploy/production/docker-compose.prod-external-db.yml logs -f"

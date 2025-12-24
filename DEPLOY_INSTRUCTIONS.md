@@ -1,4 +1,4 @@
-# 🚀 Инструкция по деплою на сервер 89.39.94.194
+# 🚀 Инструкция по деплою на сервер
 
 ## 📋 Подготовка
 
@@ -23,11 +23,21 @@ nano .env  # Заполните все значения
 
 ## 🔧 Деплой на сервер
 
+### Шаг 0: Настройте учетные данные (важно!)
+
+```bash
+# На вашем компьютере создайте файл с учетными данными
+cp .env.deploy.example .env.deploy
+nano .env.deploy  # Заполните данные вашего сервера
+```
+
+**ВАЖНО:** `.env.deploy` уже добавлен в `.gitignore` - никогда не коммитьте его в git!
+
 ### Шаг 1: Подключитесь к серверу
 
 ```bash
-ssh root@89.39.94.194
-# Пароль: w2@nT*6D
+ssh YOUR_USER@YOUR_SERVER_IP
+# Введите пароль при запросе
 ```
 
 ### Шаг 2: Подготовка сервера
@@ -60,15 +70,15 @@ git clone <ваш-репозиторий> .
 
 **Вариант Б: Через SCP (с локальной машины)**
 ```bash
-# На вашей локальной машине:
-scp -r . root@89.39.94.194:/var/www/beauty_salon/
+# На вашей локальной машине (используйте данные из .env.deploy):
+scp -r . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
 ```
 
 **Вариант В: Через rsync (рекомендуется)**
 ```bash
 # На вашей локальной машине:
 rsync -avz --exclude 'node_modules' --exclude '.git' --exclude 'venv' \
-  . root@89.39.94.194:/var/www/beauty_salon/
+  . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
 ```
 
 ### Шаг 4: Настроить переменные окружения
@@ -96,21 +106,21 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 REDIS_URL=redis://redis:6379/0
 
 # CORS
-CORS_ORIGINS=http://89.39.94.194,https://aurelle.uz
+CORS_ORIGINS=http://YOUR_SERVER_IP,https://aurelle.uz
 
 # ENVIRONMENT
 ENVIRONMENT=production
 LOG_LEVEL=INFO
 
 # ALLOWED HOSTS
-ALLOWED_HOSTS=89.39.94.194,aurelle.uz,api.aurelle.uz
+ALLOWED_HOSTS=YOUR_SERVER_IP,aurelle.uz,api.aurelle.uz
 
 # YANDEX MAPS
 YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0
 VITE_YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0
 
 # API URL для фронтенда
-VITE_API_URL=http://89.39.94.194/api
+VITE_API_URL=http://YOUR_SERVER_IP/api
 ```
 
 **Сохраните файл:** `Ctrl+O`, `Enter`, `Ctrl+X`
@@ -178,9 +188,9 @@ curl http://localhost/api/salons
 
 ### Открыть в браузере:
 
-- **Frontend:** http://89.39.94.194
-- **API:** http://89.39.94.194/api
-- **API Docs:** http://89.39.94.194/api/docs
+- **Frontend:** http://YOUR_SERVER_IP (замените на ваш IP или домен)
+- **API:** http://YOUR_SERVER_IP/api
+- **API Docs:** http://YOUR_SERVER_IP/api/docs
 
 ---
 

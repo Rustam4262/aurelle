@@ -15,19 +15,29 @@
 
 ## 🚀 Быстрый старт
 
-### 1. На сервере (89.39.94.194):
+### 0. Настройте учетные данные:
 
 ```bash
-ssh root@89.39.94.194
-# Пароль: w2@nT*6D
+cp .env.deploy.example .env.deploy
+nano .env.deploy  # Заполните данные вашего сервера
+```
+
+### 1. На сервере:
+
+```bash
+ssh YOUR_USER@YOUR_SERVER_IP
+# Введите пароль при запросе
 ```
 
 ### 2. Загрузить проект:
 
 ```bash
-# С вашей машины:
+# С вашей машины (используйте данные из .env.deploy):
 rsync -avz --exclude 'node_modules' --exclude '.git' --exclude 'venv' \
-  . root@89.39.94.194:/var/www/beauty_salon/
+  . YOUR_USER@YOUR_SERVER_IP:/var/www/beauty_salon/
+
+# Или используйте автоматический скрипт:
+# .\deploy-to-prod.ps1
 ```
 
 ### 3. Настроить .env:
@@ -42,9 +52,9 @@ nano .env
 ```env
 DATABASE_URL=postgresql://aurelleu_aurelle_user:ВАШ_ПАРОЛЬ_БД@localhost:5432/aurelleu_aurelle_db
 SECRET_KEY=$(openssl rand -hex 32)
-CORS_ORIGINS=http://89.39.94.194
-ALLOWED_HOSTS=89.39.94.194
-VITE_API_URL=http://89.39.94.194/api
+CORS_ORIGINS=http://YOUR_SERVER_IP
+ALLOWED_HOSTS=YOUR_SERVER_IP
+VITE_API_URL=http://YOUR_SERVER_IP/api
 ENVIRONMENT=production
 ```
 

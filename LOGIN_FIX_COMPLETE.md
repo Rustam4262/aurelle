@@ -90,9 +90,10 @@ access-control-max-age: 600
 
 ### Test 2: Login API Call ✅
 ```bash
+# ⚠️ НЕ ИСПОЛЬЗУЙТЕ ХАРДКОЖЕННЫЕ УЧЕТНЫЕ ДАННЫЕ В КОДЕ!
 curl -X POST 'https://aurelle.uz/api/auth/login' \
   -H 'Content-Type: application/json' \
-  -d '{"phone":"+998932611804","password":"lWSrQE4a"}'
+  -d '{"phone":"YOUR_PHONE","password":"YOUR_PASSWORD"}'
 ```
 
 **Response:**
@@ -146,9 +147,9 @@ beauty_backend_prod (FastAPI)
 ### Admin Login
 ```
 URL: https://aurelle.uz/login
-Phone: +998932611804
-Password: lWSrQE4a
-Role: ADMIN
+⚠️ ВАЖНО: Учетные данные НЕ должны храниться в git!
+Используйте менеджер паролей или безопасное хранилище.
+См. ADMIN_SECURITY.md для инструкций по смене пароля.
 ```
 
 **Note:** Password changed via C2 endpoint during Sprint C deployment

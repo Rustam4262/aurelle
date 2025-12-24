@@ -1,12 +1,43 @@
 # Production Deployment Script
 # AURELLE Beauty Salon Marketplace
-# Server: 89.39.94.194
+# ============================================
+# IMPORTANT: Create .env.deploy file with your credentials
+# Copy .env.deploy.example to .env.deploy and fill in values
+# ============================================
 
 $ErrorActionPreference = "Continue"
 
-$server = "root@89.39.94.194"
-$serverPath = "/var/www/beauty_salon"
+# Load deployment credentials from .env.deploy
+$envFile = ".env.deploy"
+if (-not (Test-Path $envFile)) {
+    Write-Host "[ERROR] .env.deploy file not found!" -ForegroundColor Red
+    Write-Host "Please copy .env.deploy.example to .env.deploy and fill in your credentials" -ForegroundColor Yellow
+    Write-Host "cp .env.deploy.example .env.deploy" -ForegroundColor White
+    Write-Host "nano .env.deploy  # Fill in your server credentials" -ForegroundColor White
+    exit 1
+}
+
+# Read .env.deploy file
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)\s*=\s*(.+)\s*$') {
+        $key = $matches[1].Trim()
+        $value = $matches[2].Trim()
+        [Environment]::SetEnvironmentVariable($key, $value, "Process")
+    }
+}
+
+# Server credentials from environment
+$serverIP = $env:DEPLOY_SERVER_IP
+$serverUser = $env:DEPLOY_SERVER_USER ?? "root"
+$serverPath = $env:DEPLOY_SERVER_PATH ?? "/var/www/beauty_salon"
 $projectPath = Get-Location
+
+if (-not $serverIP) {
+    Write-Host "[ERROR] DEPLOY_SERVER_IP not set in .env.deploy!" -ForegroundColor Red
+    exit 1
+}
+
+$server = "${serverUser}@${serverIP}"
 
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "AURELLE Production Deployment" -ForegroundColor Cyan
@@ -39,7 +70,7 @@ try {
 # Step 2: Upload to server
 Write-Host ""
 Write-Host "[2/6] Uploading files to server..." -ForegroundColor Yellow
-Write-Host "Please enter SSH password when prompted: w2@nT*6D" -ForegroundColor Cyan
+Write-Host "Please enter SSH password when prompted" -ForegroundColor Cyan
 
 try {
     ssh -o StrictHostKeyChecking=no $server "mkdir -p $serverPath" 2>&1 | Out-Null
@@ -78,13 +109,24 @@ $envExists = ssh -o StrictHostKeyChecking=no $server "test -f $serverPath/.env &
 if ($envExists -match "NO") {
     Write-Host "[WARNING] .env file not found. Creating template..." -ForegroundColor Yellow
     Write-Host ""
-    $dbPassword = Read-Host "Enter database password for 'aurelleu_aurelle_user' (press Enter to skip)"
-    
-    if ($dbPassword) {
-        # Generate SECRET_KEY
-        $secretKey = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
+        $dbPassword = Read-Host "Enter database password (press Enter to use from .env.deploy)"
         
-        $envContent = "DATABASE_URL=postgresql://aurelleu_aurelle_user:$dbPassword@localhost:5432/aurelleu_aurelle_db`nSECRET_KEY=$secretKey`nCORS_ORIGINS=http://89.39.94.194`nALLOWED_HOSTS=89.39.94.194`nVITE_API_URL=http://89.39.94.194/api`nENVIRONMENT=production`nREDIS_URL=redis://redis:6379/0`nYANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0`nVITE_YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0`n"
+        if (-not $dbPassword) {
+            $dbPassword = $env:DEPLOY_DB_PASSWORD
+        }
+        
+        if ($dbPassword) {
+            # Generate SECRET_KEY
+            $secretKey = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
+            
+            $dbHost = $env:DEPLOY_DB_HOST ?? "localhost"
+            $dbPort = $env:DEPLOY_DB_PORT ?? "5432"
+            $dbName = $env:DEPLOY_DB_NAME ?? "aurelleu_aurelle_db"
+            $dbUser = $env:DEPLOY_DB_USER ?? "aurelleu_aurelle_user"
+            $appUrl = $env:DEPLOY_APP_URL ?? "http://$serverIP"
+            $apiUrl = $env:DEPLOY_API_URL ?? "$appUrl/api"
+            
+            $envContent = "DATABASE_URL=postgresql://${dbUser}:$dbPassword@${dbHost}:${dbPort}/${dbName}`nSECRET_KEY=$secretKey`nCORS_ORIGINS=$appUrl`nALLOWED_HOSTS=$serverIP`nVITE_API_URL=$apiUrl`nENVIRONMENT=production`nREDIS_URL=redis://redis:6379/0`nYANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0`nVITE_YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0`n"
         
         $envContent | Out-File -FilePath "temp-env.txt" -Encoding utf8 -NoNewline
         
@@ -137,10 +179,13 @@ Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "Deployment completed!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
+$appUrl = $env:DEPLOY_APP_URL ?? "http://$serverIP"
+$apiUrl = $env:DEPLOY_API_URL ?? "$appUrl/api"
+
 Write-Host "Access URLs:" -ForegroundColor Yellow
-Write-Host "  Frontend: http://89.39.94.194" -ForegroundColor White
-Write-Host "  API: http://89.39.94.194/api" -ForegroundColor White
-Write-Host "  API Docs: http://89.39.94.194/api/docs" -ForegroundColor White
+Write-Host "  Frontend: $appUrl" -ForegroundColor White
+Write-Host "  API: $apiUrl" -ForegroundColor White
+Write-Host "  API Docs: $apiUrl/docs" -ForegroundColor White
 Write-Host ""
 Write-Host "To view logs:" -ForegroundColor Yellow
 Write-Host "  ssh $server" -ForegroundColor White

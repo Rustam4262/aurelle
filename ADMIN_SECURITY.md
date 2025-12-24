@@ -24,8 +24,8 @@
 **Вариант B: Через командную строку сервера (рекомендуется)**
 
 ```bash
-# SSH на сервер
-ssh root@89.39.94.194
+# SSH на сервер (используйте данные из .env.deploy)
+ssh YOUR_USER@YOUR_SERVER_IP
 
 # Сменить пароль админа
 docker exec -it beauty_backend_prod python scripts/change_admin_password.py "ВашНовыйСуперСложныйПароль2025!"

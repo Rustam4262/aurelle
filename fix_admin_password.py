@@ -1,21 +1,29 @@
 import psycopg2
+import os
 
-# Подключение к БД
+# ⚠️ ВАЖНО: НЕ храните реальные пароли, хэши или учетные данные в git!
+# Используйте переменные окружения или безопасное хранилище
+
+# Подключение к БД (используйте переменные окружения!)
 conn = psycopg2.connect(
-    host="localhost",
-    port=5432,
-    dbname="beauty_salon_db",
-    user="beauty_user",
-    password="beauty_pass"
+    host=os.getenv("DB_HOST", "localhost"),
+    port=int(os.getenv("DB_PORT", "5432")),
+    dbname=os.getenv("DB_NAME", "beauty_salon_db"),
+    user=os.getenv("DB_USER", "beauty_user"),
+    password=os.getenv("DB_PASSWORD", "CHANGE_THIS")
 )
 
-# Хэш пароля "AurelleAdmin2025"
-password_hash = "$2b$12$8UxBtGiLqfhkTi7p8ELFMOWKswOWyunVgleB7ybfM66119s70IjpC"
+# Хэш пароля должен быть сгенерирован во время выполнения, не храните в коде!
+password_hash = os.getenv("ADMIN_PASSWORD_HASH", "CHANGE_THIS")
+phone = os.getenv("ADMIN_PHONE", "CHANGE_THIS")
+
+if password_hash == "CHANGE_THIS" or phone == "CHANGE_THIS":
+    raise ValueError("⚠️ ОШИБКА: Установите ADMIN_PASSWORD_HASH и ADMIN_PHONE в переменных окружения!")
 
 cursor = conn.cursor()
 cursor.execute(
     "UPDATE users SET hashed_password = %s WHERE phone = %s RETURNING id, phone",
-    (password_hash, "+998932611804")
+    (password_hash, phone)
 )
 result = cursor.fetchone()
 conn.commit()

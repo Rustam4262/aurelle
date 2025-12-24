@@ -1,0 +1,51 @@
+========================================
+БЫСТРЫЙ ДЕПЛОЙ НА СЕРВЕР
+========================================
+
+ВАЖНО: НЕ ХРАНИТЕ УЧЕТНЫЕ ДАННЫЕ В КОДЕ!
+Создайте .env.deploy файл с вашими данными.
+
+1. Подготовка (на вашем компьютере):
+   cp .env.deploy.example .env.deploy
+   nano .env.deploy  # Заполните данные вашего сервера
+
+2. Подключиться к серверу:
+   ssh YOUR_USER@YOUR_SERVER_IP
+   # Введите пароль при запросе
+
+3. Подготовить сервер:
+   curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+   apt install docker-compose -y
+   mkdir -p /var/www/beauty_salon
+   cd /var/www/beauty_salon
+
+4. Загрузить проект (с вашего компьютера через scp/git/sftp)
+   Или используйте: .\deploy-to-prod.ps1
+
+5. Создать .env файл (на сервере):
+   nano .env
+   
+   Содержимое (ЗАМЕНИТЕ ПАРОЛЬ БД и IP):
+   DATABASE_URL=postgresql://aurelleu_aurelle_user:ПАРОЛЬ@localhost:5432/aurelleu_aurelle_db
+   SECRET_KEY=$(openssl rand -hex 32)
+   CORS_ORIGINS=http://YOUR_SERVER_IP
+   ALLOWED_HOSTS=YOUR_SERVER_IP
+   VITE_API_URL=http://YOUR_SERVER_IP/api
+   ENVIRONMENT=production
+   REDIS_URL=redis://redis:6379/0
+   YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0
+   VITE_YANDEX_MAPS_API_KEY=99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0
+
+6. Запустить деплой:
+   chmod +x deploy/production/deploy.sh
+   ./deploy/production/deploy.sh
+
+7. Проверить:
+   http://YOUR_SERVER_IP
+
+========================================
+БЕЗОПАСНОСТЬ:
+- НИКОГДА не коммитьте .env.deploy в git
+- Используйте SSH ключи вместо паролей
+- Регулярно меняйте пароли
+========================================
