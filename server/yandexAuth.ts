@@ -29,10 +29,12 @@ export async function setupYandexAuth(app: Express) {
 
   const registeredStrategies = new Set<string>();
 
-  const ensureYandexStrategy = (hostname: string) => {
+  const ensureYandexStrategy = (req: any) => {
+    const hostname = req.hostname;
     const strategyName = `yandex:${hostname}`;
     if (!registeredStrategies.has(strategyName)) {
-      const callbackURL = `https://${hostname}/api/auth/yandex/callback`;
+      const protocol = req.get('X-Forwarded-Proto') || req.protocol || 'https';
+      const callbackURL = `${protocol}://${hostname}/api/auth/yandex/callback`;
       
       const strategy = new YandexStrategy(
         {
@@ -88,12 +90,12 @@ export async function setupYandexAuth(app: Express) {
   };
 
   app.get("/api/auth/yandex", (req, res, next) => {
-    ensureYandexStrategy(req.hostname);
+    ensureYandexStrategy(req);
     passport.authenticate(`yandex:${req.hostname}`)(req, res, next);
   });
 
   app.get("/api/auth/yandex/callback", (req, res, next) => {
-    ensureYandexStrategy(req.hostname);
+    ensureYandexStrategy(req);
     passport.authenticate(`yandex:${req.hostname}`, {
       successRedirect: "/auth",
       failureRedirect: "/auth?error=yandex_auth_failed",
