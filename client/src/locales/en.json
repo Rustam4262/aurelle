@@ -388,6 +388,18 @@
       "reviewUpdated": "Review updated successfully",
       "reviewDeleted": "Review deleted successfully",
       "error": "An error occurred"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "selectDate": "Select Date",
+      "noDateSelected": "No date selected",
+      "selectDatePrompt": "Select a date to view schedule",
+      "hasBookings": "Has bookings",
+      "selected": "Selected",
+      "bookings": "bookings",
+      "freeSlots": "free slots",
+      "free": "Available",
+      "busy": "Busy"
     }
   }
 }

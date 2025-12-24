@@ -388,6 +388,18 @@
       "reviewUpdated": "Sharh yangilandi",
       "reviewDeleted": "Sharh o'chirildi",
       "error": "Xatolik yuz berdi"
+    },
+    "calendar": {
+      "title": "Kalendar",
+      "selectDate": "Sanani tanlang",
+      "noDateSelected": "Sana tanlanmagan",
+      "selectDatePrompt": "Jadvalni ko'rish uchun sanani tanlang",
+      "hasBookings": "Bronlar mavjud",
+      "selected": "Tanlangan",
+      "bookings": "bronlar",
+      "freeSlots": "bo'sh slotlar",
+      "free": "Bo'sh",
+      "busy": "Band"
     }
   }
 }

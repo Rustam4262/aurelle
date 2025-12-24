@@ -388,6 +388,18 @@
       "reviewUpdated": "Отзыв обновлён",
       "reviewDeleted": "Отзыв удалён",
       "error": "Произошла ошибка"
+    },
+    "calendar": {
+      "title": "Календарь",
+      "selectDate": "Выберите дату",
+      "noDateSelected": "Дата не выбрана",
+      "selectDatePrompt": "Выберите дату для просмотра расписания",
+      "hasBookings": "Есть записи",
+      "selected": "Выбрано",
+      "bookings": "записей",
+      "freeSlots": "свободных слотов",
+      "free": "Свободно",
+      "busy": "Занято"
     }
   }
 }
