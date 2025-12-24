@@ -235,7 +235,28 @@
       "upcomingBookings": "Предстоящие записи",
       "noBookings": "Записей пока нет",
       "salonNotFound": "Салон не найден",
-      "backToSalons": "Назад к салонам"
+      "backToSalons": "Назад к салонам",
+      "masterLoginCredentials": "Данные для входа (необязательно)",
+      "credentialsOptional": "Если вы укажете email и пароль, сотрудник сможет войти в личный кабинет для управления записями.",
+      "hasLogin": "есть вход"
+    },
+    "master": {
+      "title": "Панель мастера",
+      "welcome": "Добро пожаловать",
+      "yourSalon": "Ваш салон",
+      "todaysAppointments": "Записи на сегодня",
+      "upcomingAppointments": "Предстоящие записи",
+      "noAppointments": "Записей пока нет",
+      "viewAll": "Смотреть все",
+      "mySchedule": "Моё расписание",
+      "myReviews": "Мои отзывы",
+      "myProfile": "Мой профиль",
+      "earnings": "Заработок",
+      "thisWeek": "На этой неделе",
+      "thisMonth": "В этом месяце",
+      "totalBookings": "Всего записей",
+      "rating": "Рейтинг",
+      "clients": "Обслужено клиентов"
     },
     "days": {
       "monday": "Понедельник",

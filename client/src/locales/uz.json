@@ -235,7 +235,28 @@
       "upcomingBookings": "Kelayotgan bronlar",
       "noBookings": "Hali bronlar yo'q",
       "salonNotFound": "Salon topilmadi",
-      "backToSalons": "Salonlarga qaytish"
+      "backToSalons": "Salonlarga qaytish",
+      "masterLoginCredentials": "Kirish ma'lumotlari (ixtiyoriy)",
+      "credentialsOptional": "Agar siz email va parolni ko'rsatsangiz, xodim shaxsiy kabinetga kirib uchrashuvlarini boshqarishi mumkin.",
+      "hasLogin": "kirish mumkin"
+    },
+    "master": {
+      "title": "Usta paneli",
+      "welcome": "Xush kelibsiz",
+      "yourSalon": "Sizning saloningiz",
+      "todaysAppointments": "Bugungi uchrashuvlar",
+      "upcomingAppointments": "Kelayotgan uchrashuvlar",
+      "noAppointments": "Hali uchrashuvlar yo'q",
+      "viewAll": "Hammasini ko'rish",
+      "mySchedule": "Mening jadvalim",
+      "myReviews": "Mening sharhlarim",
+      "myProfile": "Mening profilim",
+      "earnings": "Daromad",
+      "thisWeek": "Bu hafta",
+      "thisMonth": "Bu oy",
+      "totalBookings": "Jami bronlar",
+      "rating": "Reyting",
+      "clients": "Xizmat ko'rsatilgan mijozlar"
     },
     "days": {
       "monday": "Dushanba",

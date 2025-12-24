@@ -235,7 +235,28 @@
       "upcomingBookings": "Upcoming Bookings",
       "noBookings": "No bookings yet",
       "salonNotFound": "Salon not found",
-      "backToSalons": "Back to Salons"
+      "backToSalons": "Back to Salons",
+      "masterLoginCredentials": "Login credentials (optional)",
+      "credentialsOptional": "If you provide email and password, this staff member can log in to view their personal dashboard and manage their appointments.",
+      "hasLogin": "can login"
+    },
+    "master": {
+      "title": "Master Dashboard",
+      "welcome": "Welcome",
+      "yourSalon": "Your Salon",
+      "todaysAppointments": "Today's Appointments",
+      "upcomingAppointments": "Upcoming Appointments",
+      "noAppointments": "No appointments scheduled",
+      "viewAll": "View All",
+      "mySchedule": "My Schedule",
+      "myReviews": "My Reviews",
+      "myProfile": "My Profile",
+      "earnings": "Earnings",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "totalBookings": "Total Bookings",
+      "rating": "Rating",
+      "clients": "Clients Served"
     },
     "days": {
       "monday": "Monday",

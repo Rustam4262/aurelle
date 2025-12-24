@@ -79,6 +79,8 @@ export default function OwnerSalonPage() {
     name: "",
     specialties: "",
     experience: "",
+    email: "",
+    password: "",
   });
 
   const [workingHours, setWorkingHours] = useState<{
@@ -175,7 +177,7 @@ export default function OwnerSalonPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "masters"] });
       toast({ title: t("marketplace.owner.masterAdded") });
-      setNewMaster({ name: "", specialties: "", experience: "" });
+      setNewMaster({ name: "", specialties: "", experience: "", email: "", password: "" });
     },
     onError: (error: any) => {
       toast({ 
@@ -230,7 +232,7 @@ export default function OwnerSalonPage() {
 
   const handleAddMaster = (e: React.FormEvent) => {
     e.preventDefault();
-    createMasterMutation.mutate({
+    const masterData: any = {
       name: newMaster.name,
       specialties: { 
         en: newMaster.specialties.split(",").map(s => s.trim()),
@@ -238,7 +240,15 @@ export default function OwnerSalonPage() {
         uz: newMaster.specialties.split(",").map(s => s.trim()),
       },
       experience: parseInt(newMaster.experience) || 0,
-    });
+    };
+    
+    // Include credentials if both email and password provided
+    if (newMaster.email && newMaster.password) {
+      masterData.email = newMaster.email;
+      masterData.password = newMaster.password;
+    }
+    
+    createMasterMutation.mutate(masterData);
   };
 
   const handleSaveHours = () => {
@@ -545,6 +555,34 @@ export default function OwnerSalonPage() {
                     </div>
                   </div>
 
+                  <div className="border-t pt-4 mt-4">
+                    <p className="text-sm text-muted-foreground mb-3">{t("marketplace.owner.masterLoginCredentials")}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>{t("marketplace.auth.email")}</Label>
+                        <Input
+                          type="email"
+                          value={newMaster.email}
+                          onChange={(e) => setNewMaster({ ...newMaster, email: e.target.value })}
+                          placeholder="master@example.com"
+                          data-testid="input-master-email"
+                        />
+                      </div>
+                      <div>
+                        <Label>{t("marketplace.auth.password")}</Label>
+                        <Input
+                          type="password"
+                          value={newMaster.password}
+                          onChange={(e) => setNewMaster({ ...newMaster, password: e.target.value })}
+                          placeholder="Min 6 characters"
+                          minLength={6}
+                          data-testid="input-master-password"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">{t("marketplace.owner.credentialsOptional")}</p>
+                  </div>
+
                   <Button type="submit" disabled={createMasterMutation.isPending} data-testid="button-add-master">
                     <Plus className="h-4 w-4 mr-2" />
                     {createMasterMutation.isPending ? t("marketplace.owner.adding") : t("marketplace.owner.addMaster")}
@@ -576,6 +614,11 @@ export default function OwnerSalonPage() {
                           <p className="text-sm text-muted-foreground">
                             {master.experience} {t("marketplace.owner.yearsExp")}
                           </p>
+                          {(master as any).email && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {(master as any).email} ({t("marketplace.owner.hasLogin")})
+                            </p>
+                          )}
                         </div>
                         <Button
                           variant="ghost"
