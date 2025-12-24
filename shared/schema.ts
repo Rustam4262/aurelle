@@ -88,6 +88,44 @@ export const insertMasterSchema = createInsertSchema(masters).omit({
 export type InsertMaster = z.infer<typeof insertMasterSchema>;
 export type Master = typeof masters.$inferSelect;
 
+// ============ MASTER WORKING HOURS ============
+export const masterWorkingHours = pgTable("master_working_hours", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  masterId: varchar("master_id").notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 1=Monday, etc.
+  openTime: varchar("open_time", { length: 5 }).notNull(), // "09:00"
+  closeTime: varchar("close_time", { length: 5 }).notNull(), // "18:00"
+  isClosed: boolean("is_closed").default(false),
+}, (table) => [
+  index("idx_master_hours_master").on(table.masterId),
+]);
+
+export const insertMasterWorkingHoursSchema = createInsertSchema(masterWorkingHours).omit({
+  id: true,
+});
+
+export type InsertMasterWorkingHours = z.infer<typeof insertMasterWorkingHoursSchema>;
+export type MasterWorkingHours = typeof masterWorkingHours.$inferSelect;
+
+// ============ MASTER PORTFOLIO ============
+export const masterPortfolio = pgTable("master_portfolio", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  masterId: varchar("master_id").notNull(),
+  imageUrl: varchar("image_url", { length: 500 }).notNull(),
+  description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_portfolio_master").on(table.masterId),
+]);
+
+export const insertMasterPortfolioSchema = createInsertSchema(masterPortfolio).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMasterPortfolio = z.infer<typeof insertMasterPortfolioSchema>;
+export type MasterPortfolio = typeof masterPortfolio.$inferSelect;
+
 // ============ SERVICES ============
 export const services = pgTable("services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -133,6 +171,7 @@ export const bookings = pgTable("bookings", {
   status: varchar("status", { length: 20 }).default("pending"), // pending, confirmed, cancelled, completed
   priceSnapshot: integer("price_snapshot").notNull(), // price at time of booking in UZS
   notes: text("notes"),
+  cancellationReason: text("cancellation_reason"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
