@@ -330,6 +330,64 @@
       "friday": "Juma",
       "saturday": "Shanba",
       "sunday": "Yakshanba"
+    },
+    "client": {
+      "title": "Mijoz paneli",
+      "welcome": "Xush kelibsiz",
+      "noAccount": "Bu foydalanuvchi uchun mijoz hisobi topilmadi.",
+      "backHome": "Bosh sahifaga",
+      "tabs": {
+        "profile": "Profil",
+        "bookings": "Bronlar",
+        "favorites": "Sevimlilar",
+        "reviews": "Sharhlar"
+      },
+      "editProfile": "Profilni tahrirlash",
+      "fullName": "To'liq ism",
+      "fullNamePlaceholder": "To'liq ismingizni kiriting",
+      "phone": "Telefon raqami",
+      "phonePlaceholder": "Telefon raqamingizni kiriting",
+      "city": "Shahar",
+      "cityPlaceholder": "masalan, Toshkent",
+      "avatarUrl": "Avatar URL manzili",
+      "avatarUrlPlaceholder": "Avatar rasm URL manzilini kiriting",
+      "saveProfile": "Profilni saqlash",
+      "profileUpdated": "Profil yangilandi",
+      "filter": {
+        "all": "Hammasi",
+        "upcoming": "Kelayotgan",
+        "completed": "Tugallangan",
+        "cancelled": "Bekor qilingan"
+      },
+      "status": {
+        "pending": "Kutilmoqda",
+        "confirmed": "Tasdiqlangan",
+        "completed": "Tugallangan",
+        "cancelled": "Bekor qilingan"
+      },
+      "noBookings": "Bronlar topilmadi",
+      "viewSalon": "Salonni ko'rish",
+      "cancelBooking": "Bronni bekor qilish",
+      "cancelBookingConfirm": "Haqiqatan ham bu bronni bekor qilmoqchimisiz?",
+      "confirmCancel": "Bekor qilishni tasdiqlash",
+      "bookingCancelled": "Bron bekor qilindi",
+      "noFavorites": "Hozircha sevimli salonlar yo'q",
+      "browseSalons": "Salonlarni ko'rish",
+      "favoriteRemoved": "Sevimlilardan o'chirildi",
+      "noReviews": "Hozircha sharhlar yo'q",
+      "canEdit": "24 soat ichida tahrirlash mumkin",
+      "editReview": "Sharhni tahrirlash",
+      "deleteReview": "Sharhni o'chirish",
+      "deleteReviewConfirm": "Haqiqatan ham bu sharhni o'chirmoqchimisiz?",
+      "confirmDelete": "O'chirishni tasdiqlash",
+      "rating": "Baho",
+      "comment": "Izoh",
+      "commentPlaceholder": "Tajribangizni baham ko'ring...",
+      "save": "Saqlash",
+      "close": "Yopish",
+      "reviewUpdated": "Sharh yangilandi",
+      "reviewDeleted": "Sharh o'chirildi",
+      "error": "Xatolik yuz berdi"
     }
   }
 }

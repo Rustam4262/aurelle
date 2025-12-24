@@ -330,6 +330,64 @@
       "friday": "Friday",
       "saturday": "Saturday",
       "sunday": "Sunday"
+    },
+    "client": {
+      "title": "Client Dashboard",
+      "welcome": "Welcome",
+      "noAccount": "No client account found for this user.",
+      "backHome": "Back to Home",
+      "tabs": {
+        "profile": "Profile",
+        "bookings": "Bookings",
+        "favorites": "Favorites",
+        "reviews": "Reviews"
+      },
+      "editProfile": "Edit Profile",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter your full name",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
+      "city": "City",
+      "cityPlaceholder": "e.g. Tashkent",
+      "avatarUrl": "Avatar URL",
+      "avatarUrlPlaceholder": "Enter avatar image URL",
+      "saveProfile": "Save Profile",
+      "profileUpdated": "Profile updated successfully",
+      "filter": {
+        "all": "All",
+        "upcoming": "Upcoming",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "noBookings": "No bookings found",
+      "viewSalon": "View Salon",
+      "cancelBooking": "Cancel Booking",
+      "cancelBookingConfirm": "Are you sure you want to cancel this booking?",
+      "confirmCancel": "Confirm Cancellation",
+      "bookingCancelled": "Booking cancelled successfully",
+      "noFavorites": "No favorite salons yet",
+      "browseSalons": "Browse Salons",
+      "favoriteRemoved": "Removed from favorites",
+      "noReviews": "No reviews yet",
+      "canEdit": "can edit within 24h",
+      "editReview": "Edit Review",
+      "deleteReview": "Delete Review",
+      "deleteReviewConfirm": "Are you sure you want to delete this review?",
+      "confirmDelete": "Confirm Delete",
+      "rating": "Rating",
+      "comment": "Comment",
+      "commentPlaceholder": "Share your experience...",
+      "save": "Save",
+      "close": "Close",
+      "reviewUpdated": "Review updated successfully",
+      "reviewDeleted": "Review deleted successfully",
+      "error": "An error occurred"
     }
   }
 }

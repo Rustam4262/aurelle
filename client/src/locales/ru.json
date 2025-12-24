@@ -330,6 +330,64 @@
       "friday": "Пятница",
       "saturday": "Суббота",
       "sunday": "Воскресенье"
+    },
+    "client": {
+      "title": "Панель клиента",
+      "welcome": "Добро пожаловать",
+      "noAccount": "Аккаунт клиента не найден для этого пользователя.",
+      "backHome": "На главную",
+      "tabs": {
+        "profile": "Профиль",
+        "bookings": "Записи",
+        "favorites": "Избранное",
+        "reviews": "Отзывы"
+      },
+      "editProfile": "Редактировать профиль",
+      "fullName": "Полное имя",
+      "fullNamePlaceholder": "Введите ваше полное имя",
+      "phone": "Номер телефона",
+      "phonePlaceholder": "Введите ваш номер телефона",
+      "city": "Город",
+      "cityPlaceholder": "напр. Ташкент",
+      "avatarUrl": "URL аватара",
+      "avatarUrlPlaceholder": "Введите URL изображения аватара",
+      "saveProfile": "Сохранить профиль",
+      "profileUpdated": "Профиль обновлён",
+      "filter": {
+        "all": "Все",
+        "upcoming": "Предстоящие",
+        "completed": "Завершённые",
+        "cancelled": "Отменённые"
+      },
+      "status": {
+        "pending": "Ожидает",
+        "confirmed": "Подтверждено",
+        "completed": "Завершено",
+        "cancelled": "Отменено"
+      },
+      "noBookings": "Записи не найдены",
+      "viewSalon": "Посмотреть салон",
+      "cancelBooking": "Отменить запись",
+      "cancelBookingConfirm": "Вы уверены, что хотите отменить эту запись?",
+      "confirmCancel": "Подтвердить отмену",
+      "bookingCancelled": "Запись отменена",
+      "noFavorites": "Избранных салонов пока нет",
+      "browseSalons": "Найти салоны",
+      "favoriteRemoved": "Удалено из избранного",
+      "noReviews": "Отзывов пока нет",
+      "canEdit": "можно редактировать в течение 24ч",
+      "editReview": "Редактировать отзыв",
+      "deleteReview": "Удалить отзыв",
+      "deleteReviewConfirm": "Вы уверены, что хотите удалить этот отзыв?",
+      "confirmDelete": "Подтвердить удаление",
+      "rating": "Оценка",
+      "comment": "Комментарий",
+      "commentPlaceholder": "Поделитесь впечатлениями...",
+      "save": "Сохранить",
+      "close": "Закрыть",
+      "reviewUpdated": "Отзыв обновлён",
+      "reviewDeleted": "Отзыв удалён",
+      "error": "Произошла ошибка"
     }
   }
 }
