@@ -29,7 +29,7 @@ import {
   insertMasterWorkingHoursSchema,
   insertMasterPortfolioSchema,
 } from "@shared/schema";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { createNewBookingNotification } from "./notifications";
 
@@ -419,7 +419,50 @@ export async function registerRoutes(
         .where(and(...conditions))
         .orderBy(desc(bookings.bookingDate));
       
-      return res.json(masterBookings);
+      if (masterBookings.length === 0) {
+        return res.json([]);
+      }
+
+      // Collect unique IDs for batch fetching
+      const serviceIds = Array.from(new Set(masterBookings.map(b => b.serviceId)));
+      const salonIds = Array.from(new Set(masterBookings.map(b => b.salonId)));
+      const clientIds = Array.from(new Set(masterBookings.map(b => b.clientId)));
+
+      // Batch fetch services, salons, and client profiles
+      const [servicesData, salonsData, clientProfilesData] = await Promise.all([
+        serviceIds.length > 0 
+          ? db.select().from(services).where(inArray(services.id, serviceIds))
+          : Promise.resolve([]),
+        salonIds.length > 0 
+          ? db.select().from(salons).where(inArray(salons.id, salonIds))
+          : Promise.resolve([]),
+        clientIds.length > 0 
+          ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+          : Promise.resolve([]),
+      ]);
+
+      // Create lookup maps
+      const servicesMap = new Map(servicesData.map(s => [s.id, s]));
+      const salonsMap = new Map(salonsData.map(s => [s.id, s]));
+      const clientProfilesMap = new Map(clientProfilesData.map(p => [p.id, p]));
+
+      // Enrich bookings with related data
+      const enrichedBookings = masterBookings.map(booking => {
+        const clientProfile = clientProfilesMap.get(booking.clientId);
+        // For privacy, use first name or "Client" as fallback
+        const clientName = clientProfile?.fullName 
+          ? clientProfile.fullName.split(' ')[0] 
+          : "Client";
+
+        return {
+          ...booking,
+          salon: salonsMap.get(booking.salonId) || null,
+          service: servicesMap.get(booking.serviceId) || null,
+          clientName,
+        };
+      });
+      
+      return res.json(enrichedBookings);
     } catch (error) {
       console.error("Get master bookings error:", error);
       return res.status(500).json({ error: "Failed to get bookings" });
@@ -1273,8 +1316,8 @@ export async function registerRoutes(
       }
 
       // Enrich with salon, service, and master data
-      const serviceIds = [...new Set(allBookings.map(b => b.serviceId))];
-      const masterIds = [...new Set(allBookings.filter(b => b.masterId).map(b => b.masterId!))];
+      const serviceIds = Array.from(new Set(allBookings.map(b => b.serviceId)));
+      const masterIds = Array.from(new Set(allBookings.filter(b => b.masterId).map(b => b.masterId!)));
       
       const [servicesData, mastersData] = await Promise.all([
         serviceIds.length > 0 ? db.select().from(services).where(inArray(services.id, serviceIds)) : [],
