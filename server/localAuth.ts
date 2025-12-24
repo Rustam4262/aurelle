@@ -60,6 +60,7 @@ export function setupLocalAuth(app: Express) {
             last_name: newUser.lastName,
             profile_image_url: newUser.profileImageUrl,
           },
+          expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
         },
       };
 
@@ -117,6 +118,7 @@ export function setupLocalAuth(app: Express) {
             last_name: user.lastName,
             profile_image_url: user.profileImageUrl,
           },
+          expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
         },
       };
 
