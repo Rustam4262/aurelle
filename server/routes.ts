@@ -457,6 +457,132 @@ export async function registerRoutes(
     }
   });
 
+  // Get single salon for owner
+  app.get("/api/owner/salons/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const ownerId = req.user.claims.sub;
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, id), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(404).json({ error: "Salon not found" });
+      }
+      return res.json(salon);
+    } catch (error) {
+      console.error("Get owner salon error:", error);
+      return res.status(500).json({ error: "Failed to get salon" });
+    }
+  });
+
+  // Get salon services for owner
+  app.get("/api/owner/salons/:salonId/services", isAuthenticated, async (req: any, res) => {
+    try {
+      const { salonId } = req.params;
+      const ownerId = req.user.claims.sub;
+      
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const salonServices = await db.select().from(services)
+        .where(eq(services.salonId, salonId));
+      return res.json(salonServices);
+    } catch (error) {
+      console.error("Get owner services error:", error);
+      return res.status(500).json({ error: "Failed to get services" });
+    }
+  });
+
+  // Get salon masters for owner
+  app.get("/api/owner/salons/:salonId/masters", isAuthenticated, async (req: any, res) => {
+    try {
+      const { salonId } = req.params;
+      const ownerId = req.user.claims.sub;
+      
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const salonMasters = await db.select().from(masters)
+        .where(eq(masters.salonId, salonId));
+      return res.json(salonMasters);
+    } catch (error) {
+      console.error("Get owner masters error:", error);
+      return res.status(500).json({ error: "Failed to get masters" });
+    }
+  });
+
+  // Get salon working hours for owner
+  app.get("/api/owner/salons/:salonId/hours", isAuthenticated, async (req: any, res) => {
+    try {
+      const { salonId } = req.params;
+      const ownerId = req.user.claims.sub;
+      
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const hours = await db.select().from(salonWorkingHours)
+        .where(eq(salonWorkingHours.salonId, salonId));
+      return res.json(hours);
+    } catch (error) {
+      console.error("Get owner hours error:", error);
+      return res.status(500).json({ error: "Failed to get hours" });
+    }
+  });
+
+  // Delete service
+  app.delete("/api/owner/salons/:salonId/services/:serviceId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { salonId, serviceId } = req.params;
+      const ownerId = req.user.claims.sub;
+      
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      await db.delete(services).where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Delete service error:", error);
+      return res.status(500).json({ error: "Failed to delete service" });
+    }
+  });
+
+  // Delete master
+  app.delete("/api/owner/salons/:salonId/masters/:masterId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { salonId, masterId } = req.params;
+      const ownerId = req.user.claims.sub;
+      
+      const [salon] = await db.select().from(salons)
+        .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+      
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      await db.delete(masters).where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Delete master error:", error);
+      return res.status(500).json({ error: "Failed to delete master" });
+    }
+  });
+
   // Update salon
   app.patch("/api/owner/salons/:id", isAuthenticated, async (req: any, res) => {
     try {

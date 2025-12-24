@@ -9,6 +9,7 @@ import SalonPage from "@/pages/salon";
 import AuthPage from "@/pages/auth";
 import ProfilePage from "@/pages/profile";
 import OwnerPage from "@/pages/owner";
+import OwnerSalonPage from "@/pages/owner-salon";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/owner" component={OwnerPage} />
+      <Route path="/owner/salon/:id" component={OwnerSalonPage} />
       <Route component={NotFound} />
     </Switch>
   );
