@@ -47,7 +47,21 @@ The master dashboard (`/master`) provides staff members with complete work manag
 - **Bookings Tab**: Manage appointments (confirm, complete, cancel with reason), filter by status
 - **Portfolio Tab**: Upload and manage work gallery images
 - **Analytics Tab**: Earnings charts, popular services breakdown, booking status pie charts, client retention metrics
+- **Calendar Tab**: Visual calendar showing booked/free time slots for each date
 - **Notifications**: Bell icon with unread count, real-time notifications for new bookings
+
+### Client Dashboard Features
+The client dashboard (`/client`) provides clients with booking and review management:
+- **Profile Tab**: Edit personal info (name, phone, avatar, city)
+- **Bookings Tab**: View and cancel upcoming appointments
+- **Favorites Tab**: Manage saved salons
+- **Reviews Tab**: View/edit/delete reviews (within 24h)
+- **Calendar Tab**: Visual calendar showing all booked appointments
+
+### Owner Dashboard Features
+The owner dashboard (`/owner`) provides salon owners with salon management:
+- **Salons Tab**: List and manage registered salons
+- **Calendar Tab**: Visual calendar showing all bookings across all owned salons
 
 ### Data Storage
 - **Current**: In-memory storage (MemStorage class) using JavaScript Maps
