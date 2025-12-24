@@ -1,147 +1,163 @@
 {
-  "nav": {
-    "services": "Services",
-    "team": "Team",
-    "gallery": "Gallery",
-    "testimonials": "Testimonials",
-    "contact": "Contact",
-    "book": "Book Now"
-  },
-  "hero": {
-    "title": "Where Beauty Meets Artistry",
-    "subtitle": "Experience luxury beauty treatments in a relaxing, sophisticated environment. Our expert stylists create personalized looks that enhance your natural radiance.",
-    "cta": "Book Appointment",
-    "explore": "Explore Services"
-  },
-  "services": {
-    "title": "Our Services",
-    "subtitle": "Indulge in our comprehensive range of premium beauty treatments, each designed to enhance your natural beauty.",
-    "from": "from",
-    "minutes": "min",
-    "priceTo": "to",
-    "hairStyling": {
-      "title": "Hair Styling",
-      "description": "Expert cuts, coloring, and styling for all hair types. Our master stylists create personalized looks."
+  "marketplace": {
+    "nav": {
+      "explore": "Explore Salons",
+      "forOwners": "For Salon Owners",
+      "login": "Sign In",
+      "registerSalon": "Register Your Salon"
     },
-    "facialTreatments": {
-      "title": "Facial Treatments",
-      "description": "Rejuvenating facials using premium skincare products to restore your natural glow."
+    "hero": {
+      "title": "Find Your Perfect Beauty Salon",
+      "subtitle": "Discover top-rated salons across Uzbekistan. Book appointments instantly and experience premium beauty services.",
+      "searchPlaceholder": "Search by salon name, service, or location...",
+      "search": "Search",
+      "popularCities": "Popular cities"
     },
-    "nailArt": {
-      "title": "Nail Art",
-      "description": "Manicures, pedicures, and artistic nail designs using top-quality products."
+    "categories": {
+      "all": "All Services",
+      "hair": "Hair",
+      "nails": "Nails",
+      "spa": "Spa & Wellness",
+      "makeup": "Makeup"
     },
-    "makeup": {
-      "title": "Makeup Artistry",
-      "description": "Professional makeup for any occasion, from natural everyday looks to glamorous events."
+    "salons": {
+      "title": "Featured Salons",
+      "subtitle": "Discover the best beauty salons in Uzbekistan",
+      "empty": "Be the first to register your salon",
+      "noSalons": "No salons found",
+      "beFirst": "Register your salon today and start attracting new clients",
+      "sort": "Sort by",
+      "sortRating": "Top Rated",
+      "sortReviews": "Most Reviews",
+      "sortNewest": "Newest"
     },
-    "spa": {
-      "title": "Spa & Wellness",
-      "description": "Relaxing massages and body treatments to rejuvenate your body and mind."
+    "salon": {
+      "reviews": "reviews",
+      "viewDetails": "View Details",
+      "bookNow": "Book Now",
+      "about": "About",
+      "services": "Services",
+      "team": "Our Team",
+      "gallery": "Gallery",
+      "location": "Location",
+      "hours": "Working Hours",
+      "contact": "Contact",
+      "from": "from",
+      "minutes": "min",
+      "closed": "Closed",
+      "open": "Open Now",
+      "experience": "years experience",
+      "verified": "Verified Salon"
     },
-    "bridal": {
-      "title": "Bridal Services",
-      "description": "Complete bridal packages including hair, makeup, and spa treatments for your special day."
-    }
-  },
-  "gallery": {
-    "title": "Our Work",
-    "subtitle": "Browse through our portfolio of stunning transformations and beautiful results."
-  },
-  "team": {
-    "title": "Meet Our Artists",
-    "subtitle": "Our team of skilled professionals is dedicated to bringing out your best self.",
-    "experience": "years experience",
-    "members": {
-      "sofia": {
-        "name": "Sofia Rodriguez",
-        "role": "Master Stylist & Founder",
-        "bio": "With over 15 years of experience, Sofia brings creative vision and technical mastery to every client."
-      },
-      "alex": {
-        "name": "Alexander Chen",
-        "role": "Color Specialist",
-        "bio": "Alex specializes in balayage, ombre, and creative color techniques that enhance natural beauty."
-      },
-      "maria": {
-        "name": "Maria Volkov",
-        "role": "Skincare Expert",
-        "bio": "Maria's holistic approach to skincare combines traditional techniques with modern innovations."
-      },
-      "james": {
-        "name": "James Mitchell",
-        "role": "Makeup Artist",
-        "bio": "James creates stunning looks for weddings, photoshoots, and special occasions."
-      }
-    }
-  },
-  "testimonials": {
-    "title": "What Our Clients Say",
-    "subtitle": "Discover why our clients keep coming back for their beauty needs.",
-    "reviews": {
-      "review1": {
-        "name": "Emma Thompson",
-        "text": "Absolutely love my new hair! Sofia really listened to what I wanted and the result exceeded my expectations. The salon atmosphere is so relaxing too."
-      },
-      "review2": {
-        "name": "Dilnoza Karimova",
-        "text": "The facial treatment was incredible. My skin has never looked better. Maria really knows her craft and makes you feel so comfortable."
-      },
-      "review3": {
-        "name": "Olga Petrova",
-        "text": "I've been coming here for years and wouldn't go anywhere else. The team is professional, friendly, and always up-to-date with the latest trends."
-      }
-    }
-  },
-  "contact": {
-    "title": "Book Your Experience",
-    "subtitle": "Ready to transform your look? Get in touch with us to schedule your appointment.",
-    "form": {
+    "booking": {
+      "title": "Book Appointment",
+      "selectService": "Select Service",
+      "selectMaster": "Select Master",
+      "anyMaster": "Any Available Master",
+      "selectDate": "Select Date",
+      "selectTime": "Select Time",
+      "yourDetails": "Your Details",
       "name": "Your Name",
-      "namePlaceholder": "Enter your full name",
-      "email": "Email Address",
-      "emailPlaceholder": "your@email.com",
       "phone": "Phone Number",
-      "phonePlaceholder": "+998 XX XXX XX XX",
-      "service": "Service Interest",
-      "servicePlaceholder": "Select a service",
-      "message": "Message",
-      "messagePlaceholder": "Tell us about your beauty goals...",
-      "submit": "Send Message",
-      "sending": "Sending..."
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Any special requests...",
+      "confirm": "Confirm Booking",
+      "success": "Booking Confirmed!",
+      "successMessage": "You will receive a confirmation shortly"
     },
-    "info": {
-      "title": "Visit Us",
-      "address": "123 Amir Temur Street",
-      "city": "Tashkent, Uzbekistan 100000",
-      "phone": "+998 71 123 45 67",
-      "email": "hello@lumiere.uz",
-      "hours": "Opening Hours",
-      "weekdays": "Mon - Fri: 9:00 - 20:00",
-      "saturday": "Saturday: 10:00 - 18:00",
-      "sunday": "Sunday: Closed",
-      "getDirections": "Get Directions",
-      "followUs": "Follow us:"
+    "review": {
+      "writeReview": "Write a Review",
+      "yourRating": "Your Rating",
+      "yourReview": "Your Review",
+      "reviewPlaceholder": "Share your experience...",
+      "submit": "Submit Review",
+      "success": "Review Submitted!",
+      "successMessage": "Thank you for your feedback"
     },
-    "success": {
-      "title": "Message Sent!",
-      "description": "We'll get back to you within 24 hours."
+    "map": {
+      "title": "Find Salons Near You",
+      "subtitle": "Browse salons on the map and find the perfect one for you",
+      "loading": "Loading map...",
+      "apiNote": "Yandex Maps integration"
     },
-    "error": {
-      "title": "Error",
-      "description": "Failed to send message. Please try again."
+    "stats": {
+      "salons": "Beauty Salons",
+      "clients": "Happy Clients",
+      "bookings": "Bookings Made",
+      "cities": "Cities"
+    },
+    "cta": {
+      "title": "Own a Beauty Salon?",
+      "subtitle": "Join BeautyUz marketplace and reach thousands of new clients. Register your salon for free and start growing your business.",
+      "registerSalon": "Register Your Salon",
+      "joinClient": "Join as Client"
+    },
+    "footer": {
+      "tagline": "Discover and book the best beauty salons across Uzbekistan. Your perfect look is just a click away.",
+      "forClients": "For Clients",
+      "findSalon": "Find a Salon",
+      "myBookings": "My Bookings",
+      "forOwners": "For Owners",
+      "registerSalon": "Register Salon",
+      "dashboard": "Salon Dashboard",
+      "copyright": "\u00a9 {{year}} BeautyUz. All rights reserved."
+    },
+    "auth": {
+      "title": "Welcome to BeautyUz",
+      "subtitle": "Sign in to book appointments and manage your favorites",
+      "signInWith": "Sign in with",
+      "or": "or",
+      "email": "Email",
+      "password": "Password",
+      "signIn": "Sign In",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account"
+    },
+    "profile": {
+      "title": "My Profile",
+      "bookings": "My Bookings",
+      "favorites": "Favorites",
+      "reviews": "My Reviews",
+      "settings": "Settings",
+      "signOut": "Sign Out",
+      "noBookings": "No bookings yet",
+      "noFavorites": "No favorites yet",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "cancelled": "Cancelled"
+    },
+    "owner": {
+      "title": "Salon Owner Dashboard",
+      "mySalons": "My Salons",
+      "addSalon": "Add New Salon",
+      "editSalon": "Edit Salon",
+      "salonInfo": "Salon Information",
+      "salonName": "Salon Name",
+      "description": "Description",
+      "address": "Address",
+      "city": "City",
+      "phone": "Phone",
+      "photos": "Photos",
+      "services": "Services",
+      "addService": "Add Service",
+      "team": "Team",
+      "addMaster": "Add Master",
+      "workingHours": "Working Hours",
+      "bookings": "Bookings",
+      "reviews": "Reviews",
+      "analytics": "Analytics",
+      "save": "Save Changes",
+      "noSalons": "You haven't registered any salons yet",
+      "registerFirst": "Register your first salon to start attracting clients"
+    },
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
     }
-  },
-  "footer": {
-    "tagline": "Where beauty meets artistry. Experience luxury beauty treatments in a relaxing, sophisticated environment.",
-    "newsletter": "Enter your email for beauty tips",
-    "subscribe": "Subscribe",
-    "subscribed": {
-      "title": "Subscribed!",
-      "description": "Thank you for joining our newsletter."
-    },
-    "quickLinks": "Quick Links",
-    "contactTitle": "Contact",
-    "copyright": "© {year} Lumiere Beauty Salon. All rights reserved."
   }
 }

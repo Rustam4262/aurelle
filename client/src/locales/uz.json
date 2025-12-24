@@ -1,147 +1,163 @@
 {
-  "nav": {
-    "services": "Xizmatlar",
-    "team": "Jamoa",
-    "gallery": "Galereya",
-    "testimonials": "Sharhlar",
-    "contact": "Aloqa",
-    "book": "Yozilish"
-  },
-  "hero": {
-    "title": "Go'zallik san'at bilan uchrashadigan joy",
-    "subtitle": "Qulay va nafis muhitda hashamatli go'zallik xizmatlaridan bahramand bo'ling. Bizning mutaxassislarimiz sizning tabiiy jozibangizni oshiradigan shaxsiy uslublar yaratadilar.",
-    "cta": "Yozilish",
-    "explore": "Xizmatlarni ko'rish"
-  },
-  "services": {
-    "title": "Bizning xizmatlar",
-    "subtitle": "Tabiiy go'zalligingizni oshirish uchun mo'ljallangan premium go'zallik xizmatlarimizdan bahramand bo'ling.",
-    "from": "dan",
-    "minutes": "daq",
-    "priceTo": "gacha",
-    "hairStyling": {
-      "title": "Soch turmagi",
-      "description": "Barcha soch turlari uchun professional kesish, bo'yash va turmaklash. Ustalarimiz individual uslublar yaratadilar."
+  "marketplace": {
+    "nav": {
+      "explore": "Salonlarni topish",
+      "forOwners": "Egalar uchun",
+      "login": "Kirish",
+      "registerSalon": "Salon qo'shish"
     },
-    "facialTreatments": {
-      "title": "Yuz parvarishi",
-      "description": "Tabiiy porlashingizni tiklash uchun premium kosmetika yordamida yoshartiruvchi protseduralar."
+    "hero": {
+      "title": "O'zingizga mos go'zallik salonini toping",
+      "subtitle": "O'zbekiston bo'ylab eng yaxshi salonlarni kashf eting. Onlayn bron qiling va premium xizmatlardan bahramand bo'ling.",
+      "searchPlaceholder": "Nom, xizmat yoki joylashuv bo'yicha qidirish...",
+      "search": "Qidirish",
+      "popularCities": "Mashhur shaharlar"
     },
-    "nailArt": {
-      "title": "Tirnoq xizmati",
-      "description": "Sifatli materiallar yordamida manikur, pedikur va badiiy tirnoq dizayni."
+    "categories": {
+      "all": "Barcha xizmatlar",
+      "hair": "Soch",
+      "nails": "Tirnoq",
+      "spa": "SPA va salomatlik",
+      "makeup": "Makiyaj"
     },
-    "makeup": {
-      "title": "Makiyaj",
-      "description": "Har qanday voqea uchun professional makiyaj — kundalik tabiiydan bayramona uslubgacha."
+    "salons": {
+      "title": "Tavsiya etilgan salonlar",
+      "subtitle": "O'zbekistonning eng yaxshi go'zallik salonlarini kashf eting",
+      "empty": "Birinchi bo'lib saloningizni ro'yxatdan o'tkazing",
+      "noSalons": "Salonlar topilmadi",
+      "beFirst": "Bugun saloningizni ro'yxatdan o'tkazing va yangi mijozlarni jalb qiling",
+      "sort": "Saralash",
+      "sortRating": "Reyting bo'yicha",
+      "sortReviews": "Sharhlar bo'yicha",
+      "sortNewest": "Yangi"
     },
-    "spa": {
-      "title": "SPA va salomatlik",
-      "description": "Tana va ruhni tiklash uchun bo'shashtiruvchi massaj va tana proseduralari."
-    },
-    "bridal": {
-      "title": "To'y xizmatlari",
-      "description": "Maxsus kuningiz uchun to'liq to'y paketi: soch turmagi, makiyaj va SPA."
-    }
-  },
-  "gallery": {
-    "title": "Bizning ishlarimiz",
-    "subtitle": "Ajoyib o'zgarishlar va go'zal natijalar portfoliosini ko'ring."
-  },
-  "team": {
-    "title": "Bizning ustalarimiz",
-    "subtitle": "Professional jamoamiz sizning eng yaxshi tomoningizni namoyon qilishga bag'ishlangan.",
-    "experience": "yillik tajriba",
-    "members": {
-      "sofia": {
-        "name": "Sofia Rodriges",
-        "role": "Bosh stilist va asoschisi",
-        "bio": "15 yildan ortiq tajriba bilan Sofia har bir mijozga ijodiy ko'rish va texnik mahorat olib keladi."
-      },
-      "alex": {
-        "name": "Aleksandr Chen",
-        "role": "Rang mutaxassisi",
-        "bio": "Aleks balayaj, ombre va ijodiy bo'yash texnikalariga ixtisoslashgan."
-      },
-      "maria": {
-        "name": "Mariya Volkova",
-        "role": "Teri parvarishi bo'yicha ekspert",
-        "bio": "Mariya an'anaviy usullarni zamonaviy innovatsiyalar bilan birlashtiradi."
-      },
-      "james": {
-        "name": "Jeyms Mitchell",
-        "role": "Vizajist",
-        "bio": "Jeyms to'ylar, fotosessiyalar va maxsus voqealar uchun ajoyib obrazlar yaratadi."
-      }
-    }
-  },
-  "testimonials": {
-    "title": "Mijozlarimiz fikrlari",
-    "subtitle": "Mijozlarimiz nega bizga qayta-qayta kelishlarini bilib oling.",
-    "reviews": {
-      "review1": {
-        "name": "Emma Tompson",
-        "text": "Yangi soch turmagimni juda yaxshi ko'raman! Sofia mening xohishlarimni diqqat bilan tingladi va natija kutilganidan ham yaxshi bo'ldi."
-      },
-      "review2": {
-        "name": "Dilnoza Karimova",
-        "text": "Yuz parvarishi protsedurasi ajoyib edi. Terim hech qachon bunday yaxshi ko'rinmagan edi. Mariya o'z ishining ustasi."
-      },
-      "review3": {
-        "name": "Olga Petrova",
-        "text": "Men bu yerga ko'p yillardan beri kelaman va boshqa joyga bormayman. Jamoa professional va do'stona."
-      }
-    }
-  },
-  "contact": {
-    "title": "Tajribangizni band qiling",
-    "subtitle": "Obrazingizni o'zgartirishga tayyormisiz? Uchrashuv belgilash uchun biz bilan bog'laning.",
-    "form": {
-      "name": "Ismingiz",
-      "namePlaceholder": "To'liq ismingizni kiriting",
-      "email": "Elektron pochta",
-      "emailPlaceholder": "sizning@pochta.com",
-      "phone": "Telefon raqami",
-      "phonePlaceholder": "+998 XX XXX XX XX",
-      "service": "Qiziqtirgan xizmat",
-      "servicePlaceholder": "Xizmatni tanlang",
-      "message": "Xabar",
-      "messagePlaceholder": "Go'zallik maqsadlaringiz haqida aytib bering...",
-      "submit": "Xabar yuborish",
-      "sending": "Yuborilmoqda..."
-    },
-    "info": {
-      "title": "Bizga tashrif buyuring",
-      "address": "Amir Temur ko'chasi, 123",
-      "city": "Toshkent, O'zbekiston 100000",
-      "phone": "+998 71 123 45 67",
-      "email": "hello@lumiere.uz",
+    "salon": {
+      "reviews": "sharhlar",
+      "viewDetails": "Batafsil",
+      "bookNow": "Yozilish",
+      "about": "Salon haqida",
+      "services": "Xizmatlar",
+      "team": "Bizning jamoa",
+      "gallery": "Galereya",
+      "location": "Manzil",
       "hours": "Ish vaqti",
-      "weekdays": "Du - Ju: 9:00 - 20:00",
-      "saturday": "Shanba: 10:00 - 18:00",
-      "sunday": "Yakshanba: Dam olish",
-      "getDirections": "Yo'nalishni olish",
-      "followUs": "Bizni kuzating:"
+      "contact": "Aloqa",
+      "from": "dan",
+      "minutes": "daq",
+      "closed": "Yopiq",
+      "open": "Ochiq",
+      "experience": "yillik tajriba",
+      "verified": "Tasdiqlangan salon"
     },
-    "success": {
-      "title": "Xabar yuborildi!",
-      "description": "24 soat ichida siz bilan bog'lanamiz."
+    "booking": {
+      "title": "Uchrashuv belgilash",
+      "selectService": "Xizmatni tanlang",
+      "selectMaster": "Ustani tanlang",
+      "anyMaster": "Har qanday bo'sh usta",
+      "selectDate": "Sanani tanlang",
+      "selectTime": "Vaqtni tanlang",
+      "yourDetails": "Sizning ma'lumotlaringiz",
+      "name": "Ismingiz",
+      "phone": "Telefon",
+      "notes": "Izohlar (ixtiyoriy)",
+      "notesPlaceholder": "Maxsus talablar...",
+      "confirm": "Bronni tasdiqlash",
+      "success": "Bron tasdiqlandi!",
+      "successMessage": "Tez orada tasdiqlash olasiz"
     },
-    "error": {
-      "title": "Xatolik",
-      "description": "Xabarni yuborib bo'lmadi. Iltimos, qayta urinib ko'ring."
+    "review": {
+      "writeReview": "Sharh yozish",
+      "yourRating": "Sizning bahongiz",
+      "yourReview": "Sizning sharhingiz",
+      "reviewPlaceholder": "Tajribangizni baham ko'ring...",
+      "submit": "Yuborish",
+      "success": "Sharh yuborildi!",
+      "successMessage": "Fikr-mulohazangiz uchun rahmat"
+    },
+    "map": {
+      "title": "Yaqin atrofdagi salonlarni toping",
+      "subtitle": "Xaritada salonlarni ko'ring va o'zingizga mosini tanlang",
+      "loading": "Xarita yuklanmoqda...",
+      "apiNote": "Yandex Xaritalar integratsiyasi"
+    },
+    "stats": {
+      "salons": "Go'zallik salonlari",
+      "clients": "Mamnun mijozlar",
+      "bookings": "Bronlar",
+      "cities": "Shaharlar"
+    },
+    "cta": {
+      "title": "Go'zallik saloningiz bormi?",
+      "subtitle": "BeautyUz ga qo'shiling va minglab yangi mijozlarni jalb qiling. Bepul ro'yxatdan o'tish.",
+      "registerSalon": "Salon qo'shish",
+      "joinClient": "Mijoz bo'lish"
+    },
+    "footer": {
+      "tagline": "O'zbekiston bo'ylab eng yaxshi go'zallik salonlarini toping va bron qiling. Mukammal ko'rinish — faqat bir bosish narida.",
+      "forClients": "Mijozlar uchun",
+      "findSalon": "Salon topish",
+      "myBookings": "Mening bronlarim",
+      "forOwners": "Egalar uchun",
+      "registerSalon": "Salon qo'shish",
+      "dashboard": "Boshqaruv paneli",
+      "copyright": "© {{year}} BeautyUz. Barcha huquqlar himoyalangan."
+    },
+    "auth": {
+      "title": "BeautyUz ga xush kelibsiz",
+      "subtitle": "Bron qilish va sevimlilarni boshqarish uchun kiring",
+      "signInWith": "Orqali kirish",
+      "or": "yoki",
+      "email": "Email",
+      "password": "Parol",
+      "signIn": "Kirish",
+      "noAccount": "Akkountingiz yo'qmi?",
+      "createAccount": "Akkount yaratish"
+    },
+    "profile": {
+      "title": "Mening profilim",
+      "bookings": "Mening bronlarim",
+      "favorites": "Sevimlilar",
+      "reviews": "Mening sharhlarim",
+      "settings": "Sozlamalar",
+      "signOut": "Chiqish",
+      "noBookings": "Hozircha bronlar yo'q",
+      "noFavorites": "Hozircha sevimlilar yo'q",
+      "upcoming": "Kelayotgan",
+      "past": "O'tgan",
+      "cancelled": "Bekor qilingan"
+    },
+    "owner": {
+      "title": "Salon egasining paneli",
+      "mySalons": "Mening salonlarim",
+      "addSalon": "Salon qo'shish",
+      "editSalon": "Salonni tahrirlash",
+      "salonInfo": "Salon ma'lumotlari",
+      "salonName": "Salon nomi",
+      "description": "Tavsif",
+      "address": "Manzil",
+      "city": "Shahar",
+      "phone": "Telefon",
+      "photos": "Rasmlar",
+      "services": "Xizmatlar",
+      "addService": "Xizmat qo'shish",
+      "team": "Jamoa",
+      "addMaster": "Usta qo'shish",
+      "workingHours": "Ish vaqti",
+      "bookings": "Bronlar",
+      "reviews": "Sharhlar",
+      "analytics": "Analitika",
+      "save": "Saqlash",
+      "noSalons": "Sizda hali ro'yxatdan o'tgan salonlar yo'q",
+      "registerFirst": "Birinchi saloningizni ro'yxatdan o'tkazing va mijozlarni jalb qilishni boshlang"
+    },
+    "days": {
+      "monday": "Dushanba",
+      "tuesday": "Seshanba",
+      "wednesday": "Chorshanba",
+      "thursday": "Payshanba",
+      "friday": "Juma",
+      "saturday": "Shanba",
+      "sunday": "Yakshanba"
     }
-  },
-  "footer": {
-    "tagline": "Go'zallik san'at bilan uchrashadigan joy. Qulay va nafis muhitda hashamatli go'zallik xizmatlaridan bahramand bo'ling.",
-    "newsletter": "Go'zallik maslahatlari uchun emailingizni kiriting",
-    "subscribe": "Obuna bo'lish",
-    "subscribed": {
-      "title": "Obuna bo'ldingiz!",
-      "description": "Bizning xabar yozuvimizga qo'shilganingiz uchun rahmat."
-    },
-    "quickLinks": "Tezkor havolalar",
-    "contactTitle": "Aloqa",
-    "copyright": "© {year} Lumiere Beauty Salon. Barcha huquqlar himoyalangan."
   }
 }
