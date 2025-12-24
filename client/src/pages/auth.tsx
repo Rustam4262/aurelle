@@ -195,14 +195,6 @@ export default function AuthPage() {
     }
   };
 
-  if (isLoading || profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (user && profile?.exists && profile?.isProfileComplete) {
       if (profile.role === "owner") {
@@ -212,6 +204,14 @@ export default function AuthPage() {
       }
     }
   }, [user, profile, navigate]);
+
+  if (isLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   if (user && profile?.exists && profile?.isProfileComplete) {
     return (
