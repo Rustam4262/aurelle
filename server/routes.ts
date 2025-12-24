@@ -1248,6 +1248,57 @@ export async function registerRoutes(
     }
   });
 
+  // Get all bookings across owner's salons (for calendar)
+  app.get("/api/owner/bookings", isAuthenticated, async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+
+      // Get all owner's salons
+      const ownerSalons = await db.select().from(salons)
+        .where(eq(salons.ownerId, ownerId));
+      
+      if (ownerSalons.length === 0) {
+        return res.json([]);
+      }
+
+      const salonIds = ownerSalons.map(s => s.id);
+      
+      // Get all bookings for these salons
+      const allBookings = await db.select().from(bookings)
+        .where(inArray(bookings.salonId, salonIds))
+        .orderBy(desc(bookings.bookingDate));
+      
+      if (allBookings.length === 0) {
+        return res.json([]);
+      }
+
+      // Enrich with salon, service, and master data
+      const serviceIds = [...new Set(allBookings.map(b => b.serviceId))];
+      const masterIds = [...new Set(allBookings.filter(b => b.masterId).map(b => b.masterId!))];
+      
+      const [servicesData, mastersData] = await Promise.all([
+        serviceIds.length > 0 ? db.select().from(services).where(inArray(services.id, serviceIds)) : [],
+        masterIds.length > 0 ? db.select().from(masters).where(inArray(masters.id, masterIds)) : [],
+      ]);
+      
+      const servicesMap = new Map(servicesData.map(s => [s.id, s]));
+      const mastersMap = new Map(mastersData.map(m => [m.id, m]));
+      const salonsMap = new Map(ownerSalons.map(s => [s.id, s]));
+      
+      const enrichedBookings = allBookings.map(booking => ({
+        ...booking,
+        salon: salonsMap.get(booking.salonId) || null,
+        service: servicesMap.get(booking.serviceId) || null,
+        master: booking.masterId ? mastersMap.get(booking.masterId) || null : null,
+      }));
+      
+      return res.json(enrichedBookings);
+    } catch (error) {
+      console.error("Get owner bookings error:", error);
+      return res.status(500).json({ error: "Failed to get bookings" });
+    }
+  });
+
   // Confirm/cancel booking (owner)
   app.patch("/api/owner/bookings/:id/status", isAuthenticated, async (req: any, res) => {
     try {

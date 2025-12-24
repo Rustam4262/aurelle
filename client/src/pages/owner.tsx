@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Salon } from "@shared/schema";
+import type { Salon, Booking, Service, Master } from "@shared/schema";
 import {
   ArrowLeft,
   Plus,
@@ -22,7 +22,15 @@ import {
   Scissors,
   LogOut,
 } from "lucide-react";
+import { BookingCalendar } from "@/components/booking-calendar";
 import { LanguageSwitcher } from "@/components/language-switcher";
+
+interface EnrichedBooking extends Booking {
+  salon?: Salon;
+  service?: Service;
+  master?: Master;
+  clientName?: string;
+}
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -41,10 +49,16 @@ export default function OwnerPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showAddSalon, setShowAddSalon] = useState(false);
+  const [activeTab, setActiveTab] = useState("salons");
 
   const { data: salons, isLoading: salonsLoading } = useQuery<Salon[]>({
     queryKey: ["/api/owner/salons"],
     enabled: !!user,
+  });
+
+  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<EnrichedBooking[]>({
+    queryKey: ["/api/owner/bookings"],
+    enabled: !!user && activeTab === "calendar",
   });
 
   const createSalonMutation = useMutation({
@@ -161,15 +175,28 @@ export default function OwnerPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
-          <h2 className="font-serif text-2xl text-foreground">{t("marketplace.owner.mySalons")}</h2>
-          <Button onClick={() => setShowAddSalon(!showAddSalon)} data-testid="button-add-salon">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("marketplace.owner.addSalon")}
-          </Button>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="salons" data-testid="tab-salons">
+              <Store className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.owner.mySalons")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" data-testid="tab-calendar">
+              <Calendar className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {showAddSalon && (
+          <TabsContent value="salons" className="space-y-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
+              <h2 className="font-serif text-2xl text-foreground">{t("marketplace.owner.mySalons")}</h2>
+              <Button onClick={() => setShowAddSalon(!showAddSalon)} data-testid="button-add-salon">
+                <Plus className="h-4 w-4 mr-2" />
+                {t("marketplace.owner.addSalon")}
+              </Button>
+            </div>
+
+            {showAddSalon && (
           <Card className="p-6 mb-8">
             <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.addSalon")}</h3>
             <form onSubmit={handleCreateSalon} className="space-y-4">
@@ -339,6 +366,17 @@ export default function OwnerPage() {
             </Button>
           </Card>
         )}
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <BookingCalendar
+              bookings={bookingsData || []}
+              isLoading={bookingsLoading}
+              showMaster={true}
+              showClient={true}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

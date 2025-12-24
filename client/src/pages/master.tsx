@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Master, Salon, Booking, Review, MasterWorkingHours, MasterPortfolio, Service, Notification } from "@shared/schema";
+import { BookingCalendar } from "@/components/booking-calendar";
 import {
   ArrowLeft,
   Calendar,
@@ -33,9 +34,13 @@ import {
   Trash2,
   Loader2,
   Bell,
+  CalendarCheck,
 } from "lucide-react";
+
 import { LanguageSwitcher } from "@/components/language-switcher";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import {
   BarChart,
   Bar,
@@ -49,6 +54,13 @@ import {
   Cell,
   Legend,
 } from "recharts";
+
+interface EnrichedBooking extends Booking {
+  salon?: Salon;
+  service?: Service;
+  master?: Master;
+  clientName?: string;
+}
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -123,9 +135,9 @@ export default function MasterPage() {
     enabled: !!user && activeTab === "schedule",
   });
 
-  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<Booking[]>({
+  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<EnrichedBooking[]>({
     queryKey: ["/api/master/bookings"],
-    enabled: !!user && activeTab === "bookings",
+    enabled: !!user && (activeTab === "bookings" || activeTab === "calendar"),
   });
 
   const { data: portfolioData, isLoading: portfolioLoading } = useQuery<MasterPortfolio[]>({
@@ -512,7 +524,7 @@ export default function MasterPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="overview" data-testid="tab-overview">
               <Store className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.master.tabs.overview")}</span>
@@ -524,6 +536,10 @@ export default function MasterPage() {
             <TabsTrigger value="bookings" data-testid="tab-bookings">
               <Calendar className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.master.tabs.bookings")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" data-testid="tab-calendar">
+              <CalendarCheck className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
             </TabsTrigger>
             <TabsTrigger value="portfolio" data-testid="tab-portfolio">
               <Image className="h-4 w-4 mr-2" />
@@ -867,6 +883,14 @@ export default function MasterPage() {
                 </p>
               )}
             </Card>
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <BookingCalendar
+              bookings={bookingsData || []}
+              isLoading={bookingsLoading}
+              showClient={true}
+            />
           </TabsContent>
 
           <TabsContent value="portfolio" className="space-y-6">

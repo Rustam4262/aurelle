@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { UserProfile, Salon, Booking, Review, Service, Master } from "@shared/schema";
+import { BookingCalendar } from "@/components/booking-calendar";
 import {
   ArrowLeft,
   Calendar,
@@ -100,7 +101,7 @@ export default function ClientPage() {
 
   const { data: bookingsData, isLoading: bookingsLoading } = useQuery<EnrichedBooking[]>({
     queryKey: ["/api/client/bookings"],
-    enabled: !!user && activeTab === "bookings",
+    enabled: !!user && (activeTab === "bookings" || activeTab === "calendar"),
   });
 
   const { data: favoritesData, isLoading: favoritesLoading } = useQuery<EnrichedFavorite[]>({
@@ -359,7 +360,7 @@ export default function ClientPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="profile" data-testid="tab-profile">
               <User className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.client.tabs.profile")}</span>
@@ -367,6 +368,10 @@ export default function ClientPage() {
             <TabsTrigger value="bookings" data-testid="tab-bookings">
               <Calendar className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.client.tabs.bookings")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" data-testid="tab-calendar">
+              <Calendar className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
             </TabsTrigger>
             <TabsTrigger value="favorites" data-testid="tab-favorites">
               <Heart className="h-4 w-4 mr-2" />
@@ -572,6 +577,15 @@ export default function ClientPage() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <BookingCalendar
+              bookings={bookingsData || []}
+              isLoading={bookingsLoading}
+              showSalon={true}
+              showMaster={true}
+            />
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-6">
