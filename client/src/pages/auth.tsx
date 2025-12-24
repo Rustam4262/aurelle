@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, Sparkles, User, Store, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, User, Store, Check, Mail } from "lucide-react";
 import { SiGoogle, SiApple } from "react-icons/si";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function YandexIcon({ className }: { className?: string }) {
   return (
@@ -57,6 +58,13 @@ export default function AuthPage() {
     phone: "",
     city: "",
   });
+  
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [emailAuthData, setEmailAuthData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const { data: profile, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
@@ -92,6 +100,68 @@ export default function AuthPage() {
     },
   });
 
+  const loginMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string }) => {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: t("marketplace.auth.loginSuccess"),
+        description: t("marketplace.auth.welcomeBack"),
+      });
+      window.location.href = "/auth";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("marketplace.auth.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string }) => {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Registration failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: t("marketplace.auth.registerSuccess"),
+        description: t("marketplace.auth.accountCreated"),
+      });
+      window.location.href = "/auth";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("marketplace.auth.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveProfileMutation.mutate({
@@ -100,6 +170,29 @@ export default function AuthPage() {
       phone: formData.phone,
       city: formData.city,
     });
+  };
+
+  const handleEmailAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authMode === "register") {
+      if (emailAuthData.password !== emailAuthData.confirmPassword) {
+        toast({
+          title: t("marketplace.auth.error"),
+          description: t("marketplace.auth.passwordMismatch"),
+          variant: "destructive",
+        });
+        return;
+      }
+      registerMutation.mutate({
+        email: emailAuthData.email,
+        password: emailAuthData.password,
+      });
+    } else {
+      loginMutation.mutate({
+        email: emailAuthData.email,
+        password: emailAuthData.password,
+      });
+    }
   };
 
   if (isLoading || profileLoading) {
@@ -318,42 +411,138 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Button
-                className="w-full"
-                size="lg"
-                variant="outline"
-                onClick={loginWithReplit}
-                data-testid="button-login-google"
-              >
-                <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
-                {t("marketplace.auth.signInWithGoogle")}
-              </Button>
-
-              <Button
-                className="w-full"
-                size="lg"
-                variant="outline"
-                onClick={loginWithReplit}
-                data-testid="button-login-apple"
-              >
-                <SiApple className="mr-2 h-5 w-5" />
-                {t("marketplace.auth.signInWithApple")}
-              </Button>
-
-              {providers?.yandex && (
+            <Tabs defaultValue="social" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="social" data-testid="tab-social-login">
+                  {t("marketplace.auth.socialLogin")}
+                </TabsTrigger>
+                <TabsTrigger value="email" data-testid="tab-email-login">
+                  {t("marketplace.auth.emailLogin")}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="social" className="space-y-3 mt-4">
                 <Button
                   className="w-full"
                   size="lg"
                   variant="outline"
-                  onClick={loginWithYandex}
-                  data-testid="button-login-yandex"
+                  onClick={loginWithReplit}
+                  data-testid="button-login-google"
                 >
-                  <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
-                  {t("marketplace.auth.signInWithYandex")}
+                  <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
+                  {t("marketplace.auth.signInWithGoogle")}
                 </Button>
-              )}
-            </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                  onClick={loginWithReplit}
+                  data-testid="button-login-apple"
+                >
+                  <SiApple className="mr-2 h-5 w-5" />
+                  {t("marketplace.auth.signInWithApple")}
+                </Button>
+
+                {providers?.yandex && (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    onClick={loginWithYandex}
+                    data-testid="button-login-yandex"
+                  >
+                    <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
+                    {t("marketplace.auth.signInWithYandex")}
+                  </Button>
+                )}
+              </TabsContent>
+
+              <TabsContent value="email" className="mt-4">
+                <div className="space-y-4">
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      type="button"
+                      variant={authMode === "login" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => setAuthMode("login")}
+                      data-testid="button-mode-login"
+                    >
+                      {t("marketplace.auth.login")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={authMode === "register" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => setAuthMode("register")}
+                      data-testid="button-mode-register"
+                    >
+                      {t("marketplace.auth.register")}
+                    </Button>
+                  </div>
+
+                  <form onSubmit={handleEmailAuth} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t("marketplace.auth.email")}</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={emailAuthData.email}
+                        onChange={(e) => setEmailAuthData({ ...emailAuthData, email: e.target.value })}
+                        required
+                        data-testid="input-email"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">{t("marketplace.auth.password")}</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="********"
+                        value={emailAuthData.password}
+                        onChange={(e) => setEmailAuthData({ ...emailAuthData, password: e.target.value })}
+                        required
+                        minLength={6}
+                        data-testid="input-password"
+                      />
+                    </div>
+
+                    {authMode === "register" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">{t("marketplace.auth.confirmPassword")}</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="********"
+                          value={emailAuthData.confirmPassword}
+                          onChange={(e) => setEmailAuthData({ ...emailAuthData, confirmPassword: e.target.value })}
+                          required
+                          minLength={6}
+                          data-testid="input-confirm-password"
+                        />
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={loginMutation.isPending || registerMutation.isPending}
+                      data-testid="button-submit-email-auth"
+                    >
+                      <Mail className="mr-2 h-5 w-5" />
+                      {loginMutation.isPending || registerMutation.isPending
+                        ? t("marketplace.auth.processing")
+                        : authMode === "login"
+                        ? t("marketplace.auth.signIn")
+                        : t("marketplace.auth.createAccount")}
+                    </Button>
+                  </form>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <p className="text-center text-xs text-muted-foreground">
               {t("marketplace.auth.termsNotice")}
