@@ -106,7 +106,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
                 scrolled ? "text-foreground" : "text-white"
               }`}
             >
-              BeautyUz
+              AURELLE
             </span>
           </Link>
 
@@ -599,7 +599,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <span className="font-serif text-2xl font-semibold text-foreground">
-              BeautyUz
+              AURELLE
             </span>
             <p className="text-muted-foreground mt-3 max-w-sm">
               {t("marketplace.footer.tagline")}

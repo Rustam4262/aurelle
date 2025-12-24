@@ -97,7 +97,7 @@
     },
     "cta": {
       "title": "Own a Beauty Salon?",
-      "subtitle": "Join BeautyUz marketplace and reach thousands of new clients. Register your salon for free and start growing your business.",
+      "subtitle": "Join AURELLE marketplace and reach thousands of new clients. Register your salon for free and start growing your business.",
       "registerSalon": "Register Your Salon",
       "joinClient": "Join as Client"
     },
@@ -109,10 +109,10 @@
       "forOwners": "For Owners",
       "registerSalon": "Register Salon",
       "dashboard": "Salon Dashboard",
-      "copyright": "\u00a9 {{year}} BeautyUz. All rights reserved."
+      "copyright": "\u00a9 {{year}} AURELLE. All rights reserved."
     },
     "auth": {
-      "title": "Welcome to BeautyUz",
+      "title": "Welcome to AURELLE",
       "subtitle": "Sign in to book appointments and manage your favorites",
       "signInWith": "Sign in with",
       "signInWithYandex": "Sign in with Yandex",
@@ -144,7 +144,7 @@
       "termsNotice": "By signing in, you agree to our Terms of Service and Privacy Policy",
       "completeProfile": "Complete Your Profile",
       "completeProfileSubtitle": "Tell us a bit about yourself to personalize your experience",
-      "selectRole": "How will you use BeautyUz?",
+      "selectRole": "How will you use AURELLE?",
       "roleClient": "Client",
       "roleClientDesc": "Book appointments at salons",
       "roleOwner": "Salon Owner",
@@ -158,7 +158,7 @@
       "completeRegistration": "Complete Registration",
       "saving": "Saving...",
       "profileSaved": "Profile Saved!",
-      "welcomeMessage": "Welcome to BeautyUz!",
+      "welcomeMessage": "Welcome to AURELLE!",
       "error": "Error",
       "saveFailed": "Failed to save profile. Please try again."
     },

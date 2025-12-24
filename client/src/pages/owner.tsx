@@ -22,6 +22,7 @@ import {
   Scissors,
   LogOut,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -107,13 +108,16 @@ export default function OwnerPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b border-border">
-          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center">
-            <Link href="/">
-              <Button variant="ghost" size="icon" data-testid="button-back-owner">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <h1 className="font-serif text-xl text-foreground ml-4">{t("marketplace.owner.title")}</h1>
+          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center">
+              <Link href="/">
+                <Button variant="ghost" size="icon" data-testid="button-back-owner">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="font-serif text-xl text-foreground ml-4">{t("marketplace.owner.title")}</h1>
+            </div>
+            <LanguageSwitcher />
           </div>
         </div>
 
@@ -138,7 +142,7 @@ export default function OwnerPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center">
             <Link href="/">
               <Button variant="ghost" size="icon" data-testid="button-back-owner-dash">
@@ -147,9 +151,12 @@ export default function OwnerPage() {
             </Link>
             <h1 className="font-serif text-xl text-foreground ml-4">{t("marketplace.owner.title")}</h1>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-owner">
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-owner">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

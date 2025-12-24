@@ -97,7 +97,7 @@
     },
     "cta": {
       "title": "Go'zallik saloningiz bormi?",
-      "subtitle": "BeautyUz ga qo'shiling va minglab yangi mijozlarni jalb qiling. Bepul ro'yxatdan o'tish.",
+      "subtitle": "AURELLE ga qo'shiling va minglab yangi mijozlarni jalb qiling. Bepul ro'yxatdan o'tish.",
       "registerSalon": "Salon qo'shish",
       "joinClient": "Mijoz bo'lish"
     },
@@ -109,10 +109,10 @@
       "forOwners": "Egalar uchun",
       "registerSalon": "Salon qo'shish",
       "dashboard": "Boshqaruv paneli",
-      "copyright": "© {{year}} BeautyUz. Barcha huquqlar himoyalangan."
+      "copyright": "© {{year}} AURELLE. Barcha huquqlar himoyalangan."
     },
     "auth": {
-      "title": "BeautyUz ga xush kelibsiz",
+      "title": "AURELLE ga xush kelibsiz",
       "subtitle": "Bron qilish va sevimlilarni boshqarish uchun kiring",
       "signInWith": "Orqali kirish",
       "signInWithYandex": "Yandex orqali kirish",
@@ -144,7 +144,7 @@
       "termsNotice": "Kirish orqali siz Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildirasiz",
       "completeProfile": "Profilingizni to'ldiring",
       "completeProfileSubtitle": "Tajribangizni shaxsiylashtirish uchun o'zingiz haqingizda ma'lumot bering",
-      "selectRole": "BeautyUz dan qanday foydalanasiz?",
+      "selectRole": "AURELLE dan qanday foydalanasiz?",
       "roleClient": "Mijoz",
       "roleClientDesc": "Salonlarga bron qilish",
       "roleOwner": "Salon egasi",
@@ -158,7 +158,7 @@
       "completeRegistration": "Ro'yxatdan o'tishni yakunlash",
       "saving": "Saqlanmoqda...",
       "profileSaved": "Profil saqlandi!",
-      "welcomeMessage": "BeautyUz ga xush kelibsiz!",
+      "welcomeMessage": "AURELLE ga xush kelibsiz!",
       "error": "Xato",
       "saveFailed": "Profilni saqlab bo'lmadi. Qaytadan urinib ko'ring."
     },

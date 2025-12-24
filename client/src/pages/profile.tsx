@@ -17,6 +17,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -54,16 +55,19 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <Link href="/">
             <Button variant="ghost" size="icon" data-testid="button-back-profile">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <h1 className="font-serif text-xl text-foreground">{t("marketplace.profile.title")}</h1>
-          <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

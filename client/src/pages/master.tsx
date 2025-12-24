@@ -34,6 +34,7 @@ import {
   Loader2,
   Bell,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   BarChart,
@@ -306,13 +307,16 @@ export default function MasterPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b border-border">
-          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon" data-testid="button-back-master">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <h1 className="font-serif text-xl text-foreground">{t("marketplace.master.title")}</h1>
+          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <Button variant="ghost" size="icon" data-testid="button-back-master">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="font-serif text-xl text-foreground">{t("marketplace.master.title")}</h1>
+            </div>
+            <LanguageSwitcher />
           </div>
         </div>
 
@@ -382,6 +386,7 @@ export default function MasterPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSwitcher />
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative" data-testid="button-notifications">

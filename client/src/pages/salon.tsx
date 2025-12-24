@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Scissors,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -60,6 +61,7 @@ function SalonHeader({ salon }: { salon: Salon }) {
           </Button>
         </Link>
         <div className="flex gap-2">
+          <LanguageSwitcher variant="ghost" className="bg-white/80 backdrop-blur-sm hover:bg-white text-foreground" />
           <Button variant="ghost" size="icon" className="bg-white/80 backdrop-blur-sm hover:bg-white" data-testid="button-share">
             <Share2 className="h-5 w-5" />
           </Button>

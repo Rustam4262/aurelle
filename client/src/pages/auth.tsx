@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ArrowLeft, Sparkles, User, Store, Check, Mail } from "lucide-react";
 import { SiGoogle, SiApple } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 function YandexIcon({ className }: { className?: string }) {
   return (
@@ -226,12 +227,13 @@ export default function AuthPage() {
   if (user && (!profile?.exists || !profile?.isProfileComplete)) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="p-6">
+        <div className="p-6 flex items-center justify-between">
           <Link href="/">
             <Button variant="ghost" size="icon" data-testid="button-back-auth">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
+          <LanguageSwitcher />
         </div>
 
         <div className="flex-1 flex items-center justify-center p-6">
@@ -385,12 +387,13 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="p-6">
+      <div className="p-6 flex items-center justify-between">
         <Link href="/">
           <Button variant="ghost" size="icon" data-testid="button-back-auth">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
+        <LanguageSwitcher />
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
