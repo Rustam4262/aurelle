@@ -36,7 +36,16 @@ Preferred communication style: Simple, everyday language.
 ### User Roles
 - **client**: Can browse salons, book appointments, leave reviews
 - **owner**: Can register and manage salons, add staff with login credentials
-- **master**: Staff accounts created by owners with personal dashboards (route: /master)
+- **master**: Staff accounts created by owners with comprehensive personal dashboards (route: /master)
+
+### Master Dashboard Features
+The master dashboard (`/master`) provides staff members with complete work management:
+- **Overview Tab**: Stats summary, upcoming appointments, recent reviews
+- **Schedule Tab**: Working hours management by day of week with enable/disable toggles
+- **Bookings Tab**: Manage appointments (confirm, complete, cancel with reason), filter by status
+- **Portfolio Tab**: Upload and manage work gallery images
+- **Analytics Tab**: Earnings charts, popular services breakdown, booking status pie charts, client retention metrics
+- **Notifications**: Bell icon with unread count, real-time notifications for new bookings
 
 ### Data Storage
 - **Current**: In-memory storage (MemStorage class) using JavaScript Maps
