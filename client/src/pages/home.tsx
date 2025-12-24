@@ -487,7 +487,8 @@ function MapSection() {
   useEffect(() => {
     // Load Yandex Maps API
     const script = document.createElement("script");
-    script.src = "https://api-maps.yandex.ru/2.1/?apikey=&lang=en_US";
+    const apiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "";
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=en_US`;
     script.async = true;
     script.onload = () => setMapLoaded(true);
     document.head.appendChild(script);

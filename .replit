@@ -41,3 +41,8 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_log_in_with_replit:2.0.0", "javascript_database:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_YANDEX_MAPS_API_KEY = "22630f41-e074-42fd-9549-c902a031fab1"
