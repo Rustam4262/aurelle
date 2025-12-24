@@ -175,6 +175,31 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Review = typeof reviews.$inferSelect;
 
+// ============ USER PROFILES ============
+export const userProfiles = pgTable("user_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  role: varchar("role", { length: 20 }).notNull().default("client"),
+  fullName: varchar("full_name", { length: 200 }),
+  phone: varchar("phone", { length: 20 }),
+  city: varchar("city", { length: 100 }),
+  avatarUrl: varchar("avatar_url", { length: 500 }),
+  isProfileComplete: boolean("is_profile_complete").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_profiles_user").on(table.userId),
+]);
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+
 // ============ FAVORITES ============
 export const favorites = pgTable("favorites", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
