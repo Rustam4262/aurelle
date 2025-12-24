@@ -11,9 +11,26 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ArrowLeft, Sparkles, User, Store, Check } from "lucide-react";
 
+function YandexIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.272 19.636h-2.182V9.454l-2.363 4.636H8.363l-2.363-4.636v10.182H3.818V4.363h2.182l3.636 7.273 3.636-7.273h2.182v15.273h-1.182z"/>
+    </svg>
+  );
+}
+
 function loginWithReplit() {
   window.location.href = "/api/login";
 }
+
+function loginWithYandex() {
+  window.location.href = "/api/auth/yandex";
+}
+
+type AuthProviders = {
+  replit: boolean;
+  yandex: boolean;
+};
 
 type UserProfile = {
   exists: boolean;
@@ -43,6 +60,10 @@ export default function AuthPage() {
   const { data: profile, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
     enabled: !!user,
+  });
+
+  const { data: providers } = useQuery<AuthProviders>({
+    queryKey: ["/api/auth/providers"],
   });
 
   const saveProfileMutation = useMutation({
@@ -296,14 +317,29 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={loginWithReplit}
-              data-testid="button-login-replit"
-            >
-              {t("marketplace.auth.signInWith")} Replit
-            </Button>
+            <div className="space-y-3">
+              {providers?.yandex && (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                  onClick={loginWithYandex}
+                  data-testid="button-login-yandex"
+                >
+                  <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
+                  {t("marketplace.auth.signInWithYandex")}
+                </Button>
+              )}
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={loginWithReplit}
+                data-testid="button-login-replit"
+              >
+                {t("marketplace.auth.signInWithReplit")}
+              </Button>
+            </div>
 
             <p className="text-center text-xs text-muted-foreground">
               {t("marketplace.auth.termsNotice")}

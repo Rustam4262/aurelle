@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupYandexAuth, isYandexConfigured } from "./yandexAuth";
 import { db } from "./db";
 import { 
   contactSchema, 
@@ -30,6 +31,17 @@ export async function registerRoutes(
   // Setup authentication
   await setupAuth(app);
   registerAuthRoutes(app);
+  
+  // Setup Yandex OAuth (if configured)
+  await setupYandexAuth(app);
+
+  // Auth providers status endpoint
+  app.get("/api/auth/providers", (req, res) => {
+    res.json({
+      replit: true,
+      yandex: isYandexConfigured(),
+    });
+  });
 
   // ============ PUBLIC ROUTES ============
   
