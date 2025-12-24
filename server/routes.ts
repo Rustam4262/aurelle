@@ -4,6 +4,7 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 import { setupYandexAuth, isYandexConfigured } from "./yandexAuth";
 import { setupLocalAuth } from "./localAuth";
 import { db } from "./db";
+import bcrypt from "bcrypt";
 import { 
   contactSchema, 
   newsletterSchema,
@@ -15,6 +16,7 @@ import {
   salonWorkingHours,
   favorites,
   userProfiles,
+  users,
   insertSalonSchema,
   insertMasterSchema,
   insertServiceSchema,
@@ -604,11 +606,12 @@ export async function registerRoutes(
     }
   });
 
-  // Add master to salon
+  // Add master to salon (with optional login credentials)
   app.post("/api/owner/salons/:salonId/masters", isAuthenticated, async (req: any, res) => {
     try {
       const { salonId } = req.params;
       const ownerId = req.user.claims.sub;
+      const { email, password, ...masterData } = req.body;
 
       // Verify ownership
       const [salon] = await db.select().from(salons)
@@ -618,7 +621,48 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Not authorized" });
       }
 
-      const parsed = insertMasterSchema.safeParse({ ...req.body, salonId });
+      let userId = null;
+
+      // If email and password provided, create user account for master
+      if (email && password) {
+        // Check if user already exists
+        const existingUser = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (existingUser.length > 0) {
+          return res.status(400).json({ error: "User with this email already exists" });
+        }
+
+        // Create user account
+        const passwordHash = await bcrypt.hash(password, 10);
+        userId = `master:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        await db.insert(users).values({
+          id: userId,
+          email,
+          passwordHash,
+          firstName: masterData.name?.split(" ")[0] || null,
+          lastName: masterData.name?.split(" ").slice(1).join(" ") || null,
+        });
+
+        // Create user profile with master role
+        await db.insert(userProfiles).values({
+          userId,
+          role: "master",
+          fullName: masterData.name,
+          isProfileComplete: true,
+        });
+      }
+
+      const parsed = insertMasterSchema.safeParse({ 
+        ...masterData, 
+        salonId,
+        userId,
+        email: email || null,
+      });
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid master data", details: parsed.error.errors });
       }

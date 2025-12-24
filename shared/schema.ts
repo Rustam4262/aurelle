@@ -62,7 +62,8 @@ export type WorkingHours = typeof salonWorkingHours.$inferSelect;
 export const masters = pgTable("masters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   salonId: varchar("salon_id").notNull(),
-  userId: varchar("user_id"), // Optional link to user account
+  userId: varchar("user_id"), // Link to user account for login
+  email: varchar("email", { length: 255 }), // Login email
   name: varchar("name", { length: 200 }).notNull(),
   photo: varchar("photo", { length: 500 }),
   specialties: jsonb("specialties").$type<{ en: string[]; ru: string[]; uz: string[] }>(),
@@ -74,6 +75,7 @@ export const masters = pgTable("masters", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_masters_salon").on(table.salonId),
+  index("idx_masters_user").on(table.userId),
 ]);
 
 export const insertMasterSchema = createInsertSchema(masters).omit({
