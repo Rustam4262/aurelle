@@ -4,10 +4,11 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { authLimiter, registerLimiter } from "./middleware/rateLimiter";
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 });
@@ -17,8 +18,11 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+// Увеличенные rounds для bcrypt (безопаснее)
+const BCRYPT_ROUNDS = 12;
+
 export function setupLocalAuth(app: Express) {
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  app.post("/api/auth/register", registerLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = registerSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -37,8 +41,8 @@ export function setupLocalAuth(app: Express) {
         return res.status(400).json({ message: "User with this email already exists" });
       }
 
-      const passwordHash = await bcrypt.hash(password, 10);
-      const userId = `local:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const userId = `local:${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const [newUser] = await db
         .insert(users)
@@ -85,7 +89,7 @@ export function setupLocalAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", authLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = loginSchema.safeParse(req.body);
       if (!parsed.success) {

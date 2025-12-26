@@ -9,10 +9,20 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, Sparkles, User, Store, Check, Mail } from "lucide-react";
-import { SiGoogle, SiApple } from "react-icons/si";
+import { ArrowLeft, User, Store, Check, Mail, Phone } from "lucide-react";
+import { SiGoogle, SiGithub } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageSwitcher } from "@/components/language-switcher";
+
+function Logo({ className }: { className?: string }) {
+  return (
+    <img
+      src="/images/logo.jpg"
+      alt="AURELLE"
+      className={className}
+    />
+  );
+}
 
 function YandexIcon({ className }: { className?: string }) {
   return (
@@ -22,17 +32,24 @@ function YandexIcon({ className }: { className?: string }) {
   );
 }
 
-function loginWithReplit() {
-  window.location.href = "/api/login";
-}
-
 function loginWithYandex() {
   window.location.href = "/api/auth/yandex";
 }
 
+function loginWithGoogle() {
+  window.location.href = "/api/auth/google";
+}
+
+function loginWithGitHub() {
+  window.location.href = "/api/auth/github";
+}
+
 type AuthProviders = {
-  replit: boolean;
+  local: boolean;
   yandex: boolean;
+  google: boolean;
+  github: boolean;
+  phone: boolean;
 };
 
 type UserProfile = {
@@ -66,6 +83,12 @@ export default function AuthPage() {
     password: "",
     confirmPassword: "",
   });
+
+  const [phoneAuthData, setPhoneAuthData] = useState({
+    phoneNumber: "",
+    code: "",
+  });
+  const [phoneStep, setPhoneStep] = useState<"phone" | "code">("phone");
 
   const { data: profile, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
@@ -163,6 +186,66 @@ export default function AuthPage() {
     },
   });
 
+  const sendCodeMutation = useMutation({
+    mutationFn: async (phoneNumber: string) => {
+      const response = await fetch("/api/auth/phone/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send code");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setPhoneStep("code");
+      toast({
+        title: t("marketplace.auth.codeSent"),
+        description: data.devCode ? `Code: ${data.devCode}` : t("marketplace.auth.checkPhone"),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("marketplace.auth.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const verifyCodeMutation = useMutation({
+    mutationFn: async (data: { phoneNumber: string; code: string }) => {
+      const response = await fetch("/api/auth/phone/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Invalid code");
+      }
+      return response.json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      toast({
+        title: t("marketplace.auth.phoneLoginSuccess"),
+        description: t("marketplace.auth.welcomeBack"),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("marketplace.auth.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveProfileMutation.mutate({
@@ -194,6 +277,19 @@ export default function AuthPage() {
         password: emailAuthData.password,
       });
     }
+  };
+
+  const handleSendCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendCodeMutation.mutate(phoneAuthData.phoneNumber);
+  };
+
+  const handleVerifyCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    verifyCodeMutation.mutate({
+      phoneNumber: phoneAuthData.phoneNumber,
+      code: phoneAuthData.code,
+    });
   };
 
   useEffect(() => {
@@ -239,9 +335,8 @@ export default function AuthPage() {
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="w-full max-w-lg p-8">
             <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Sparkles className="h-8 w-8 text-primary" />
-                <span className="font-serif text-2xl font-semibold">BeautyUz</span>
+              <div className="flex items-center justify-center mb-4">
+                <Logo className="h-16 w-auto object-contain" />
               </div>
               <h1 className="font-serif text-2xl text-foreground mb-2">
                 {t("marketplace.auth.completeProfile")}
@@ -399,9 +494,8 @@ export default function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <Card className="w-full max-w-md p-8">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Sparkles className="h-8 w-8 text-primary" />
-              <span className="font-serif text-2xl font-semibold">BeautyUz</span>
+            <div className="flex items-center justify-center mb-4">
+              <Logo className="h-16 w-auto object-contain" />
             </div>
             <h1 className="font-serif text-2xl text-foreground mb-2">
               {t("marketplace.auth.title")}
@@ -426,38 +520,33 @@ export default function AuthPage() {
             </div>
 
             <Tabs defaultValue="social" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="social" data-testid="tab-social-login">
                   {t("marketplace.auth.socialLogin")}
                 </TabsTrigger>
                 <TabsTrigger value="email" data-testid="tab-email-login">
                   {t("marketplace.auth.emailLogin")}
                 </TabsTrigger>
+                {providers?.phone && (
+                  <TabsTrigger value="phone" data-testid="tab-phone-login">
+                    {t("marketplace.auth.phoneLogin")}
+                  </TabsTrigger>
+                )}
               </TabsList>
-              
+
               <TabsContent value="social" className="space-y-3 mt-4">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant="outline"
-                  onClick={loginWithReplit}
-                  data-testid="button-login-google"
-                >
-                  <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
-                  {t("marketplace.auth.signInWithGoogle")}
-                </Button>
-
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant="outline"
-                  onClick={loginWithReplit}
-                  data-testid="button-login-apple"
-                >
-                  <SiApple className="mr-2 h-5 w-5" />
-                  {t("marketplace.auth.signInWithApple")}
-                </Button>
-
+                {providers?.google && (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    onClick={loginWithGoogle}
+                    data-testid="button-login-google"
+                  >
+                    <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
+                    {t("marketplace.auth.signInWithGoogle")}
+                  </Button>
+                )}
                 {providers?.yandex && (
                   <Button
                     className="w-full"
@@ -468,6 +557,18 @@ export default function AuthPage() {
                   >
                     <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
                     {t("marketplace.auth.signInWithYandex")}
+                  </Button>
+                )}
+                {providers?.github && (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    onClick={loginWithGitHub}
+                    data-testid="button-login-github"
+                  >
+                    <SiGithub className="mr-2 h-5 w-5" />
+                    {t("marketplace.auth.signInWithGitHub")}
                   </Button>
                 )}
               </TabsContent>
@@ -556,6 +657,88 @@ export default function AuthPage() {
                   </form>
                 </div>
               </TabsContent>
+
+              {providers?.phone && (
+                <TabsContent value="phone" className="mt-4">
+                  <div className="space-y-4">
+                    {phoneStep === "phone" ? (
+                      <form onSubmit={handleSendCode} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="phoneNumber">{t("marketplace.auth.phoneNumber")}</Label>
+                          <Input
+                            id="phoneNumber"
+                            type="tel"
+                            placeholder="+998901234567"
+                            value={phoneAuthData.phoneNumber}
+                            onChange={(e) => setPhoneAuthData({ ...phoneAuthData, phoneNumber: e.target.value })}
+                            required
+                            pattern="^\+\d{10,15}$"
+                            data-testid="input-phone-number"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {t("marketplace.auth.phoneFormat")}
+                          </p>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          size="lg"
+                          disabled={sendCodeMutation.isPending}
+                          data-testid="button-send-code"
+                        >
+                          <Phone className="mr-2 h-5 w-5" />
+                          {sendCodeMutation.isPending
+                            ? t("marketplace.auth.sending")
+                            : t("marketplace.auth.sendCode")}
+                        </Button>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleVerifyCode} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="code">{t("marketplace.auth.verificationCode")}</Label>
+                          <Input
+                            id="code"
+                            type="text"
+                            placeholder="123456"
+                            value={phoneAuthData.code}
+                            onChange={(e) => setPhoneAuthData({ ...phoneAuthData, code: e.target.value })}
+                            required
+                            pattern="\d{6}"
+                            maxLength={6}
+                            data-testid="input-verification-code"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {t("marketplace.auth.codeHint")}
+                          </p>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          size="lg"
+                          disabled={verifyCodeMutation.isPending}
+                          data-testid="button-verify-code"
+                        >
+                          {verifyCodeMutation.isPending
+                            ? t("marketplace.auth.verifying")
+                            : t("marketplace.auth.verifyCode")}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="w-full"
+                          onClick={() => setPhoneStep("phone")}
+                          data-testid="button-change-number"
+                        >
+                          {t("marketplace.auth.changeNumber")}
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
 
             <p className="text-center text-xs text-muted-foreground">

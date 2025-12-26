@@ -598,9 +598,11 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
-            <span className="font-serif text-2xl font-semibold text-foreground">
-              AURELLE
-            </span>
+            <img
+              src="/images/logo.jpg"
+              alt="AURELLE"
+              className="h-12 w-auto object-contain mb-3"
+            />
             <p className="text-muted-foreground mt-3 max-w-sm">
               {t("marketplace.footer.tagline")}
             </p>

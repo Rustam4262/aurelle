@@ -1,7 +1,7 @@
 import passport from "passport";
 import { Strategy as YandexStrategy } from "passport-yandex";
 import type { Express } from "express";
-import { authStorage } from "./replit_integrations/auth/storage";
+import { authStorage } from "./auth/storage";
 
 function getYandexCredentials() {
   const clientID = process.env.YANDEX_CLIENT_ID;
@@ -52,9 +52,9 @@ export async function setupYandexAuth(app: Express) {
             const email = profile.emails?.[0]?.value || profile._json?.default_email || null;
             const firstName = profile.name?.givenName || profile.displayName?.split(" ")[0] || null;
             const lastName = profile.name?.familyName || profile.displayName?.split(" ").slice(1).join(" ") || null;
-            const profileImageUrl = profile._json?.default_avatar_id 
+            const profileImageUrl = profile._json?.default_avatar_id
               ? `https://avatars.yandex.net/get-yapic/${profile._json.default_avatar_id}/islands-200`
-              : null;
+              : undefined;
 
             await authStorage.upsertUser({
               id: `yandex:${profile.id}`,
