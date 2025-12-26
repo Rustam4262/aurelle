@@ -87,7 +87,8 @@
       "title": "Yaqin atrofdagi salonlarni toping",
       "subtitle": "Xaritada salonlarni ko'ring va o'zingizga mosini tanlang",
       "loading": "Xarita yuklanmoqda...",
-      "apiNote": "Yandex Xaritalar integratsiyasi"
+      "error": "Xarita yuklanishda xatolik",
+      "apiNote": "Yandex Xaritalar integratsiyasi - VITE_YANDEX_MAPS_API_KEY qo'shing"
     },
     "stats": {
       "salons": "Go'zallik salonlari",

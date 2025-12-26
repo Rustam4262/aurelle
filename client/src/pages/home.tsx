@@ -481,22 +481,131 @@ function SalonsSection() {
 }
 
 function MapSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState(false);
+  const mapContainerRef = useState<HTMLDivElement | null>(null);
+
+  const { data: salons } = useQuery<Salon[]>({
+    queryKey: ["/api/salons"],
+  });
 
   useEffect(() => {
+    let map: any = null;
+
+    const initMap = () => {
+      const mapContainer = mapContainerRef[0];
+      if (!mapContainer || !window.ymaps) return;
+
+      try {
+        window.ymaps.ready(() => {
+          // Create map centered on Tashkent
+          map = new window.ymaps.Map(mapContainer, {
+            center: [41.2995, 69.2401], // Tashkent coordinates
+            zoom: 11,
+            controls: ['zoomControl', 'fullscreenControl', 'geolocationControl']
+          });
+
+          // Add markers for each salon
+          if (salons && salons.length > 0) {
+            const bounds: number[][] = [];
+
+            salons.forEach((salon) => {
+              if (salon.latitude && salon.longitude) {
+                const coords = [Number(salon.latitude), Number(salon.longitude)];
+                bounds.push(coords);
+
+                const placemark = new window.ymaps.Placemark(
+                  coords,
+                  {
+                    balloonContent: `
+                      <div style="padding: 12px; max-width: 280px; font-family: system-ui, -apple-system, sans-serif;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+                          ${getLocalizedText(salon.name as any, i18n.language) || 'Salon'}
+                        </h3>
+                        <p style="margin: 0 0 6px 0; font-size: 14px; color: #666; display: flex; align-items: center; gap: 4px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          ${getLocalizedText(salon.city as any, i18n.language) || 'City'}
+                        </p>
+                        ${salon.averageRating ? `
+                          <p style="margin: 0 0 10px 0; font-size: 14px; color: #fbbf24; font-weight: 500;">
+                            ⭐ ${Number(salon.averageRating).toFixed(1)} (${salon.reviewCount || 0} ${t("marketplace.salon.reviews")})
+                          </p>
+                        ` : ''}
+                        <a href="/salon/${salon.id}" style="display: inline-block; padding: 6px 12px; background: #0066cc; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500;">
+                          ${t("marketplace.salon.viewDetails")}
+                        </a>
+                      </div>
+                    `,
+                    hintContent: getLocalizedText(salon.name as any, i18n.language) || 'Salon'
+                  },
+                  {
+                    preset: 'islands#violetDotIconWithCaption',
+                    iconColor: '#8b5cf6'
+                  }
+                );
+                map.geoObjects.add(placemark);
+              }
+            });
+
+            // Fit map to show all salons
+            if (bounds.length > 1) {
+              map.setBounds(bounds, {
+                checkZoomRange: true,
+                zoomMargin: 50
+              });
+            } else if (bounds.length === 1) {
+              map.setCenter(bounds[0], 13);
+            }
+          }
+
+          setMapLoaded(true);
+        });
+      } catch (error) {
+        console.error("Map initialization error:", error);
+        setMapError(true);
+      }
+    };
+
     // Load Yandex Maps API
-    const script = document.createElement("script");
     const apiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "";
-    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=en_US`;
-    script.async = true;
-    script.onload = () => setMapLoaded(true);
-    document.head.appendChild(script);
+    const lang = i18n.language === 'uz' ? 'ru_RU' :
+                 i18n.language === 'ru' ? 'ru_RU' : 'en_US';
+
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src*="api-maps.yandex.ru"]');
+
+    if (existingScript) {
+      if (window.ymaps) {
+        initMap();
+      } else {
+        existingScript.addEventListener('load', initMap);
+      }
+    } else {
+      const script = document.createElement("script");
+      script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=${lang}`;
+      script.async = true;
+      script.onload = initMap;
+      script.onerror = () => {
+        console.error("Failed to load Yandex Maps");
+        setMapError(true);
+      };
+      document.head.appendChild(script);
+    }
 
     return () => {
-      document.head.removeChild(script);
+      if (map) {
+        try {
+          map.destroy();
+        } catch (e) {
+          console.error("Error destroying map:", e);
+        }
+      }
     };
-  }, []);
+  }, [salons, i18n.language]);
 
   return (
     <section className="py-16 bg-card" data-testid="section-map">
@@ -511,19 +620,44 @@ function MapSection() {
         </div>
 
         <Card className="overflow-hidden">
-          <div className="h-[400px] bg-muted relative" data-testid="map-container">
-            {/* Map placeholder - in production, integrate Yandex Maps properly with API key */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  {t("marketplace.map.loading")}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t("marketplace.map.apiNote")}
-                </p>
+          <div className="h-[500px] relative" data-testid="map-container">
+            <div
+              ref={(el) => {
+                mapContainerRef[0] = el;
+              }}
+              className="w-full h-full"
+            />
+
+            {!mapLoaded && !mapError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                <div className="text-center">
+                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3 animate-pulse" />
+                  <p className="text-muted-foreground font-medium">
+                    {t("marketplace.map.loading")}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Интеграция Яндекс.Карт...
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {mapError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                <div className="text-center p-6 max-w-md">
+                  <MapPin className="h-12 w-12 text-destructive mx-auto mb-3" />
+                  <p className="text-foreground font-medium mb-2">
+                    Ошибка загрузки карты
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("marketplace.map.apiNote")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Проверьте VITE_YANDEX_MAPS_API_KEY в настройках
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>

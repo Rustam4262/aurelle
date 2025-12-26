@@ -87,7 +87,8 @@
       "title": "Find Salons Near You",
       "subtitle": "Browse salons on the map and find the perfect one for you",
       "loading": "Loading map...",
-      "apiNote": "Yandex Maps integration"
+      "error": "Failed to load map",
+      "apiNote": "Yandex Maps integration - Add VITE_YANDEX_MAPS_API_KEY to enable"
     },
     "stats": {
       "salons": "Beauty Salons",

@@ -134,6 +134,9 @@ cd aurelle
 ### Настройка OAuth для продакшена:
 - **[OAUTH_SETUP_PRODUCTION.md](./OAUTH_SETUP_PRODUCTION.md)** - Обновление Redirect URIs
 
+### Настройка Яндекс.Карт:
+- **[YANDEX_MAPS_SETUP.md](./YANDEX_MAPS_SETUP.md)** - ⭐ Настройка интерактивной карты салонов
+
 ---
 
 ## 🔐 Настройка авторизации
@@ -164,6 +167,15 @@ cd aurelle
    YANDEX_CLIENT_ID=your-client-id
    YANDEX_CLIENT_SECRET=your-client-secret
    ```
+
+#### Yandex Maps API (для карты на главной странице):
+1. [Yandex Developer](https://developer.tech.yandex.ru/)
+2. Получите API ключ для JavaScript API
+3. Добавьте в `.env`:
+   ```env
+   VITE_YANDEX_MAPS_API_KEY=your-maps-api-key
+   ```
+4. Подробная инструкция: **[YANDEX_MAPS_SETUP.md](./YANDEX_MAPS_SETUP.md)**
 
 ---
 
