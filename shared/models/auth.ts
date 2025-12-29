@@ -20,6 +20,8 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   passwordHash: varchar("password_hash"),
   phoneNumber: varchar("phone_number").unique(),
+  provider: varchar("provider").default("local"), // local, google, yandex, github
+  providerId: varchar("provider_id"), // OAuth provider user ID
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
