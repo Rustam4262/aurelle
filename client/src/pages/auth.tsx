@@ -165,6 +165,11 @@ export default function AuthPage() {
       });
       if (!response.ok) {
         const error = await response.json();
+        // Extract validation errors if available
+        if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+          const firstError = error.errors[0];
+          throw new Error(firstError.message || error.message || "Registration failed");
+        }
         throw new Error(error.message || "Registration failed");
       }
       return response.json();
@@ -619,9 +624,14 @@ export default function AuthPage() {
                         value={emailAuthData.password}
                         onChange={(e) => setEmailAuthData({ ...emailAuthData, password: e.target.value })}
                         required
-                        minLength={6}
+                        minLength={8}
                         data-testid="input-password"
                       />
+                      {authMode === "register" && (
+                        <p className="text-xs text-muted-foreground">
+                          Минимум 8 символов
+                        </p>
+                      )}
                     </div>
 
                     {authMode === "register" && (
@@ -634,7 +644,7 @@ export default function AuthPage() {
                           value={emailAuthData.confirmPassword}
                           onChange={(e) => setEmailAuthData({ ...emailAuthData, confirmPassword: e.target.value })}
                           required
-                          minLength={6}
+                          minLength={8}
                           data-testid="input-confirm-password"
                         />
                       </div>
