@@ -6,6 +6,24 @@ import { isPhoneAuthConfigured } from "../phoneAuth";
 
 const router = Router();
 
+// Get current authenticated user
+router.get("/auth/user", (req: any, res) => {
+  // Check if user is authenticated via session
+  if (req.session && req.session.passport?.user) {
+    const user = req.session.passport.user;
+    return res.json({
+      id: user.claims.sub,
+      email: user.claims.email,
+      firstName: user.claims.first_name,
+      lastName: user.claims.last_name,
+      profileImageUrl: user.claims.profile_image_url,
+    });
+  }
+
+  // User not authenticated
+  return res.status(401).json({ message: "Not authenticated" });
+});
+
 // Auth providers status endpoint
 router.get("/auth/providers", (_req, res) => {
   res.json({
