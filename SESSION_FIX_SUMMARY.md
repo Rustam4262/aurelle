@@ -292,6 +292,52 @@ docker-compose exec app npm run db:push
 
 ---
 
+---
+
+## ⚠️ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ (01.01.2026)
+
+### Проблема: "this[#e].query is not a function"
+
+После первого деплоя обнаружилась критическая ошибка:
+```
+Failed to prune sessions: TypeError: this[#e].query is not a function
+```
+
+**Причина:**
+В конфигурации сессий передавался `db` (Drizzle ORM wrapper) вместо `pool` (нативный PostgreSQL pool).
+
+**Исправление:**
+
+```typescript
+// ❌ БЫЛО (неправильно):
+import { db } from "../db";
+// ...
+store: new PgSession({
+  pool: db as any,  // Drizzle ORM объект
+  // ...
+})
+
+// ✅ СТАЛО (правильно):
+import { pool } from "../db";
+// ...
+store: new PgSession({
+  pool: pool,  // Нативный pg.Pool
+  // ...
+})
+```
+
+**Файл:** `server/auth/index.ts`
+
+**Коммит:** `e7fa92cb` - Fix PostgreSQL session store configuration
+
+**Результат:**
+- ✅ Ошибки "Failed to prune sessions" полностью исчезли
+- ✅ Сессии корректно сохраняются в PostgreSQL
+- ✅ Платформа работает стабильно
+- ✅ API возвращает корректные ответы
+
+---
+
 ## 🎯 Следующие шаги
 
 ### Для полной работы OAuth (опционально):
@@ -316,6 +362,7 @@ docker-compose exec app npm run db:push
 - `c547b100` - Add provider and providerId fields to users table
 - `2a20ca36` - Fix password validation mismatch and improve error handling
 - `e173a6ca` - Add express-session configuration with PostgreSQL store
+- `e7fa92cb` - Fix PostgreSQL session store configuration (pool instead of db)
 
 ---
 

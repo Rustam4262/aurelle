@@ -317,13 +317,14 @@ docker-compose exec app npm run db:push
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Последние коммиты:**
+- `e7fa92cb` - Fix PostgreSQL session store (КРИТИЧНО - исправлена ошибка pool)
+- `8e46b485` - Add comprehensive documentation for session and auth fixes
+- `e173a6ca` - Add express-session configuration with PostgreSQL store
+- `2a20ca36` - Fix password validation mismatch and improve error handling
+- `c547b100` - Add provider and providerId fields to users table
 - `100ade32` - Add detailed guide for Yandex Maps API key
 - `9da8f039` - Add comprehensive summary of Yandex Maps fixes
-- `0c255e06` - Add step-by-step guide for enabling Yandex Maps
 - `30440d44` - Implement Yandex Maps integration
-- `e173a6ca` - Add express-session configuration
-- `2a20ca36` - Fix password validation mismatch
-- `c547b100` - Add provider and providerId fields
 
 **Документация:**
 - [README.md](README.md) - Общая информация о проекте
