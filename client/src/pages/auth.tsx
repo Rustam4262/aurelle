@@ -145,6 +145,8 @@ export default function AuthPage() {
         title: t("marketplace.auth.loginSuccess"),
         description: t("marketplace.auth.welcomeBack"),
       });
+      // Force page reload to ensure React Query picks up the new auth state
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast({
@@ -181,6 +183,8 @@ export default function AuthPage() {
         title: t("marketplace.auth.registerSuccess"),
         description: t("marketplace.auth.accountCreated"),
       });
+      // Force page reload to ensure React Query picks up the new auth state
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast({
