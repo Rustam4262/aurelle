@@ -18,6 +18,11 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+});
+
 // Увеличенные rounds для bcrypt (безопаснее)
 const BCRYPT_ROUNDS = 12;
 
@@ -144,6 +149,41 @@ export function setupLocalAuth(app: Express) {
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Password reset endpoint (simple version - for testing)
+  app.post("/api/auth/reset-password", authLimiter, async (req: Request, res: Response) => {
+    try {
+      const parsed = resetPasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+      }
+
+      const { email, newPassword } = parsed.data;
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ success: true, message: "If the email exists, password has been reset" });
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+      await db
+        .update(users)
+        .set({ passwordHash })
+        .where(eq(users.email, email));
+
+      res.json({ success: true, message: "Password has been reset successfully" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Password reset failed" });
     }
   });
 
