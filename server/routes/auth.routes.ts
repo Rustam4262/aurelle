@@ -24,6 +24,21 @@ router.get("/auth/user", (req: any, res) => {
   return res.status(401).json({ message: "Not authenticated" });
 });
 
+// Logout endpoint
+router.post("/logout", (req: any, res) => {
+  if (req.session) {
+    req.session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.clearCookie("connect.sid");
+      return res.json({ success: true, message: "Logged out successfully" });
+    });
+  } else {
+    return res.json({ success: true, message: "Already logged out" });
+  }
+});
+
 // Auth providers status endpoint
 router.get("/auth/providers", (_req, res) => {
   res.json({
