@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import { db } from "../db";
+import { pool } from "../db";
 
 const PgSession = connectPgSimple(session);
 
@@ -40,7 +40,7 @@ export async function setupAuth(app: Express) {
   app.use(
     session({
       store: new PgSession({
-        pool: db as any,
+        pool: pool,
         tableName: "sessions",
         createTableIfMissing: false,
       }),
