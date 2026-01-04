@@ -1,12 +1,19 @@
 import { useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/i18n";
 import type { Salon, Service, Master, Review, WorkingHours } from "@shared/schema";
 import {
@@ -101,7 +108,7 @@ function SalonHeader({ salon }: { salon: Salon }) {
   );
 }
 
-function ServiceCard({ service }: { service: Service }) {
+function ServiceCard({ service, onBook }: { service: Service; onBook: (service: Service) => void }) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
@@ -125,7 +132,7 @@ function ServiceCard({ service }: { service: Service }) {
         </div>
         <div className="text-right">
           <p className="font-medium text-foreground">{formatCurrency(service.priceMin)}</p>
-          <Button size="sm" className="mt-2" data-testid={`button-book-service-${service.id}`}>
+          <Button size="sm" className="mt-2" onClick={() => onBook(service)} data-testid={`button-book-service-${service.id}`}>
             {t("marketplace.salon.bookNow")}
           </Button>
         </div>
@@ -134,7 +141,7 @@ function ServiceCard({ service }: { service: Service }) {
   );
 }
 
-function MasterCard({ master }: { master: Master }) {
+function MasterCard({ master, onBook }: { master: Master; onBook: (master: Master) => void }) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
@@ -169,7 +176,7 @@ function MasterCard({ master }: { master: Master }) {
             </div>
           )}
         </div>
-        <Button variant="outline" size="sm" data-testid={`button-book-master-${master.id}`}>
+        <Button variant="outline" size="sm" onClick={() => onBook(master)} data-testid={`button-book-master-${master.id}`}>
           {t("marketplace.salon.bookNow")}
         </Button>
       </div>
@@ -231,6 +238,16 @@ export default function SalonPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedMaster, setSelectedMaster] = useState<Master | null>(null);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
 
   const { data: salon, isLoading: salonLoading } = useQuery<Salon>({
     queryKey: ["/api/salons", id],
@@ -255,6 +272,62 @@ export default function SalonPage() {
     queryKey: ["/api/salons", id, "hours"],
     enabled: !!id,
   });
+
+  const createBookingMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", "/api/client/bookings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/bookings"] });
+      setBookingDialogOpen(false);
+      setSelectedService(null);
+      setSelectedMaster(null);
+      setBookingDate("");
+      setBookingTime("");
+      setBookingNotes("");
+      toast({
+        title: t("marketplace.salon.bookingCreated"),
+        description: t("marketplace.salon.bookingSuccess"),
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.salon.bookingFailed"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBookService = (service: Service, master?: Master) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    setSelectedService(service);
+    setSelectedMaster(master || null);
+    setBookingDialogOpen(true);
+  };
+
+  const handleSubmitBooking = () => {
+    if (!selectedService || !bookingDate || !bookingTime) {
+      toast({
+        title: t("marketplace.salon.missingFields"),
+        description: t("marketplace.salon.pleaseFillAll"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createBookingMutation.mutate({
+      salonId: id,
+      serviceId: selectedService.id,
+      masterId: selectedMaster?.id || null,
+      bookingDate,
+      startTime: bookingTime,
+      notes: bookingNotes,
+    });
+  };
 
   if (salonLoading) {
     return (
@@ -313,7 +386,7 @@ export default function SalonPage() {
               <TabsContent value="services" className="space-y-4">
                 {services && services.length > 0 ? (
                   services.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
+                    <ServiceCard key={service.id} service={service} onBook={handleBookService} />
                   ))
                 ) : (
                   <Card className="p-8 text-center">
@@ -325,7 +398,7 @@ export default function SalonPage() {
               <TabsContent value="team" className="space-y-4">
                 {masters && masters.length > 0 ? (
                   masters.map((master) => (
-                    <MasterCard key={master.id} master={master} />
+                    <MasterCard key={master.id} master={master} onBook={(m) => handleBookService(masters[0] || {} as Service, m)} />
                   ))
                 ) : (
                   <Card className="p-8 text-center">
@@ -376,7 +449,17 @@ export default function SalonPage() {
 
           <div className="space-y-4">
             <Card className="p-6">
-              <Button className="w-full mb-4" size="lg" data-testid="button-book-main">
+              <Button className="w-full mb-4" size="lg" onClick={() => {
+                if (services && services.length > 0) {
+                  handleBookService(services[0]);
+                } else {
+                  toast({
+                    title: t("marketplace.salon.noServices"),
+                    description: t("marketplace.salon.noServicesAvailable"),
+                    variant: "destructive",
+                  });
+                }
+              }} data-testid="button-book-main">
                 <Calendar className="h-5 w-5 mr-2" />
                 {t("marketplace.salon.bookNow")}
               </Button>
@@ -410,6 +493,63 @@ export default function SalonPage() {
             )}
           </div>
         </div>
+
+        <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("marketplace.salon.bookService")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {selectedService && (
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="font-medium">{getLocalizedText(selectedService.name as any, currentLang)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedService.duration} {t("marketplace.salon.minutes")} • {formatCurrency(selectedService.priceMin)}
+                  </p>
+                </div>
+              )}
+              {selectedMaster && (
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm font-medium">{t("marketplace.salon.withMaster")}: {selectedMaster.name}</p>
+                </div>
+              )}
+              <div>
+                <Label>{t("marketplace.salon.date")}</Label>
+                <Input
+                  type="date"
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label>{t("marketplace.salon.time")}</Label>
+                <Input
+                  type="time"
+                  value={bookingTime}
+                  onChange={(e) => setBookingTime(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>{t("marketplace.salon.notes")} ({t("marketplace.salon.optional")})</Label>
+                <Textarea
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder={t("marketplace.salon.notesPlaceholder")}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBookingDialogOpen(false)}>
+                {t("marketplace.salon.cancel")}
+              </Button>
+              <Button onClick={handleSubmitBooking} disabled={createBookingMutation.isPending}>
+                {createBookingMutation.isPending ? t("marketplace.salon.booking") : t("marketplace.salon.confirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

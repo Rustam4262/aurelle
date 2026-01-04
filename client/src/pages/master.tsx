@@ -15,6 +15,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Master, Salon, Booking, Review, MasterWorkingHours, MasterPortfolio, Service, Notification } from "@shared/schema";
 import { BookingCalendar } from "@/components/booking-calendar";
+import { ImageUpload } from "@/components/image-upload";
 import {
   ArrowLeft,
   Calendar,
@@ -1087,11 +1088,12 @@ export default function MasterPage() {
             <DialogTitle>{t("marketplace.master.addPhoto")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Input
-              placeholder={t("marketplace.master.imageUrlPlaceholder")}
+            <ImageUpload
               value={newPortfolioUrl}
-              onChange={(e) => setNewPortfolioUrl(e.target.value)}
-              data-testid="input-portfolio-url"
+              onChange={setNewPortfolioUrl}
+              uploadType="portfolio"
+              label={t("marketplace.master.uploadPhoto")}
+              preview={true}
             />
             <Textarea
               placeholder={t("marketplace.master.descriptionPlaceholder")}

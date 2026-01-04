@@ -76,6 +76,89 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
   }
 });
 
+// Create a new booking
+router.post("/bookings", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const result = await getClientFromUser(userId);
+
+    if ('error' in result) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    if (!result.profile) {
+      return res.status(400).json({ error: "Profile not found. Please complete your profile first." });
+    }
+
+    const bookingSchema = z.object({
+      salonId: z.string(),
+      serviceId: z.string(),
+      masterId: z.string().optional().nullable(),
+      bookingDate: z.string(), // ISO date string
+      startTime: z.string(), // HH:mm format
+      notes: z.string().optional(),
+    });
+
+    const parsed = bookingSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid booking data", details: parsed.error.errors });
+    }
+
+    const { salonId, serviceId, masterId, bookingDate, startTime, notes } = parsed.data;
+
+    // Verify salon exists
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    // Verify service exists and belongs to salon
+    const [service] = await db.select().from(services)
+      .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // Verify master if provided
+    if (masterId) {
+      const [master] = await db.select().from(masters)
+        .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
+      if (!master) {
+        return res.status(404).json({ error: "Master not found" });
+      }
+    }
+
+    // Calculate end time based on service duration
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = startMinutes + service.duration;
+    const endHour = Math.floor(endMinutes / 60);
+    const endMinute = endMinutes % 60;
+    const endTime = `${endHour.toString().padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}`;
+
+    // Create booking
+    const [newBooking] = await db.insert(bookings).values({
+      clientId: result.profile.id,
+      salonId,
+      serviceId,
+      masterId: masterId || null,
+      bookingDate: new Date(bookingDate),
+      startTime,
+      endTime,
+      status: "pending",
+      priceSnapshot: service.priceMin,
+      notes: notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+
+    return res.status(201).json(newBooking);
+  } catch (error) {
+    console.error("Create booking error:", error);
+    return res.status(500).json({ error: "Failed to create booking" });
+  }
+});
+
 // Get client bookings with salon/service/master info
 router.get("/bookings", isAuthenticated, async (req: any, res) => {
   try {

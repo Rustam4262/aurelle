@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  ArrowLeft, 
-  Camera, 
-  Clock, 
-  Users, 
-  Scissors, 
+import { MultiImageUpload } from "@/components/image-upload";
+import {
+  ArrowLeft,
+  Camera,
+  Clock,
+  Users,
+  Scissors,
   Calendar,
   Plus,
   Trash2,
@@ -95,6 +97,9 @@ export default function OwnerSalonPage() {
     6: { open: "10:00", close: "18:00", closed: false },
   });
 
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [salonPhotos, setSalonPhotos] = useState<string[]>([]);
+
   const { data: salon, isLoading: salonLoading } = useQuery<Salon>({
     queryKey: ["/api/owner/salons", salonId],
     enabled: !!user && !!salonId,
@@ -133,6 +138,12 @@ export default function OwnerSalonPage() {
       setWorkingHours((prev) => ({ ...prev, ...hoursMap }));
     }
   }, [savedHours]);
+
+  useEffect(() => {
+    if (salon?.photos && photoDialogOpen) {
+      setSalonPhotos(salon.photos as string[]);
+    }
+  }, [salon, photoDialogOpen]);
 
   const createServiceMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -207,13 +218,36 @@ export default function OwnerSalonPage() {
       toast({ title: t("marketplace.owner.hoursSaved") });
     },
     onError: (error: any) => {
-      toast({ 
-        title: t("marketplace.owner.error"), 
-        description: error.message, 
-        variant: "destructive" 
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message,
+        variant: "destructive"
       });
     },
   });
+
+  const updatePhotosMutation = useMutation({
+    mutationFn: async (photos: string[]) => {
+      return apiRequest("PATCH", `/api/owner/salons/${salonId}`, { photos });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId] });
+      setPhotoDialogOpen(false);
+      setSalonPhotos([]);
+      toast({ title: t("marketplace.owner.photosUpdated") });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleSavePhotos = () => {
+    updatePhotosMutation.mutate(salonPhotos);
+  };
 
   const handleAddService = (e: React.FormEvent) => {
     e.preventDefault();
@@ -347,9 +381,17 @@ export default function OwnerSalonPage() {
                       <div className="col-span-4 text-center py-8 border-2 border-dashed border-border rounded-md">
                         <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-muted-foreground text-sm">{t("marketplace.owner.noPhotos")}</p>
-                        <Button variant="outline" className="mt-2" size="sm">
+                        <Button variant="outline" className="mt-2" size="sm" onClick={() => setPhotoDialogOpen(true)}>
                           <Plus className="h-4 w-4 mr-2" />
                           {t("marketplace.owner.addPhoto")}
+                        </Button>
+                      </div>
+                    )}
+                    {salon.photos && salon.photos.length > 0 && (
+                      <div className="col-span-4 mt-2">
+                        <Button variant="outline" size="sm" onClick={() => setPhotoDialogOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          {t("marketplace.owner.managePhotos")}
                         </Button>
                       </div>
                     )}
@@ -738,6 +780,33 @@ export default function OwnerSalonPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("marketplace.owner.managePhotos")}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <MultiImageUpload
+              values={salonPhotos}
+              onChange={setSalonPhotos}
+              maxImages={10}
+              uploadType="salons"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPhotoDialogOpen(false)}>
+              {t("marketplace.owner.close")}
+            </Button>
+            <Button
+              onClick={handleSavePhotos}
+              disabled={updatePhotosMutation.isPending}
+            >
+              {t("marketplace.owner.savePhotos")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
