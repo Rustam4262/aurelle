@@ -70,7 +70,7 @@ docker restart aurelle_app_1
 
 ---
 
-## Fix #2: Photo Upload Failing (PENDING)
+## Fix #2: Photo Upload Failing (FIXED)
 
 ### Problem
 **Error:** "Upload failed. Failed to upload image. Please try again."
@@ -80,13 +80,48 @@ docker restart aurelle_app_1
 - Salon photo upload fails
 - ImageUpload component shows error toast
 
-**Status:** 🔄 Investigation in progress
+**Root Cause:**
+Upload directories didn't exist on the production server. When multer tried to save uploaded files to `server/uploads/{salons|masters|portfolio|avatars}/`, the directories were missing, causing the upload to fail silently.
 
-**Next Steps:**
-1. Check upload endpoint logs
-2. Verify authentication middleware
-3. Check file size limits and upload directory permissions
-4. Test upload endpoints directly with curl
+### Solution
+Created automatic directory initialization on server startup.
+
+**New File:** `server/initUploads.ts`
+```typescript
+export function initializeUploadDirectories() {
+  const uploadsBasePath = path.join(process.cwd(), "server", "uploads");
+  const uploadTypes = ["salons", "masters", "portfolio", "avatars"];
+
+  // Create base and subdirectories
+  if (!fs.existsSync(uploadsBasePath)) {
+    fs.mkdirSync(uploadsBasePath, { recursive: true });
+  }
+
+  uploadTypes.forEach((type) => {
+    const typePath = path.join(uploadsBasePath, type);
+    if (!fs.existsSync(typePath)) {
+      fs.mkdirSync(typePath, { recursive: true });
+    }
+  });
+}
+```
+
+**Modified:** `server/index.ts` - Added initialization call on startup
+**Added:** `.gitkeep` files in each upload subdirectory to track structure in git
+
+### Deployment
+Will be deployed together with booking fix using the deployment script.
+
+### Verification
+1. Upload a photo to master portfolio
+2. Upload a photo to salon photos
+3. Check that files are saved to `server/uploads/` directory
+4. Verify images are accessible via `/uploads/{type}/{filename}` URL
+
+### Commit
+- **Commit Hash:** `fd05f5e4`
+- **Message:** "Fix photo upload: initialize upload directories on server startup"
+- **Date:** January 5, 2026
 
 ---
 

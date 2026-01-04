@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Deploying Booking Fix to Production..."
+echo "🚀 Deploying Fixes to Production..."
+echo "   - Fix #1: Booking creation (master_id nullable)"
+echo "   - Fix #2: Photo upload (directory initialization)"
 echo ""
 
 # Navigate to project directory
@@ -13,10 +15,12 @@ git pull origin main
 echo "✓ Code updated"
 echo ""
 
-# Copy to container and install deps (if needed)
-echo "📦 [2/5] Copying updated schema to container..."
+# Copy updated files to container
+echo "📦 [2/5] Copying updated files to container..."
 docker cp /var/www/aurelle/shared/schema.ts aurelle_app_1:/app/shared/schema.ts
 docker cp /var/www/aurelle/drizzle.config.ts aurelle_app_1:/app/drizzle.config.ts
+docker cp /var/www/aurelle/server/initUploads.ts aurelle_app_1:/app/server/initUploads.ts
+docker cp /var/www/aurelle/server/index.ts aurelle_app_1:/app/server/index.ts
 echo "✓ Files copied"
 echo ""
 
