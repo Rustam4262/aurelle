@@ -147,28 +147,38 @@ If you encounter any issues:
 
 ---
 
-## 🎯 Next Steps After Deployment
+## 🎯 All Three Fixes Complete!
 
-Once these fixes are deployed and tested, we can work on:
+### ✅ Fix #1: Booking Creation (master_id nullable)
+- Clients can now book without selecting specific master
+- Database constraint removed
 
-### Fix #3: Geolocation Feature
-- Add Yandex Maps picker for salon owners
-- Display salon location on map for clients
-- Make address copyable
+### ✅ Fix #2: Photo Upload (directory initialization)
+- Upload directories auto-created on server startup
+- Master portfolio and salon photos work
 
-This will be a bigger feature requiring:
-- Frontend: Yandex Maps integration
-- UI: Map picker component
-- Backend: Already has lat/lng fields in database
+### ✅ Fix #3: Geolocation Feature (NEW!)
+- Salon owners can set location via Yandex Maps
+- Clients see salon location on interactive map
+- Copy address and open in Yandex Maps buttons
+- Search, click on map, or use current location
+
+**Note:** Fix #3 requires rebuilding the frontend to include new components and dependencies.
 
 ---
 
 **Deployment prepared:** January 5, 2026
 **Files updated:**
 - `shared/schema.ts` (master_id nullable)
-- `server/initUploads.ts` (new file)
+- `server/initUploads.ts` (new file - upload dirs)
 - `server/index.ts` (initialize uploads)
+- `client/src/components/location-picker.tsx` (NEW - map picker)
+- `client/src/components/location-display.tsx` (NEW - map display)
+- `client/src/pages/owner-salon.tsx` (location editor)
+- `client/src/pages/salon.tsx` (location display)
+- `client/src/locales/*.json` (translations)
+- `package.json` (@pbe/react-yandex-maps dependency)
 - Upload directories structure
 
-**Latest commit:** `aa942162`
+**Latest commit:** `460230a6`
 **Repository:** https://github.com/Rustam4262/aurelle

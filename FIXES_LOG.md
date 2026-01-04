@@ -125,31 +125,70 @@ Will be deployed together with booking fix using the deployment script.
 
 ---
 
-## Fix #3: Missing Geolocation Feature (PENDING)
+## Fix #3: Geolocation Feature (COMPLETED)
 
 ### Problem
-Salon owners cannot set their salon's geolocation via Yandex Maps. Clients cannot see salon location on a map.
+Salon owners couldn't set their salon's geolocation via Yandex Maps. Clients couldn't see salon location on a map.
 
 **User Request:**
 "в платформе нет возможность для владелца салона указать геолокацию через yandex своего салона, у клиентов допольнытельный возможность, при выборе салона должен показыть где он находится по геолокацию и адрес чтобы клиенты просто скопировали"
 
-**Requirements:**
-1. For Salon Owners:
-   - Add Yandex Maps picker in salon settings
-   - Allow owner to click on map to set location
-   - Save latitude/longitude to database
+### Solution
+Implemented comprehensive geolocation feature using Yandex Maps API.
 
-2. For Clients:
-   - Display Yandex Maps on salon detail page
-   - Show salon location with marker
-   - Display address in copyable format
+**New Components:**
 
-**Status:** 🔄 Planning phase
+1. **LocationPicker Component** (`client/src/components/location-picker.tsx`)
+   - Interactive Yandex Maps with draggable marker
+   - Address search with geocoding
+   - "Get current location" button (uses browser geolocation)
+   - Reverse geocoding on map click (auto-fills address)
+   - Real-time coordinates display
 
-**Technical Notes:**
-- VITE_YANDEX_MAPS_API_KEY already configured
-- Database schema already has latitude/longitude columns
-- Need to integrate @pbe/react-yandex-maps or yandex-maps API
+2. **LocationDisplay Component** (`client/src/components/location-display.tsx`)
+   - Read-only map showing salon location
+   - Copy address to clipboard button
+   - "Open in Yandex Maps" button (new tab)
+   - Coordinates display
+
+**Integration:**
+
+For Salon Owners ([owner-salon.tsx:450-458](client/src/pages/owner-salon.tsx#L450-L458)):
+- "Edit Location" button in salon info tab
+- Opens dialog with interactive map
+- Click on map or drag marker to set location
+- Search for address or use current location
+- Save updates salon address, latitude, longitude
+
+For Clients ([salon.tsx:432-440](client/src/pages/salon.tsx#L432-L440)):
+- Location map in "About" tab
+- Shows salon with red marker
+- Copy address button
+- Open in Yandex Maps for navigation
+
+**Dependencies:**
+- Installed `@pbe/react-yandex-maps` library
+
+**Translations:**
+Added keys in all 3 languages (en, ru, uz):
+- editLocation / Изменить местоположение / Manzilni o'zgartirish
+- locationUpdated / Местоположение обновлено / Manzil yangilandi
+- saveLocation / Сохранить местоположение / Manzilni saqlash
+
+### Verification
+1. Log in as salon owner
+2. Go to salon dashboard → Info tab
+3. Click "Изменить местоположение"
+4. Click on map or search for address
+5. Click "Сохранить местоположение"
+6. Open salon page as client
+7. Go to "About" tab
+8. See location on map with copy/open buttons
+
+### Commit
+- **Commit Hash:** `460230a6`
+- **Message:** "Add Yandex Maps geolocation feature for salons"
+- **Date:** January 5, 2026
 
 ---
 
