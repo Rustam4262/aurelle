@@ -21,8 +21,8 @@ pm2-error.log
 pm2-out.log
 
 # Uploaded files (exclude from git, backup separately)
-server/uploads/*
-!server/uploads/.gitkeep
+server/uploads/*/*
+!server/uploads/*/.gitkeep
 
 # Backups
 backups/
