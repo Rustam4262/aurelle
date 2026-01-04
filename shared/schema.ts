@@ -163,7 +163,7 @@ export const bookings = pgTable("bookings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
   salonId: varchar("salon_id").notNull(),
-  masterId: varchar("master_id").notNull(),
+  masterId: varchar("master_id"), // Optional - allows booking without specific master
   serviceId: varchar("service_id").notNull(),
   bookingDate: timestamp("booking_date").notNull(),
   startTime: varchar("start_time", { length: 5 }).notNull(), // "14:00"
