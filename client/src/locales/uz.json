@@ -251,7 +251,14 @@
       "backToSalons": "Salonlarga qaytish",
       "masterLoginCredentials": "Kirish ma'lumotlari (ixtiyoriy)",
       "credentialsOptional": "Agar siz email va parolni ko'rsatsangiz, xodim shaxsiy kabinetga kirib uchrashuvlarini boshqarishi mumkin.",
-      "hasLogin": "kirish mumkin"
+      "hasLogin": "kirish mumkin",
+      "editLocation": "Manzilni o'zgartirish",
+      "locationUpdated": "Manzil yangilandi",
+      "saveLocation": "Manzilni saqlash",
+      "managePhotos": "Rasmlarni boshqarish",
+      "photosUpdated": "Rasmlar yangilandi",
+      "savePhotos": "Rasmlarni saqlash",
+      "close": "Yopish"
     },
     "master": {
       "title": "Usta paneli",

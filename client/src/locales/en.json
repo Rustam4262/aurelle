@@ -251,7 +251,14 @@
       "backToSalons": "Back to Salons",
       "masterLoginCredentials": "Login credentials (optional)",
       "credentialsOptional": "If you provide email and password, this staff member can log in to view their personal dashboard and manage their appointments.",
-      "hasLogin": "can login"
+      "hasLogin": "can login",
+      "editLocation": "Edit Location",
+      "locationUpdated": "Location Updated",
+      "saveLocation": "Save Location",
+      "managePhotos": "Manage Photos",
+      "photosUpdated": "Photos Updated",
+      "savePhotos": "Save Photos",
+      "close": "Close"
     },
     "master": {
       "title": "Master Dashboard",

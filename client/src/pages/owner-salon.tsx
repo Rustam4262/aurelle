@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MultiImageUpload } from "@/components/image-upload";
+import { LocationPicker } from "@/components/location-picker";
 import {
   ArrowLeft,
   Camera,
@@ -23,7 +24,8 @@ import {
   Plus,
   Trash2,
   Star,
-  Save
+  Save,
+  MapPin
 } from "lucide-react";
 import type { Salon, Service, Master, WorkingHours, Booking } from "@shared/schema";
 
@@ -100,6 +102,13 @@ export default function OwnerSalonPage() {
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [salonPhotos, setSalonPhotos] = useState<string[]>([]);
 
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [salonLocation, setSalonLocation] = useState({
+    latitude: 41.311081,
+    longitude: 69.240562,
+    address: "",
+  });
+
   const { data: salon, isLoading: salonLoading } = useQuery<Salon>({
     queryKey: ["/api/owner/salons", salonId],
     enabled: !!user && !!salonId,
@@ -124,6 +133,16 @@ export default function OwnerSalonPage() {
     queryKey: ["/api/owner/salons", salonId, "hours"],
     enabled: !!user && !!salonId,
   });
+
+  useEffect(() => {
+    if (salon) {
+      setSalonLocation({
+        latitude: Number(salon.latitude),
+        longitude: Number(salon.longitude),
+        address: salon.address,
+      });
+    }
+  }, [salon]);
 
   useEffect(() => {
     if (savedHours && savedHours.length > 0) {
@@ -247,6 +266,32 @@ export default function OwnerSalonPage() {
 
   const handleSavePhotos = () => {
     updatePhotosMutation.mutate(salonPhotos);
+  };
+
+  const updateLocationMutation = useMutation({
+    mutationFn: async (location: { latitude: number; longitude: number; address: string }) => {
+      return apiRequest("PATCH", `/api/owner/salons/${salonId}`, {
+        latitude: location.latitude.toString(),
+        longitude: location.longitude.toString(),
+        address: location.address,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId] });
+      setLocationDialogOpen(false);
+      toast({ title: t("marketplace.owner.locationUpdated") });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleSaveLocation = () => {
+    updateLocationMutation.mutate(salonLocation);
   };
 
   const handleAddService = (e: React.FormEvent) => {
@@ -402,6 +447,15 @@ export default function OwnerSalonPage() {
                   <div>
                     <Label>{t("marketplace.owner.address")}</Label>
                     <p className="text-foreground mt-1">{salon.address}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => setLocationDialogOpen(true)}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      {t("marketplace.owner.editLocation")}
+                    </Button>
                   </div>
                   <div>
                     <Label>{t("marketplace.owner.phone")}</Label>
@@ -803,6 +857,33 @@ export default function OwnerSalonPage() {
               disabled={updatePhotosMutation.isPending}
             >
               {t("marketplace.owner.savePhotos")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t("marketplace.owner.editLocation")}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <LocationPicker
+              latitude={salonLocation.latitude}
+              longitude={salonLocation.longitude}
+              address={salonLocation.address}
+              onLocationChange={setSalonLocation}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLocationDialogOpen(false)}>
+              {t("marketplace.owner.close")}
+            </Button>
+            <Button
+              onClick={handleSaveLocation}
+              disabled={updateLocationMutation.isPending}
+            >
+              {updateLocationMutation.isPending ? t("marketplace.owner.saving") : t("marketplace.owner.saveLocation")}
             </Button>
           </DialogFooter>
         </DialogContent>

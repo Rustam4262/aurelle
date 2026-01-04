@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/i18n";
+import { LocationDisplay } from "@/components/location-display";
 import type { Salon, Service, Master, Review, WorkingHours } from "@shared/schema";
 import {
   ArrowLeft,
@@ -420,15 +421,26 @@ export default function SalonPage() {
               </TabsContent>
 
               <TabsContent value="about">
-                <Card className="p-6">
+                <Card className="p-6 space-y-6">
                   {description && (
-                    <div className="mb-6">
+                    <div>
                       <h3 className="font-medium text-foreground mb-2">{t("marketplace.salon.about")}</h3>
                       <p className="text-muted-foreground">{description}</p>
                     </div>
                   )}
+
+                  <div>
+                    <h3 className="font-medium text-foreground mb-3">{t("marketplace.salon.location")}</h3>
+                    <LocationDisplay
+                      latitude={Number(salon.latitude)}
+                      longitude={Number(salon.longitude)}
+                      address={salon.address}
+                      salonName={getLocalizedText(salon.name, currentLang)}
+                    />
+                  </div>
+
                   {salon.photos && (salon.photos as string[]).length > 1 && (
-                    <div className="mb-6">
+                    <div>
                       <h3 className="font-medium text-foreground mb-3">{t("marketplace.salon.gallery")}</h3>
                       <div className="grid grid-cols-3 gap-2">
                         {(salon.photos as string[]).slice(0, 6).map((photo, index) => (
