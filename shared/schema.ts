@@ -58,6 +58,29 @@ export const insertWorkingHoursSchema = createInsertSchema(salonWorkingHours).om
 export type InsertWorkingHours = z.infer<typeof insertWorkingHoursSchema>;
 export type WorkingHours = typeof salonWorkingHours.$inferSelect;
 
+// ============ SALON SETTINGS ============
+export const salonSettings = pgTable("salon_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  salonId: varchar("salon_id").notNull().unique(),
+  bufferMinutes: integer("buffer_minutes").default(10), // Buffer between bookings
+  allowDoubleBooking: boolean("allow_double_booking").default(false), // Allow multiple bookings at same time
+  autoConfirmBookings: boolean("auto_confirm_bookings").default(false), // Auto-confirm new bookings
+  maxAdvanceBookingDays: integer("max_advance_booking_days").default(30), // How far in advance clients can book
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_salon_settings_salon").on(table.salonId),
+]);
+
+export const insertSalonSettingsSchema = createInsertSchema(salonSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSalonSettings = z.infer<typeof insertSalonSettingsSchema>;
+export type SalonSettings = typeof salonSettings.$inferSelect;
+
 // ============ MASTERS ============
 export const masters = pgTable("masters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -179,6 +202,10 @@ export const bookings = pgTable("bookings", {
   index("idx_bookings_salon").on(table.salonId),
   index("idx_bookings_master").on(table.masterId),
   index("idx_bookings_date").on(table.bookingDate),
+  index("idx_bookings_status").on(table.status),
+  // Composite indexes for conflict checking optimization
+  index("idx_bookings_master_date_status").on(table.masterId, table.bookingDate, table.status),
+  index("idx_bookings_salon_date_status").on(table.salonId, table.bookingDate, table.status),
 ]);
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({

@@ -9,8 +9,9 @@ import {
   salons,
   services,
   masters,
+  salonSettings,
 } from "@shared/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, or, gte, lte, ne } from "drizzle-orm";
 import { z } from "zod";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 
@@ -23,6 +24,90 @@ async function getClientFromUser(userId: string): Promise<{ error: string; statu
 
   // Any authenticated user can access client dashboard
   return { profile: profile || null, userId };
+}
+
+// Helper function to check for booking time conflicts
+async function checkBookingConflict(params: {
+  masterId: string | null;
+  salonId: string;
+  bookingDate: Date;
+  startTime: string;
+  endTime: string;
+  excludeBookingId?: string;
+  bufferMinutes?: number;
+}): Promise<{ hasConflict: boolean; conflictingBooking?: any }> {
+  const { masterId, salonId, bookingDate, startTime, endTime, excludeBookingId, bufferMinutes = 10 } = params;
+
+  // Convert time strings to minutes for easier comparison
+  const parseTime = (timeStr: string): number => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const requestedStart = parseTime(startTime);
+  const requestedEnd = parseTime(endTime);
+
+  // Add buffer to the requested times
+  const bufferedStart = requestedStart - bufferMinutes;
+  const bufferedEnd = requestedEnd + bufferMinutes;
+
+  // Convert back to time strings for database query
+  const formatTime = (totalMinutes: number): string => {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  const bufferedStartTime = formatTime(Math.max(0, bufferedStart));
+  const bufferedEndTime = formatTime(Math.min(1440, bufferedEnd)); // 1440 = 24 hours in minutes
+
+  // Build the query conditions
+  let conditions = [
+    eq(bookings.bookingDate, bookingDate),
+    // Exclude cancelled bookings
+    ne(bookings.status, 'cancelled' as any),
+  ];
+
+  // If masterId is provided, check master's schedule
+  // Otherwise, check salon's overall capacity (not implemented yet, would need capacity tracking)
+  if (masterId) {
+    conditions.push(eq(bookings.masterId, masterId));
+  } else {
+    // If no master specified, just check same salon
+    conditions.push(eq(bookings.salonId, salonId));
+  }
+
+  // Exclude current booking if updating
+  if (excludeBookingId) {
+    conditions.push(ne(bookings.id, excludeBookingId));
+  }
+
+  // Get all bookings for this master/salon on the same day
+  const existingBookings = await db
+    .select()
+    .from(bookings)
+    .where(and(...conditions));
+
+  // Check for time overlaps
+  for (const booking of existingBookings) {
+    const existingStart = parseTime(booking.startTime);
+    const existingEnd = parseTime(booking.endTime);
+    const existingBufferedStart = existingStart - bufferMinutes;
+    const existingBufferedEnd = existingEnd + bufferMinutes;
+
+    // Check if there's an overlap
+    // Overlap occurs if: (start1 < end2) AND (start2 < end1)
+    const hasOverlap = (bufferedStart < existingBufferedEnd) && (existingBufferedStart < bufferedEnd);
+
+    if (hasOverlap) {
+      return {
+        hasConflict: true,
+        conflictingBooking: booking,
+      };
+    }
+  }
+
+  return { hasConflict: false };
 }
 
 // Get client profile
@@ -142,6 +227,38 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     const endHour = Math.floor(endMinutes / 60);
     const endMinute = endMinutes % 60;
     const endTime = `${endHour.toString().padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}`;
+
+    // Get salon settings for buffer time
+    const [settings] = await db.select().from(salonSettings).where(eq(salonSettings.salonId, salonId));
+    const bufferMinutes = settings?.bufferMinutes ?? 10; // Default to 10 minutes if no settings
+    const allowDoubleBooking = settings?.allowDoubleBooking ?? false;
+
+    // Check for booking conflicts BEFORE creating (unless double booking is allowed)
+    if (!allowDoubleBooking) {
+      const conflictCheck = await checkBookingConflict({
+        masterId: masterId || null,
+        salonId,
+        bookingDate: new Date(bookingDate),
+        startTime,
+        endTime,
+        bufferMinutes,
+      });
+
+      if (conflictCheck.hasConflict) {
+        const conflicting = conflictCheck.conflictingBooking;
+        return res.status(409).json({
+          error: "Time slot not available",
+          message: masterId
+            ? `This master already has a booking from ${conflicting.startTime} to ${conflicting.endTime}. Please choose a different time.`
+            : `This time slot is not available. Please choose a different time.`,
+          conflictingBooking: {
+            startTime: conflicting.startTime,
+            endTime: conflicting.endTime,
+            date: conflicting.bookingDate,
+          },
+        });
+      }
+    }
 
     // Create booking
     console.log("[DEBUG] Creating booking with data:", {
