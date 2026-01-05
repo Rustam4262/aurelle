@@ -2,7 +2,7 @@ import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
-import { bookings, insertBookingSchema } from "@shared/schema";
+import { bookings, insertBookingSchema, userProfiles } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { createNewBookingNotification } from "../notifications";
 
@@ -45,9 +45,18 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 // Get user's bookings
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
-    const clientId = req.user.claims.sub;
+    const userId = req.user.claims.sub;
+
+    // Get user's profile to find their client profile ID
+    const [profile] = await db.select().from(userProfiles)
+      .where(eq(userProfiles.userId, userId));
+
+    if (!profile) {
+      return res.json([]);
+    }
+
     const userBookings = await db.select().from(bookings)
-      .where(eq(bookings.clientId, clientId))
+      .where(eq(bookings.clientId, profile.id))
       .orderBy(desc(bookings.bookingDate));
     return res.json(userBookings);
   } catch (error) {
@@ -60,11 +69,19 @@ router.get("/", isAuthenticated, async (req: any, res) => {
 router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const clientId = req.user.claims.sub;
+    const userId = req.user.claims.sub;
+
+    // Get user's profile to find their client profile ID
+    const [profile] = await db.select().from(userProfiles)
+      .where(eq(userProfiles.userId, userId));
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
 
     const [booking] = await db.update(bookings)
       .set({ status: "cancelled", updatedAt: new Date() })
-      .where(and(eq(bookings.id, id), eq(bookings.clientId, clientId)))
+      .where(and(eq(bookings.id, id), eq(bookings.clientId, profile.id)))
       .returning();
 
     if (!booking) {
