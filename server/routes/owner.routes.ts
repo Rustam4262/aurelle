@@ -200,7 +200,7 @@ router.patch("/salons/:id", isAuthenticated, async (req: any, res) => {
       longitude: z.string().regex(/^-?\d+(\.\d+)?$/).optional(),
       phone: z.string().max(20).optional(),
       email: z.string().email().max(255).optional(),
-      photos: z.array(z.string().url()).optional(),
+      photos: z.array(z.string().min(1)).optional(), // Accept relative paths like /uploads/...
       isActive: z.boolean().optional(),
     });
 
