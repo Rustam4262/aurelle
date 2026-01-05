@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/i18n";
 import { LocationDisplay } from "@/components/location-display";
+import { TimeSlotPicker } from "@/components/time-slot-picker";
 import type { Salon, Service, Master, Review, WorkingHours } from "@shared/schema";
 import {
   ArrowLeft,
@@ -538,14 +539,18 @@ export default function SalonPage() {
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
-              <div>
-                <Label>{t("marketplace.salon.time")}</Label>
-                <Input
-                  type="time"
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                />
-              </div>
+              {bookingDate && selectedMaster && (
+                <div>
+                  <Label>{t("marketplace.salon.time")}</Label>
+                  <TimeSlotPicker
+                    masterId={selectedMaster.id}
+                    serviceId={selectedService?.id || null}
+                    date={bookingDate}
+                    selectedTime={bookingTime}
+                    onTimeSelect={setBookingTime}
+                  />
+                </div>
+              )}
               <div>
                 <Label>{t("marketplace.salon.notes")} ({t("marketplace.salon.optional")})</Label>
                 <Textarea
