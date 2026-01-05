@@ -80,15 +80,22 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 router.post("/bookings", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
+    console.log("[DEBUG] Create booking request from user:", userId);
+
     const result = await getClientFromUser(userId);
+    console.log("[DEBUG] Profile lookup result:", result);
 
     if ('error' in result) {
+      console.log("[DEBUG] Error in getClientFromUser:", result.error);
       return res.status(result.status).json({ error: result.error });
     }
 
     if (!result.profile) {
+      console.log("[DEBUG] No profile found for user:", userId);
       return res.status(400).json({ error: "Profile not found. Please complete your profile first." });
     }
+
+    console.log("[DEBUG] Profile found:", result.profile.id);
 
     const bookingSchema = z.object({
       salonId: z.string(),
@@ -137,6 +144,16 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     const endTime = `${endHour.toString().padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}`;
 
     // Create booking
+    console.log("[DEBUG] Creating booking with data:", {
+      clientId: result.profile.id,
+      salonId,
+      serviceId,
+      masterId: masterId || null,
+      bookingDate,
+      startTime,
+      endTime,
+    });
+
     const [newBooking] = await db.insert(bookings).values({
       clientId: result.profile.id,
       salonId,
@@ -152,6 +169,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       updatedAt: new Date(),
     }).returning();
 
+    console.log("[DEBUG] Booking created successfully:", newBooking);
     return res.status(201).json(newBooking);
   } catch (error) {
     console.error("Create booking error:", error);
