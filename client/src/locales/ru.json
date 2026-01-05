@@ -186,7 +186,20 @@
       "noFavorites": "Избранного пока нет",
       "upcoming": "Предстоящие",
       "past": "Прошедшие",
-      "cancelled": "Отменённые"
+      "cancelled": "Отменённые",
+      "cancelBooking": "Отменить",
+      "bookingCancelled": "Запись отменена",
+      "bookingCancelledDescription": "Ваша запись была успешно отменена.",
+      "error": "Ошибка",
+      "cancelError": "Не удалось отменить запись. Попробуйте снова."
+    },
+    "booking": {
+      "status": {
+        "pending": "Ожидается",
+        "confirmed": "Подтверждено",
+        "cancelled": "Отменено",
+        "completed": "Завершено"
+      }
     },
     "owner": {
       "title": "Панель владельца салона",

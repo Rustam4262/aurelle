@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -26,7 +27,8 @@ import {
   Trash2,
   Star,
   Save,
-  MapPin
+  MapPin,
+  User
 } from "lucide-react";
 import type { Salon, Service, Master, WorkingHours, Booking } from "@shared/schema";
 
@@ -825,29 +827,68 @@ export default function OwnerSalonPage() {
               <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.upcomingBookings")}</h3>
               {bookings && bookings.length > 0 ? (
                 <div className="space-y-3">
-                  {bookings.map((booking) => {
+                  {bookings.map((booking: any) => {
                     const assignedMaster = masters?.find(m => m.id === booking.masterId);
                     return (
                       <div
                         key={booking.id}
-                        className="flex items-center justify-between p-4 bg-muted/50 rounded-md gap-4"
+                        className="flex items-start justify-between p-5 bg-muted/50 rounded-md gap-4"
                         data-testid={`booking-item-${booking.id}`}
                       >
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">
-                            {new Date(booking.bookingDate).toLocaleDateString()} • {booking.startTime}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {booking.status}
-                          </p>
+                        <div className="flex-1 space-y-2.5">
+                          {/* Client and Service */}
+                          <div className="flex flex-wrap gap-3 items-center">
+                            {booking.client && (
+                              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                                <User className="h-4 w-4" />
+                                {booking.client.firstName} {booking.client.lastName}
+                              </span>
+                            )}
+                            {booking.service && (
+                              <span className="flex items-center gap-1.5 text-muted-foreground">
+                                <Scissors className="h-4 w-4" />
+                                <span>
+                                  {typeof booking.service.name === "object" && booking.service.name
+                                    ? (booking.service.name as any)[t("language")] || (booking.service.name as any).en
+                                    : booking.service.name}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Date, Time and Status */}
+                          <div className="flex flex-wrap gap-3 items-center text-sm">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(booking.bookingDate).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              {booking.startTime}
+                            </span>
+                            <Badge
+                              variant={
+                                booking.status === "confirmed" ? "default" :
+                                booking.status === "cancelled" ? "destructive" :
+                                "secondary"
+                              }
+                            >
+                              {t(`marketplace.booking.status.${booking.status}`)}
+                            </Badge>
+                          </div>
+
+                          {/* Assigned Master Info */}
                           {assignedMaster && (
-                            <p className="text-sm text-primary mt-1">
+                            <p className="text-sm text-primary flex items-center gap-1.5">
+                              <User className="h-4 w-4" />
                               {t("marketplace.owner.master")}: {assignedMaster.name}
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium text-foreground whitespace-nowrap">
+
+                        {/* Price and Master Assignment */}
+                        <div className="flex flex-col items-end gap-3">
+                          <span className="font-semibold text-foreground text-lg whitespace-nowrap">
                             {booking.priceSnapshot?.toLocaleString()} UZS
                           </span>
                           <Select

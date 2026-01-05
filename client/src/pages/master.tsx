@@ -36,6 +36,8 @@ import {
   Loader2,
   Bell,
   CalendarCheck,
+  User,
+  Scissors,
 } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -606,24 +608,56 @@ export default function MasterPage() {
 
               {todayBookings.length > 0 ? (
                 <div className="space-y-3">
-                  {todayBookings.map((booking) => (
+                  {todayBookings.map((booking: any) => (
                     <div
                       key={booking.id}
-                      className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-md flex-wrap"
+                      className="flex items-start justify-between gap-4 p-5 bg-muted/50 rounded-md"
                       data-testid={`booking-today-${booking.id}`}
                     >
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {t("marketplace.master.client")} #{booking.clientId.slice(-6)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {booking.startTime} - {booking.endTime}
-                        </p>
+                      <div className="flex-1 space-y-2.5">
+                        {/* Client and Service */}
+                        <div className="flex flex-wrap gap-3 items-center">
+                          {booking.client && (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <User className="h-4 w-4" />
+                              {booking.client.firstName} {booking.client.lastName}
+                            </span>
+                          )}
+                          {booking.service && (
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Scissors className="h-4 w-4" />
+                              <span>
+                                {typeof booking.service.name === "object" && booking.service.name
+                                  ? (booking.service.name as any)[t("language")] || (booking.service.name as any).en
+                                  : booking.service.name}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Time and Status */}
+                        <div className="flex flex-wrap gap-3 items-center text-sm">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            {booking.startTime} - {booking.endTime}
+                          </span>
+                          <Badge
+                            variant={
+                              booking.status === "confirmed" ? "default" :
+                              booking.status === "cancelled" ? "destructive" :
+                              "secondary"
+                            }
+                          >
+                            {t(`marketplace.booking.status.${booking.status}`)}
+                          </Badge>
+                        </div>
                       </div>
+
+                      {/* Price */}
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          {booking.priceSnapshot.toLocaleString()} UZS
-                        </p>
+                        <span className="font-semibold text-foreground text-lg whitespace-nowrap">
+                          {booking.priceSnapshot?.toLocaleString()} UZS
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -645,24 +679,60 @@ export default function MasterPage() {
 
               {upcomingBookings.length > 0 ? (
                 <div className="space-y-3">
-                  {upcomingBookings.map((booking) => (
+                  {upcomingBookings.map((booking: any) => (
                     <div
                       key={booking.id}
-                      className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-md flex-wrap"
+                      className="flex items-start justify-between gap-4 p-5 bg-muted/50 rounded-md"
                       data-testid={`booking-upcoming-${booking.id}`}
                     >
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {t("marketplace.master.client")} #{booking.clientId.slice(-6)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(booking.bookingDate).toLocaleDateString()} at {booking.startTime}
-                        </p>
+                      <div className="flex-1 space-y-2.5">
+                        {/* Client and Service */}
+                        <div className="flex flex-wrap gap-3 items-center">
+                          {booking.client && (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <User className="h-4 w-4" />
+                              {booking.client.firstName} {booking.client.lastName}
+                            </span>
+                          )}
+                          {booking.service && (
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Scissors className="h-4 w-4" />
+                              <span>
+                                {typeof booking.service.name === "object" && booking.service.name
+                                  ? (booking.service.name as any)[t("language")] || (booking.service.name as any).en
+                                  : booking.service.name}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Date, Time and Status */}
+                        <div className="flex flex-wrap gap-3 items-center text-sm">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(booking.bookingDate).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            {booking.startTime}
+                          </span>
+                          <Badge
+                            variant={
+                              booking.status === "confirmed" ? "default" :
+                              booking.status === "cancelled" ? "destructive" :
+                              "secondary"
+                            }
+                          >
+                            {t(`marketplace.booking.status.${booking.status}`)}
+                          </Badge>
+                        </div>
                       </div>
+
+                      {/* Price */}
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          {booking.priceSnapshot.toLocaleString()} UZS
-                        </p>
+                        <span className="font-semibold text-foreground text-lg whitespace-nowrap">
+                          {booking.priceSnapshot?.toLocaleString()} UZS
+                        </span>
                       </div>
                     </div>
                   ))}

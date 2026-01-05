@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Booking, Salon } from "@shared/schema";
 import {
   ArrowLeft,
@@ -16,6 +19,9 @@ import {
   LogOut,
   Clock,
   MapPin,
+  User,
+  Scissors,
+  XCircle,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -24,9 +30,31 @@ export default function ProfilePage() {
   const { user, isLoading, logout } = useAuth();
   const [, navigate] = useLocation();
 
-  const { data: bookings } = useQuery<Booking[]>({
-    queryKey: ["/api/bookings"],
+  const { data: bookings } = useQuery<any[]>({
+    queryKey: ["/api/client/bookings"],
     enabled: !!user,
+  });
+
+  const { toast } = useToast();
+
+  const cancelBookingMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      return apiRequest("DELETE", `/api/client/bookings/${bookingId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/bookings"] });
+      toast({
+        title: t("marketplace.profile.bookingCancelled"),
+        description: t("marketplace.profile.bookingCancelledDescription"),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t("marketplace.profile.error"),
+        description: t("marketplace.profile.cancelError"),
+        variant: "destructive",
+      });
+    },
   });
 
   const { data: favorites } = useQuery<Salon[]>({
@@ -104,28 +132,83 @@ export default function ProfilePage() {
           <TabsContent value="bookings" className="space-y-4">
             {bookings && bookings.length > 0 ? (
               bookings.map((booking) => (
-                <Card key={booking.id} className="p-4" data-testid={`card-booking-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-foreground">Booking #{booking.id.slice(0, 8)}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                <Card key={booking.id} className="p-5" data-testid={`card-booking-${booking.id}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      {/* Salon name */}
+                      {booking.salon && (
+                        <Link href={`/salon/${booking.salonId}`}>
+                          <h3 className="font-semibold text-foreground text-lg hover:text-primary transition-colors">
+                            {typeof booking.salon.name === "object" && booking.salon.name
+                              ? (booking.salon.name as any)[t("language")] || (booking.salon.name as any).en
+                              : booking.salon.name}
+                          </h3>
+                        </Link>
+                      )}
+
+                      {/* Service and Master */}
+                      <div className="flex flex-wrap gap-3 text-sm">
+                        {booking.service && (
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Scissors className="h-4 w-4" />
+                            <span className="font-medium">
+                              {typeof booking.service.name === "object" && booking.service.name
+                                ? (booking.service.name as any)[t("language")] || (booking.service.name as any).en
+                                : booking.service.name}
+                            </span>
+                          </span>
+                        )}
+                        {booking.master && (
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <User className="h-4 w-4" />
+                            <span>{booking.master.name}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Date, Time, Price */}
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4" />
                           {new Date(booking.bookingDate).toLocaleDateString()}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4" />
                           {booking.startTime}
                         </span>
+                        {booking.priceSnapshot && (
+                          <span className="font-semibold text-foreground">
+                            {booking.priceSnapshot.toLocaleString()} UZS
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <span className={`text-sm font-medium ${
-                      booking.status === "confirmed" ? "text-green-600" :
-                      booking.status === "cancelled" ? "text-red-600" :
-                      "text-muted-foreground"
-                    }`}>
-                      {booking.status}
-                    </span>
+
+                    {/* Status Badge and Cancel Button */}
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge
+                        variant={
+                          booking.status === "confirmed" ? "default" :
+                          booking.status === "cancelled" ? "destructive" :
+                          "secondary"
+                        }
+                      >
+                        {t(`marketplace.booking.status.${booking.status}`)}
+                      </Badge>
+
+                      {booking.status === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => cancelBookingMutation.mutate(booking.id)}
+                          disabled={cancelBookingMutation.isPending}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          {t("marketplace.profile.cancelBooking")}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))

@@ -186,7 +186,20 @@
       "noFavorites": "No favorites yet",
       "upcoming": "Upcoming",
       "past": "Past",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "cancelBooking": "Cancel",
+      "bookingCancelled": "Booking Cancelled",
+      "bookingCancelledDescription": "Your booking has been successfully cancelled.",
+      "error": "Error",
+      "cancelError": "Failed to cancel booking. Please try again."
+    },
+    "booking": {
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled",
+        "completed": "Completed"
+      }
     },
     "owner": {
       "title": "Salon Owner Dashboard",

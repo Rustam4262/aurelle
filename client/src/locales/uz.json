@@ -186,7 +186,20 @@
       "noFavorites": "Hozircha sevimlilar yo'q",
       "upcoming": "Kelayotgan",
       "past": "O'tgan",
-      "cancelled": "Bekor qilingan"
+      "cancelled": "Bekor qilingan",
+      "cancelBooking": "Bekor qilish",
+      "bookingCancelled": "Bron bekor qilindi",
+      "bookingCancelledDescription": "Sizning broningiz muvaffaqiyatli bekor qilindi.",
+      "error": "Xato",
+      "cancelError": "Bronni bekor qilib bo'lmadi. Qaytadan urinib ko'ring."
+    },
+    "booking": {
+      "status": {
+        "pending": "Kutilmoqda",
+        "confirmed": "Tasdiqlangan",
+        "cancelled": "Bekor qilingan",
+        "completed": "Yakunlangan"
+      }
     },
     "owner": {
       "title": "Salon egasining paneli",

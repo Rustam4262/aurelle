@@ -371,7 +371,33 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
       .where(eq(bookings.salonId, salonId))
       .orderBy(desc(bookings.bookingDate));
 
-    return res.json(salonBookings);
+    if (salonBookings.length === 0) {
+      return res.json([]);
+    }
+
+    // Batch loading for services and clients
+    const serviceIds = Array.from(new Set(salonBookings.map(b => b.serviceId)));
+    const clientIds = Array.from(new Set(salonBookings.map(b => b.clientId)));
+
+    const [servicesData, clientsData] = await Promise.all([
+      serviceIds.length > 0
+        ? db.select().from(services).where(inArray(services.id, serviceIds))
+        : Promise.resolve([]),
+      clientIds.length > 0
+        ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+        : Promise.resolve([]),
+    ]);
+
+    const servicesMap = new Map(servicesData.map(s => [s.id, s]));
+    const clientsMap = new Map(clientsData.map(c => [c.id, c]));
+
+    const enrichedBookings = salonBookings.map(booking => ({
+      ...booking,
+      service: servicesMap.get(booking.serviceId),
+      client: clientsMap.get(booking.clientId),
+    }));
+
+    return res.json(enrichedBookings);
   } catch (error) {
     console.error("Get salon bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
