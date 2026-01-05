@@ -22,6 +22,7 @@ docker cp /var/www/aurelle/shared/schema.ts aurelle_app_1:/app/shared/schema.ts
 docker cp /var/www/aurelle/drizzle.config.ts aurelle_app_1:/app/drizzle.config.ts
 docker cp /var/www/aurelle/server/initUploads.ts aurelle_app_1:/app/server/initUploads.ts
 docker cp /var/www/aurelle/server/index.ts aurelle_app_1:/app/server/index.ts
+docker cp /var/www/aurelle/tsconfig.json aurelle_app_1:/app/tsconfig.json
 docker cp /var/www/aurelle/package.json aurelle_app_1:/app/package.json
 docker cp /var/www/aurelle/package-lock.json aurelle_app_1:/app/package-lock.json
 echo "✓ Files copied"
