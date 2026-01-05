@@ -399,7 +399,11 @@ export default function SalonPage() {
               <TabsContent value="team" className="space-y-4">
                 {masters && masters.length > 0 ? (
                   masters.map((master) => (
-                    <MasterCard key={master.id} master={master} onBook={(m) => handleBookService(masters[0] || {} as Service, m)} />
+                    <MasterCard key={master.id} master={master} onBook={(m) => {
+                      if (services && services.length > 0) {
+                        handleBookService(services[0], m);
+                      }
+                    }} />
                   ))
                 ) : (
                   <Card className="p-8 text-center">

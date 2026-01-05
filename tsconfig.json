@@ -13,8 +13,6 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
