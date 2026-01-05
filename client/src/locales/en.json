@@ -258,7 +258,11 @@
       "managePhotos": "Manage Photos",
       "photosUpdated": "Photos Updated",
       "savePhotos": "Save Photos",
-      "close": "Close"
+      "close": "Close",
+      "master": "Master",
+      "selectMaster": "Select Master",
+      "noMaster": "No Master",
+      "masterAssigned": "Master Assigned"
     },
     "master": {
       "title": "Master Dashboard",

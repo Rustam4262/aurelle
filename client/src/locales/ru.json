@@ -258,7 +258,11 @@
       "managePhotos": "Управление фотографиями",
       "photosUpdated": "Фотографии обновлены",
       "savePhotos": "Сохранить фотографии",
-      "close": "Закрыть"
+      "close": "Закрыть",
+      "master": "Мастер",
+      "selectMaster": "Выберите мастера",
+      "noMaster": "Нет мастера",
+      "masterAssigned": "Мастер назначен"
     },
     "master": {
       "title": "Панель мастера",

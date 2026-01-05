@@ -258,7 +258,11 @@
       "managePhotos": "Rasmlarni boshqarish",
       "photosUpdated": "Rasmlar yangilandi",
       "savePhotos": "Rasmlarni saqlash",
-      "close": "Yopish"
+      "close": "Yopish",
+      "master": "Usta",
+      "selectMaster": "Ustani tanlang",
+      "noMaster": "Usta yo'q",
+      "masterAssigned": "Usta tayinlandi"
     },
     "master": {
       "title": "Usta paneli",
