@@ -461,4 +461,47 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
   }
 });
 
+// Assign master to booking
+router.patch("/bookings/:id/assign-master", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { masterId } = req.body;
+    const ownerId = req.user.claims.sub;
+
+    // Get booking and verify salon ownership
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, booking.salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Verify master belongs to this salon
+    if (masterId) {
+      const [master] = await db.select().from(masters)
+        .where(and(eq(masters.id, masterId), eq(masters.salonId, booking.salonId)));
+
+      if (!master) {
+        return res.status(400).json({ error: "Master not found or does not belong to this salon" });
+      }
+    }
+
+    // Update booking with assigned master
+    const [updated] = await db.update(bookings)
+      .set({ masterId: masterId || null, updatedAt: new Date() })
+      .where(eq(bookings.id, id))
+      .returning();
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Assign master to booking error:", error);
+    return res.status(500).json({ error: "Failed to assign master" });
+  }
+});
+
 export default router;

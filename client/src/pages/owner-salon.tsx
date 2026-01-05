@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -254,6 +255,23 @@ export default function OwnerSalonPage() {
       setPhotoDialogOpen(false);
       setSalonPhotos([]);
       toast({ title: t("marketplace.owner.photosUpdated") });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const assignMasterMutation = useMutation({
+    mutationFn: async ({ bookingId, masterId }: { bookingId: string; masterId: string | null }) => {
+      return apiRequest("PATCH", `/api/owner/bookings/${bookingId}/assign-master`, { masterId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "bookings"] });
+      toast({ title: t("marketplace.owner.masterAssigned") });
     },
     onError: (error: any) => {
       toast({
@@ -807,25 +825,56 @@ export default function OwnerSalonPage() {
               <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.upcomingBookings")}</h3>
               {bookings && bookings.length > 0 ? (
                 <div className="space-y-3">
-                  {bookings.map((booking) => (
-                    <div 
-                      key={booking.id} 
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-md"
-                      data-testid={`booking-item-${booking.id}`}
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {new Date(booking.bookingDate).toLocaleDateString()} • {booking.startTime}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {booking.status}
-                        </p>
+                  {bookings.map((booking) => {
+                    const assignedMaster = masters?.find(m => m.id === booking.masterId);
+                    return (
+                      <div
+                        key={booking.id}
+                        className="flex items-center justify-between p-4 bg-muted/50 rounded-md gap-4"
+                        data-testid={`booking-item-${booking.id}`}
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">
+                            {new Date(booking.bookingDate).toLocaleDateString()} • {booking.startTime}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {booking.status}
+                          </p>
+                          {assignedMaster && (
+                            <p className="text-sm text-primary mt-1">
+                              {t("marketplace.owner.master")}: {assignedMaster.name}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-foreground whitespace-nowrap">
+                            {booking.priceSnapshot?.toLocaleString()} UZS
+                          </span>
+                          <Select
+                            value={booking.masterId || "unassigned"}
+                            onValueChange={(value) => {
+                              const masterId = value === "unassigned" ? null : value;
+                              assignMasterMutation.mutate({ bookingId: booking.id, masterId });
+                            }}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder={t("marketplace.owner.selectMaster")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unassigned">
+                                {t("marketplace.owner.noMaster")}
+                              </SelectItem>
+                              {masters?.map((master) => (
+                                <SelectItem key={master.id} value={master.id}>
+                                  {master.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <span className="font-medium text-foreground">
-                        {booking.priceSnapshot?.toLocaleString()} UZS
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center py-8">{t("marketplace.owner.noBookings")}</p>
