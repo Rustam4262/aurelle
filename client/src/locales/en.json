@@ -480,6 +480,35 @@
       "freeSlots": "free slots",
       "free": "Available",
       "busy": "Busy"
+    },
+    "push": {
+      "title": "Push Notifications",
+      "description": "Get instant notifications about bookings and updates",
+      "enable": "Enable Notifications",
+      "disable": "Disable Notifications",
+      "enabled": "Push notifications are enabled",
+      "disabled": "Push notifications are disabled",
+      "notSupported": "Your browser does not support push notifications",
+      "permissionDenied": "Notification permission was denied. Please enable it in your browser settings.",
+      "sendTest": "Send Test",
+      "whatYouWillReceive": "What you'll receive:",
+      "newBookings": "New booking notifications (for salon owners)",
+      "bookingReminders": "Booking reminders (24 hours before)",
+      "reviewResponses": "Responses to your reviews"
+    },
+    "common": {
+      "loading": "Loading...",
+      "error": "Error",
+      "success": "Success",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "close": "Close",
+      "submit": "Submit",
+      "submitting": "Submitting...",
+      "sending": "Sending...",
+      "anonymous": "Anonymous"
     }
   }
 }

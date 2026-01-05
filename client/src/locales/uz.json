@@ -481,6 +481,35 @@
       "freeSlots": "bo'sh slotlar",
       "free": "Bo'sh",
       "busy": "Band"
+    },
+    "push": {
+      "title": "Push-bildirishnomalar",
+      "description": "Bronlashlar va yangilanishlar haqida tezkor bildirishnomalar oling",
+      "enable": "Bildirishnomalarni yoqish",
+      "disable": "Bildirishnomalarni o'chirish",
+      "enabled": "Push-bildirishnomalar yoqilgan",
+      "disabled": "Push-bildirishnomalar o'chirilgan",
+      "notSupported": "Brauzeringiz push-bildirishnomalarni qo'llab-quvvatlamaydi",
+      "permissionDenied": "Bildirishnoma ruxsati rad etildi. Iltimos, brauzer sozlamalarida uni yoqing.",
+      "sendTest": "Test yuborish",
+      "whatYouWillReceive": "Nima olasiz:",
+      "newBookings": "Yangi bronlashlar haqida bildirishnomalar (egalar uchun)",
+      "bookingReminders": "Bronlash eslatmalari (24 soat oldin)",
+      "reviewResponses": "Sharhlaringizga javoblar"
+    },
+    "common": {
+      "loading": "Yuklanmoqda...",
+      "error": "Xato",
+      "success": "Muvaffaqiyatli",
+      "cancel": "Bekor qilish",
+      "save": "Saqlash",
+      "delete": "O'chirish",
+      "edit": "Tahrirlash",
+      "close": "Yopish",
+      "submit": "Yuborish",
+      "submitting": "Yuborilmoqda...",
+      "sending": "Yuborilmoqda...",
+      "anonymous": "Anonim"
     }
   }
 }
