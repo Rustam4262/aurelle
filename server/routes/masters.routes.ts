@@ -305,7 +305,7 @@ router.post("/portfolio", isAuthenticated, async (req: any, res) => {
     }
 
     const portfolioSchema = z.object({
-      imageUrl: z.string().url().max(500),
+      imageUrl: z.string().min(1).max(500), // Accept relative paths like /uploads/...
       description: z.object({
         en: z.string().optional().default(""),
         ru: z.string().optional().default(""),
