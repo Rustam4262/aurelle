@@ -224,7 +224,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       ...booking,
       salon: salonsMap.get(booking.salonId),
       service: servicesMap.get(booking.serviceId),
-      master: mastersMap.get(booking.masterId),
+      master: booking.masterId ? mastersMap.get(booking.masterId) : null,
     }));
 
     return res.json(enrichedBookings);
