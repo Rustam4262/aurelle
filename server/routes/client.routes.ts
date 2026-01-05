@@ -14,6 +14,7 @@ import {
 import { eq, and, desc, inArray, or, gte, lte, ne } from "drizzle-orm";
 import { z } from "zod";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
+import { sendBookingConfirmation, sendBookingCancellation, isEmailConfigured } from "../email";
 
 const router = Router();
 
@@ -287,6 +288,60 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     }).returning();
 
     console.log("[DEBUG] Booking created successfully:", newBooking);
+
+    // Send confirmation email if email is configured
+    if (isEmailConfigured() && result.profile.email) {
+      try {
+        // Get master info if assigned
+        let masterName: string | null = null;
+        if (masterId) {
+          const [masterInfo] = await db.select().from(masters).where(eq(masters.id, masterId));
+          masterName = masterInfo?.name || null;
+        }
+
+        // Determine language from user profile or default to 'en'
+        const language = result.profile.preferredLanguage || 'en';
+
+        // Format date for email
+        const formattedDate = new Date(bookingDate).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        // Get salon name (assuming it's a JSON object with language keys)
+        const salonName = typeof salon.name === 'object' && salon.name !== null
+          ? (salon.name as any)[language] || (salon.name as any)['en'] || 'Salon'
+          : String(salon.name || 'Salon');
+
+        // Get service name
+        const serviceName = typeof service.name === 'object' && service.name !== null
+          ? (service.name as any)[language] || (service.name as any)['en'] || 'Service'
+          : String(service.name || 'Service');
+
+        await sendBookingConfirmation(
+          result.profile.email,
+          {
+            clientName: result.profile.name || 'Client',
+            salonName,
+            serviceName,
+            masterName,
+            date: formattedDate,
+            time: startTime,
+            price: service.priceMin,
+            bookingId: newBooking.id,
+          },
+          language
+        );
+
+        console.log(`[EMAIL] Confirmation email sent to ${result.profile.email}`);
+      } catch (emailError) {
+        // Don't fail the booking if email fails
+        console.error("[EMAIL] Failed to send confirmation email:", emailError);
+      }
+    }
+
     return res.status(201).json(newBooking);
   } catch (error) {
     console.error("Create booking error:", error);
@@ -386,6 +441,53 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(bookings.id, id))
       .returning();
+
+    // Send cancellation email if email is configured
+    if (isEmailConfigured() && result.profile.email) {
+      try {
+        // Get booking details for email
+        const [salon] = await db.select().from(salons).where(eq(salons.id, booking.salonId));
+        const [service] = await db.select().from(services).where(eq(services.id, booking.serviceId));
+
+        if (salon && service) {
+          const language = result.profile.preferredLanguage || 'en';
+
+          // Format date
+          const formattedDate = new Date(booking.bookingDate).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+
+          // Get localized names
+          const salonName = typeof salon.name === 'object' && salon.name !== null
+            ? (salon.name as any)[language] || (salon.name as any)['en'] || 'Salon'
+            : String(salon.name || 'Salon');
+
+          const serviceName = typeof service.name === 'object' && service.name !== null
+            ? (service.name as any)[language] || (service.name as any)['en'] || 'Service'
+            : String(service.name || 'Service');
+
+          await sendBookingCancellation(
+            result.profile.email,
+            {
+              clientName: result.profile.name || 'Client',
+              salonName,
+              serviceName,
+              date: formattedDate,
+              time: booking.startTime,
+            },
+            language
+          );
+
+          console.log(`[EMAIL] Cancellation email sent to ${result.profile.email}`);
+        }
+      } catch (emailError) {
+        // Don't fail the cancellation if email fails
+        console.error("[EMAIL] Failed to send cancellation email:", emailError);
+      }
+    }
 
     return res.json(updated);
   } catch (error) {

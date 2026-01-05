@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { initializeUploadDirectories } from "./initUploads";
+import { initializeEmail } from "./email";
 
 const app = express();
 const httpServer = createServer(app);
@@ -64,6 +65,9 @@ app.use((req, res, next) => {
 (async () => {
   // Initialize upload directories
   initializeUploadDirectories();
+
+  // Initialize email system
+  initializeEmail();
 
   await registerRoutes(httpServer, app);
 
