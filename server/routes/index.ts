@@ -6,6 +6,7 @@ import mastersRoutes from "./masters.routes";
 import bookingsRoutes from "./bookings.routes";
 import favoritesRoutes from "./favorites.routes";
 import reviewsRoutes from "./reviews.routes";
+import pushRoutes from "./push.routes";
 import notificationsRoutes from "./notifications.routes";
 import ownerRoutes from "./owner.routes";
 import clientRoutes from "./client.routes";
@@ -27,6 +28,7 @@ router.use("/salons", salonsRoutes);
 router.use("/bookings", bookingsRoutes);
 router.use("/favorites", favoritesRoutes);
 router.use("/reviews", reviewsRoutes);
+router.use("/push", pushRoutes);
 router.use("/notifications", notificationsRoutes);
 
 // Role-specific dashboards
