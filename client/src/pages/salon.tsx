@@ -17,6 +17,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/i18n";
 import { LocationDisplay } from "@/components/location-display";
 import { TimeSlotPicker } from "@/components/time-slot-picker";
+import { WaitlistButton } from "@/components/waitlist-button";
+import { MasterPortfolio } from "@/components/master-portfolio";
 import type { Salon, Service, Master, Review, WorkingHours } from "@shared/schema";
 import {
   ArrowLeft,
@@ -146,6 +148,7 @@ function ServiceCard({ service, onBook }: { service: Service; onBook: (service: 
 function MasterCard({ master, onBook }: { master: Master; onBook: (master: Master) => void }) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const [showPortfolio, setShowPortfolio] = useState(false);
 
   const specialties = master.specialties as { en?: string[]; ru?: string[]; uz?: string[] } | null;
   const specs = specialties ? (specialties[currentLang as keyof typeof specialties] || specialties.en || []) : [];
@@ -177,11 +180,25 @@ function MasterCard({ master, onBook }: { master: Master; onBook: (master: Maste
               <span>{Number(master.averageRating).toFixed(1)}</span>
             </div>
           )}
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => setShowPortfolio(!showPortfolio)}
+            className="px-0 mt-2"
+          >
+            {showPortfolio ? t("portfolio.hide") : t("portfolio.show")}
+          </Button>
         </div>
         <Button variant="outline" size="sm" onClick={() => onBook(master)} data-testid={`button-book-master-${master.id}`}>
           {t("marketplace.salon.bookNow")}
         </Button>
       </div>
+      {showPortfolio && (
+        <div className="mt-4 pt-4 border-t">
+          <h4 className="font-medium text-sm mb-3">{t("portfolio.title")}</h4>
+          <MasterPortfolio masterId={master.id} />
+        </div>
+      )}
     </Card>
   );
 }
@@ -539,16 +556,25 @@ export default function SalonPage() {
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
-              {bookingDate && selectedMaster && (
+              {bookingDate && (
                 <div>
                   <Label>{t("marketplace.salon.time")}</Label>
-                  <TimeSlotPicker
-                    masterId={selectedMaster.id}
-                    serviceId={selectedService?.id || null}
-                    date={bookingDate}
-                    selectedTime={bookingTime}
-                    onTimeSelect={setBookingTime}
-                  />
+                  {selectedMaster ? (
+                    <TimeSlotPicker
+                      masterId={selectedMaster.id}
+                      serviceId={selectedService?.id || null}
+                      date={bookingDate}
+                      selectedTime={bookingTime}
+                      onTimeSelect={setBookingTime}
+                    />
+                  ) : (
+                    <Input
+                      type="time"
+                      value={bookingTime}
+                      onChange={(e) => setBookingTime(e.target.value)}
+                      placeholder="09:00"
+                    />
+                  )}
                 </div>
               )}
               <div>
@@ -561,13 +587,24 @@ export default function SalonPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBookingDialogOpen(false)}>
-                {t("marketplace.salon.cancel")}
-              </Button>
-              <Button onClick={handleSubmitBooking} disabled={createBookingMutation.isPending}>
-                {createBookingMutation.isPending ? t("marketplace.salon.booking") : t("marketplace.salon.confirm")}
-              </Button>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <div className="flex-1">
+                {selectedService && id && (
+                  <WaitlistButton
+                    salonId={id}
+                    serviceId={selectedService.id}
+                    masterId={selectedMaster?.id}
+                  />
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setBookingDialogOpen(false)}>
+                  {t("marketplace.salon.cancel")}
+                </Button>
+                <Button onClick={handleSubmitBooking} disabled={createBookingMutation.isPending}>
+                  {createBookingMutation.isPending ? t("marketplace.salon.booking") : t("marketplace.salon.confirm")}
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>

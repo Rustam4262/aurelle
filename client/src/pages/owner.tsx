@@ -21,8 +21,10 @@ import {
   Star,
   Scissors,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 import { BookingCalendar } from "@/components/booking-calendar";
+import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface EnrichedBooking extends Booking {
@@ -176,7 +178,7 @@ export default function OwnerPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="salons" data-testid="tab-salons">
               <Store className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.owner.mySalons")}</span>
@@ -184,6 +186,10 @@ export default function OwnerPage() {
             <TabsTrigger value="calendar" data-testid="tab-calendar">
               <Calendar className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" data-testid="tab-analytics">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("analytics.title")}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -375,6 +381,28 @@ export default function OwnerPage() {
               showMaster={true}
               showClient={true}
             />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            {salons && salons.length > 0 ? (
+              <div className="space-y-6">
+                {salons.map((salon) => (
+                  <div key={salon.id}>
+                    <h3 className="font-serif text-xl text-foreground mb-4">
+                      {getLocalizedText(salon.name as any, currentLang)}
+                    </h3>
+                    <AnalyticsDashboard salonId={salon.id} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-12 text-center">
+                <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  {t("analytics.noData")}
+                </p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
