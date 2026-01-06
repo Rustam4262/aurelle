@@ -118,6 +118,13 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
                 {t("marketplace.nav.explore")}
               </span>
             </Link>
+            <Link href="/about">
+              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
+                scrolled ? "text-foreground" : "text-white/90"
+              }`}>
+                {t("about.title")}
+              </span>
+            </Link>
             <Link href="/owner">
               <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
                 scrolled ? "text-foreground" : "text-white/90"
@@ -179,6 +186,9 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
           <div className="px-6 py-4 flex flex-col gap-4">
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>
               <span className="text-foreground py-2 block">{t("marketplace.nav.explore")}</span>
+            </Link>
+            <Link href="/about" onClick={() => setMobileMenuOpen(false)}>
+              <span className="text-foreground py-2 block">{t("about.title")}</span>
             </Link>
             <Link href="/owner" onClick={() => setMobileMenuOpen(false)}>
               <span className="text-foreground py-2 block">{t("marketplace.nav.forOwners")}</span>

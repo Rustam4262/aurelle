@@ -548,6 +548,50 @@
       "sending": "Sending...",
       "anonymous": "Anonymous",
       "optional": "Optional"
+    },
+    "about": {
+      "title": "About",
+      "hero": {
+        "title": "AURELLE",
+        "subtitle": "Digital assistant for booking beauty services",
+        "description": "Platform connecting the best beauty masters and salons across Uzbekistan in one place. AURELLE is created for those who value their time, service quality, and convenience — for both clients and businesses."
+      },
+      "clients": {
+        "title": "For Clients",
+        "whatIsIt": "What is it for you?",
+        "whatIsItAnswer": "AURELLE is a simple and convenient way to find a master and book online, without calls, messages, and unnecessary hassle.",
+        "benefits": "What you get:",
+        "benefit1": "Search for verified masters in the best salons",
+        "benefit2": "Online booking at a convenient time in a couple of clicks",
+        "benefit3": "Appointment reminders (so you don't forget)",
+        "benefit4": "Time savings — no calls or waiting",
+        "benefit5": "Transparency: masters, services, schedule in one place",
+        "summary": "You don't \"search for a salon\", you book with a specific master when it's convenient for you."
+      },
+      "business": {
+        "title": "For Salons and Masters",
+        "whatIsIt": "What is it for business?",
+        "whatIsItAnswer": "AURELLE is a tool for attracting clients and managing bookings.",
+        "benefits": "Your benefits:",
+        "benefit1": "New clients without advertising costs",
+        "benefit2": "Automatic online booking 24/7",
+        "benefit3": "Fewer cancellations and forgotten visits thanks to reminders",
+        "benefit4": "Convenient schedule and service management",
+        "benefit5": "Increased master workload and salon revenue",
+        "summary": "You spend less time on administration and more on work and business growth."
+      },
+      "why": {
+        "title": "Why is it needed?",
+        "text1": "The beauty market has long outgrown phone calls, notebooks, and WhatsApp chaos.",
+        "text2": "AURELLE is a unified platform where it's convenient for clients to book, masters to work, and salons to earn."
+      },
+      "summary": {
+        "title": "Short and Clear",
+        "forClients": "For clients — a quick and convenient way to book with a master",
+        "forBusiness": "For business — client flow and booking automation",
+        "tagline": "No unnecessary words. No confusion. Everything in one place."
+      },
+      "cta": "Find a Salon"
     }
   }
 }

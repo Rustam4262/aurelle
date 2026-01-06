@@ -547,6 +547,50 @@
       "sending": "Yuborilmoqda...",
       "anonymous": "Anonim",
       "optional": "Ixtiyoriy"
+    },
+    "about": {
+      "title": "Loyiha haqida",
+      "hero": {
+        "title": "AURELLE (AUREL)",
+        "subtitle": "Go'zallik ustalariga yozilish uchun raqamli yordamchi",
+        "description": "Platforma O'zbekiston bo'ylab eng yaxshi go'zallik ustalarini va salonlarini bir joyda birlashtiradi. AURELLE o'z vaqtini, xizmat sifatini va qulaylikni qadrlaydiganlar uchun yaratilgan — mijozlar va biznes uchun ham."
+      },
+      "clients": {
+        "title": "Mijozlar uchun",
+        "whatIsIt": "Bu siz uchun nima?",
+        "whatIsItAnswer": "AURELLE — bu ustani topish va onlayn yozilishning oddiy va qulay usuli, qo'ng'iroqlar, xabarlar va ortiqcha mashg'ulotlarsiz.",
+        "benefits": "Siz nima olasiz:",
+        "benefit1": "Eng yaxshi salonlarda tekshirilgan ustalarni qidirish",
+        "benefit2": "Qulay vaqtda onlayn yozilish bir necha bosishda",
+        "benefit3": "Yozilish eslatmalari (unutmaslik uchun)",
+        "benefit4": "Vaqt tejash — qo'ng'iroqlar va kutishsiz",
+        "benefit5": "Shaffoflik: ustalar, xizmatlar, jadval bir joyda",
+        "summary": "Siz \"salon qidirmaysiz\", siz o'zingizga qulay bo'lgan vaqtda aniq ustaga yozilasiz."
+      },
+      "business": {
+        "title": "Salonlar va ustalar uchun",
+        "whatIsIt": "Bu biznes uchun nima?",
+        "whatIsItAnswer": "AURELLE — bu mijozlarni jalb qilish va yozilishlarni boshqarish vositasi.",
+        "benefits": "Sizning foydalangiz:",
+        "benefit1": "Reklama xarajatlarsiz yangi mijozlar",
+        "benefit2": "Avtomatik onlayn yozilish 24/7",
+        "benefit3": "Eslatmalar tufayli kamroq bekor qilishlar va unutilgan tashriflar",
+        "benefit4": "Jadval va xizmatlarni qulay boshqarish",
+        "benefit5": "Ustalar yuklanishining va salon daromadining o'sishi",
+        "summary": "Siz ma'muriyat ishlariga kamroq, ishga va biznes o'sishiga ko'proq vaqt sarflaysiz."
+      },
+      "why": {
+        "title": "Buning nima keragi bor?",
+        "text1": "Go'zallik bozori allaqachon qo'ng'iroqlar, daftarlar va WhatsApp tartibsizligidan o'sib ketgan.",
+        "text2": "AURELLE — bu mijoz uchun yozilish qulay, usta uchun ishlash, salon uchun daromad olish uchun yagona platforma."
+      },
+      "summary": {
+        "title": "Qisqa va aniq",
+        "forClients": "Mijozlar uchun — ustaga yozilishning tez va qulay usuli",
+        "forBusiness": "Biznes uchun — mijozlar oqimi va yozilishlar avtomatlashtirilishi",
+        "tagline": "Ortiqcha so'zlarsiz. Chalkashliksiz. Hammasi bir joyda."
+      },
+      "cta": "Salon topish"
     }
   }
 }

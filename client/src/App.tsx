@@ -12,11 +12,13 @@ import OwnerPage from "@/pages/owner";
 import OwnerSalonPage from "@/pages/owner-salon";
 import MasterPage from "@/pages/master";
 import ClientPage from "@/pages/client";
+import AboutPage from "@/pages/about";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/salon/:id" component={SalonPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/profile" component={ProfilePage} />
