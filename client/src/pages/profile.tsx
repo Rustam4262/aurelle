@@ -75,6 +75,12 @@ export default function ProfilePage() {
     return null;
   }
 
+  // Redirect admins to admin panel
+  if (user.isAdmin) {
+    navigate("/admin");
+    return null;
+  }
+
   const handleLogout = async () => {
     await logout();
     navigate("/");

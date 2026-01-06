@@ -1,0 +1,37 @@
+import { Router } from "express";
+import { requireAdmin, requirePermission } from "../middleware/admin";
+import dashboardRoutes from "./admin/dashboard.routes";
+import usersManagementRoutes from "./admin/users.routes";
+import salonsManagementRoutes from "./admin/salons.routes";
+import sanctionsRoutes from "./admin/sanctions.routes";
+import complaintsRoutes from "./admin/complaints.routes";
+import chatRoutes from "./admin/chat.routes";
+import auditRoutes from "./admin/audit.routes";
+
+const router = Router();
+
+// All routes require admin authentication
+router.use(requireAdmin);
+
+// Dashboard & Stats
+router.use("/dashboard", dashboardRoutes);
+
+// User Management
+router.use("/users", usersManagementRoutes);
+
+// Salon/Master Management
+router.use("/salons", salonsManagementRoutes);
+
+// Sanctions & Blocking
+router.use("/sanctions", sanctionsRoutes);
+
+// Complaints & Moderation
+router.use("/complaints", complaintsRoutes);
+
+// Support Chat
+router.use("/chat", chatRoutes);
+
+// Audit Logs
+router.use("/audit", auditRoutes);
+
+export default router;

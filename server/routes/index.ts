@@ -14,6 +14,7 @@ import portfolioRoutes from "./portfolio.routes";
 import ownerRoutes from "./owner.routes";
 import clientRoutes from "./client.routes";
 import contactRoutes from "./contact.routes";
+import adminRoutes from "./admin.routes";
 
 const router = Router();
 
@@ -41,5 +42,8 @@ router.use("/portfolio", portfolioRoutes);
 router.use("/master", mastersRoutes);
 router.use("/owner", ownerRoutes);
 router.use("/client", clientRoutes);
+
+// Admin panel (requires admin authentication)
+router.use("/admin", adminRoutes);
 
 export default router;

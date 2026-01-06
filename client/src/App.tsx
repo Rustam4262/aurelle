@@ -13,6 +13,7 @@ import OwnerSalonPage from "@/pages/owner-salon";
 import MasterPage from "@/pages/master";
 import ClientPage from "@/pages/client";
 import AboutPage from "@/pages/about";
+import AdminPage from "@/pages/admin";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/owner/salon/:id" component={OwnerSalonPage} />
       <Route path="/master" component={MasterPage} />
       <Route path="/client" component={ClientPage} />
+      <Route path="/admin/:rest*" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

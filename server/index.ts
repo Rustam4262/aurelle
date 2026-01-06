@@ -5,6 +5,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { initializeUploadDirectories } from "./initUploads";
 import { initializeEmail } from "./email";
+import { startSanctionExpiryJob } from "./jobs/expire-sanctions";
 
 const app = express();
 const httpServer = createServer(app);
@@ -102,6 +103,9 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+
+      // Start cron jobs
+      startSanctionExpiryJob();
     },
   );
 })();
