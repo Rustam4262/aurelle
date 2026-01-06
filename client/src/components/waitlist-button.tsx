@@ -13,7 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Clock } from "lucide-react";
 
@@ -26,7 +26,7 @@ interface WaitlistButtonProps {
 
 export function WaitlistButton({ salonId, serviceId, masterId, disabled }: WaitlistButtonProps) {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +85,7 @@ export function WaitlistButton({ salonId, serviceId, masterId, disabled }: Waitl
         {t("waitlist.joinWaitlist")}
       </Button>
 
-      <Dialog open={isOpen} onSetOpen={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("waitlist.joinWaitlist")}</DialogTitle>
