@@ -480,7 +480,13 @@
       "bookings": "записей",
       "freeSlots": "свободных слотов",
       "free": "Свободно",
-      "busy": "Занято"
+      "busy": "Занято",
+      "scheduleFor": "Расписание на",
+      "totalBookings": "Всего записей",
+      "noBookings": "Нет записей на этот день",
+      "legend": "Легенда",
+      "statistics": "Статистика дня",
+      "total": "Всего"
     },
     "push": {
       "title": "Push-уведомления",
@@ -497,6 +503,36 @@
       "bookingReminders": "Напоминания о записях (за 24 часа)",
       "reviewResponses": "Ответы на ваши отзывы"
     },
+    "waitlist": {
+      "joinWaitlist": "Присоединиться к листу ожидания",
+      "joined": "Добавлено в лист ожидания",
+      "willNotify": "Мы уведомим вас, когда появится свободное место",
+      "joinError": "Не удалось присоединиться к листу ожидания",
+      "description": "Вы получите уведомление, когда появится свободный слот",
+      "preferredDate": "Предпочтительная дата",
+      "preferredTimeStart": "Время от",
+      "preferredTimeEnd": "Время до",
+      "expiresIn": "Запись истечёт через 7 дней",
+      "join": "Присоединиться"
+    },
+    "portfolio": {
+      "title": "Портфолио",
+      "noItems": "Пока нет работ в портфолио"
+    },
+    "analytics": {
+      "title": "Аналитика",
+      "totalBookings": "Всего записей",
+      "completedBookings": "Завершённых",
+      "totalRevenue": "Общий доход",
+      "completionRate": "Процент завершения",
+      "bookingStatus": "Статус записей",
+      "currentMonth": "Статистика текущего месяца",
+      "busiestDays": "Самые загруженные дни",
+      "topFiveDays": "Топ-5 самых загруженных дней месяца",
+      "outOf": "из",
+      "bookings": "записей",
+      "cancellationRate": "Процент отмен"
+    },
     "common": {
       "loading": "Загрузка...",
       "error": "Ошибка",
@@ -509,7 +545,8 @@
       "submit": "Отправить",
       "submitting": "Отправка...",
       "sending": "Отправка...",
-      "anonymous": "Аноним"
+      "anonymous": "Аноним",
+      "optional": "Необязательно"
     }
   }
 }

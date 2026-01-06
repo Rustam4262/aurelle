@@ -480,7 +480,13 @@
       "bookings": "bronlar",
       "freeSlots": "bo'sh slotlar",
       "free": "Bo'sh",
-      "busy": "Band"
+      "busy": "Band",
+      "scheduleFor": "Jadval",
+      "totalBookings": "Jami bronlar",
+      "noBookings": "Bu kun uchun bronlar yo'q",
+      "legend": "Belgilar",
+      "statistics": "Kun statistikasi",
+      "total": "Jami"
     },
     "push": {
       "title": "Push-bildirishnomalar",
@@ -497,6 +503,36 @@
       "bookingReminders": "Bronlash eslatmalari (24 soat oldin)",
       "reviewResponses": "Sharhlaringizga javoblar"
     },
+    "waitlist": {
+      "joinWaitlist": "Kutish ro'yxatiga qo'shilish",
+      "joined": "Kutish ro'yxatiga qo'shildi",
+      "willNotify": "Bo'sh joy paydo bo'lganda sizga xabar beramiz",
+      "joinError": "Kutish ro'yxatiga qo'shilmadi",
+      "description": "Bo'sh slot paydo bo'lganda xabarnoma olasiz",
+      "preferredDate": "Afzal sana",
+      "preferredTimeStart": "Vaqtdan",
+      "preferredTimeEnd": "Vaqtgacha",
+      "expiresIn": "Bu yozuv 7 kundan keyin yaroqsiz bo'ladi",
+      "join": "Qo'shilish"
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "noItems": "Hozircha portfolioda ishlar yo'q"
+    },
+    "analytics": {
+      "title": "Analitika",
+      "totalBookings": "Jami bronlar",
+      "completedBookings": "Tugallangan",
+      "totalRevenue": "Umumiy daromad",
+      "completionRate": "Tugallanish foizi",
+      "bookingStatus": "Bron holati",
+      "currentMonth": "Joriy oy statistikasi",
+      "busiestDays": "Eng band kunlar",
+      "topFiveDays": "Oyning eng band 5 kuni",
+      "outOf": "dan",
+      "bookings": "bronlar",
+      "cancellationRate": "Bekor qilish foizi"
+    },
     "common": {
       "loading": "Yuklanmoqda...",
       "error": "Xato",
@@ -509,7 +545,8 @@
       "submit": "Yuborish",
       "submitting": "Yuborilmoqda...",
       "sending": "Yuborilmoqda...",
-      "anonymous": "Anonim"
+      "anonymous": "Anonim",
+      "optional": "Ixtiyoriy"
     }
   }
 }

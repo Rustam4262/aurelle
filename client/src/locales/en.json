@@ -479,7 +479,13 @@
       "bookings": "bookings",
       "freeSlots": "free slots",
       "free": "Available",
-      "busy": "Busy"
+      "busy": "Busy",
+      "scheduleFor": "Schedule for",
+      "totalBookings": "Total bookings",
+      "noBookings": "No bookings for this day",
+      "legend": "Legend",
+      "statistics": "Daily Statistics",
+      "total": "Total"
     },
     "push": {
       "title": "Push Notifications",
@@ -496,6 +502,36 @@
       "bookingReminders": "Booking reminders (24 hours before)",
       "reviewResponses": "Responses to your reviews"
     },
+    "waitlist": {
+      "joinWaitlist": "Join Waitlist",
+      "joined": "Added to waitlist",
+      "willNotify": "We'll notify you when a slot becomes available",
+      "joinError": "Failed to join waitlist",
+      "description": "You'll be notified when a slot becomes available",
+      "preferredDate": "Preferred Date",
+      "preferredTimeStart": "Time From",
+      "preferredTimeEnd": "Time To",
+      "expiresIn": "This entry will expire in 7 days",
+      "join": "Join"
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "noItems": "No portfolio items yet"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "totalBookings": "Total Bookings",
+      "completedBookings": "Completed",
+      "totalRevenue": "Total Revenue",
+      "completionRate": "Completion Rate",
+      "bookingStatus": "Booking Status",
+      "currentMonth": "Current month statistics",
+      "busiestDays": "Busiest Days",
+      "topFiveDays": "Top 5 busiest days this month",
+      "outOf": "out of",
+      "bookings": "bookings",
+      "cancellationRate": "Cancellation Rate"
+    },
     "common": {
       "loading": "Loading...",
       "error": "Error",
@@ -508,7 +544,8 @@
       "submit": "Submit",
       "submitting": "Submitting...",
       "sending": "Sending...",
-      "anonymous": "Anonymous"
+      "anonymous": "Anonymous",
+      "optional": "Optional"
     }
   }
 }

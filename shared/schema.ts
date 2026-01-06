@@ -111,6 +111,29 @@ export const insertMasterSchema = createInsertSchema(masters).omit({
 export type InsertMaster = z.infer<typeof insertMasterSchema>;
 export type Master = typeof masters.$inferSelect;
 
+// ============ MASTER PORTFOLIO ============
+export const portfolioItems = pgTable("portfolio_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  masterId: varchar("master_id").notNull(),
+  imageUrl: varchar("image_url", { length: 500 }).notNull(),
+  title: jsonb("title").$type<{ en: string; ru: string; uz: string }>(),
+  description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
+  serviceCategory: varchar("service_category", { length: 50 }), // haircut, coloring, nails, etc.
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_portfolio_master").on(table.masterId),
+  index("idx_portfolio_category").on(table.serviceCategory),
+]);
+
+export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
+export type PortfolioItem = typeof portfolioItems.$inferSelect;
+
 // ============ MASTER WORKING HOURS ============
 export const masterWorkingHours = pgTable("master_working_hours", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -266,6 +289,36 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// ============ WAITLIST ============
+export const waitlist = pgTable("waitlist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull(),
+  salonId: varchar("salon_id").notNull(),
+  masterId: varchar("master_id"),
+  serviceId: varchar("service_id").notNull(),
+  preferredDate: varchar("preferred_date", { length: 10 }), // YYYY-MM-DD
+  preferredTimeStart: varchar("preferred_time_start", { length: 5 }), // HH:MM
+  preferredTimeEnd: varchar("preferred_time_end", { length: 5 }), // HH:MM
+  status: varchar("status", { length: 20 }).notNull().default("waiting"), // waiting, notified, booked, expired
+  notifiedAt: timestamp("notified_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_waitlist_client").on(table.clientId),
+  index("idx_waitlist_salon").on(table.salonId),
+  index("idx_waitlist_status").on(table.status),
+]);
+
+export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
+  id: true,
+  status: true,
+  notifiedAt: true,
+  createdAt: true,
+});
+
+export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
+export type Waitlist = typeof waitlist.$inferSelect;
 
 // ============ USER PROFILES ============
 export const userProfiles = pgTable("user_profiles", {

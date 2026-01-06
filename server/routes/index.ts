@@ -8,6 +8,9 @@ import favoritesRoutes from "./favorites.routes";
 import reviewsRoutes from "./reviews.routes";
 import pushRoutes from "./push.routes";
 import notificationsRoutes from "./notifications.routes";
+import calendarRoutes from "./calendar.routes";
+import waitlistRoutes from "./waitlist.routes";
+import portfolioRoutes from "./portfolio.routes";
 import ownerRoutes from "./owner.routes";
 import clientRoutes from "./client.routes";
 import contactRoutes from "./contact.routes";
@@ -30,6 +33,9 @@ router.use("/favorites", favoritesRoutes);
 router.use("/reviews", reviewsRoutes);
 router.use("/push", pushRoutes);
 router.use("/notifications", notificationsRoutes);
+router.use("/calendar", calendarRoutes);
+router.use("/waitlist", waitlistRoutes);
+router.use("/portfolio", portfolioRoutes);
 
 // Role-specific dashboards
 router.use("/master", mastersRoutes);
