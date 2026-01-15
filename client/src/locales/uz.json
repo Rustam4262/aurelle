@@ -473,6 +473,7 @@
     "calendar": {
       "title": "Kalendar",
       "selectDate": "Sanani tanlang",
+      "today": "Bugun",
       "noDateSelected": "Sana tanlanmagan",
       "selectDatePrompt": "Jadvalni ko'rish uchun sanani tanlang",
       "hasBookings": "Bronlar mavjud",
@@ -486,7 +487,12 @@
       "noBookings": "Bu kun uchun bronlar yo'q",
       "legend": "Belgilar",
       "statistics": "Kun statistikasi",
-      "total": "Jami"
+      "total": "Jami",
+      "bookingWindow": {
+        "pastDatesDisabled": "O'tgan sanalar yopiq",
+        "maxDaysAdvance": "{{days}} kungacha oldindan yozilish mumkin",
+        "dateNotAvailable": "Bu sana yozilish uchun mavjud emas"
+      }
     },
     "push": {
       "title": "Push-bildirishnomalar",
@@ -517,7 +523,45 @@
     },
     "portfolio": {
       "title": "Portfolio",
-      "noItems": "Hozircha portfolioda ishlar yo'q"
+      "noItems": "Hozircha portfolioda ishlar yo'q",
+      "upload": {
+        "title": "Portfolio rasmlarini yuklash",
+        "subtitle": "Rasm qo'shish",
+        "dragDrop": "Rasmlarni bu yerga sudrab oling yoki fayllarni tanlash uchun bosing",
+        "chooseFiles": "Fayllarni tanlash",
+        "limitations": "{{count}} / {{max}} rasm • Fayl hajmi maks 5MB • JPEG, PNG, WebP",
+        "selectedImages": "Tanlangan rasmlar ({{count}})",
+        "clearAll": "Hammasini tozalash",
+        "uploadAll": "Hammasini yuklash",
+        "uploading": "Yuklanmoqda...",
+        "emptyState": "Hali rasmlar tanlanmagan. Sudrab oling yoki bosib tanlang.",
+        "editDetails": "Rasm tafsilotlarini tahrirlash",
+        "titleLabel": "Sarlavha (ixtiyoriy)",
+        "titlePlaceholder": "masalan, Balayaj soch bo'yash",
+        "descriptionLabel": "Tavsif (ixtiyoriy)",
+        "descriptionPlaceholder": "Ishingizni tasvirlab bering...",
+        "categoryLabel": "Kategoriya (ixtiyoriy)",
+        "categoryPlaceholder": "masalan, Soch bo'yash, Manikur, Makiyaj",
+        "saveDetails": "Saqlash",
+        "cancel": "Bekor qilish",
+        "uploaded": "Yuklandi",
+        "errors": {
+          "tooMany": "Juda ko'p rasmlar",
+          "tooManyDesc": "Bir vaqtning o'zida {{max}} gacha rasm yuklash mumkin",
+          "invalidType": "Noto'g'ri fayl turi",
+          "invalidTypeDesc": "{{name}} rasm fayli emas",
+          "tooLarge": "Fayl juda katta",
+          "tooLargeDesc": "{{name}} 5MB limitdan oshib ketdi",
+          "noImages": "Yuklash uchun rasmlar yo'q",
+          "noImagesDesc": "Iltimos, avval rasmlarni tanlang",
+          "uploadFailed": "Yuklash xatosi",
+          "uploadFailedDesc": "Ba'zi rasmlarni yuklab bo'lmadi. Qayta urinib ko'ring."
+        },
+        "success": {
+          "title": "Muvaffaqiyatli",
+          "description": "{{count}} rasm yuklandi"
+        }
+      }
     },
     "analytics": {
       "title": "Analitika",
@@ -624,14 +668,87 @@
         "subtitle": "Ro'yxatdan o'tgan foydalanuvchilarni boshqarish",
         "allUsers": "Barcha foydalanuvchilar",
         "search": "Foydalanuvchilarni qidirish...",
+        "searchPlaceholder": "Ism, email yoki telefon bo'yicha qidirish...",
         "user": "Foydalanuvchi",
+        "contact": "Aloqa",
         "email": "Email",
+        "phone": "Telefon",
         "role": "Rol",
+        "status": "Holat",
+        "verification": "Tasdiqlash",
         "joined": "Ro'yxatdan o'tgan sana",
         "actions": "Amallar",
-        "viewProfile": "Profilni ko'rish",
-        "blockUser": "Bloklash",
-        "noUsers": "Foydalanuvchilar topilmadi"
+        "filters": {
+          "allRoles": "Barcha rollar",
+          "allStatuses": "Barcha holatlar",
+          "client": "Mijoz",
+          "owner": "Egasi",
+          "master": "Usta",
+          "admin": "Admin",
+          "active": "Faol",
+          "blocked": "Bloklangan"
+        },
+        "badges": {
+          "active": "Faol",
+          "blocked": "Bloklangan",
+          "emailVerified": "Email tasdiqlangan",
+          "emailNotVerified": "Email tasdiqlanmagan",
+          "phoneVerified": "Telefon tasdiqlangan",
+          "phoneNotVerified": "Telefon tasdiqlanmagan"
+        },
+        "table": {
+          "id": "ID",
+          "name": "Ism",
+          "sortByName": "Ism bo'yicha saralash",
+          "sortByEmail": "Email bo'yicha saralash",
+          "sortByJoined": "Sana bo'yicha saralash"
+        },
+        "actions": {
+          "viewDetails": "Tafsilotlarni ko'rish",
+          "blockUser": "Bloklash",
+          "unblockUser": "Blokdan chiqarish",
+          "deleteUser": "O'chirish"
+        },
+        "blockDialog": {
+          "title": "Foydalanuvchini bloklash",
+          "description": "Haqiqatan ham bu foydalanuvchini bloklamoqchimisiz?",
+          "reasonLabel": "Bloklash sababi",
+          "reasonRequired": "Sabab majburiy",
+          "reasonPlaceholder": "Bloklash sababini kiriting (masalan, spam, qoidalarni buzish, haqorat)...",
+          "blockButton": "Bloklash",
+          "cancel": "Bekor qilish",
+          "userInfo": "Siz bloklamoqchisiz:"
+        },
+        "unblockDialog": {
+          "title": "Blokdan chiqarish",
+          "description": "Haqiqatan ham bu foydalanuvchini blokdan chiqarmoqchimisiz?",
+          "unblockButton": "Blokdan chiqarish",
+          "cancel": "Bekor qilish"
+        },
+        "deleteDialog": {
+          "title": "Foydalanuvchini o'chirish",
+          "description": "Haqiqatan ham bu foydalanuvchini o'chirmoqchimisiz? Bu amalni bekor qilib bo'lmaydi.",
+          "warning": "Foydalanuvchi hisobi va barcha bog'liq ma'lumotlar butunlay o'chiriladi.",
+          "deleteButton": "O'chirish",
+          "cancel": "Bekor qilish"
+        },
+        "toast": {
+          "userBlocked": "Foydalanuvchi bloklandi",
+          "userUnblocked": "Foydalanuvchi blokdan chiqarildi",
+          "userDeleted": "Foydalanuvchi o'chirildi",
+          "blockError": "Foydalanuvchini bloklab bo'lmadi",
+          "unblockError": "Blokdan chiqarib bo'lmadi",
+          "deleteError": "O'chirib bo'lmadi"
+        },
+        "pagination": {
+          "showing": "Ko'rsatilmoqda {{from}} - {{to}}, jami {{total}} foydalanuvchi",
+          "previous": "Orqaga",
+          "next": "Keyingi",
+          "page": "Sahifa {{page}}"
+        },
+        "noUsers": "Foydalanuvchilar topilmadi",
+        "loading": "Yuklanmoqda...",
+        "blockReason": "Bloklash sababi:"
       },
       "salons": {
         "title": "Salonlar va Ustalar",
@@ -722,6 +839,91 @@
         "view": "Ko'rish",
         "back": "Orqaga"
       }
+    },
+    "errors": {
+      "UNAUTHORIZED": "Ruxsatsiz kirish",
+      "FORBIDDEN": "Sizda bu amalni bajarish uchun ruxsat yo'q",
+      "NOT_FOUND": "So'ralgan resurs topilmadi",
+      "VALIDATION_ERROR": "Tekshirish xatosi",
+      "NETWORK_ERROR": "Tarmoq xatosi. Ulanishingizni tekshiring",
+      "SERVER_ERROR": "Server xatosi. Keyinroq urinib ko'ring",
+      "CONFLICT": "Bu resurs allaqachon mavjud",
+      "RATE_LIMIT": "Juda ko'p so'rovlar. Keyinroq urinib ko'ring",
+      "BOOKING_CONFLICT": "Bu vaqt endi mavjud emas",
+      "INVALID_CREDENTIALS": "Noto'g'ri email yoki parol",
+      "USER_NOT_FOUND": "Foydalanuvchi topilmadi",
+      "SALON_NOT_FOUND": "Salon topilmadi",
+      "SERVICE_NOT_FOUND": "Xizmat topilmadi",
+      "MASTER_NOT_FOUND": "Usta topilmadi",
+      "BOOKING_NOT_FOUND": "Bron topilmadi",
+      "REVIEW_NOT_FOUND": "Sharh topilmadi",
+      "DUPLICATE_EMAIL": "Bu email allaqachon ro'yxatdan o'tgan",
+      "DUPLICATE_PHONE": "Bu telefon raqami allaqachon ro'yxatdan o'tgan",
+      "INVALID_FILE_TYPE": "Noto'g'ri fayl turi",
+      "FILE_TOO_LARGE": "Fayl juda katta",
+      "UPLOAD_FAILED": "Fayl yuklash xatosi",
+      "PERMISSION_DENIED": "Ruxsat berilmadi",
+      "SESSION_EXPIRED": "Sessiyangiz tugadi. Qayta kiring",
+      "DATABASE_ERROR": "Ma'lumotlar bazasi xatosi",
+      "EXTERNAL_API_ERROR": "Tashqi xizmat xatosi",
+      "UNKNOWN_ERROR": "Kutilmagan xato yuz berdi",
+      "generic": "Nimadir noto'g'ri ketdi. Qayta urinib ko'ring"
+    },
+    "validation": {
+      "required": "Bu maydon majburiy",
+      "email": "To'g'ri email manzilini kiriting",
+      "phone": "To'g'ri telefon raqamini kiriting",
+      "url": "To'g'ri URL manzilini kiriting",
+      "minLength": "Kamida {{min}} belgi bo'lishi kerak",
+      "maxLength": "Ko'pi bilan {{max}} belgi bo'lishi kerak",
+      "min": "Kamida {{min}} bo'lishi kerak",
+      "max": "Ko'pi bilan {{max}} bo'lishi kerak",
+      "pattern": "Noto'g'ri format",
+      "passwordMismatch": "Parollar mos kelmaydi",
+      "invalidDate": "Noto'g'ri sana",
+      "futureDate": "Sana kelajakda bo'lishi kerak",
+      "pastDate": "Sana o'tmishda bo'lishi kerak",
+      "invalidTime": "Noto'g'ri vaqt",
+      "invalidRange": "Noto'g'ri diapazon",
+      "fieldRequired": "{{field}} majburiy",
+      "invalidEmail": "Noto'g'ri email formati",
+      "invalidPhone": "Noto'g'ri telefon formati (+998XXXXXXXXX formatidan foydalaning)",
+      "weakPassword": "Zaif parol. Kamida 8 belgidan, harflar va raqamlardan foydalaning",
+      "invalidPrice": "Noto'g'ri narx",
+      "invalidDuration": "Noto'g'ri davomiylik",
+      "nameRequired": "Ism majburiy",
+      "emailRequired": "Email majburiy",
+      "phoneRequired": "Telefon majburiy",
+      "passwordRequired": "Parol majburiy",
+      "dateRequired": "Sana majburiy",
+      "timeRequired": "Vaqt majburiy",
+      "serviceRequired": "Xizmat majburiy",
+      "masterRequired": "Usta majburiy"
+    },
+    "theme": {
+      "light": "Yorug'",
+      "dark": "Qorong'i",
+      "system": "Tizim",
+      "toggle": "Mavzuni almashtirish",
+      "selectTheme": "Mavzuni tanlang"
+    },
+    "a11y": {
+      "skipToContent": "Asosiy kontentga o'tish",
+      "openMenu": "Menyuni ochish",
+      "closeMenu": "Menyuni yopish",
+      "loading": "Yuklanmoqda...",
+      "search": "Qidirish",
+      "close": "Yopish",
+      "previous": "Oldingi",
+      "next": "Keyingi",
+      "selectDate": "Sanani tanlang",
+      "requiredField": "Majburiy maydon",
+      "optional": "Ixtiyoriy",
+      "expandSection": "Bo'limni ochish",
+      "collapseSection": "Bo'limni yopish",
+      "profileImage": "Profil rasmi",
+      "logo": "Logotip",
+      "noImage": "Rasm mavjud emas"
     }
   }
 }

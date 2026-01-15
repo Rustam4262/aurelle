@@ -1,0 +1,21 @@
+{
+  "yaml.schemas": {},
+  "yaml.customTags": [
+    "!ENV scalar",
+    "!ENV sequence"
+  ],
+  "yaml.validate": false,
+  "yaml.schemaStore.enable": false,
+  "yaml.format.enable": true,
+  "files.associations": {
+    ".github/workflows/*.yml": "github-actions-workflow"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "github-actions.workflows.pinned.workflows": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/deploy-production.yml",
+    ".github/workflows/deploy-staging.yml"
+  ]
+}

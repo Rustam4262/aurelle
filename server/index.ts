@@ -6,9 +6,16 @@ import { createServer } from "http";
 import { initializeUploadDirectories } from "./initUploads";
 import { initializeEmail } from "./email";
 import { startSanctionExpiryJob } from "./jobs/expire-sanctions";
+import { initializeSentry, setupSentryMiddleware, setupSentryErrorHandler, trackUserMiddleware } from "./lib/sentry";
+
+// Initialize Sentry as early as possible
+initializeSentry();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Setup Sentry request handler - must be first middleware
+setupSentryMiddleware(app);
 
 declare module "http" {
   interface IncomingMessage {
@@ -72,12 +79,22 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
+  // Track user context after authentication
+  app.use(trackUserMiddleware());
+
+  // Sentry error handler - must be before other error handlers
+  setupSentryErrorHandler(app);
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+
+    // Only throw server errors (5xx) - Sentry will capture them
+    if (status >= 500) {
+      throw err;
+    }
   });
 
   // importantly only setup vite in development and after

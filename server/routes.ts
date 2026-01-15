@@ -9,11 +9,15 @@ import { setupPhoneAuth } from "./phoneAuth";
 import { registerUploadRoutes } from "./uploadRoutes";
 import { globalLimiter } from "./middleware/rateLimiter";
 import apiRoutes from "./routes/index";
+import healthRoutes from "./health.routes";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Health check endpoints (no rate limiting)
+  app.use("/api", healthRoutes);
+
   // Global rate limiter for all API requests
   app.use("/api", globalLimiter);
 

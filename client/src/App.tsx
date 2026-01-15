@@ -1,46 +1,73 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/home";
-import SalonPage from "@/pages/salon";
-import AuthPage from "@/pages/auth";
-import ProfilePage from "@/pages/profile";
-import OwnerPage from "@/pages/owner";
-import OwnerSalonPage from "@/pages/owner-salon";
-import MasterPage from "@/pages/master";
-import ClientPage from "@/pages/client";
-import AboutPage from "@/pages/about";
-import AdminPage from "@/pages/admin";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SkipToContent } from "@/components/skip-to-content";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Loader2 } from "lucide-react";
 
+// Eager load Home page (first page users see)
+import Home from "@/pages/home";
+
+// Lazy load all other pages for code splitting
+const NotFound = lazy(() => import("@/pages/not-found"));
+const SalonPage = lazy(() => import("@/pages/salon"));
+const AuthPage = lazy(() => import("@/pages/auth"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const OwnerPage = lazy(() => import("@/pages/owner"));
+const OwnerSalonPage = lazy(() => import("@/pages/owner-salon"));
+const MasterPage = lazy(() => import("@/pages/master"));
+const ClientPage = lazy(() => import("@/pages/client"));
+const AboutPage = lazy(() => import("@/pages/about"));
+const AdminPage = lazy(() => import("@/pages/admin"));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
+// Router component
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/salon/:id" component={SalonPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/profile" component={ProfilePage} />
-      <Route path="/owner" component={OwnerPage} />
-      <Route path="/owner/salon/:id" component={OwnerSalonPage} />
-      <Route path="/master" component={MasterPage} />
-      <Route path="/client" component={ClientPage} />
-      <Route path="/admin/:rest*" component={AdminPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/salon/:id" component={SalonPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/profile" component={ProfilePage} />
+        <Route path="/owner" component={OwnerPage} />
+        <Route path="/owner/salon/:id" component={OwnerSalonPage} />
+        <Route path="/master" component={MasterPage} />
+        <Route path="/client" component={ClientPage} />
+        <Route path="/admin" component={AdminPage} />
+        <Route path="/admin/:rest*" component={AdminPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="aurelle-ui-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <SkipToContent />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

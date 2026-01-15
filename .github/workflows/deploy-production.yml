@@ -1,0 +1,393 @@
+name: Deploy to Production
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        default: 'Manual production deployment'
+
+env:
+  NODE_VERSION: '20'
+  PM2_APP_NAME: 'aurelle-production'
+
+jobs:
+  # Job 1: Build and prepare
+  build:
+    name: Build & Prepare Deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run check
+
+      - name: Run tests (when ready)
+        run: |
+          if grep -q '"test"' package.json; then
+            npm test
+          else
+            echo "No tests configured - skipping"
+          fi
+        continue-on-error: false
+
+      - name: Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_RELEASE: aurelle@${{ github.sha }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_SENTRY_RELEASE: aurelle@${{ github.sha }}
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Create Sentry release
+        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        run: |
+          # Install Sentry CLI
+          curl -sL https://sentry.io/get-cli/ | bash
+
+          # Set environment variables
+          export SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+          export SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+          export SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
+
+          RELEASE_VERSION="aurelle@${{ github.sha }}"
+
+          # Create release
+          sentry-cli releases new $RELEASE_VERSION
+
+          # Associate commits
+          sentry-cli releases set-commits $RELEASE_VERSION --auto || echo "Failed to set commits"
+
+          # Finalize release
+          sentry-cli releases finalize $RELEASE_VERSION
+
+          echo "✅ Sentry release created: $RELEASE_VERSION"
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp package.json package-lock.json deploy/
+          cp -r migrations deploy/ || echo "No migrations directory"
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: deploy.tar.gz
+          retention-days: 30
+
+  # Job 2: Manual approval gate
+  approve-deployment:
+    name: Approve Production Deployment
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production-approval
+
+    steps:
+      - name: Approval checkpoint
+        run: |
+          echo "✅ Deployment approved by ${{ github.actor }}"
+          echo "Proceeding with production deployment..."
+
+  # Job 3: Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: approve-deployment
+    environment:
+      name: production
+      url: https://aurelle.uz
+
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+
+      - name: Upload deployment package to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          source: "deploy.tar.gz"
+          target: "/tmp/"
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          script: |
+            set -e
+
+            # Configuration
+            APP_DIR="/var/www/aurelle-production"
+            BACKUP_DIR="/var/www/aurelle-production-backups"
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+            echo "🚀 Starting deployment to production..."
+
+            # Create backup of current version
+            if [ -d "$APP_DIR" ]; then
+              echo "📦 Creating backup (for rollback)..."
+              mkdir -p $BACKUP_DIR
+
+              # Create full backup with timestamp
+              cp -r $APP_DIR $BACKUP_DIR/backup_$TIMESTAMP
+
+              # Create/update 'latest' symlink for quick rollback
+              rm -f $BACKUP_DIR/latest
+              ln -s $BACKUP_DIR/backup_$TIMESTAMP $BACKUP_DIR/latest
+
+              # Keep only last 10 backups
+              cd $BACKUP_DIR
+              ls -t | grep "backup_" | tail -n +11 | xargs -r rm -rf
+            fi
+
+            # Create app directory if not exists
+            mkdir -p $APP_DIR
+
+            # Extract new version
+            echo "📂 Extracting deployment package..."
+            cd $APP_DIR
+            tar -xzf /tmp/deploy.tar.gz
+            rm /tmp/deploy.tar.gz
+
+            # Install production dependencies
+            echo "📥 Installing production dependencies..."
+            npm ci --production --ignore-scripts
+
+            # Backup current database (safety)
+            echo "💾 Creating database backup..."
+            export PGPASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+            pg_dump -h ${{ secrets.PRODUCTION_DB_HOST }} \
+                    -U ${{ secrets.PRODUCTION_DB_USER }} \
+                    -d ${{ secrets.PRODUCTION_DB_NAME }} \
+                    > $BACKUP_DIR/db_backup_$TIMESTAMP.sql || echo "Database backup failed"
+
+            # Run database migrations
+            echo "🗄️  Running database migrations..."
+            export DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}"
+            npx drizzle-kit push --config=drizzle.config.ts
+
+            # Restart PM2 application with zero-downtime reload
+            echo "🔄 Restarting application (zero-downtime)..."
+            pm2 describe ${{ env.PM2_APP_NAME }} > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              pm2 reload ${{ env.PM2_APP_NAME }} --update-env
+            else
+              pm2 start dist/index.cjs --name ${{ env.PM2_APP_NAME }} -i max
+            fi
+
+            pm2 save
+
+            echo "✅ Deployment completed successfully!"
+            echo "📝 Backup location: $BACKUP_DIR/backup_$TIMESTAMP"
+
+      - name: Wait for application to stabilize
+        run: sleep 15
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          script: |
+            set -e
+
+            echo "🏥 Running health checks..."
+
+            # Check PM2 process status
+            PM2_STATUS=$(pm2 jlist | jq -r '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .pm2_env.status')
+
+            if [ "$PM2_STATUS" = "online" ]; then
+              echo "✅ PM2 process is online"
+            else
+              echo "❌ PM2 process status: $PM2_STATUS"
+              pm2 logs ${{ env.PM2_APP_NAME }} --lines 100 --err
+              exit 1
+            fi
+
+            # Check HTTP health endpoint
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "000")
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Health check passed (HTTP 200)"
+            else
+              echo "❌ Health check failed (HTTP $RESPONSE)"
+              pm2 logs ${{ env.PM2_APP_NAME }} --lines 100
+              exit 1
+            fi
+
+            # Check response time
+            RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' http://localhost:5000/)
+            echo "⏱️  Response time: ${RESPONSE_TIME}s"
+
+            # Check memory usage
+            MEMORY=$(pm2 jlist | jq -r '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .monit.memory')
+            MEMORY_MB=$((MEMORY / 1024 / 1024))
+            echo "💾 Memory usage: ${MEMORY_MB}MB"
+
+            if [ $MEMORY_MB -gt 1024 ]; then
+              echo "⚠️  High memory usage detected"
+            fi
+
+            echo "✅ All health checks passed!"
+
+      - name: Smoke tests
+        run: |
+          echo "🧪 Running smoke tests..."
+
+          # Test homepage
+          curl -f https://aurelle.uz/ || exit 1
+
+          # Test API health endpoint (if exists)
+          curl -f https://aurelle.uz/api/health || echo "Health endpoint not available"
+
+          # Test API salons endpoint
+          curl -f https://aurelle.uz/api/salons || exit 1
+
+          echo "✅ Smoke tests passed!"
+
+      - name: Notify Sentry of deployment
+        if: success() && secrets.SENTRY_AUTH_TOKEN != ''
+        run: |
+          # Sentry CLI should already be installed from earlier step
+          export SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+          export SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+          export SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
+
+          RELEASE_VERSION="aurelle@${{ github.sha }}"
+
+          # Create deployment notification
+          sentry-cli releases deploys $RELEASE_VERSION new -e production
+
+          echo "✅ Sentry notified of production deployment"
+
+      - name: Send Telegram notification on success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🎉 Production Deployment Successful
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Approved by: ${{ github.actor }}
+
+            Environment: aurelle.uz
+            Deployment time: ${{ github.event.head_commit.timestamp }}
+
+            ✅ All health checks passed
+            🌐 Site is live and operational
+
+      - name: Send Telegram notification on failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚨 CRITICAL: Production Deployment Failed
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            ⚠️ Rollback may be required!
+
+            Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            To rollback, run: gh workflow run rollback.yml
+
+      - name: Send Slack notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '🎉' || '🚨' }} Production Deployment ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment ${{ job.status }}*\n\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Environment:* aurelle.uz"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Visit Production"
+                      },
+                      "url": "https://aurelle.uz"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "${{ job.status == 'failure' && 'Rollback' || 'Monitor' }}"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/workflows/rollback.yml"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Create deployment tag
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TAG_NAME="production-$(date +%Y%m%d-%H%M%S)"
+          git tag -a $TAG_NAME -m "Production deployment: ${{ github.sha }}"
+          git push origin $TAG_NAME

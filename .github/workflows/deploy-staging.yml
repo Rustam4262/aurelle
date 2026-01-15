@@ -1,0 +1,236 @@
+name: Deploy to Staging
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        default: 'Manual staging deployment'
+
+env:
+  NODE_VERSION: '20'
+  PM2_APP_NAME: 'aurelle-staging'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.aurelle.uz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run check
+
+      - name: Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: staging
+          VITE_SENTRY_RELEASE: aurelle-staging@${{ github.sha }}
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp package.json package-lock.json deploy/
+          cp -r migrations deploy/ || echo "No migrations directory"
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Upload deployment package to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT || 22 }}
+          source: "deploy.tar.gz"
+          target: "/tmp/"
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT || 22 }}
+          script: |
+            set -e
+
+            # Configuration
+            APP_DIR="/var/www/aurelle-staging"
+            BACKUP_DIR="/var/www/aurelle-staging-backups"
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+            echo "🚀 Starting deployment to staging..."
+
+            # Create backup of current version
+            if [ -d "$APP_DIR" ]; then
+              echo "📦 Creating backup..."
+              mkdir -p $BACKUP_DIR
+              cp -r $APP_DIR $BACKUP_DIR/backup_$TIMESTAMP
+
+              # Keep only last 5 backups
+              cd $BACKUP_DIR
+              ls -t | tail -n +6 | xargs -r rm -rf
+            fi
+
+            # Create app directory if not exists
+            mkdir -p $APP_DIR
+
+            # Extract new version
+            echo "📂 Extracting deployment package..."
+            cd $APP_DIR
+            tar -xzf /tmp/deploy.tar.gz
+            rm /tmp/deploy.tar.gz
+
+            # Install production dependencies
+            echo "📥 Installing production dependencies..."
+            npm ci --production --ignore-scripts
+
+            # Run database migrations
+            echo "🗄️  Running database migrations..."
+            export DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}"
+            npx drizzle-kit push --config=drizzle.config.ts || echo "Migration failed or not needed"
+
+            # Restart PM2 application
+            echo "🔄 Restarting application..."
+            pm2 describe ${{ env.PM2_APP_NAME }} > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              pm2 restart ${{ env.PM2_APP_NAME }} --update-env
+            else
+              pm2 start dist/index.cjs --name ${{ env.PM2_APP_NAME }} -i max
+            fi
+
+            pm2 save
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Wait for application to start
+        run: sleep 10
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT || 22 }}
+          script: |
+            set -e
+
+            echo "🏥 Running health check..."
+
+            # Check if PM2 process is running
+            pm2 describe ${{ env.PM2_APP_NAME }} | grep "status" | grep "online"
+
+            if [ $? -eq 0 ]; then
+              echo "✅ Application is running"
+            else
+              echo "❌ Application failed to start"
+              pm2 logs ${{ env.PM2_APP_NAME }} --lines 50
+              exit 1
+            fi
+
+            # Check HTTP endpoint
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "000")
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Health check passed (HTTP 200)"
+            else
+              echo "⚠️  Health check returned HTTP $RESPONSE"
+              # Don't fail deployment if health endpoint doesn't exist yet
+            fi
+
+      - name: Send Telegram notification on success
+        if: success() && secrets.TELEGRAM_BOT_TOKEN != ''
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ Staging Deployment Successful
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            Environment: staging.aurelle.uz
+            Time: ${{ github.event.head_commit.timestamp }}
+
+      - name: Send Telegram notification on failure
+        if: failure() && secrets.TELEGRAM_BOT_TOKEN != ''
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ Staging Deployment Failed
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Slack notification (optional)
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Staging Deployment ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment ${{ job.status }}*\n\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}\n*Environment:* staging.aurelle.uz"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Visit Staging"
+                      },
+                      "url": "https://staging.aurelle.uz"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

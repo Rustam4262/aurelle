@@ -472,6 +472,7 @@
     "calendar": {
       "title": "Calendar",
       "selectDate": "Select Date",
+      "today": "Today",
       "noDateSelected": "No date selected",
       "selectDatePrompt": "Select a date to view schedule",
       "hasBookings": "Has bookings",
@@ -485,7 +486,12 @@
       "noBookings": "No bookings for this day",
       "legend": "Legend",
       "statistics": "Daily Statistics",
-      "total": "Total"
+      "total": "Total",
+      "bookingWindow": {
+        "pastDatesDisabled": "Past dates are disabled",
+        "maxDaysAdvance": "You can book up to {{days}} days in advance",
+        "dateNotAvailable": "This date is not available for booking"
+      }
     },
     "push": {
       "title": "Push Notifications",
@@ -518,7 +524,45 @@
       "title": "Portfolio",
       "noItems": "No portfolio items yet",
       "show": "Show Portfolio",
-      "hide": "Hide Portfolio"
+      "hide": "Hide Portfolio",
+      "upload": {
+        "title": "Upload Portfolio Images",
+        "subtitle": "Add Photo",
+        "dragDrop": "Drag & drop images here, or click to select files",
+        "chooseFiles": "Choose Files",
+        "limitations": "{{count}} / {{max}} images • Max 5MB per image • JPEG, PNG, WebP",
+        "selectedImages": "Selected Images ({{count}})",
+        "clearAll": "Clear All",
+        "uploadAll": "Upload All",
+        "uploading": "Uploading...",
+        "emptyState": "No images selected yet. Drag & drop or click to select.",
+        "editDetails": "Edit Image Details",
+        "titleLabel": "Title (Optional)",
+        "titlePlaceholder": "e.g., Balayage Hair Color",
+        "descriptionLabel": "Description (Optional)",
+        "descriptionPlaceholder": "Describe your work...",
+        "categoryLabel": "Category (Optional)",
+        "categoryPlaceholder": "e.g., Hair Color, Manicure, Makeup",
+        "saveDetails": "Save Details",
+        "cancel": "Cancel",
+        "uploaded": "Uploaded",
+        "errors": {
+          "tooMany": "Too many images",
+          "tooManyDesc": "You can upload up to {{max}} images at a time",
+          "invalidType": "Invalid file type",
+          "invalidTypeDesc": "{{name}} is not an image file",
+          "tooLarge": "File too large",
+          "tooLargeDesc": "{{name}} exceeds 5MB limit",
+          "noImages": "No images to upload",
+          "noImagesDesc": "Please select images first",
+          "uploadFailed": "Upload failed",
+          "uploadFailedDesc": "Failed to upload some images. Please try again."
+        },
+        "success": {
+          "title": "Success",
+          "description": "{{count}} image(s) uploaded successfully"
+        }
+      }
     },
     "analytics": {
       "title": "Analytics",
@@ -625,14 +669,87 @@
         "subtitle": "Manage registered users",
         "allUsers": "All Users",
         "search": "Search users...",
+        "searchPlaceholder": "Search by name, email, or phone...",
         "user": "User",
+        "contact": "Contact",
         "email": "Email",
+        "phone": "Phone",
         "role": "Role",
+        "status": "Status",
+        "verification": "Verification",
         "joined": "Joined",
         "actions": "Actions",
-        "viewProfile": "View Profile",
-        "blockUser": "Block User",
-        "noUsers": "No users found"
+        "filters": {
+          "allRoles": "All Roles",
+          "allStatuses": "All Statuses",
+          "client": "Client",
+          "owner": "Owner",
+          "master": "Master",
+          "admin": "Admin",
+          "active": "Active",
+          "blocked": "Blocked"
+        },
+        "badges": {
+          "active": "Active",
+          "blocked": "Blocked",
+          "emailVerified": "Email Verified",
+          "emailNotVerified": "Email Not Verified",
+          "phoneVerified": "Phone Verified",
+          "phoneNotVerified": "Phone Not Verified"
+        },
+        "table": {
+          "id": "ID",
+          "name": "Name",
+          "sortByName": "Sort by Name",
+          "sortByEmail": "Sort by Email",
+          "sortByJoined": "Sort by Date Joined"
+        },
+        "actions": {
+          "viewDetails": "View Details",
+          "blockUser": "Block User",
+          "unblockUser": "Unblock User",
+          "deleteUser": "Delete User"
+        },
+        "blockDialog": {
+          "title": "Block User",
+          "description": "Are you sure you want to block this user?",
+          "reasonLabel": "Reason for blocking",
+          "reasonRequired": "Reason is required",
+          "reasonPlaceholder": "Enter reason for blocking (e.g., spam, abuse, violation of terms)...",
+          "blockButton": "Block User",
+          "cancel": "Cancel",
+          "userInfo": "You are about to block:"
+        },
+        "unblockDialog": {
+          "title": "Unblock User",
+          "description": "Are you sure you want to unblock this user?",
+          "unblockButton": "Unblock User",
+          "cancel": "Cancel"
+        },
+        "deleteDialog": {
+          "title": "Delete User",
+          "description": "Are you sure you want to delete this user? This action cannot be undone.",
+          "warning": "This will permanently delete the user account and all associated data.",
+          "deleteButton": "Delete User",
+          "cancel": "Cancel"
+        },
+        "toast": {
+          "userBlocked": "User blocked successfully",
+          "userUnblocked": "User unblocked successfully",
+          "userDeleted": "User deleted successfully",
+          "blockError": "Failed to block user",
+          "unblockError": "Failed to unblock user",
+          "deleteError": "Failed to delete user"
+        },
+        "pagination": {
+          "showing": "Showing {{from}} to {{to}} of {{total}} users",
+          "previous": "Previous",
+          "next": "Next",
+          "page": "Page {{page}}"
+        },
+        "noUsers": "No users found",
+        "loading": "Loading users...",
+        "blockReason": "Block reason:"
       },
       "salons": {
         "title": "Salons & Masters",
@@ -723,6 +840,91 @@
         "view": "View",
         "back": "Back"
       }
+    },
+    "errors": {
+      "UNAUTHORIZED": "Unauthorized access",
+      "FORBIDDEN": "You don't have permission to perform this action",
+      "NOT_FOUND": "The requested resource was not found",
+      "VALIDATION_ERROR": "Validation error",
+      "NETWORK_ERROR": "Network error. Please check your connection",
+      "SERVER_ERROR": "Server error. Please try again later",
+      "CONFLICT": "This resource already exists",
+      "RATE_LIMIT": "Too many requests. Please try again later",
+      "BOOKING_CONFLICT": "This time slot is no longer available",
+      "INVALID_CREDENTIALS": "Invalid email or password",
+      "USER_NOT_FOUND": "User not found",
+      "SALON_NOT_FOUND": "Salon not found",
+      "SERVICE_NOT_FOUND": "Service not found",
+      "MASTER_NOT_FOUND": "Master not found",
+      "BOOKING_NOT_FOUND": "Booking not found",
+      "REVIEW_NOT_FOUND": "Review not found",
+      "DUPLICATE_EMAIL": "This email is already registered",
+      "DUPLICATE_PHONE": "This phone number is already registered",
+      "INVALID_FILE_TYPE": "Invalid file type",
+      "FILE_TOO_LARGE": "File is too large",
+      "UPLOAD_FAILED": "File upload failed",
+      "PERMISSION_DENIED": "Permission denied",
+      "SESSION_EXPIRED": "Your session has expired. Please log in again",
+      "DATABASE_ERROR": "Database error occurred",
+      "EXTERNAL_API_ERROR": "External service error",
+      "UNKNOWN_ERROR": "An unexpected error occurred",
+      "generic": "Something went wrong. Please try again"
+    },
+    "validation": {
+      "required": "This field is required",
+      "email": "Please enter a valid email address",
+      "phone": "Please enter a valid phone number",
+      "url": "Please enter a valid URL",
+      "minLength": "Must be at least {{min}} characters",
+      "maxLength": "Must be no more than {{max}} characters",
+      "min": "Must be at least {{min}}",
+      "max": "Must be no more than {{max}}",
+      "pattern": "Invalid format",
+      "passwordMismatch": "Passwords do not match",
+      "invalidDate": "Invalid date",
+      "futureDate": "Date must be in the future",
+      "pastDate": "Date must be in the past",
+      "invalidTime": "Invalid time",
+      "invalidRange": "Invalid range",
+      "fieldRequired": "{{field}} is required",
+      "invalidEmail": "Invalid email format",
+      "invalidPhone": "Invalid phone format (use +998XXXXXXXXX)",
+      "weakPassword": "Password is too weak. Use at least 8 characters with letters and numbers",
+      "invalidPrice": "Invalid price",
+      "invalidDuration": "Invalid duration",
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "phoneRequired": "Phone number is required",
+      "passwordRequired": "Password is required",
+      "dateRequired": "Date is required",
+      "timeRequired": "Time is required",
+      "serviceRequired": "Service is required",
+      "masterRequired": "Master is required"
+    },
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "toggle": "Toggle theme",
+      "selectTheme": "Select theme"
+    },
+    "a11y": {
+      "skipToContent": "Skip to main content",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "loading": "Loading...",
+      "search": "Search",
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next",
+      "selectDate": "Select date",
+      "requiredField": "Required field",
+      "optional": "Optional",
+      "expandSection": "Expand section",
+      "collapseSection": "Collapse section",
+      "profileImage": "Profile image",
+      "logo": "Logo",
+      "noImage": "No image available"
     }
   }
 }

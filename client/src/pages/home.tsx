@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency, changeLanguage } from "@/lib/i18n";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { OptimizedImage } from "@/components/optimized-image";
 import type { Salon } from "@shared/schema";
 import {
   Search,
@@ -135,6 +137,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
             <LanguageSwitcher scrolled={scrolled} />
             <Link href="/auth">
               <Button
@@ -164,12 +167,15 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
           </div>
 
           <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
             <LanguageSwitcher scrolled={scrolled} />
             <button
               className="p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               data-testid="button-mobile-menu"
-              aria-label="Toggle menu"
+              aria-label={mobileMenuOpen ? t("a11y.closeMenu") : t("a11y.openMenu")}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? (
                 <X className={scrolled ? "text-foreground" : "text-white"} />
@@ -182,7 +188,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-background border-t border-border">
+        <div id="mobile-menu" className="md:hidden bg-background border-t border-border">
           <div className="px-6 py-4 flex flex-col gap-4">
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>
               <span className="text-foreground py-2 block">{t("marketplace.nav.explore")}</span>
@@ -331,7 +337,7 @@ function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null 
   return obj[langKey] || obj.en || "";
 }
 
-function SalonCard({ salon }: { salon: Salon }) {
+const SalonCard = memo(({ salon }: { salon: Salon }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
@@ -344,10 +350,11 @@ function SalonCard({ salon }: { salon: Salon }) {
       <Card className="group overflow-hidden hover-elevate cursor-pointer" data-testid={`card-salon-${salon.id}`}>
         <div className="aspect-[4/3] relative overflow-hidden">
           {salon.photos && (salon.photos as string[])[0] ? (
-            <img
+            <OptimizedImage
               src={(salon.photos as string[])[0]}
               alt={name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fallback="/images/placeholder-salon.jpg"
+              className="w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -400,7 +407,9 @@ function SalonCard({ salon }: { salon: Salon }) {
       </Card>
     </Link>
   );
-}
+});
+
+SalonCard.displayName = "SalonCard";
 
 function SalonsSection() {
   const { t, i18n } = useTranslation();
@@ -443,7 +452,7 @@ function SalonsSection() {
   const displaySalons = salons && salons.length > 0 ? salons : [];
 
   return (
-    <section className="py-16 bg-background" data-testid="section-salons">
+    <section id="main-content" className="py-16 bg-background" data-testid="section-salons">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
           <div>

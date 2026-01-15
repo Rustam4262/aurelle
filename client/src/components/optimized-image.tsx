@@ -55,6 +55,8 @@ export function OptimizedImage({
         {...props}
         src={imageSrc}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className={cn(
           "w-full h-full object-cover transition-opacity duration-300",
           loading ? "opacity-0" : "opacity-100",

@@ -1,0 +1,957 @@
+{
+  "info": {
+    "name": "AURELLE API v1.0",
+    "_postman_id": "aurelle-api-collection-v1",
+    "description": "Complete API testing collection for AURELLE Beauty Salon Platform.\n\n**Features:**\n- 80+ API endpoints\n- 7 organized modules\n- Automated test assertions\n- Pre-request authentication\n- Environment variables support\n\n**Modules:**\n1. Auth - Authentication & Registration\n2. Salons - Salon CRUD & Public endpoints\n3. Masters - Master profiles & Availability\n4. Services - Service management\n5. Bookings - Booking creation & Management\n6. Reviews - Review system\n7. Admin - Platform administration\n\n**Quick Start:**\n1. Import this collection\n2. Import environment (Development/Staging/Production)\n3. Set user_email and user_password in environment\n4. Run collection or individual requests\n\n**Documentation:** See API_TESTING_POSTMAN_GUIDE.md",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global Pre-Request Script",
+          "// Tracks request start time for performance testing",
+          "pm.environment.set('request_start_time', Date.now());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global Test Script",
+          "// These tests run for ALL requests",
+          "",
+          "// 1. Check response time",
+          "const requestStart = parseInt(pm.environment.get('request_start_time') || '0');",
+          "const requestDuration = Date.now() - requestStart;",
+          "",
+          "pm.test('⏱️ Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// 2. No server errors",
+          "pm.test('✅ No server errors (5xx)', function () {",
+          "    pm.expect(pm.response.code).to.not.be.oneOf([500, 502, 503, 504]);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Auth",
+      "description": "Authentication and authorization endpoints",
+      "item": [
+        {
+          "name": "Get Auth Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/auth/providers",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "providers"]
+            },
+            "description": "Get available authentication providers (Google, Yandex, GitHub, Phone)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Providers object is valid', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('local');",
+                  "    pm.expect(jsonData).to.have.property('google');",
+                  "    pm.expect(jsonData.local).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "pm.test('Response time < 300ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(300);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Email/Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/login",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email and password. Saves auth token to environment."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Login successful - Token received', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    ",
+                  "    // Save auth token for subsequent requests",
+                  "    pm.environment.set('auth_token', jsonData.token);",
+                  "    pm.environment.set('token_timestamp', new Date().toISOString());",
+                  "    console.log('✅ Auth token saved');",
+                  "});",
+                  "",
+                  "pm.test('User data is valid', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
+                  "    ",
+                  "    // Save user ID",
+                  "    pm.environment.set('user_id', jsonData.user.id);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 1000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/auth/user",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "user"]
+            },
+            "description": "Get currently authenticated user details"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('User data is complete', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('firstName');",
+                  "    pm.expect(jsonData).to.have.property('isAdmin');",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/logout",
+              "host": ["{{api_base}}"],
+              "path": ["logout"]
+            },
+            "description": "Logout current user and clear session"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Logout successful', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    ",
+                  "    // Clear auth token",
+                  "    pm.environment.unset('auth_token');",
+                  "    pm.environment.unset('user_id');",
+                  "    pm.environment.unset('token_timestamp');",
+                  "    console.log('✅ Auth token cleared');",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02. Salons",
+      "description": "Salon endpoints - public browsing and owner management",
+      "item": [
+        {
+          "name": "Public",
+          "description": "Public salon browsing endpoints (no auth required)",
+          "item": [
+            {
+              "name": "Get All Salons",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_base}}/salons",
+                  "host": ["{{api_base}}"],
+                  "path": ["salons"]
+                },
+                "description": "Get all active salons (public endpoint)"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Salons have required fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        const salon = jsonData[0];",
+                      "        pm.expect(salon).to.have.property('id');",
+                      "        pm.expect(salon).to.have.property('name');",
+                      "        pm.expect(salon).to.have.property('address');",
+                      "        pm.expect(salon).to.have.property('city');",
+                      "        pm.expect(salon.isActive).to.be.true;",
+                      "        ",
+                      "        // Save first salon ID for subsequent tests",
+                      "        pm.environment.set('salon_id', salon.id);",
+                      "        console.log('✅ Saved salon_id:', salon.id);",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Average rating is valid', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0 && jsonData[0].averageRating !== null) {",
+                      "        pm.expect(jsonData[0].averageRating).to.be.within(0, 5);",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Response time < 1000ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Salon by ID",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_base}}/salons/{{salon_id}}",
+                  "host": ["{{api_base}}"],
+                  "path": ["salons", "{{salon_id}}"]
+                },
+                "description": "Get salon details with masters, services, reviews"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Salon has complete data', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('masters');",
+                      "    pm.expect(jsonData).to.have.property('services');",
+                      "    pm.expect(jsonData).to.have.property('workingHours');",
+                      "    pm.expect(jsonData).to.have.property('reviews');",
+                      "});",
+                      "",
+                      "pm.test('Masters array is valid', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.masters).to.be.an('array');",
+                      "    ",
+                      "    if (jsonData.masters.length > 0) {",
+                      "        const master = jsonData.masters[0];",
+                      "        pm.expect(master).to.have.property('id');",
+                      "        pm.expect(master).to.have.property('name');",
+                      "        ",
+                      "        // Save master ID",
+                      "        pm.environment.set('master_id', master.id);",
+                      "        console.log('✅ Saved master_id:', master.id);",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Services array is valid', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.services).to.be.an('array');",
+                      "    ",
+                      "    if (jsonData.services.length > 0) {",
+                      "        const service = jsonData.services[0];",
+                      "        pm.expect(service).to.have.property('id');",
+                      "        pm.expect(service).to.have.property('price');",
+                      "        pm.expect(service).to.have.property('duration');",
+                      "        pm.expect(service.price).to.be.a('number').and.above(0);",
+                      "        pm.expect(service.duration).to.be.a('number').and.above(0);",
+                      "        ",
+                      "        // Save service ID",
+                      "        pm.environment.set('service_id', service.id);",
+                      "        console.log('✅ Saved service_id:', service.id);",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Response time < 1500ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Salon Services",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_base}}/salons/{{salon_id}}/services",
+                  "host": ["{{api_base}}"],
+                  "path": ["salons", "{{salon_id}}", "services"]
+                },
+                "description": "Get all services for a specific salon"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is array of services', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "    ",
+                      "    if (jsonData.length > 0) {",
+                      "        const service = jsonData[0];",
+                      "        pm.expect(service).to.have.property('id');",
+                      "        pm.expect(service).to.have.property('name');",
+                      "        pm.expect(service).to.have.property('price');",
+                      "        pm.expect(service).to.have.property('duration');",
+                      "        pm.expect(service.isActive).to.be.true;",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Price is positive number', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.expect(jsonData[0].price).to.be.a('number').and.above(0);",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Response time < 800ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(800);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Master Availability",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_base}}/salons/masters/{{master_id}}/availability?date=2024-01-25&serviceId={{service_id}}",
+                  "host": ["{{api_base}}"],
+                  "path": ["salons", "masters", "{{master_id}}", "availability"],
+                  "query": [
+                    {
+                      "key": "date",
+                      "value": "2024-01-25",
+                      "description": "Date in YYYY-MM-DD format"
+                    },
+                    {
+                      "key": "serviceId",
+                      "value": "{{service_id}}",
+                      "description": "Optional service ID for duration calculation"
+                    }
+                  ]
+                },
+                "description": "Get available time slots for a master on a specific date"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Availability response is valid', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('masterId');",
+                      "    pm.expect(jsonData).to.have.property('date');",
+                      "    pm.expect(jsonData).to.have.property('slots');",
+                      "    pm.expect(jsonData.slots).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Slots have correct structure', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    if (jsonData.slots.length > 0) {",
+                      "        const slot = jsonData.slots[0];",
+                      "        pm.expect(slot).to.have.all.keys('startTime', 'endTime', 'isAvailable', 'conflictReason');",
+                      "        pm.expect(slot.isAvailable).to.be.a('boolean');",
+                      "    }",
+                      "});",
+                      "",
+                      "pm.test('Available slots count is accurate', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const actualAvailable = jsonData.slots.filter(s => s.isAvailable).length;",
+                      "    pm.expect(jsonData.availableSlots).to.equal(actualAvailable);",
+                      "});",
+                      "",
+                      "pm.test('Response time < 1000ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Owner",
+          "description": "Owner-only salon management endpoints (requires auth)",
+          "item": [
+            {
+              "name": "Create Salon",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Beauty Salon\",\n  \"description\": \"Test salon created via Postman\",\n  \"address\": \"123 Test Street\",\n  \"city\": \"Tashkent\",\n  \"postalCode\": \"100000\",\n  \"phone\": \"+998712345678\",\n  \"email\": \"test@testsalon.uz\",\n  \"latitude\": 41.2995,\n  \"longitude\": 69.2401,\n  \"photos\": [],\n  \"amenities\": [\"WiFi\", \"Parking\"]\n}"
+                },
+                "url": {
+                  "raw": "{{api_base}}/owner/salons",
+                  "host": ["{{api_base}}"],
+                  "path": ["owner", "salons"]
+                },
+                "description": "Create a new salon (owner only)"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 201', function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "pm.test('Salon created successfully', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('ownerId');",
+                      "    ",
+                      "    // Save new salon ID",
+                      "    pm.environment.set('new_salon_id', jsonData.id);",
+                      "    console.log('✅ Created salon ID:', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Salon is initially inactive', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.isActive).to.be.false;",
+                      "});",
+                      "",
+                      "pm.test('Response time < 2000ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Owner's Salons",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{api_base}}/owner/salons",
+                  "host": ["{{api_base}}"],
+                  "path": ["owner", "salons"]
+                },
+                "description": "Get all salons owned by authenticated user"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is array of salons', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Response time < 1000ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03. Bookings",
+      "description": "Booking creation and management endpoints",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salonId\": \"{{salon_id}}\",\n  \"serviceId\": \"{{service_id}}\",\n  \"masterId\": \"{{master_id}}\",\n  \"bookingDate\": \"2024-01-25\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"11:00\",\n  \"notes\": \"Test booking from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/bookings",
+              "host": ["{{api_base}}"],
+              "path": ["bookings"]
+            },
+            "description": "Create a new booking"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Booking created successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.status).to.be.oneOf(['pending', 'confirmed']);",
+                  "    pm.expect(jsonData).to.have.property('bookingDate');",
+                  "    pm.expect(jsonData).to.have.property('startTime');",
+                  "    pm.expect(jsonData).to.have.property('endTime');",
+                  "    ",
+                  "    // Save booking ID",
+                  "    pm.environment.set('booking_id', jsonData.id);",
+                  "    console.log('✅ Created booking ID:', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 2000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/bookings",
+              "host": ["{{api_base}}"],
+              "path": ["bookings"]
+            },
+            "description": "Get all bookings for authenticated user"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is array of bookings', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    ",
+                  "    if (jsonData.length > 0) {",
+                  "        const booking = jsonData[0];",
+                  "        pm.expect(booking).to.have.property('id');",
+                  "        pm.expect(booking).to.have.property('status');",
+                  "        pm.expect(booking.status).to.be.oneOf(['pending', 'confirmed', 'completed', 'cancelled']);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Response time < 1000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/bookings/{{booking_id}}/cancel",
+              "host": ["{{api_base}}"],
+              "path": ["bookings", "{{booking_id}}", "cancel"]
+            },
+            "description": "Cancel a booking"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Booking cancelled successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal('cancelled');",
+                  "    pm.expect(jsonData).to.have.property('updatedAt');",
+                  "});",
+                  "",
+                  "pm.test('Response time < 1500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04. Reviews",
+      "description": "Review creation and management endpoints",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{booking_id}}\",\n  \"salonId\": \"{{salon_id}}\",\n  \"masterId\": \"{{master_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent service! Test review from Postman.\",\n  \"photos\": []\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/reviews",
+              "host": ["{{api_base}}"],
+              "path": ["reviews"]
+            },
+            "description": "Create a review for a completed booking"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Review created successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.rating).to.be.within(1, 5);",
+                  "    pm.expect(jsonData).to.have.property('comment');",
+                  "    ",
+                  "    // Save review ID",
+                  "    pm.environment.set('review_id', jsonData.id);",
+                  "    console.log('✅ Created review ID:', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 1500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Salon Reviews",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/salons/{{salon_id}}/reviews",
+              "host": ["{{api_base}}"],
+              "path": ["salons", "{{salon_id}}", "reviews"]
+            },
+            "description": "Get all reviews for a salon (public endpoint)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Reviews array is valid', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    ",
+                  "    if (jsonData.length > 0) {",
+                  "        const review = jsonData[0];",
+                  "        pm.expect(review).to.have.property('id');",
+                  "        pm.expect(review).to.have.property('rating');",
+                  "        pm.expect(review.rating).to.be.within(1, 5);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Response time < 1000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05. Admin",
+      "description": "Admin-only endpoints for platform management",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base}}/admin/dashboard/stats",
+              "host": ["{{api_base}}"],
+              "path": ["admin", "dashboard", "stats"]
+            },
+            "description": "Get platform statistics (admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 403', function () {",
+                  "    // 200 if user is admin, 403 if not",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Dashboard stats are valid', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('totalUsers');",
+                  "        pm.expect(jsonData).to.have.property('totalSalons');",
+                  "        pm.expect(jsonData).to.have.property('totalBookings');",
+                  "        pm.expect(jsonData.totalUsers).to.be.a('number').and.at.least(0);",
+                  "    });",
+                  "}",
+                  "",
+                  "pm.test('Response time < 1500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

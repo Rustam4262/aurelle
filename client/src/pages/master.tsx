@@ -16,6 +16,8 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Master, Salon, Booking, Review, MasterWorkingHours, MasterPortfolio, Service, Notification } from "@shared/schema";
 import { BookingCalendar } from "@/components/booking-calendar";
 import { ImageUpload } from "@/components/image-upload";
+import { PortfolioUpload } from "@/components/portfolio-upload";
+import { PortfolioGallery } from "@/components/image-gallery";
 import {
   ArrowLeft,
   Calendar,
@@ -965,16 +967,38 @@ export default function MasterPage() {
           </TabsContent>
 
           <TabsContent value="portfolio" className="space-y-6">
+            {/* Upload Section */}
             <Card className="p-6">
-              <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+              <div className="mb-6">
+                <h3 className="font-medium text-foreground flex items-center gap-2 mb-2">
+                  <Plus className="h-5 w-5" />
+                  {t("marketplace.master.addPhoto")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload your work to showcase your skills
+                </p>
+              </div>
+
+              <PortfolioUpload
+                masterId={user?.id || ""}
+                maxImages={10}
+                onUploadSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/master/portfolio"] });
+                  toast({
+                    title: "Success",
+                    description: "Portfolio updated successfully",
+                  });
+                }}
+              />
+            </Card>
+
+            {/* Gallery Section */}
+            <Card className="p-6">
+              <div className="mb-6">
                 <h3 className="font-medium text-foreground flex items-center gap-2">
                   <Image className="h-5 w-5" />
                   {t("marketplace.master.myPortfolio")}
                 </h3>
-                <Button onClick={() => setPortfolioDialogOpen(true)} data-testid="button-add-photo">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("marketplace.master.addPhoto")}
-                </Button>
               </div>
 
               {portfolioLoading ? (
@@ -982,32 +1006,10 @@ export default function MasterPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : portfolioData && portfolioData.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {portfolioData.map((item) => (
-                    <div key={item.id} className="relative group" data-testid={`portfolio-${item.id}`}>
-                      <img
-                        src={item.imageUrl}
-                        alt={getLocalizedText(item.description as any, currentLang) || "Portfolio"}
-                        className="w-full aspect-square object-cover rounded-md"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => deletePortfolioMutation.mutate(item.id)}
-                        disabled={deletePortfolioMutation.isPending}
-                        data-testid={`button-delete-portfolio-${item.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mt-2 truncate">
-                          {getLocalizedText(item.description as any, currentLang)}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <PortfolioGallery
+                  images={portfolioData.map((item) => item.imageUrl)}
+                  masterName={masterData?.name}
+                />
               ) : (
                 <p className="text-center text-muted-foreground py-8">
                   {t("marketplace.master.noPortfolio")}

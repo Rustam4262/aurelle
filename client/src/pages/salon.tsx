@@ -19,6 +19,7 @@ import { LocationDisplay } from "@/components/location-display";
 import { TimeSlotPicker } from "@/components/time-slot-picker";
 import { WaitlistButton } from "@/components/waitlist-button";
 import { MasterPortfolio } from "@/components/master-portfolio";
+import { SalonGallery } from "@/components/image-gallery";
 import type { Salon, Service, Master, Review, WorkingHours } from "@shared/schema";
 import {
   ArrowLeft,
@@ -196,7 +197,7 @@ function MasterCard({ master, onBook }: { master: Master; onBook: (master: Maste
       {showPortfolio && (
         <div className="mt-4 pt-4 border-t">
           <h4 className="font-medium text-sm mb-3">{t("portfolio.title")}</h4>
-          <MasterPortfolio masterId={master.id} />
+          <MasterPortfolio masterId={master.id} masterName={master.name} />
         </div>
       )}
     </Card>
@@ -461,19 +462,10 @@ export default function SalonPage() {
                     />
                   </div>
 
-                  {salon.photos && (salon.photos as string[]).length > 1 && (
+                  {salon.photos && (salon.photos as string[]).length > 0 && (
                     <div>
                       <h3 className="font-medium text-foreground mb-3">{t("marketplace.salon.gallery")}</h3>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(salon.photos as string[]).slice(0, 6).map((photo, index) => (
-                          <img
-                            key={index}
-                            src={photo}
-                            alt={`Gallery ${index + 1}`}
-                            className="aspect-square object-cover rounded-md"
-                          />
-                        ))}
-                      </div>
+                      <SalonGallery images={salon.photos as string[]} />
                     </div>
                   )}
                 </Card>

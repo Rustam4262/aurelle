@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
@@ -29,6 +30,8 @@ export function ImageUpload({
   preview = true,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(value || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -58,6 +61,8 @@ export function ImageUpload({
     }
 
     setUploading(true);
+    setUploadProgress(0);
+    setUploadSuccess(false);
 
     try {
       // Создаем preview
@@ -66,6 +71,17 @@ export function ImageUpload({
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Simulate progress during upload (since fetch doesn't support progress natively)
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90; // Stop at 90%, complete on success
+          }
+          return prev + 10;
+        });
+      }, 200);
 
       // Загружаем на сервер
       const formData = new FormData();
@@ -87,11 +103,17 @@ export function ImageUpload({
         credentials: "include",
       });
 
+      clearInterval(progressInterval);
+
       if (!response.ok) {
         throw new Error("Upload failed");
       }
 
       const data = await response.json();
+
+      // Complete progress
+      setUploadProgress(100);
+      setUploadSuccess(true);
 
       onChange(data.url);
 
@@ -99,6 +121,12 @@ export function ImageUpload({
         title: "Success",
         description: "Image uploaded successfully",
       });
+
+      // Reset success state after delay
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadProgress(0);
+      }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -107,6 +135,8 @@ export function ImageUpload({
         variant: "destructive",
       });
       setPreviewUrl("");
+      setUploadProgress(0);
+      setUploadSuccess(false);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -132,47 +162,63 @@ export function ImageUpload({
     <div className={`space-y-4 ${className}`}>
       {label && <Label>{label}</Label>}
 
-      <div className="flex items-center gap-4">
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept={accept}
-          onChange={handleFileSelect}
-          disabled={uploading}
-          className="hidden"
-          id={`file-upload-${uploadType}`}
-        />
+      <div className="space-y-3">
+        <div className="flex items-center gap-4">
+          <Input
+            ref={fileInputRef}
+            type="file"
+            accept={accept}
+            onChange={handleFileSelect}
+            disabled={uploading}
+            className="hidden"
+            id={`file-upload-${uploadType}`}
+          />
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="w-full"
-        >
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              Choose File
-            </>
-          )}
-        </Button>
-
-        {previewUrl && (
           <Button
             type="button"
-            variant="destructive"
-            size="icon"
-            onClick={handleRemove}
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
+            className="w-full"
           >
-            <X className="h-4 w-4" />
+            {uploadSuccess ? (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
+                Uploaded!
+              </>
+            ) : uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Choose File
+              </>
+            )}
           </Button>
+
+          {previewUrl && !uploading && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              onClick={handleRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Progress Bar */}
+        {uploading && (
+          <div className="space-y-1">
+            <Progress value={uploadProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">
+              {uploadProgress}% uploaded
+            </p>
+          </div>
         )}
       </div>
 
@@ -210,6 +256,7 @@ export function MultiImageUpload({
   className = "",
 }: MultiImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -228,8 +275,20 @@ export function MultiImageUpload({
     }
 
     setUploading(true);
+    setUploadProgress(0);
 
     try {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("images", file);
@@ -241,17 +300,23 @@ export function MultiImageUpload({
         credentials: "include",
       });
 
+      clearInterval(progressInterval);
+
       if (!response.ok) {
         throw new Error("Upload failed");
       }
 
       const data = await response.json();
+
+      setUploadProgress(100);
       onChange([...values, ...data.urls]);
 
       toast({
         title: "Success",
         description: `${files.length} image(s) uploaded successfully`,
       });
+
+      setTimeout(() => setUploadProgress(0), 1500);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -259,6 +324,7 @@ export function MultiImageUpload({
         description: "Failed to upload images. Please try again.",
         variant: "destructive",
       });
+      setUploadProgress(0);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -311,7 +377,17 @@ export function MultiImageUpload({
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      {/* Progress Bar for Multiple Images */}
+      {uploading && uploadProgress > 0 && (
+        <div className="space-y-1">
+          <Progress value={uploadProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground text-center">
+            Uploading {uploadProgress}%
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {values.map((url, index) => (
           <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
             <img

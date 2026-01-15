@@ -1,0 +1,290 @@
+name: Rollback Deployment
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+      backup_timestamp:
+        description: 'Backup timestamp (YYYYMMDD_HHMMSS) or "latest" for most recent'
+        required: false
+        default: 'latest'
+      reason:
+        description: 'Reason for rollback'
+        required: true
+      restore_database:
+        description: 'Restore database backup'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}-rollback
+
+    steps:
+      - name: Validate rollback request
+        run: |
+          echo "🔄 Rollback requested for ${{ inputs.environment }}"
+          echo "📝 Reason: ${{ inputs.reason }}"
+          echo "📦 Backup: ${{ inputs.backup_timestamp }}"
+          echo "👤 Requested by: ${{ github.actor }}"
+
+      - name: Send Telegram notification - Rollback started
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🔄 Rollback Started
+
+            Environment: ${{ inputs.environment }}
+            Backup: ${{ inputs.backup_timestamp }}
+            Reason: ${{ inputs.reason }}
+            Requested by: ${{ github.actor }}
+
+      - name: Rollback production
+        if: inputs.environment == 'production'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          script: |
+            set -e
+
+            APP_DIR="/var/www/aurelle-production"
+            BACKUP_DIR="/var/www/aurelle-production-backups"
+            BACKUP_TIMESTAMP="${{ inputs.backup_timestamp }}"
+
+            echo "🔄 Starting rollback for production..."
+
+            # Determine which backup to restore
+            if [ "$BACKUP_TIMESTAMP" = "latest" ]; then
+              if [ -L "$BACKUP_DIR/latest" ]; then
+                BACKUP_PATH=$(readlink -f "$BACKUP_DIR/latest")
+              else
+                BACKUP_PATH=$(ls -td $BACKUP_DIR/backup_* | head -1)
+              fi
+            else
+              BACKUP_PATH="$BACKUP_DIR/backup_$BACKUP_TIMESTAMP"
+            fi
+
+            if [ ! -d "$BACKUP_PATH" ]; then
+              echo "❌ Backup not found: $BACKUP_PATH"
+              echo "Available backups:"
+              ls -lt $BACKUP_DIR/backup_* 2>/dev/null || echo "No backups available"
+              exit 1
+            fi
+
+            echo "📦 Rolling back to: $BACKUP_PATH"
+
+            # Create backup of current (failed) version
+            FAILED_BACKUP="$BACKUP_DIR/failed_$(date +%Y%m%d_%H%M%S)"
+            echo "💾 Backing up current version to: $FAILED_BACKUP"
+            cp -r $APP_DIR $FAILED_BACKUP
+
+            # Restore backup
+            echo "♻️  Restoring backup..."
+            rm -rf $APP_DIR
+            cp -r $BACKUP_PATH $APP_DIR
+
+            # Restore database backup (if requested)
+            DB_BACKUP=$(ls -t $BACKUP_DIR/db_backup_*.sql 2>/dev/null | head -1)
+            if [ -f "$DB_BACKUP" ] && [ "${{ inputs.restore_database }}" = "true" ]; then
+              echo "🗄️  Restoring database from: $DB_BACKUP"
+              export PGPASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+              psql -h ${{ secrets.PRODUCTION_DB_HOST }} \
+                   -U ${{ secrets.PRODUCTION_DB_USER }} \
+                   -d ${{ secrets.PRODUCTION_DB_NAME }} \
+                   < $DB_BACKUP
+            else
+              echo "⚠️  Database not restored (restore_database=false or no backup found)"
+            fi
+
+            # Restart PM2
+            echo "🔄 Restarting application..."
+            cd $APP_DIR
+            pm2 reload aurelle-production --update-env
+            pm2 save
+
+            echo "✅ Rollback completed successfully!"
+
+      - name: Rollback staging
+        if: inputs.environment == 'staging'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT || 22 }}
+          script: |
+            set -e
+
+            APP_DIR="/var/www/aurelle-staging"
+            BACKUP_DIR="/var/www/aurelle-staging-backups"
+            BACKUP_TIMESTAMP="${{ inputs.backup_timestamp }}"
+
+            echo "🔄 Starting rollback for staging..."
+
+            # Determine which backup to restore
+            if [ "$BACKUP_TIMESTAMP" = "latest" ]; then
+              if [ -L "$BACKUP_DIR/latest" ]; then
+                BACKUP_PATH=$(readlink -f "$BACKUP_DIR/latest")
+              else
+                BACKUP_PATH=$(ls -td $BACKUP_DIR/backup_* | head -1)
+              fi
+            else
+              BACKUP_PATH="$BACKUP_DIR/backup_$BACKUP_TIMESTAMP"
+            fi
+
+            if [ ! -d "$BACKUP_PATH" ]; then
+              echo "❌ Backup not found: $BACKUP_PATH"
+              echo "Available backups:"
+              ls -lt $BACKUP_DIR/backup_* 2>/dev/null || echo "No backups available"
+              exit 1
+            fi
+
+            echo "📦 Rolling back to: $BACKUP_PATH"
+
+            # Create backup of current (failed) version
+            FAILED_BACKUP="$BACKUP_DIR/failed_$(date +%Y%m%d_%H%M%S)"
+            echo "💾 Backing up current version to: $FAILED_BACKUP"
+            cp -r $APP_DIR $FAILED_BACKUP
+
+            # Restore backup
+            echo "♻️  Restoring backup..."
+            rm -rf $APP_DIR
+            cp -r $BACKUP_PATH $APP_DIR
+
+            # Restart PM2
+            echo "🔄 Restarting application..."
+            cd $APP_DIR
+            pm2 reload aurelle-staging --update-env
+            pm2 save
+
+            echo "✅ Rollback completed successfully!"
+
+      - name: Wait for application to start
+        run: sleep 10
+
+      - name: Health check after rollback
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ inputs.environment == 'production' && secrets.PRODUCTION_HOST || secrets.STAGING_HOST }}
+          username: ${{ inputs.environment == 'production' && secrets.PRODUCTION_USER || secrets.STAGING_USER }}
+          key: ${{ inputs.environment == 'production' && secrets.PRODUCTION_SSH_KEY || secrets.STAGING_SSH_KEY }}
+          port: ${{ inputs.environment == 'production' && secrets.PRODUCTION_PORT || secrets.STAGING_PORT || 22 }}
+          script: |
+            set -e
+
+            PM2_APP_NAME="aurelle-${{ inputs.environment }}"
+
+            echo "🏥 Running health check after rollback..."
+
+            # Check PM2 status
+            PM2_STATUS=$(pm2 jlist | jq -r ".[] | select(.name==\"$PM2_APP_NAME\") | .pm2_env.status")
+
+            if [ "$PM2_STATUS" = "online" ]; then
+              echo "✅ Application is running"
+            else
+              echo "❌ Application failed to start after rollback"
+              pm2 logs $PM2_APP_NAME --lines 50
+              exit 1
+            fi
+
+            # Check HTTP endpoint
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "000")
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Health check passed"
+            else
+              echo "⚠️  Health check returned HTTP $RESPONSE"
+            fi
+
+            echo "✅ Rollback verification complete!"
+
+      - name: Send Telegram notification on success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ Rollback Successful
+
+            Environment: ${{ inputs.environment }}
+            Backup restored: ${{ inputs.backup_timestamp }}
+            Reason: ${{ inputs.reason }}
+            Performed by: ${{ github.actor }}
+
+            ✅ Health checks passed
+            System restored to previous state
+
+      - name: Send Telegram notification on failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚨 CRITICAL: Rollback Failed
+
+            Environment: ${{ inputs.environment }}
+            Backup: ${{ inputs.backup_timestamp }}
+            Reason: ${{ inputs.reason }}
+
+            ⚠️ Manual intervention required!
+
+            Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Create rollback incident report
+        if: always()
+        run: |
+          cat > rollback-report.md << 'EOF'
+          # Rollback Incident Report
+
+          **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: ${{ inputs.environment }}
+          **Status**: ${{ job.status }}
+
+          ## Details
+          - **Backup Restored**: ${{ inputs.backup_timestamp }}
+          - **Reason**: ${{ inputs.reason }}
+          - **Requested By**: ${{ github.actor }}
+          - **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ## Actions Taken
+          1. Validated rollback request
+          2. Backed up current (failed) version
+          3. Restored previous working version
+          4. Restarted application services
+          5. Performed health checks
+
+          ## Next Steps
+          - [ ] Investigate root cause of deployment failure
+          - [ ] Fix issues in code
+          - [ ] Test thoroughly in staging
+          - [ ] Re-deploy when ready
+
+          ---
+          *Auto-generated by GitHub Actions*
+          EOF
+
+          cat rollback-report.md
+
+      - name: Upload rollback report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-report-${{ inputs.environment }}-${{ github.run_id }}
+          path: rollback-report.md
+          retention-days: 90
