@@ -40,8 +40,8 @@ function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null 
   return obj[langKey] || obj.en || "";
 }
 
-function loginWithReplit() {
-  window.location.href = "/api/login";
+function goToAuth() {
+  window.location.href = "/auth";
 }
 
 export default function OwnerPage() {
@@ -146,7 +146,7 @@ export default function OwnerPage() {
             <p className="text-muted-foreground mb-6">
               Sign in to register your salon and start attracting new clients.
             </p>
-            <Button onClick={loginWithReplit} className="w-full" data-testid="button-login-owner">
+            <Button onClick={goToAuth} className="w-full" data-testid="button-login-owner">
               Sign In to Continue
             </Button>
           </Card>

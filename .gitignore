@@ -27,6 +27,7 @@ server/uploads/*/*
 # Backups
 backups/
 *.sql
+!scripts/*.sql
 *.sql.gz
 
 # IDE
@@ -48,6 +49,7 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+tmpclaude-*
 
 # Replit state files
 .local/

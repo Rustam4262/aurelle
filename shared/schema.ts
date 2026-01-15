@@ -161,7 +161,7 @@ export const masterPortfolio = pgTable("master_portfolio", {
   description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  index("idx_portfolio_master").on(table.masterId),
+  index("idx_master_portfolio_master").on(table.masterId),
 ]);
 
 export const insertMasterPortfolioSchema = createInsertSchema(masterPortfolio).omit({
