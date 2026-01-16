@@ -15,7 +15,7 @@ import {
 } from "@shared/schema";
 import { requirePermission, OWNER_PERMISSIONS } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, gte, lte, lt, ne } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
 
@@ -1579,6 +1579,410 @@ router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     console.error("Dashboard alerts error:", error);
     return res.status(500).json({ error: "Failed to get alerts" });
+  }
+});
+
+// ============ PHASE 7: ANALYTICS ENHANCEMENTS ============
+
+// Get analytics for custom date range
+router.get("/analytics/custom-range", isAuthenticated, requirePermission("ANALYTICS", "view"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { from, to, salonId } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({ error: "from and to dates are required" });
+    }
+
+    const fromDate = new Date(from as string);
+    const toDate = new Date(to as string);
+
+    // Get owner's salons
+    let ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json({
+        totalBookings: 0,
+        confirmedBookings: 0,
+        completedBookings: 0,
+        cancelledBookings: 0,
+        totalRevenue: 0,
+        averageBookingValue: 0,
+        completionRate: 0,
+        cancellationRate: 0
+      });
+    }
+
+    // Filter by specific salon if provided
+    if (salonId && salonId !== 'all') {
+      ownerSalons = ownerSalons.filter(s => s.id === salonId);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get bookings in date range
+    const rangeBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, fromDate),
+          lte(bookings.bookingDate, toDate)
+        )
+      );
+
+    const totalBookings = rangeBookings.length;
+    const confirmedBookings = rangeBookings.filter(b => b.status === "confirmed").length;
+    const completedBookings = rangeBookings.filter(b => b.status === "completed").length;
+    const cancelledBookings = rangeBookings.filter(b => b.status === "cancelled").length;
+
+    const totalRevenue = rangeBookings
+      .filter(b => b.status === "completed")
+      .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
+    const averageBookingValue = completedBookings > 0 ? totalRevenue / completedBookings : 0;
+    const completionRate = totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
+    const cancellationRate = totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0;
+
+    return res.json({
+      dateRange: { from: fromDate, to: toDate },
+      salonId: salonId || 'all',
+      totalBookings,
+      confirmedBookings,
+      completedBookings,
+      cancelledBookings,
+      totalRevenue,
+      averageBookingValue: Math.round(averageBookingValue * 100) / 100,
+      completionRate: Math.round(completionRate * 10) / 10,
+      cancellationRate: Math.round(cancellationRate * 10) / 10
+    });
+  } catch (error) {
+    console.error("Custom range analytics error:", error);
+    return res.status(500).json({ error: "Failed to get analytics" });
+  }
+});
+
+// Get comparison analytics (current period vs previous period)
+router.get("/analytics/comparison", isAuthenticated, requirePermission("ANALYTICS", "view"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { from, to, salonId } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({ error: "from and to dates are required" });
+    }
+
+    const currentFrom = new Date(from as string);
+    const currentTo = new Date(to as string);
+
+    // Calculate previous period (same duration)
+    const durationMs = currentTo.getTime() - currentFrom.getTime();
+    const previousFrom = new Date(currentFrom.getTime() - durationMs);
+    const previousTo = new Date(currentFrom.getTime());
+
+    // Get owner's salons
+    let ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json({
+        current: { totalBookings: 0, totalRevenue: 0, completionRate: 0 },
+        previous: { totalBookings: 0, totalRevenue: 0, completionRate: 0 },
+        changes: { bookings: 0, revenue: 0, completionRate: 0 }
+      });
+    }
+
+    // Filter by specific salon if provided
+    if (salonId && salonId !== 'all') {
+      ownerSalons = ownerSalons.filter(s => s.id === salonId);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get current period bookings
+    const currentBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, currentFrom),
+          lte(bookings.bookingDate, currentTo)
+        )
+      );
+
+    // Get previous period bookings
+    const previousBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, previousFrom),
+          lt(bookings.bookingDate, previousTo)
+        )
+      );
+
+    // Calculate current period metrics
+    const currentTotal = currentBookings.length;
+    const currentCompleted = currentBookings.filter(b => b.status === "completed").length;
+    const currentRevenue = currentBookings
+      .filter(b => b.status === "completed")
+      .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+    const currentCompletionRate = currentTotal > 0 ? (currentCompleted / currentTotal) * 100 : 0;
+
+    // Calculate previous period metrics
+    const previousTotal = previousBookings.length;
+    const previousCompleted = previousBookings.filter(b => b.status === "completed").length;
+    const previousRevenue = previousBookings
+      .filter(b => b.status === "completed")
+      .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+    const previousCompletionRate = previousTotal > 0 ? (previousCompleted / previousTotal) * 100 : 0;
+
+    // Calculate percentage changes
+    const bookingsChange = previousTotal > 0
+      ? ((currentTotal - previousTotal) / previousTotal) * 100
+      : currentTotal > 0 ? 100 : 0;
+
+    const revenueChange = previousRevenue > 0
+      ? ((currentRevenue - previousRevenue) / previousRevenue) * 100
+      : currentRevenue > 0 ? 100 : 0;
+
+    const completionRateChange = previousCompletionRate > 0
+      ? currentCompletionRate - previousCompletionRate
+      : currentCompletionRate;
+
+    return res.json({
+      dateRange: {
+        current: { from: currentFrom, to: currentTo },
+        previous: { from: previousFrom, to: previousTo }
+      },
+      current: {
+        totalBookings: currentTotal,
+        completedBookings: currentCompleted,
+        totalRevenue: currentRevenue,
+        completionRate: Math.round(currentCompletionRate * 10) / 10
+      },
+      previous: {
+        totalBookings: previousTotal,
+        completedBookings: previousCompleted,
+        totalRevenue: previousRevenue,
+        completionRate: Math.round(previousCompletionRate * 10) / 10
+      },
+      changes: {
+        bookings: Math.round(bookingsChange * 10) / 10,
+        revenue: Math.round(revenueChange * 10) / 10,
+        completionRate: Math.round(completionRateChange * 10) / 10
+      }
+    });
+  } catch (error) {
+    console.error("Comparison analytics error:", error);
+    return res.status(500).json({ error: "Failed to get comparison analytics" });
+  }
+});
+
+// Get master performance analytics
+router.get("/analytics/master-performance", isAuthenticated, requirePermission("ANALYTICS", "view"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { from, to, salonId } = req.query;
+
+    const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = to ? new Date(to as string) : new Date();
+
+    // Get owner's salons
+    let ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    // Filter by specific salon if provided
+    if (salonId && salonId !== 'all') {
+      ownerSalons = ownerSalons.filter(s => s.id === salonId);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get all masters for these salons
+    const salonMasters = await db.select()
+      .from(masters)
+      .where(inArray(masters.salonId, salonIds));
+
+    // Get bookings in date range
+    const rangeBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, fromDate),
+          lte(bookings.bookingDate, toDate)
+        )
+      );
+
+    // Calculate performance for each master
+    const masterPerformance = salonMasters.map(master => {
+      const masterBookings = rangeBookings.filter(b => b.masterId === master.id);
+      const totalBookings = masterBookings.length;
+      const completedBookings = masterBookings.filter(b => b.status === "completed").length;
+      const cancelledBookings = masterBookings.filter(b => b.status === "cancelled").length;
+
+      const totalRevenue = masterBookings
+        .filter(b => b.status === "completed")
+        .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
+      const completionRate = totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
+      const cancellationRate = totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0;
+
+      return {
+        masterId: master.id,
+        masterName: master.name,
+        salonId: master.salonId,
+        totalBookings,
+        completedBookings,
+        cancelledBookings,
+        totalRevenue,
+        completionRate: Math.round(completionRate * 10) / 10,
+        cancellationRate: Math.round(cancellationRate * 10) / 10
+      };
+    });
+
+    // Sort by revenue (descending)
+    masterPerformance.sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    return res.json(masterPerformance);
+  } catch (error) {
+    console.error("Master performance analytics error:", error);
+    return res.status(500).json({ error: "Failed to get master performance" });
+  }
+});
+
+// Get service performance analytics
+router.get("/analytics/service-performance", isAuthenticated, requirePermission("ANALYTICS", "view"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { from, to, salonId } = req.query;
+
+    const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = to ? new Date(to as string) : new Date();
+
+    // Get owner's salons
+    let ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    // Filter by specific salon if provided
+    if (salonId && salonId !== 'all') {
+      ownerSalons = ownerSalons.filter(s => s.id === salonId);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get all services for these salons
+    const salonServices = await db.select()
+      .from(services)
+      .where(inArray(services.salonId, salonIds));
+
+    // Get bookings in date range
+    const rangeBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, fromDate),
+          lte(bookings.bookingDate, toDate)
+        )
+      );
+
+    // Calculate performance for each service
+    const servicePerformance = salonServices.map(service => {
+      const serviceBookings = rangeBookings.filter(b => b.serviceId === service.id);
+      const totalBookings = serviceBookings.length;
+      const completedBookings = serviceBookings.filter(b => b.status === "completed").length;
+
+      const totalRevenue = serviceBookings
+        .filter(b => b.status === "completed")
+        .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
+      const completionRate = totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
+
+      return {
+        serviceId: service.id,
+        serviceName: service.name,
+        salonId: service.salonId,
+        price: service.price,
+        totalBookings,
+        completedBookings,
+        totalRevenue,
+        completionRate: Math.round(completionRate * 10) / 10
+      };
+    });
+
+    // Sort by revenue (descending)
+    servicePerformance.sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    return res.json(servicePerformance);
+  } catch (error) {
+    console.error("Service performance analytics error:", error);
+    return res.status(500).json({ error: "Failed to get service performance" });
+  }
+});
+
+// Get peak hours analysis
+router.get("/analytics/peak-hours", isAuthenticated, requirePermission("ANALYTICS", "view"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { from, to, salonId } = req.query;
+
+    const fromDate = from ? new Date(from as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = to ? new Date(to as string) : new Date();
+
+    // Get owner's salons
+    let ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    // Filter by specific salon if provided
+    if (salonId && salonId !== 'all') {
+      ownerSalons = ownerSalons.filter(s => s.id === salonId);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get bookings in date range
+    const rangeBookings = await db.select()
+      .from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, fromDate),
+          lte(bookings.bookingDate, toDate),
+          ne(bookings.status, "cancelled")
+        )
+      );
+
+    // Group by hour
+    const hourlyBookings: { [hour: number]: number } = {};
+
+    rangeBookings.forEach(booking => {
+      const hour = parseInt(booking.startTime.split(':')[0]);
+      hourlyBookings[hour] = (hourlyBookings[hour] || 0) + 1;
+    });
+
+    // Convert to array and sort
+    const peakHours = Object.entries(hourlyBookings)
+      .map(([hour, count]) => ({
+        hour: parseInt(hour),
+        timeRange: `${hour.toString().padStart(2, '0')}:00 - ${(parseInt(hour) + 1).toString().padStart(2, '0')}:00`,
+        bookings: count
+      }))
+      .sort((a, b) => b.bookings - a.bookings);
+
+    return res.json(peakHours);
+  } catch (error) {
+    console.error("Peak hours analytics error:", error);
+    return res.status(500).json({ error: "Failed to get peak hours" });
   }
 });
 
