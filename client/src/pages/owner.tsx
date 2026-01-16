@@ -209,7 +209,7 @@ export default function OwnerPage() {
             </TabsTrigger>
             <TabsTrigger value="analytics" data-testid="tab-analytics">
               <Settings className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("analytics.title")}</span>
+              <span className="hidden sm:inline">{t("analytics.title", "Analytics")}</span>
             </TabsTrigger>
           </TabsList>
 

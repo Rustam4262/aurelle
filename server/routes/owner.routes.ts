@@ -1435,8 +1435,19 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
       trends: trendData
     });
   } catch (error) {
-    console.error("Dashboard overview error:", error);
-    return res.status(500).json({ error: "Failed to get dashboard data" });
+    console.error("Dashboard overview error:", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      ownerId: req.user?.claims?.sub,
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(500).json({
+      error: "Failed to get dashboard data",
+      message: error instanceof Error ? error.message : "Unknown error",
+      // Don't expose stack trace in production, but log requestId for debugging
+      requestId: req.id || Math.random().toString(36)
+    });
   }
 });
 

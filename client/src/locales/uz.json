@@ -524,6 +524,8 @@
     "portfolio": {
       "title": "Portfolio",
       "noItems": "Hozircha portfolioda ishlar yo'q",
+      "show": "Portfolioni ko'rsatish",
+      "hide": "Portfolioni yashirish",
       "upload": {
         "title": "Portfolio rasmlarini yuklash",
         "subtitle": "Rasm qo'shish",

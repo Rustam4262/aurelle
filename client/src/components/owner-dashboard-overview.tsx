@@ -151,12 +151,30 @@ export function OwnerDashboardOverview() {
   }
 
   if (overviewError) {
+    // Log error for debugging
+    console.error('Dashboard overview load error:', {
+      error: overviewError,
+      timestamp: new Date().toISOString()
+    });
+
+    const errorMessage = overviewError instanceof Error
+      ? overviewError.message
+      : t('dashboard.loadError', 'Failed to load dashboard data. Please try again.');
+
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>{t('dashboard.errorTitle', 'Failed to Load')}</AlertTitle>
-        <AlertDescription className="mt-2">
-          <p>{t('dashboard.loadError', 'Failed to load dashboard data. Please try again.')}</p>
+        <AlertDescription className="mt-2 space-y-2">
+          <p>{errorMessage}</p>
+          {process.env.NODE_ENV === 'development' && (
+            <details className="text-xs">
+              <summary className="cursor-pointer">Debug info</summary>
+              <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto">
+                {JSON.stringify(overviewError, null, 2)}
+              </pre>
+            </details>
+          )}
           <Button
             variant="outline"
             size="sm"

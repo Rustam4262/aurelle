@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { salons, masters, services, salonWorkingHours, reviews, bookings, salonSettings } from "@shared/schema";
+import { salons, masters, services, salonWorkingHours, masterWorkingHours, reviews, bookings, salonSettings } from "@shared/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
 
 const router = Router();
@@ -164,6 +164,46 @@ router.get("/masters/:id/availability", async (req, res) => {
 
     // Parse the date
     const bookingDate = new Date(date as string);
+    const dayOfWeek = bookingDate.getDay(); // 0=Sunday, 1=Monday, etc.
+
+    // Get master-specific working hours for this day
+    const [masterHours] = await db.select()
+      .from(masterWorkingHours)
+      .where(
+        and(
+          eq(masterWorkingHours.masterId, id),
+          eq(masterWorkingHours.dayOfWeek, dayOfWeek)
+        )
+      );
+
+    // If no master-specific hours, fall back to salon working hours
+    let workingHours = masterHours;
+    if (!workingHours) {
+      const [salonHours] = await db.select()
+        .from(salonWorkingHours)
+        .where(
+          and(
+            eq(salonWorkingHours.salonId, master.salonId),
+            eq(salonWorkingHours.dayOfWeek, dayOfWeek)
+          )
+        );
+      workingHours = salonHours;
+    }
+
+    // If no working hours defined or salon is closed on this day, return empty slots
+    if (!workingHours || workingHours.isClosed) {
+      return res.json({
+        masterId: id,
+        date: bookingDate,
+        serviceDuration,
+        bufferMinutes,
+        slots: [],
+        totalSlots: 0,
+        availableSlots: 0,
+        closed: true,
+        reason: workingHours?.isClosed ? 'Closed on this day' : 'No working hours configured'
+      });
+    }
 
     // Get all bookings for this master on this date (excluding cancelled)
     const existingBookings = await db.select({
@@ -193,60 +233,66 @@ router.get("/masters/:id/availability", async (req, res) => {
       return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
     };
 
-    // Generate all possible time slots (every 30 minutes from 9:00 to 20:00)
+    // Generate all possible time slots using actual working hours
     const slots = [];
-    const startHour = 9;
-    const endHour = 20;
     const slotInterval = 30; // 30 minute intervals
 
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += slotInterval) {
-        const slotStartMinutes = hour * 60 + minute;
-        const slotEndMinutes = slotStartMinutes + serviceDuration;
+    // Parse working hours
+    const openMinutes = parseTime(workingHours.openTime);
+    const closeMinutes = parseTime(workingHours.closeTime);
 
-        // Don't create slots that would end after closing time
-        if (slotEndMinutes > endHour * 60) continue;
+    // Generate slots from open to close time
+    for (let slotStartMinutes = openMinutes; slotStartMinutes < closeMinutes; slotStartMinutes += slotInterval) {
+      const slotEndMinutes = slotStartMinutes + serviceDuration;
 
-        const slotStart = formatTime(slotStartMinutes);
-        const slotEnd = formatTime(slotEndMinutes);
+      // Don't create slots that would end after closing time
+      if (slotEndMinutes > closeMinutes) continue;
 
-        // Check if this slot conflicts with any existing booking
-        let isAvailable = true;
-        let conflictReason = null;
+      const slotStart = formatTime(slotStartMinutes);
+      const slotEnd = formatTime(slotEndMinutes);
 
-        for (const booking of existingBookings) {
-          const bookingStart = parseTime(booking.startTime);
-          const bookingEnd = parseTime(booking.endTime);
+      // Check if this slot conflicts with any existing booking
+      let isAvailable = true;
+      let conflictReason = null;
 
-          // Add buffer to both the slot and the existing booking
-          const slotBufferedStart = slotStartMinutes - bufferMinutes;
-          const slotBufferedEnd = slotEndMinutes + bufferMinutes;
-          const bookingBufferedStart = bookingStart - bufferMinutes;
-          const bookingBufferedEnd = bookingEnd + bufferMinutes;
+      for (const booking of existingBookings) {
+        const bookingStart = parseTime(booking.startTime);
+        const bookingEnd = parseTime(booking.endTime);
 
-          // Check for overlap: (start1 < end2) AND (start2 < end1)
-          const hasOverlap = (slotBufferedStart < bookingBufferedEnd) &&
-                             (bookingBufferedStart < slotBufferedEnd);
+        // Add buffer to both the slot and the existing booking
+        const slotBufferedStart = slotStartMinutes - bufferMinutes;
+        const slotBufferedEnd = slotEndMinutes + bufferMinutes;
+        const bookingBufferedStart = bookingStart - bufferMinutes;
+        const bookingBufferedEnd = bookingEnd + bufferMinutes;
 
-          if (hasOverlap) {
-            isAvailable = false;
-            conflictReason = booking.status === "confirmed" ? "booked" : "pending";
-            break;
-          }
+        // Check for overlap: (start1 < end2) AND (start2 < end1)
+        const hasOverlap = (slotBufferedStart < bookingBufferedEnd) &&
+                           (bookingBufferedStart < slotBufferedEnd);
+
+        if (hasOverlap) {
+          isAvailable = false;
+          conflictReason = booking.status === "confirmed" ? "booked" : "pending";
+          break;
         }
-
-        slots.push({
-          startTime: slotStart,
-          endTime: slotEnd,
-          isAvailable,
-          conflictReason,
-        });
       }
+
+      slots.push({
+        startTime: slotStart,
+        endTime: slotEnd,
+        isAvailable,
+        conflictReason,
+      });
     }
 
     return res.json({
       masterId: id,
       date: bookingDate,
+      dayOfWeek,
+      workingHours: {
+        openTime: workingHours.openTime,
+        closeTime: workingHours.closeTime,
+        source: masterHours ? 'master' : 'salon'
+      },
       serviceDuration,
       bufferMinutes,
       slots,
