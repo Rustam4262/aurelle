@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { DashboardCharts } from "@/components/dashboard-charts";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
+
+interface TrendData {
+  date: string;
+  revenue: number;
+  bookings: number;
+}
 
 interface DashboardOverview {
   today: {
@@ -27,6 +34,7 @@ interface DashboardOverview {
     topServices: Array<{ id: string; name: any; count: number }>;
     topMasters: Array<{ id: string; name: string; revenue: number }>;
   };
+  trends: TrendData[];
 }
 
 interface DashboardAlert {
@@ -319,60 +327,14 @@ export function OwnerDashboardOverview() {
         </div>
       </div>
 
-      {/* Month Stats */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Top Services */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.topServices', 'Top Services This Month')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {overview.month.topServices.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.noData', 'No data yet')}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {overview.month.topServices.map((service) => (
-                  <div key={service.id} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {service.name?.[i18n.language as 'en' | 'ru' | 'uz'] || service.name?.en || 'Unknown'}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {service.count} {t('dashboard.bookings', 'bookings')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Top Masters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.topMasters', 'Top Masters This Month')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {overview.month.topMasters.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.noData', 'No data yet')}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {overview.month.topMasters.map((master) => (
-                  <div key={master.id} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{master.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {formatCurrency(master.revenue)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Charts Section */}
+      {overview.trends && overview.trends.length > 0 && (
+        <DashboardCharts
+          trends={overview.trends}
+          topServices={overview.month.topServices}
+          topMasters={overview.month.topMasters}
+        />
+      )}
 
       {/* Recent Activity */}
       <Card>

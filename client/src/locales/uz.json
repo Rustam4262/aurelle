@@ -589,7 +589,11 @@
         "noServices": "Xizmatlar yo'q",
         "noMasters": "Ustalar yo'q",
         "notPublished": "Salon nashr etilmagan"
-      }
+      },
+      "revenueTrend": "Daromad tendentsiyasi (oxirgi 30 kun)",
+      "bookingsTrend": "Bronlar tendentsiyasi (oxirgi 30 kun)",
+      "topServicesChart": "Top xizmatlar (bronlar bo'yicha)",
+      "topMastersChart": "Top ustalar (daromad bo'yicha)"
     },
     "bookings": {
       "title": "Bronlar"

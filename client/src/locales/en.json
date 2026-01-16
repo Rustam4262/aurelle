@@ -590,7 +590,11 @@
         "noServices": "No Services",
         "noMasters": "No Masters",
         "notPublished": "Salon Not Published"
-      }
+      },
+      "revenueTrend": "Revenue Trend (Last 30 Days)",
+      "bookingsTrend": "Bookings Trend (Last 30 Days)",
+      "topServicesChart": "Top Services by Bookings",
+      "topMastersChart": "Top Masters by Revenue"
     },
     "bookings": {
       "title": "Bookings"

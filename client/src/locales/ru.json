@@ -591,7 +591,11 @@
         "noServices": "Нет услуг",
         "noMasters": "Нет мастеров",
         "notPublished": "Салон не опубликован"
-      }
+      },
+      "revenueTrend": "Тренд доходов (последние 30 дней)",
+      "bookingsTrend": "Тренд бронирований (последние 30 дней)",
+      "topServicesChart": "Топ услуги по бронированиям",
+      "topMastersChart": "Топ мастера по доходам"
     },
     "bookings": {
       "title": "Бронирования"

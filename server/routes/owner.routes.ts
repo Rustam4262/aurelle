@@ -1348,6 +1348,49 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
     // Unique clients this month
     const uniqueClients = new Set(monthBookings.map(b => b.clientId));
 
+    // Get last 30 days bookings for trends
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const last30DaysBookings = await db.select().from(bookings)
+      .where(
+        and(
+          inArray(bookings.salonId, salonIds),
+          gte(bookings.bookingDate, thirtyDaysAgo)
+        )
+      );
+
+    // Group by date for trends
+    const dailyStats = new Map<string, { revenue: number; bookings: number }>();
+
+    // Initialize all 30 days with zero values
+    for (let i = 0; i < 30; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (29 - i));
+      const dateKey = date.toISOString().split('T')[0];
+      dailyStats.set(dateKey, { revenue: 0, bookings: 0 });
+    }
+
+    // Fill in actual data
+    last30DaysBookings.forEach(b => {
+      const dateKey = new Date(b.bookingDate).toISOString().split('T')[0];
+      const current = dailyStats.get(dateKey) || { revenue: 0, bookings: 0 };
+      dailyStats.set(dateKey, {
+        revenue: current.revenue + (b.status === 'completed' ? b.priceSnapshot : 0),
+        bookings: current.bookings + 1
+      });
+    });
+
+    // Convert to array sorted by date
+    const trendData = Array.from(dailyStats.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, stats]) => ({
+        date,
+        revenue: stats.revenue,
+        bookings: stats.bookings
+      }));
+
     return res.json({
       today: {
         revenue: todayRevenue,
@@ -1366,7 +1409,8 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
         bookings: monthBookings.length,
         topServices,
         topMasters
-      }
+      },
+      trends: trendData
     });
   } catch (error) {
     console.error("Dashboard overview error:", error);
