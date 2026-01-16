@@ -597,7 +597,53 @@
       "topMastersChart": "Top Masters by Revenue"
     },
     "bookings": {
-      "title": "Bookings"
+      "title": "Bookings",
+      "reschedule": {
+        "title": "Reschedule Booking",
+        "description": "Change the date and time of this booking",
+        "current": "Current",
+        "newDate": "New Date",
+        "pickDate": "Pick a date",
+        "newStartTime": "New Start Time",
+        "newEndTime": "New End Time",
+        "reason": "Reason",
+        "reasonPlaceholder": "Why are you rescheduling this booking?",
+        "save": "Reschedule",
+        "saving": "Rescheduling...",
+        "success": "Booking rescheduled",
+        "successDesc": "The booking has been successfully rescheduled",
+        "error": "Reschedule failed",
+        "missingFields": "Please fill in all fields",
+        "invalidTime": "End time must be after start time"
+      },
+      "manual": {
+        "title": "Create Manual Booking",
+        "description": "Create a booking on behalf of a client",
+        "salon": "Salon",
+        "selectSalon": "Select a salon",
+        "service": "Service",
+        "selectService": "Select a service",
+        "master": "Master",
+        "selectMaster": "Select a master",
+        "anyMaster": "Any available master",
+        "clientName": "Client Name",
+        "clientNamePlaceholder": "Enter client name",
+        "clientPhone": "Client Phone",
+        "date": "Date",
+        "pickDate": "Pick a date",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "notes": "Notes",
+        "notesPlaceholder": "Add any additional notes",
+        "create": "Create Booking",
+        "creating": "Creating...",
+        "success": "Booking created",
+        "successDesc": "The booking has been successfully created",
+        "error": "Creation failed",
+        "missingFields": "Please fill in all required fields",
+        "invalidPhone": "Please enter a valid phone number",
+        "invalidTime": "End time must be after start time"
+      }
     },
     "services": {
       "title": "Services"

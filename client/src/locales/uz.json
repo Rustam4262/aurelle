@@ -598,7 +598,53 @@
       "topMastersChart": "Top ustalar (daromad bo'yicha)"
     },
     "bookings": {
-      "title": "Bronlar"
+      "title": "Bronlar",
+      "reschedule": {
+        "title": "Bronni ko'chirish",
+        "description": "Bron sanasi va vaqtini o'zgartirish",
+        "current": "Joriy",
+        "newDate": "Yangi sana",
+        "pickDate": "Sanani tanlang",
+        "newStartTime": "Yangi boshlanish vaqti",
+        "newEndTime": "Yangi tugash vaqti",
+        "reason": "Sabab",
+        "reasonPlaceholder": "Nima uchun bronni ko'chiryapsiz?",
+        "save": "Ko'chirish",
+        "saving": "Ko'chirilmoqda...",
+        "success": "Bron ko'chirildi",
+        "successDesc": "Bron muvaffaqiyatli ko'chirildi",
+        "error": "Ko'chirish xatosi",
+        "missingFields": "Iltimos, barcha maydonlarni to'ldiring",
+        "invalidTime": "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak"
+      },
+      "manual": {
+        "title": "Qo'lda bron yaratish",
+        "description": "Mijoz nomidan bron yaratish",
+        "salon": "Salon",
+        "selectSalon": "Salonni tanlang",
+        "service": "Xizmat",
+        "selectService": "Xizmatni tanlang",
+        "master": "Usta",
+        "selectMaster": "Ustani tanlang",
+        "anyMaster": "Istalgan mavjud usta",
+        "clientName": "Mijoz ismi",
+        "clientNamePlaceholder": "Mijoz ismini kiriting",
+        "clientPhone": "Mijoz telefoni",
+        "date": "Sana",
+        "pickDate": "Sanani tanlang",
+        "startTime": "Boshlanish vaqti",
+        "endTime": "Tugash vaqti",
+        "notes": "Izohlar",
+        "notesPlaceholder": "Qo'shimcha izohlar qo'shing",
+        "create": "Bron yaratish",
+        "creating": "Yaratilmoqda...",
+        "success": "Bron yaratildi",
+        "successDesc": "Bron muvaffaqiyatli yaratildi",
+        "error": "Yaratish xatosi",
+        "missingFields": "Iltimos, barcha majburiy maydonlarni to'ldiring",
+        "invalidPhone": "Iltimos, to'g'ri telefon raqamini kiriting",
+        "invalidTime": "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak"
+      }
     },
     "services": {
       "title": "Xizmatlar"

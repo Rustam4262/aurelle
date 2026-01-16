@@ -15,9 +15,10 @@ import {
 } from "@shared/schema";
 import { requirePermission, OWNER_PERMISSIONS } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
-import { eq, and, desc, inArray, gte, lte, lt, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, gte, lte, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
+import { createNewBookingNotification } from "../notifications";
 
 const router = Router();
 
@@ -1983,6 +1984,143 @@ router.get("/analytics/peak-hours", isAuthenticated, requirePermission("ANALYTIC
   } catch (error) {
     console.error("Peak hours analytics error:", error);
     return res.status(500).json({ error: "Failed to get peak hours" });
+  }
+});
+
+// Manual booking creation by owner (Phase 8)
+router.post("/bookings/manual", isAuthenticated, requirePermission("BOOKINGS", "create"), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const {
+      salonId,
+      serviceId,
+      masterId,
+      clientName,
+      clientPhone,
+      bookingDate,
+      startTime,
+      endTime,
+      notes
+    } = req.body;
+
+    // Validation
+    if (!salonId || !serviceId || !clientName || !clientPhone || !bookingDate || !startTime || !endTime) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: ["salonId", "serviceId", "clientName", "clientPhone", "bookingDate", "startTime", "endTime"]
+      });
+    }
+
+    // Verify owner owns this salon
+    const [salon] = await db.select().from(salons)
+      .where(and(
+        eq(salons.id, salonId),
+        eq(salons.ownerId, ownerId)
+      ));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Salon not found or access denied" });
+    }
+
+    // Get service details for price
+    const [service] = await db.select().from(services)
+      .where(and(
+        eq(services.id, serviceId),
+        eq(services.salonId, salonId)
+      ));
+
+    if (!service) {
+      return res.status(404).json({ error: "Service not found in this salon" });
+    }
+
+    // Check for slot conflicts if master is specified
+    if (masterId) {
+      const conflictingBookings = await db.select().from(bookings)
+        .where(
+          and(
+            eq(bookings.masterId, masterId),
+            eq(bookings.bookingDate, new Date(bookingDate)),
+            ne(bookings.status, "cancelled"),
+            // Check time overlap
+            sql`(${bookings.startTime} < ${endTime} AND ${bookings.endTime} > ${startTime})`
+          )
+        );
+
+      if (conflictingBookings.length > 0) {
+        return res.status(409).json({
+          error: "Master is already booked during this time",
+          conflicts: conflictingBookings
+        });
+      }
+    }
+
+    // Check or create client profile
+    let [clientProfile] = await db.select().from(userProfiles)
+      .where(eq(userProfiles.phoneNumber, clientPhone));
+
+    // If client doesn't exist, create a guest profile
+    if (!clientProfile) {
+      const [newProfile] = await db.insert(userProfiles).values({
+        fullName: clientName,
+        phoneNumber: clientPhone,
+        role: "client",
+        // No userId - this is a guest booking
+      }).returning();
+      clientProfile = newProfile;
+    }
+
+    // Create booking
+    const [booking] = await db.insert(bookings).values({
+      clientId: clientProfile.id,
+      salonId,
+      serviceId,
+      masterId: masterId || null,
+      bookingDate: new Date(bookingDate),
+      startTime,
+      endTime,
+      status: "confirmed", // Owner-created bookings are auto-confirmed
+      priceSnapshot: service.basePrice,
+      notes: notes || `Manual booking created by owner (${clientName}, ${clientPhone})`,
+      modifiedBy: ownerId,
+      modificationHistory: [{
+        timestamp: new Date().toISOString(),
+        action: "manual_create",
+        changedBy: ownerId,
+        changes: {
+          clientName,
+          clientPhone,
+          createdBy: "owner"
+        }
+      }]
+    }).returning();
+
+    // Create notification for the master if assigned
+    if (masterId) {
+      const bookingDateStr = new Date(bookingDate).toISOString().split('T')[0];
+      await createNewBookingNotification(
+        db,
+        masterId,
+        bookingDateStr,
+        startTime,
+        booking.id
+      );
+    }
+
+    // Log audit
+    await logAudit(ownerId, "booking.manual_create", "bookings", booking.id, {
+      salonId,
+      clientName,
+      clientPhone,
+      serviceId,
+      masterId,
+      bookingDate,
+      startTime
+    });
+
+    return res.status(201).json(booking);
+  } catch (error) {
+    console.error("Manual booking creation error:", error);
+    return res.status(500).json({ error: "Failed to create manual booking" });
   }
 });
 
