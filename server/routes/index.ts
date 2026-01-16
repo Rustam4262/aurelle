@@ -16,11 +16,15 @@ import clientRoutes from "./client.routes";
 import contactRoutes from "./contact.routes";
 import adminRoutes from "./admin.routes";
 import healthRoutes from "./health.routes";
+import featureFlagsRoutes from "./featureFlags.routes";
 
 const router = Router();
 
 // Health check (public, no authentication required)
 router.use("/", healthRoutes);
+
+// Feature flags (public, no authentication required)
+router.use("/feature-flags", featureFlagsRoutes);
 
 // Public routes (no /api prefix needed, added in main routes.ts)
 router.use("/", authRoutes);
