@@ -642,7 +642,18 @@
       "returningClients": "Returning Clients",
       "exportExcel": "Export to Excel",
       "exportPDF": "Export to PDF",
-      "refreshData": "Refresh Data"
+      "refreshData": "Refresh Data",
+      "vsLastPeriod": "vs last period",
+      "change": "change",
+      "avgBookingValue": "Avg. Booking",
+      "perCompletedBooking": "per completed booking",
+      "noData": "No data available",
+      "completed": "completed",
+      "basePrice": "base price"
+    },
+    "dashboard": {
+      "selectSalon": "Select salon",
+      "allSalons": "All Salons"
     },
     "common": {
       "loading": "Loading...",

@@ -643,7 +643,18 @@
       "returningClients": "Вернувшиеся клиенты",
       "exportExcel": "Экспорт в Excel",
       "exportPDF": "Экспорт в PDF",
-      "refreshData": "Обновить данные"
+      "refreshData": "Обновить данные",
+      "vsLastPeriod": "к прошлому периоду",
+      "change": "изменение",
+      "avgBookingValue": "Средний чек",
+      "perCompletedBooking": "на завершённую запись",
+      "noData": "Нет данных",
+      "completed": "завершено",
+      "basePrice": "базовая цена"
+    },
+    "dashboard": {
+      "selectSalon": "Выберите салон",
+      "allSalons": "Все салоны"
     },
     "common": {
       "loading": "Загрузка...",

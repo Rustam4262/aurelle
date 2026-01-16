@@ -643,7 +643,18 @@
       "returningClients": "Qaytgan mijozlar",
       "exportExcel": "Excel ga eksport",
       "exportPDF": "PDF ga eksport",
-      "refreshData": "Ma'lumotlarni yangilash"
+      "refreshData": "Ma'lumotlarni yangilash",
+      "vsLastPeriod": "oldingi davrga nisbatan",
+      "change": "o'zgarish",
+      "avgBookingValue": "O'rtacha chek",
+      "perCompletedBooking": "tugallangan bronlarga",
+      "noData": "Ma'lumot yo'q",
+      "completed": "tugallangan",
+      "basePrice": "asosiy narx"
+    },
+    "dashboard": {
+      "selectSalon": "Salonni tanlang",
+      "allSalons": "Barcha salonlar"
     },
     "common": {
       "loading": "Yuklanmoqda...",
