@@ -529,3 +529,52 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
     references: [masters.id],
   }),
 }));
+
+// ============ AUDIT LOGS ============
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actorId: varchar("actor_id", { length: 255 }).notNull(),
+  action: varchar("action", { length: 100 }).notNull(), // "booking.cancel", "service.create", "master.update"
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // "booking", "service", "master", "salon"
+  entityId: varchar("entity_id", { length: 255 }),
+  salonId: varchar("salon_id", { length: 255 }),
+  details: jsonb("details").$type<Record<string, any>>(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  result: varchar("result", { length: 20 }).notNull(), // "success" / "failure"
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_audit_logs_actor").on(table.actorId),
+  index("idx_audit_logs_salon").on(table.salonId),
+  index("idx_audit_logs_created").on(table.createdAt),
+  index("idx_audit_logs_entity").on(table.entityType, table.entityId),
+]);
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
+// ============ OWNER PERMISSIONS ============
+export const ownerPermissions = pgTable("owner_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerId: varchar("owner_id", { length: 255 }).notNull(),
+  permission: varchar("permission", { length: 100 }).notNull(), // "owner.read_dashboard", "owner.manage_bookings"
+  grantedAt: timestamp("granted_at").defaultNow(),
+  grantedBy: varchar("granted_by", { length: 255 }),
+}, (table) => [
+  index("idx_owner_permissions_owner").on(table.ownerId),
+  index("idx_owner_permissions_permission").on(table.permission),
+]);
+
+export const insertOwnerPermissionSchema = createInsertSchema(ownerPermissions).omit({
+  id: true,
+  grantedAt: true,
+});
+
+export type InsertOwnerPermission = z.infer<typeof insertOwnerPermissionSchema>;
+export type OwnerPermission = typeof ownerPermissions.$inferSelect;
