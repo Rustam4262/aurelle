@@ -13,6 +13,8 @@ import {
   insertMasterSchema,
   insertServiceSchema,
 } from "@shared/schema";
+import { requirePermission, OWNER_PERMISSIONS } from "../lib/rbac";
+import { logAudit } from "../lib/audit";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
@@ -948,7 +950,7 @@ router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
 // ============ BOOKING MANAGEMENT ENDPOINTS (Phase 1 - P0-4) ============
 
 // Get advanced bookings list with filters
-router.get("/bookings/advanced", isAuthenticated, async (req: any, res) => {
+router.get("/bookings/advanced", isAuthenticated, requirePermission(OWNER_PERMISSIONS.READ_BOOKINGS), async (req: any, res) => {
   try {
     const ownerId = req.user.claims.sub;
     const {
@@ -1043,7 +1045,7 @@ router.get("/bookings/advanced", isAuthenticated, async (req: any, res) => {
 });
 
 // Bulk update booking status
-router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
+router.post("/bookings/bulk-update", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS), async (req: any, res) => {
   try {
     const ownerId = req.user.claims.sub;
 
@@ -1104,7 +1106,27 @@ router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
       })
     );
 
-    return res.json({ success: true, updated: updates.filter(Boolean) });
+    const successfulUpdates = updates.filter(Boolean);
+
+    // Log audit trail
+    await logAudit({
+      actorId: ownerId,
+      action: 'booking.bulk_update',
+      entityType: 'booking',
+      entityId: bookingIds.join(','),
+      salonId: bookingsToUpdate[0]?.salonId,
+      details: {
+        bookingCount: bookingIds.length,
+        status: { to: status },
+        notes,
+        updatedBookings: successfulUpdates.map(b => b.id),
+      },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      result: 'success',
+    });
+
+    return res.json({ success: true, updated: successfulUpdates });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request data", details: error.errors });
@@ -1115,7 +1137,7 @@ router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
 });
 
 // Get booking modification history
-router.get("/bookings/:bookingId/history", isAuthenticated, async (req: any, res) => {
+router.get("/bookings/:bookingId/history", isAuthenticated, requirePermission(OWNER_PERMISSIONS.READ_BOOKINGS), async (req: any, res) => {
   try {
     const { bookingId } = req.params;
     const ownerId = req.user.claims.sub;
