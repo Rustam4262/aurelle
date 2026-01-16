@@ -44,19 +44,28 @@ export function OwnerDashboardOverview() {
 
   const { data: overview, isLoading: overviewLoading } = useQuery<DashboardOverview>({
     queryKey: ["/api/owner/dashboard/overview"],
-    queryFn: () => apiRequest("GET", "/api/owner/dashboard/overview"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/dashboard/overview");
+      return res.json();
+    },
     refetchInterval: 60000, // Auto-refresh every 60 seconds
   });
 
   const { data: alerts = [] } = useQuery<Alert[]>({
     queryKey: ["/api/owner/dashboard/alerts"],
-    queryFn: () => apiRequest("GET", "/api/owner/dashboard/alerts"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/dashboard/alerts");
+      return res.json();
+    },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: activity = [] } = useQuery<Activity[]>({
     queryKey: ["/api/owner/dashboard/recent-activity"],
-    queryFn: () => apiRequest("GET", "/api/owner/dashboard/recent-activity"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/dashboard/recent-activity");
+      return res.json();
+    },
     refetchInterval: 30000,
   });
 
