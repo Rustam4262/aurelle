@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { TrendingUp, TrendingDown, Users, DollarSign, Calendar, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, DollarSign, Calendar, AlertCircle, Store, Scissors, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "react-i18next";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface DashboardOverview {
   today: {
@@ -26,10 +29,14 @@ interface DashboardOverview {
   };
 }
 
-interface Alert {
+interface DashboardAlert {
   type: string;
-  count: number;
+  severity: 'info' | 'warning' | 'error';
+  count?: number;
   message: string;
+  action: string;
+  salonId?: string;
+  salonName?: any;
 }
 
 interface Activity {
@@ -41,8 +48,10 @@ interface Activity {
 
 export function OwnerDashboardOverview() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: overview, isLoading: overviewLoading } = useQuery<DashboardOverview>({
+  const { data: overview, isLoading: overviewLoading, error: overviewError, refetch } = useQuery<DashboardOverview>({
     queryKey: ["/api/owner/dashboard/overview"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/owner/dashboard/overview");
@@ -51,7 +60,7 @@ export function OwnerDashboardOverview() {
     refetchInterval: 60000, // Auto-refresh every 60 seconds
   });
 
-  const { data: alerts = [] } = useQuery<Alert[]>({
+  const { data: alerts = [] } = useQuery<DashboardAlert[]>({
     queryKey: ["/api/owner/dashboard/alerts"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/owner/dashboard/alerts");
@@ -81,6 +90,29 @@ export function OwnerDashboardOverview() {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
+  const handleAlertAction = (alert: DashboardAlert) => {
+    switch (alert.action) {
+      case 'GO_BOOKINGS':
+        setSearchParams({ tab: 'bookings' });
+        break;
+      case 'GO_SERVICES':
+        setSearchParams({ tab: 'services' });
+        break;
+      case 'GO_MASTERS':
+        setSearchParams({ tab: 'masters' });
+        break;
+      case 'PUBLISH_SALON':
+        setSearchParams({ tab: 'salons' });
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getAlertVariant = (severity: string): 'default' | 'destructive' => {
+    return severity === 'error' ? 'destructive' : 'default';
+  };
+
   if (overviewLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -89,15 +121,50 @@ export function OwnerDashboardOverview() {
     );
   }
 
-  if (!overview) {
+  // Check if no salons (empty state)
+  const hasNoData = overview &&
+    overview.today.revenue === 0 &&
+    overview.today.bookings === 0 &&
+    overview.month.bookings === 0 &&
+    overview.month.topServices.length === 0 &&
+    overview.month.topMasters.length === 0;
+
+  if (hasNoData && alerts.some(a => a.type === 'no_services' || a.type === 'no_masters')) {
     return (
-      <Alert>
+      <EmptyState
+        icon={Store}
+        title={t('dashboard.noSalonsYet', 'Welcome to Your Dashboard!')}
+        description={t('dashboard.noSalonsDescription', 'Start by creating your first salon, then add services and masters to begin accepting bookings.')}
+        action={{
+          label: t('dashboard.createFirstSalon', 'Create First Salon'),
+          onClick: () => setSearchParams({ tab: 'salons' }),
+        }}
+      />
+    );
+  }
+
+  if (overviewError) {
+    return (
+      <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          {t('dashboard.loadError', 'Failed to load dashboard data')}
+        <AlertTitle>{t('dashboard.errorTitle', 'Failed to Load')}</AlertTitle>
+        <AlertDescription className="mt-2">
+          <p>{t('dashboard.loadError', 'Failed to load dashboard data. Please try again.')}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => refetch()}
+          >
+            {t('common.retry', 'Retry')}
+          </Button>
         </AlertDescription>
       </Alert>
     );
+  }
+
+  if (!overview) {
+    return null;
   }
 
   return (
@@ -106,9 +173,28 @@ export function OwnerDashboardOverview() {
       {alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((alert, index) => (
-            <Alert key={index} variant={alert.type === 'pending_booking' ? 'default' : 'destructive'}>
+            <Alert key={index} variant={getAlertVariant(alert.severity)}>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{alert.message}</AlertDescription>
+              <AlertTitle className="mb-1">
+                {alert.type === 'pending_bookings' && t('dashboard.alert.pendingBookings', 'Pending Bookings')}
+                {alert.type === 'no_services' && t('dashboard.alert.noServices', 'No Services')}
+                {alert.type === 'no_masters' && t('dashboard.alert.noMasters', 'No Masters')}
+                {alert.type === 'salon_not_published' && t('dashboard.alert.notPublished', 'Salon Not Published')}
+              </AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                <span>{alert.message}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-4"
+                  onClick={() => handleAlertAction(alert)}
+                >
+                  {alert.action === 'GO_BOOKINGS' && t('common.viewBookings', 'View Bookings')}
+                  {alert.action === 'GO_SERVICES' && t('common.addServices', 'Add Services')}
+                  {alert.action === 'GO_MASTERS' && t('common.addMasters', 'Add Masters')}
+                  {alert.action === 'PUBLISH_SALON' && t('common.publish', 'Publish')}
+                </Button>
+              </AlertDescription>
             </Alert>
           ))}
         </div>

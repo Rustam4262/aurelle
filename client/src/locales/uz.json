@@ -564,7 +564,32 @@
       }
     },
     "dashboard": {
-      "title": "Boshqaruv paneli"
+      "title": "Boshqaruv paneli",
+      "today": "Bugun",
+      "thisWeek": "Bu hafta",
+      "revenue": "Daromad",
+      "bookings": "Bronlar",
+      "completionRate": "Tugallanish foizi",
+      "newClients": "Yangi mijozlar",
+      "weeklyRevenue": "Haftalik daromad",
+      "weeklyBookings": "Haftalik bronlar",
+      "vsLastWeek": "o'tgan haftaga nisbatan",
+      "topServices": "Oyning top xizmatlari",
+      "topMasters": "Oyning top ustalar",
+      "recentActivity": "So'nggi faoliyat",
+      "noActivity": "So'nggi faoliyat yo'q",
+      "noData": "Ma'lumot yo'q",
+      "noSalonsYet": "Xush kelibsiz!",
+      "noSalonsDescription": "Birinchi saloningizni yaratishdan boshlang, keyin bronlarni qabul qilishni boshlash uchun xizmatlar va ustalar qo'shing.",
+      "createFirstSalon": "Birinchi salonni yaratish",
+      "errorTitle": "Yuklashda xatolik",
+      "loadError": "Ma'lumotlarni yuklash amalga oshmadi. Yana urinib ko'ring.",
+      "alert": {
+        "pendingBookings": "Kutilayotgan bronlar",
+        "noServices": "Xizmatlar yo'q",
+        "noMasters": "Ustalar yo'q",
+        "notPublished": "Salon nashr etilmagan"
+      }
     },
     "bookings": {
       "title": "Bronlar"
@@ -602,7 +627,12 @@
       "submitting": "Yuborilmoqda...",
       "sending": "Yuborilmoqda...",
       "anonymous": "Anonim",
-      "optional": "Ixtiyoriy"
+      "optional": "Ixtiyoriy",
+      "retry": "Qayta urinish",
+      "viewBookings": "Bronlarni ko'rish",
+      "addServices": "Xizmatlar qo'shish",
+      "addMasters": "Ustalar qo'shish",
+      "publish": "Nashr etish"
     },
     "about": {
       "title": "Loyiha haqida",

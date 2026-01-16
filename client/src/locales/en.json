@@ -565,7 +565,32 @@
       }
     },
     "dashboard": {
-      "title": "Dashboard"
+      "title": "Dashboard",
+      "today": "Today",
+      "thisWeek": "This Week",
+      "revenue": "Revenue",
+      "bookings": "Bookings",
+      "completionRate": "Completion Rate",
+      "newClients": "New Clients",
+      "weeklyRevenue": "Weekly Revenue",
+      "weeklyBookings": "Weekly Bookings",
+      "vsLastWeek": "vs last week",
+      "topServices": "Top Services This Month",
+      "topMasters": "Top Masters This Month",
+      "recentActivity": "Recent Activity",
+      "noActivity": "No recent activity",
+      "noData": "No data yet",
+      "noSalonsYet": "Welcome to Your Dashboard!",
+      "noSalonsDescription": "Start by creating your first salon, then add services and masters to begin accepting bookings.",
+      "createFirstSalon": "Create First Salon",
+      "errorTitle": "Failed to Load",
+      "loadError": "Failed to load dashboard data. Please try again.",
+      "alert": {
+        "pendingBookings": "Pending Bookings",
+        "noServices": "No Services",
+        "noMasters": "No Masters",
+        "notPublished": "Salon Not Published"
+      }
     },
     "bookings": {
       "title": "Bookings"
@@ -603,7 +628,12 @@
       "submitting": "Submitting...",
       "sending": "Sending...",
       "anonymous": "Anonymous",
-      "optional": "Optional"
+      "optional": "Optional",
+      "retry": "Retry",
+      "viewBookings": "View Bookings",
+      "addServices": "Add Services",
+      "addMasters": "Add Masters",
+      "publish": "Publish"
     },
     "about": {
       "title": "About",

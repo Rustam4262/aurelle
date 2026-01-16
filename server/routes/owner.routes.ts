@@ -1442,16 +1442,61 @@ router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
 
     if (pendingBookings.length > 0) {
       alerts.push({
-        type: 'pending_booking',
+        type: 'pending_bookings',
+        severity: 'warning',
         count: pendingBookings.length,
-        message: `${pendingBookings.length} booking${pendingBookings.length > 1 ? 's' : ''} awaiting confirmation`
+        message: `${pendingBookings.length} booking${pendingBookings.length > 1 ? 's' : ''} awaiting confirmation`,
+        action: 'GO_BOOKINGS'
       });
     }
 
-    // TODO: Add more alert types:
-    // - New reviews awaiting response
-    // - Low availability (no slots in next 3 days)
-    // - Masters with no bookings this week
+    // Check for salons without services
+    for (const salon of ownerSalons) {
+      const salonServices = await db.select().from(services)
+        .where(eq(services.salonId, salon.id));
+
+      if (salonServices.length === 0) {
+        alerts.push({
+          type: 'no_services',
+          severity: 'error',
+          salonId: salon.id,
+          salonName: salon.name,
+          message: `Salon "${salon.name.ru || salon.name.en}" has no services`,
+          action: 'GO_SERVICES'
+        });
+      }
+    }
+
+    // Check for salons without masters
+    for (const salon of ownerSalons) {
+      const salonMasters = await db.select().from(masters)
+        .where(eq(masters.salonId, salon.id));
+
+      if (salonMasters.length === 0) {
+        alerts.push({
+          type: 'no_masters',
+          severity: 'error',
+          salonId: salon.id,
+          salonName: salon.name,
+          message: `Salon "${salon.name.ru || salon.name.en}" has no masters`,
+          action: 'GO_MASTERS'
+        });
+      }
+    }
+
+    // Check for unpublished salons
+    for (const salon of ownerSalons) {
+      if (!salon.isActive) {
+        alerts.push({
+          type: 'salon_not_published',
+          severity: 'info',
+          salonId: salon.id,
+          salonName: salon.name,
+          message: `Salon "${salon.name.ru || salon.name.en}" is not published`,
+          action: 'PUBLISH_SALON'
+        });
+      }
+    }
 
     return res.json(alerts);
   } catch (error) {
