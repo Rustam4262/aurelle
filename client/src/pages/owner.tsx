@@ -26,6 +26,10 @@ import {
 import { BookingCalendar } from "@/components/booking-calendar";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { OwnerDashboardOverview } from "@/components/owner-dashboard-overview";
+import { ServiceManagement } from "@/components/service-management";
+import { MasterManagement } from "@/components/master-management";
+import { BookingManagement } from "@/components/booking-management";
 
 interface EnrichedBooking extends Booking {
   salon?: Salon;
@@ -51,7 +55,7 @@ export default function OwnerPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showAddSalon, setShowAddSalon] = useState(false);
-  const [activeTab, setActiveTab] = useState("salons");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const { data: salons, isLoading: salonsLoading } = useQuery<Salon[]>({
     queryKey: ["/api/owner/salons"],
@@ -178,7 +182,23 @@ export default function OwnerPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
+            <TabsTrigger value="dashboard" data-testid="tab-dashboard">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("dashboard.title", "Dashboard")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="bookings" data-testid="tab-bookings">
+              <Calendar className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("bookings.title", "Bookings")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="services" data-testid="tab-services">
+              <Scissors className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("services.title", "Services")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="masters" data-testid="tab-masters">
+              <Users className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("masters.title", "Masters")}</span>
+            </TabsTrigger>
             <TabsTrigger value="salons" data-testid="tab-salons">
               <Store className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.owner.mySalons")}</span>
@@ -188,10 +208,26 @@ export default function OwnerPage() {
               <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" data-testid="tab-analytics">
-              <BarChart3 className="h-4 w-4 mr-2" />
+              <Settings className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("analytics.title")}</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <OwnerDashboardOverview />
+          </TabsContent>
+
+          <TabsContent value="bookings" className="space-y-6">
+            <BookingManagement />
+          </TabsContent>
+
+          <TabsContent value="services" className="space-y-6">
+            <ServiceManagement />
+          </TabsContent>
+
+          <TabsContent value="masters" className="space-y-6">
+            <MasterManagement />
+          </TabsContent>
 
           <TabsContent value="salons" className="space-y-6">
             <div className="flex items-center justify-between gap-4 flex-wrap mb-8">

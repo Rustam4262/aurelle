@@ -530,4 +530,934 @@ router.patch("/bookings/:id/assign-master", isAuthenticated, async (req: any, re
   }
 });
 
+// ============ MASTER MANAGEMENT ENDPOINTS (Phase 1 - P0-2) ============
+
+// Get master statistics across all owner's salons
+router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get all masters for owner's salons with booking statistics
+    const allMasters = await db.select({
+      id: masters.id,
+      salonId: masters.salonId,
+      userId: masters.userId,
+      name: masters.name,
+      email: masters.email,
+      phone: masters.phone,
+      specialization: masters.specialization,
+      bio: masters.bio,
+      portfolio: masters.portfolio,
+      workingHours: masters.workingHours,
+      isActive: masters.isActive,
+      rating: masters.rating,
+      reviewCount: masters.reviewCount,
+      createdAt: masters.createdAt,
+      salonName: salons.name,
+    })
+      .from(masters)
+      .leftJoin(salons, eq(masters.salonId, salons.id))
+      .where(inArray(masters.salonId, salonIds))
+      .orderBy(desc(masters.rating));
+
+    // Get booking counts for each master
+    const masterIds = allMasters.map(m => m.id);
+    const bookingCounts = await db.select({
+      masterId: bookings.masterId,
+      totalBookings: sql<number>`count(*)::int`,
+      completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
+      totalRevenue: sql<string>`sum(${bookings.price})::numeric`,
+    })
+      .from(bookings)
+      .where(and(
+        inArray(bookings.masterId, masterIds),
+        gte(bookings.date, sql`CURRENT_DATE - INTERVAL '30 days'`)
+      ))
+      .groupBy(bookings.masterId);
+
+    // Merge booking stats with masters
+    const mastersWithStats = allMasters.map(master => {
+      const stats = bookingCounts.find(bc => bc.masterId === master.id);
+      return {
+        ...master,
+        totalBookings: stats?.totalBookings || 0,
+        completedBookings: stats?.completedBookings || 0,
+        totalRevenue: parseFloat(stats?.totalRevenue || "0"),
+      };
+    });
+
+    return res.json(mastersWithStats);
+  } catch (error) {
+    console.error("Get master stats error:", error);
+    return res.status(500).json({ error: "Failed to get master statistics" });
+  }
+});
+
+// Update master profile
+router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId, masterId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify salon ownership
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Validate request body
+    const updateSchema = z.object({
+      name: z.object({
+        en: z.string().min(1),
+        ru: z.string().min(1),
+        uz: z.string().min(1),
+      }).optional(),
+      bio: z.object({
+        en: z.string(),
+        ru: z.string(),
+        uz: z.string(),
+      }).optional(),
+      specialization: z.string().optional(),
+      phone: z.string().optional(),
+      portfolio: z.array(z.string()).optional(),
+      workingHours: z.record(z.object({
+        start: z.string(),
+        end: z.string(),
+        isWorking: z.boolean(),
+      })).optional(),
+      isActive: z.boolean().optional(),
+    });
+
+    const validatedData = updateSchema.parse(req.body);
+
+    // Update master
+    const [updatedMaster] = await db.update(masters)
+      .set({
+        ...validatedData,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)))
+      .returning();
+
+    if (!updatedMaster) {
+      return res.status(404).json({ error: "Master not found" });
+    }
+
+    return res.json(updatedMaster);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid request data", details: error.errors });
+    }
+    console.error("Update master error:", error);
+    return res.status(500).json({ error: "Failed to update master" });
+  }
+});
+
+// Upload portfolio images for master
+router.post("/masters/:masterId/portfolio", isAuthenticated, async (req: any, res) => {
+  try {
+    const { masterId } = req.params;
+    const ownerId = req.user.claims.sub;
+    const { imageUrl } = req.body;
+
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      return res.status(400).json({ error: "Image URL is required" });
+    }
+
+    // Verify master belongs to owner's salon
+    const [master] = await db.select({
+      masterId: masters.id,
+      portfolio: masters.portfolio,
+      salonOwnerId: salons.ownerId,
+    })
+      .from(masters)
+      .leftJoin(salons, eq(masters.salonId, salons.id))
+      .where(eq(masters.id, masterId));
+
+    if (!master || master.salonOwnerId !== ownerId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Add image to portfolio
+    const currentPortfolio = master.portfolio || [];
+    const updatedPortfolio = [...currentPortfolio, imageUrl];
+
+    const [updatedMaster] = await db.update(masters)
+      .set({
+        portfolio: updatedPortfolio,
+        updatedAt: new Date(),
+      })
+      .where(eq(masters.id, masterId))
+      .returning();
+
+    return res.json(updatedMaster);
+  } catch (error) {
+    console.error("Upload portfolio error:", error);
+    return res.status(500).json({ error: "Failed to upload portfolio image" });
+  }
+});
+
+// Delete portfolio image
+router.delete("/masters/:masterId/portfolio/:imageIndex", isAuthenticated, async (req: any, res) => {
+  try {
+    const { masterId, imageIndex } = req.params;
+    const ownerId = req.user.claims.sub;
+    const index = parseInt(imageIndex);
+
+    if (isNaN(index)) {
+      return res.status(400).json({ error: "Invalid image index" });
+    }
+
+    // Verify master belongs to owner's salon
+    const [master] = await db.select({
+      masterId: masters.id,
+      portfolio: masters.portfolio,
+      salonOwnerId: salons.ownerId,
+    })
+      .from(masters)
+      .leftJoin(salons, eq(masters.salonId, salons.id))
+      .where(eq(masters.id, masterId));
+
+    if (!master || master.salonOwnerId !== ownerId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Remove image from portfolio
+    const currentPortfolio = master.portfolio || [];
+    if (index < 0 || index >= currentPortfolio.length) {
+      return res.status(400).json({ error: "Invalid image index" });
+    }
+
+    const updatedPortfolio = currentPortfolio.filter((_, i) => i !== index);
+
+    const [updatedMaster] = await db.update(masters)
+      .set({
+        portfolio: updatedPortfolio,
+        updatedAt: new Date(),
+      })
+      .where(eq(masters.id, masterId))
+      .returning();
+
+    return res.json(updatedMaster);
+  } catch (error) {
+    console.error("Delete portfolio error:", error);
+    return res.status(500).json({ error: "Failed to delete portfolio image" });
+  }
+});
+
+// ============ SERVICE MANAGEMENT ENDPOINTS (Phase 1 - P0-3) ============
+
+// Get service statistics across all owner's salons
+router.get("/services/stats", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get all services for owner's salons
+    const allServices = await db.select().from(services)
+      .where(inArray(services.salonId, salonIds))
+      .orderBy(desc(services.bookingCount));
+
+    return res.json(allServices);
+  } catch (error) {
+    console.error("Get service stats error:", error);
+    return res.status(500).json({ error: "Failed to get service statistics" });
+  }
+});
+
+// Update service
+router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify salon ownership
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Validate request body
+    const updateSchema = z.object({
+      name: z.object({
+        en: z.string().min(1),
+        ru: z.string().min(1),
+        uz: z.string().min(1),
+      }).optional(),
+      description: z.object({
+        en: z.string(),
+        ru: z.string(),
+        uz: z.string(),
+      }).optional(),
+      category: z.string().optional(),
+      priceMin: z.number().int().positive().optional(),
+      priceMax: z.number().int().positive().optional(),
+      duration: z.number().int().positive().optional(),
+      isActive: z.boolean().optional(),
+      displayOrder: z.number().int().optional(),
+    });
+
+    const parsed = updateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    // Update service
+    const [updated] = await db.update(services)
+      .set(parsed.data)
+      .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Update service error:", error);
+    return res.status(500).json({ error: "Failed to update service" });
+  }
+});
+
+// Duplicate service to another salon
+router.post("/services/:serviceId/duplicate", isAuthenticated, async (req: any, res) => {
+  try {
+    const { serviceId } = req.params;
+    const { targetSalonId } = req.body;
+    const ownerId = req.user.claims.sub;
+
+    if (!targetSalonId) {
+      return res.status(400).json({ error: "Target salon ID is required" });
+    }
+
+    // Get source service
+    const [sourceService] = await db.select().from(services)
+      .where(eq(services.id, serviceId));
+
+    if (!sourceService) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // Verify both salons belong to owner
+    const [sourceSalon] = await db.select().from(salons)
+      .where(and(eq(salons.id, sourceService.salonId), eq(salons.ownerId, ownerId)));
+
+    const [targetSalon] = await db.select().from(salons)
+      .where(and(eq(salons.id, targetSalonId), eq(salons.ownerId, ownerId)));
+
+    if (!sourceSalon || !targetSalon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Create duplicate service
+    const [duplicated] = await db.insert(services).values({
+      salonId: targetSalonId,
+      name: sourceService.name,
+      description: sourceService.description,
+      category: sourceService.category,
+      priceMin: sourceService.priceMin,
+      priceMax: sourceService.priceMax,
+      duration: sourceService.duration,
+      isActive: sourceService.isActive,
+      displayOrder: 0,
+    }).returning();
+
+    return res.status(201).json(duplicated);
+  } catch (error) {
+    console.error("Duplicate service error:", error);
+    return res.status(500).json({ error: "Failed to duplicate service" });
+  }
+});
+
+// Reorder services (bulk update displayOrder)
+router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    const reorderSchema = z.object({
+      services: z.array(z.object({
+        id: z.string(),
+        displayOrder: z.number().int(),
+      })).min(1),
+    });
+
+    const parsed = reorderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const { services: servicesToReorder } = parsed.data;
+
+    // Get all services to verify ownership
+    const serviceIds = servicesToReorder.map(s => s.id);
+    const allServices = await db.select().from(services)
+      .where(inArray(services.id, serviceIds));
+
+    // Get salon IDs and verify ownership
+    const salonIds = [...new Set(allServices.map(s => s.salonId))];
+    const ownerSalons = await db.select().from(salons)
+      .where(and(
+        inArray(salons.id, salonIds),
+        eq(salons.ownerId, ownerId)
+      ));
+
+    if (ownerSalons.length !== salonIds.length) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Update display orders
+    const updates = await Promise.all(
+      servicesToReorder.map(item =>
+        db.update(services)
+          .set({ displayOrder: item.displayOrder })
+          .where(eq(services.id, item.id))
+          .returning()
+      )
+    );
+
+    return res.json({ success: true, updated: updates.flat() });
+  } catch (error) {
+    console.error("Reorder services error:", error);
+    return res.status(500).json({ error: "Failed to reorder services" });
+  }
+});
+
+// ============ BOOKING MANAGEMENT ENDPOINTS (Phase 1 - P0-4) ============
+
+// Get advanced bookings list with filters
+router.get("/bookings/advanced", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const {
+      status,
+      salonId,
+      masterId,
+      dateFrom,
+      dateTo,
+      search,
+      limit = "50",
+      offset = "0"
+    } = req.query;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json({ bookings: [], total: 0 });
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Build query conditions
+    const conditions = [inArray(bookings.salonId, salonIds)];
+
+    if (status) conditions.push(eq(bookings.status, status as any));
+    if (salonId) conditions.push(eq(bookings.salonId, salonId as string));
+    if (masterId) conditions.push(eq(bookings.masterId, masterId as string));
+    if (dateFrom) conditions.push(gte(bookings.date, new Date(dateFrom as string)));
+    if (dateTo) conditions.push(lte(bookings.date, new Date(dateTo as string)));
+
+    // Get bookings with joined data
+    let query = db.select({
+      id: bookings.id,
+      salonId: bookings.salonId,
+      clientId: bookings.clientId,
+      masterId: bookings.masterId,
+      serviceId: bookings.serviceId,
+      date: bookings.date,
+      time: bookings.time,
+      duration: bookings.duration,
+      status: bookings.status,
+      price: bookings.price,
+      notes: bookings.notes,
+      modifiedBy: bookings.modifiedBy,
+      modificationHistory: bookings.modificationHistory,
+      createdAt: bookings.createdAt,
+      updatedAt: bookings.updatedAt,
+      salonName: salons.name,
+      masterName: masters.name,
+      serviceName: services.name,
+      clientName: sql<string>`users.full_name`,
+      clientEmail: sql<string>`users.email`,
+    })
+      .from(bookings)
+      .leftJoin(salons, eq(bookings.salonId, salons.id))
+      .leftJoin(masters, eq(bookings.masterId, masters.id))
+      .leftJoin(services, eq(bookings.serviceId, services.id))
+      .leftJoin(sql`users`, sql`bookings.client_id = users.id`)
+      .where(and(...conditions))
+      .orderBy(desc(bookings.date), desc(bookings.time))
+      .limit(parseInt(limit as string))
+      .offset(parseInt(offset as string));
+
+    const allBookings = await query;
+
+    // Apply search filter if provided (client name, salon name, master name)
+    let filteredBookings = allBookings;
+    if (search) {
+      const searchLower = (search as string).toLowerCase();
+      filteredBookings = allBookings.filter(b =>
+        b.clientName?.toLowerCase().includes(searchLower) ||
+        b.clientEmail?.toLowerCase().includes(searchLower) ||
+        b.salonName?.en?.toLowerCase().includes(searchLower) ||
+        b.masterName?.en?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Get total count
+    const totalQuery = await db.select({ count: sql<number>`count(*)::int` })
+      .from(bookings)
+      .where(and(...conditions));
+
+    const total = totalQuery[0]?.count || 0;
+
+    return res.json({ bookings: filteredBookings, total });
+  } catch (error) {
+    console.error("Get advanced bookings error:", error);
+    return res.status(500).json({ error: "Failed to get bookings" });
+  }
+});
+
+// Bulk update booking status
+router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    const bulkUpdateSchema = z.object({
+      bookingIds: z.array(z.string()).min(1),
+      status: z.enum(['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show']),
+      notes: z.string().optional(),
+    });
+
+    const { bookingIds, status, notes } = bulkUpdateSchema.parse(req.body);
+
+    // Verify all bookings belong to owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    const bookingsToUpdate = await db.select().from(bookings)
+      .where(and(
+        inArray(bookings.id, bookingIds),
+        inArray(bookings.salonId, salonIds)
+      ));
+
+    if (bookingsToUpdate.length !== bookingIds.length) {
+      return res.status(403).json({ error: "Not authorized to update some bookings" });
+    }
+
+    // Update bookings and add to history
+    const updates = await Promise.all(
+      bookingIds.map(async (bookingId) => {
+        const booking = bookingsToUpdate.find(b => b.id === bookingId);
+        if (!booking) return null;
+
+        const historyEntry = {
+          timestamp: new Date().toISOString(),
+          action: `Status changed to ${status}`,
+          changedBy: ownerId,
+          changes: {
+            status: { from: booking.status, to: status },
+            ...(notes && { notes })
+          },
+        };
+
+        const currentHistory = (booking.modificationHistory as any[]) || [];
+
+        const [updated] = await db.update(bookings)
+          .set({
+            status,
+            ...(notes && { notes }),
+            modifiedBy: ownerId,
+            modificationHistory: [...currentHistory, historyEntry],
+            updatedAt: new Date(),
+          })
+          .where(eq(bookings.id, bookingId))
+          .returning();
+
+        return updated;
+      })
+    );
+
+    return res.json({ success: true, updated: updates.filter(Boolean) });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid request data", details: error.errors });
+    }
+    console.error("Bulk update bookings error:", error);
+    return res.status(500).json({ error: "Failed to update bookings" });
+  }
+});
+
+// Get booking modification history
+router.get("/bookings/:bookingId/history", isAuthenticated, async (req: any, res) => {
+  try {
+    const { bookingId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify booking belongs to owner's salon
+    const [booking] = await db.select({
+      bookingId: bookings.id,
+      history: bookings.modificationHistory,
+      salonOwnerId: salons.ownerId,
+    })
+      .from(bookings)
+      .leftJoin(salons, eq(bookings.salonId, salons.id))
+      .where(eq(bookings.id, bookingId));
+
+    if (!booking || booking.salonOwnerId !== ownerId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    return res.json({ history: booking.history || [] });
+  } catch (error) {
+    console.error("Get booking history error:", error);
+    return res.status(500).json({ error: "Failed to get booking history" });
+  }
+});
+
+// Export bookings to CSV
+router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { dateFrom, dateTo } = req.query;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.status(404).json({ error: "No salons found" });
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Build query conditions
+    const conditions = [inArray(bookings.salonId, salonIds)];
+    if (dateFrom) conditions.push(gte(bookings.date, new Date(dateFrom as string)));
+    if (dateTo) conditions.push(lte(bookings.date, new Date(dateTo as string)));
+
+    // Get bookings with joined data
+    const allBookings = await db.select({
+      id: bookings.id,
+      date: bookings.date,
+      time: bookings.time,
+      status: bookings.status,
+      price: bookings.price,
+      duration: bookings.duration,
+      notes: bookings.notes,
+      salonName: salons.name,
+      masterName: masters.name,
+      serviceName: services.name,
+      clientName: sql<string>`users.full_name`,
+      clientEmail: sql<string>`users.email`,
+    })
+      .from(bookings)
+      .leftJoin(salons, eq(bookings.salonId, salons.id))
+      .leftJoin(masters, eq(bookings.masterId, masters.id))
+      .leftJoin(services, eq(bookings.serviceId, services.id))
+      .leftJoin(sql`users`, sql`bookings.client_id = users.id`)
+      .where(and(...conditions))
+      .orderBy(desc(bookings.date));
+
+    // Generate CSV
+    const headers = ['ID', 'Date', 'Time', 'Client', 'Salon', 'Master', 'Service', 'Duration', 'Status', 'Price'];
+    const rows = allBookings.map(b => [
+      b.id,
+      b.date?.toISOString().split('T')[0] || '',
+      b.time || '',
+      b.clientName || '',
+      b.salonName?.en || '',
+      b.masterName?.en || '',
+      b.serviceName?.en || '',
+      `${b.duration} min`,
+      b.status,
+      b.price?.toString() || '0',
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=bookings.csv');
+    return res.send(csv);
+  } catch (error) {
+    console.error("Export bookings error:", error);
+    return res.status(500).json({ error: "Failed to export bookings" });
+  }
+});
+
+// ============ DASHBOARD ENDPOINTS (Phase 1) ============
+
+// Get dashboard overview with KPIs
+router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json({
+        today: { revenue: 0, bookings: 0, newClients: 0, completionRate: 0 },
+        week: { revenue: 0, revenueChange: 0, bookings: 0, bookingsChange: 0 },
+        month: { revenue: 0, bookings: 0, topServices: [], topMasters: [] },
+      });
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Today's stats
+    const todayBookings = await db.select().from(bookings)
+      .where(and(
+        inArray(bookings.salonId, salonIds),
+        eq(bookings.bookingDate, today)
+      ));
+
+    const todayRevenue = todayBookings
+      .filter(b => b.status === 'completed')
+      .reduce((sum, b) => sum + b.priceSnapshot, 0);
+
+    const todayCompletionRate = todayBookings.length > 0
+      ? (todayBookings.filter(b => b.status === 'completed').length / todayBookings.length) * 100
+      : 0;
+
+    // Week stats
+    const weekBookings = await db.select().from(bookings)
+      .where(and(
+        inArray(bookings.salonId, salonIds),
+        desc(bookings.bookingDate)
+      ));
+
+    const thisWeekBookings = weekBookings.filter(b =>
+      new Date(b.bookingDate) >= weekAgo
+    );
+    const lastWeekBookings = weekBookings.filter(b => {
+      const date = new Date(b.bookingDate);
+      return date >= new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) && date < weekAgo;
+    });
+
+    const weekRevenue = thisWeekBookings
+      .filter(b => b.status === 'completed')
+      .reduce((sum, b) => sum + b.priceSnapshot, 0);
+
+    const lastWeekRevenue = lastWeekBookings
+      .filter(b => b.status === 'completed')
+      .reduce((sum, b) => sum + b.priceSnapshot, 0);
+
+    const revenueChange = lastWeekRevenue > 0
+      ? ((weekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100
+      : 0;
+
+    const bookingsChange = lastWeekBookings.length > 0
+      ? ((thisWeekBookings.length - lastWeekBookings.length) / lastWeekBookings.length) * 100
+      : 0;
+
+    // Month stats
+    const monthBookings = weekBookings.filter(b =>
+      new Date(b.bookingDate) >= monthStart
+    );
+
+    const monthRevenue = monthBookings
+      .filter(b => b.status === 'completed')
+      .reduce((sum, b) => sum + b.priceSnapshot, 0);
+
+    // Top services
+    const serviceStats = new Map<string, { count: number; revenue: number }>();
+    monthBookings.forEach(b => {
+      const current = serviceStats.get(b.serviceId) || { count: 0, revenue: 0 };
+      serviceStats.set(b.serviceId, {
+        count: current.count + 1,
+        revenue: current.revenue + (b.status === 'completed' ? b.priceSnapshot : 0)
+      });
+    });
+
+    const topServiceIds = Array.from(serviceStats.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([id]) => id);
+
+    const topServicesData = topServiceIds.length > 0
+      ? await db.select().from(services).where(inArray(services.id, topServiceIds))
+      : [];
+
+    const topServices = topServicesData.map(s => ({
+      id: s.id,
+      name: s.name,
+      count: serviceStats.get(s.id)?.count || 0
+    }));
+
+    // Top masters
+    const masterStats = new Map<string, { revenue: number; bookings: number }>();
+    monthBookings
+      .filter(b => b.masterId)
+      .forEach(b => {
+        const current = masterStats.get(b.masterId!) || { revenue: 0, bookings: 0 };
+        masterStats.set(b.masterId!, {
+          revenue: current.revenue + (b.status === 'completed' ? b.priceSnapshot : 0),
+          bookings: current.bookings + 1
+        });
+      });
+
+    const topMasterIds = Array.from(masterStats.entries())
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 5)
+      .map(([id]) => id);
+
+    const topMastersData = topMasterIds.length > 0
+      ? await db.select().from(masters).where(inArray(masters.id, topMasterIds))
+      : [];
+
+    const topMasters = topMastersData.map(m => ({
+      id: m.id,
+      name: m.name,
+      revenue: masterStats.get(m.id)?.revenue || 0
+    }));
+
+    // Unique clients this month
+    const uniqueClients = new Set(monthBookings.map(b => b.clientId));
+
+    return res.json({
+      today: {
+        revenue: todayRevenue,
+        bookings: todayBookings.length,
+        newClients: 0, // TODO: implement new client tracking
+        completionRate: Math.round(todayCompletionRate)
+      },
+      week: {
+        revenue: weekRevenue,
+        revenueChange: Math.round(revenueChange * 10) / 10,
+        bookings: thisWeekBookings.length,
+        bookingsChange: Math.round(bookingsChange * 10) / 10
+      },
+      month: {
+        revenue: monthRevenue,
+        bookings: monthBookings.length,
+        topServices,
+        topMasters
+      }
+    });
+  } catch (error) {
+    console.error("Dashboard overview error:", error);
+    return res.status(500).json({ error: "Failed to get dashboard data" });
+  }
+});
+
+// Get recent activity
+router.get("/dashboard/recent-activity", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Get recent bookings (last 20)
+    const recentBookings = await db.select().from(bookings)
+      .where(inArray(bookings.salonId, salonIds))
+      .orderBy(desc(bookings.createdAt))
+      .limit(20);
+
+    const activity = recentBookings.map(b => ({
+      type: b.status === 'pending' ? 'new_booking' :
+            b.status === 'confirmed' ? 'booking_confirmed' :
+            b.status === 'cancelled' ? 'booking_cancelled' : 'booking_completed',
+      message: `Booking ${b.status}`,
+      timestamp: b.createdAt,
+      relatedId: b.id,
+      metadata: {
+        salonId: b.salonId,
+        bookingDate: b.bookingDate,
+        status: b.status
+      }
+    }));
+
+    return res.json(activity);
+  } catch (error) {
+    console.error("Recent activity error:", error);
+    return res.status(500).json({ error: "Failed to get recent activity" });
+  }
+});
+
+// Get alerts (actions requiring attention)
+router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons)
+      .where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    const salonIds = ownerSalons.map(s => s.id);
+
+    // Pending bookings (require confirmation)
+    const pendingBookings = await db.select().from(bookings)
+      .where(and(
+        inArray(bookings.salonId, salonIds),
+        eq(bookings.status, 'pending')
+      ));
+
+    const alerts = [];
+
+    if (pendingBookings.length > 0) {
+      alerts.push({
+        type: 'pending_booking',
+        count: pendingBookings.length,
+        message: `${pendingBookings.length} booking${pendingBookings.length > 1 ? 's' : ''} awaiting confirmation`
+      });
+    }
+
+    // TODO: Add more alert types:
+    // - New reviews awaiting response
+    // - Low availability (no slots in next 3 days)
+    // - Masters with no bookings this week
+
+    return res.json(alerts);
+  } catch (error) {
+    console.error("Dashboard alerts error:", error);
+    return res.status(500).json({ error: "Failed to get alerts" });
+  }
+});
+
 export default router;

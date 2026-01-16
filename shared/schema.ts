@@ -183,10 +183,15 @@ export const services = pgTable("services", {
   priceMax: integer("price_max"), // in UZS, optional for fixed price
   duration: integer("duration").notNull(), // in minutes
   isActive: boolean("is_active").default(true),
+  bookingCount: integer("booking_count").default(0), // Phase 1: Track popularity
+  lastBookedAt: timestamp("last_booked_at"), // Phase 1: Last booking timestamp
+  displayOrder: integer("display_order").default(0), // Phase 1: Custom ordering
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_services_salon").on(table.salonId),
   index("idx_services_category").on(table.category),
+  index("idx_services_booking_count").on(table.bookingCount),
+  index("idx_services_display_order").on(table.displayOrder),
 ]);
 
 export const insertServiceSchema = createInsertSchema(services).omit({
@@ -218,6 +223,13 @@ export const bookings = pgTable("bookings", {
   priceSnapshot: integer("price_snapshot").notNull(), // price at time of booking in UZS
   notes: text("notes"),
   cancellationReason: text("cancellation_reason"),
+  modifiedBy: varchar("modified_by", { length: 255 }), // Phase 1: Who modified the booking
+  modificationHistory: jsonb("modification_history").default('[]').$type<Array<{
+    timestamp: string;
+    action: string;
+    changedBy: string;
+    changes?: Record<string, any>;
+  }>>(), // Phase 1: Audit trail
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -416,6 +428,56 @@ export interface NewsletterSubscription extends NewsletterData {
   id: string;
   subscribedAt: Date;
 }
+
+// ============ MASTER STATISTICS (Phase 1) ============
+export const masterStatistics = pgTable("master_statistics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  masterId: varchar("master_id").notNull(),
+  month: varchar("month", { length: 7 }).notNull(), // "YYYY-MM"
+  totalBookings: integer("total_bookings").default(0),
+  completedBookings: integer("completed_bookings").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  averageRating: decimal("average_rating", { precision: 2, scale: 1 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_master_stats_master").on(table.masterId),
+  index("idx_master_stats_month").on(table.month),
+  // Unique constraint to prevent duplicate stats
+  index("idx_master_stats_unique").on(table.masterId, table.month),
+]);
+
+export const insertMasterStatisticsSchema = createInsertSchema(masterStatistics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertMasterStatistics = z.infer<typeof insertMasterStatisticsSchema>;
+export type MasterStatistics = typeof masterStatistics.$inferSelect;
+
+// ============ BOOKING HISTORY (Phase 1) ============
+export const bookingHistory = pgTable("booking_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull(),
+  action: varchar("action", { length: 50 }).notNull(), // "created", "confirmed", "cancelled", "rescheduled", "completed"
+  previousState: jsonb("previous_state").$type<Partial<Booking>>(),
+  newState: jsonb("new_state").$type<Partial<Booking>>(),
+  changedBy: varchar("changed_by", { length: 255 }).notNull(),
+  changeReason: text("change_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_booking_history_booking").on(table.bookingId),
+  index("idx_booking_history_created").on(table.createdAt),
+]);
+
+export const insertBookingHistorySchema = createInsertSchema(bookingHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBookingHistory = z.infer<typeof insertBookingHistorySchema>;
+export type BookingHistory = typeof bookingHistory.$inferSelect;
 
 // ============ RELATIONS ============
 export const salonsRelations = relations(salons, ({ many }) => ({
