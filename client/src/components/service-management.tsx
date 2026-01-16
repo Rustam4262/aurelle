@@ -244,7 +244,10 @@ export function ServiceManagement() {
   // Fetch services
   const { data: servicesData, isLoading } = useQuery<Service[]>({
     queryKey: ["/api/owner/services/stats"],
-    queryFn: () => apiRequest("GET", "/api/owner/services/stats"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/services/stats");
+      return res.json();
+    },
     onSuccess: (data) => {
       setServices(data);
     },
@@ -253,13 +256,18 @@ export function ServiceManagement() {
   // Fetch owner salons for duplication
   const { data: salons = [] } = useQuery<any[]>({
     queryKey: ["/api/owner/salons"],
-    queryFn: () => apiRequest("GET", "/api/owner/salons"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/salons");
+      return res.json();
+    },
   });
 
   // Update service mutation
   const updateServiceMutation = useMutation({
-    mutationFn: ({ salonId, serviceId, data }: { salonId: string; serviceId: string; data: EditFormData }) =>
-      apiRequest("PUT", `/api/owner/salons/${salonId}/services/${serviceId}`, data),
+    mutationFn: async ({ salonId, serviceId, data }: { salonId: string; serviceId: string; data: EditFormData }) => {
+      const res = await apiRequest("PUT", `/api/owner/salons/${salonId}/services/${serviceId}`, data);
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("services.updateSuccess", "Service updated successfully"),
@@ -279,8 +287,10 @@ export function ServiceManagement() {
 
   // Duplicate service mutation
   const duplicateServiceMutation = useMutation({
-    mutationFn: ({ serviceId, data }: { serviceId: string; data: DuplicateFormData }) =>
-      apiRequest("POST", `/api/owner/services/${serviceId}/duplicate`, data),
+    mutationFn: async ({ serviceId, data }: { serviceId: string; data: DuplicateFormData }) => {
+      const res = await apiRequest("POST", `/api/owner/services/${serviceId}/duplicate`, data);
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("services.duplicateSuccess", "Service duplicated successfully"),
@@ -299,8 +309,10 @@ export function ServiceManagement() {
 
   // Reorder services mutation
   const reorderMutation = useMutation({
-    mutationFn: (data: { services: Array<{ id: string; displayOrder: number }> }) =>
-      apiRequest("PUT", "/api/owner/services/reorder", data),
+    mutationFn: async (data: { services: Array<{ id: string; displayOrder: number }> }) => {
+      const res = await apiRequest("PUT", "/api/owner/services/reorder", data);
+      return res.json();
+    },
     onError: (error: any) => {
       toast({
         title: t("services.reorderError", "Failed to reorder services"),

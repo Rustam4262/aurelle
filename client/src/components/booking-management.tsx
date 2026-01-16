@@ -121,7 +121,10 @@ export function BookingManagement() {
   // Fetch bookings
   const { data, isLoading, refetch } = useQuery<{ bookings: Booking[]; total: number }>({
     queryKey: ["/api/owner/bookings/advanced", queryParams.toString()],
-    queryFn: () => apiRequest("GET", `/api/owner/bookings/advanced?${queryParams.toString()}`),
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/owner/bookings/advanced?${queryParams.toString()}`);
+      return res.json();
+    },
   });
 
   const bookings = data?.bookings || [];
@@ -130,19 +133,27 @@ export function BookingManagement() {
   // Fetch owner salons for filter
   const { data: salons = [] } = useQuery<any[]>({
     queryKey: ["/api/owner/salons"],
-    queryFn: () => apiRequest("GET", "/api/owner/salons"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/salons");
+      return res.json();
+    },
   });
 
   // Fetch masters for filter
   const { data: masters = [] } = useQuery<any[]>({
     queryKey: ["/api/owner/masters/stats"],
-    queryFn: () => apiRequest("GET", "/api/owner/masters/stats"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/masters/stats");
+      return res.json();
+    },
   });
 
   // Bulk update mutation
   const bulkUpdateMutation = useMutation({
-    mutationFn: (data: { bookingIds: string[]; status: string; notes?: string }) =>
-      apiRequest("POST", "/api/owner/bookings/bulk-update", data),
+    mutationFn: async (data: { bookingIds: string[]; status: string; notes?: string }) => {
+      const res = await apiRequest("POST", "/api/owner/bookings/bulk-update", data);
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("bookings.bulkUpdateSuccess", "Bookings updated successfully"),
@@ -166,7 +177,8 @@ export function BookingManagement() {
   // Get history mutation
   const fetchHistory = async (bookingId: string) => {
     try {
-      const response = await apiRequest("GET", `/api/owner/bookings/${bookingId}/history`);
+      const res = await apiRequest("GET", `/api/owner/bookings/${bookingId}/history`);
+      const response = await res.json();
       setHistory(response.history || []);
     } catch (error) {
       toast({

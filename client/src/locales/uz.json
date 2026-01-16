@@ -563,6 +563,18 @@
         }
       }
     },
+    "dashboard": {
+      "title": "Boshqaruv paneli"
+    },
+    "bookings": {
+      "title": "Bronlar"
+    },
+    "services": {
+      "title": "Xizmatlar"
+    },
+    "masters": {
+      "title": "Ustalar"
+    },
     "analytics": {
       "title": "Analitika",
       "totalBookings": "Jami bronlar",

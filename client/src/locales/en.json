@@ -564,6 +564,18 @@
         }
       }
     },
+    "dashboard": {
+      "title": "Dashboard"
+    },
+    "bookings": {
+      "title": "Bookings"
+    },
+    "services": {
+      "title": "Services"
+    },
+    "masters": {
+      "title": "Masters"
+    },
     "analytics": {
       "title": "Analytics",
       "totalBookings": "Total Bookings",

@@ -565,6 +565,18 @@
         }
       }
     },
+    "dashboard": {
+      "title": "Панель управления"
+    },
+    "bookings": {
+      "title": "Бронирования"
+    },
+    "services": {
+      "title": "Услуги"
+    },
+    "masters": {
+      "title": "Мастера"
+    },
     "analytics": {
       "title": "Аналитика",
       "totalBookings": "Всего записей",

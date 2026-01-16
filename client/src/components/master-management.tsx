@@ -101,13 +101,18 @@ export function MasterManagement() {
   // Fetch masters
   const { data: masters = [], isLoading } = useQuery<Master[]>({
     queryKey: ["/api/owner/masters/stats"],
-    queryFn: () => apiRequest("GET", "/api/owner/masters/stats"),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/masters/stats");
+      return res.json();
+    },
   });
 
   // Update master mutation
   const updateMasterMutation = useMutation({
-    mutationFn: ({ salonId, masterId, data }: { salonId: string; masterId: string; data: any }) =>
-      apiRequest("PUT", `/api/owner/salons/${salonId}/masters/${masterId}`, data),
+    mutationFn: async ({ salonId, masterId, data }: { salonId: string; masterId: string; data: any }) => {
+      const res = await apiRequest("PUT", `/api/owner/salons/${salonId}/masters/${masterId}`, data);
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("masters.updateSuccess", "Master updated successfully"),
@@ -127,8 +132,10 @@ export function MasterManagement() {
 
   // Upload portfolio mutation
   const uploadPortfolioMutation = useMutation({
-    mutationFn: ({ masterId, imageUrl }: { masterId: string; imageUrl: string }) =>
-      apiRequest("POST", `/api/owner/masters/${masterId}/portfolio`, { imageUrl }),
+    mutationFn: async ({ masterId, imageUrl }: { masterId: string; imageUrl: string }) => {
+      const res = await apiRequest("POST", `/api/owner/masters/${masterId}/portfolio`, { imageUrl });
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("masters.portfolioUploadSuccess", "Portfolio image added"),
@@ -147,8 +154,10 @@ export function MasterManagement() {
 
   // Delete portfolio mutation
   const deletePortfolioMutation = useMutation({
-    mutationFn: ({ masterId, imageIndex }: { masterId: string; imageIndex: number }) =>
-      apiRequest("DELETE", `/api/owner/masters/${masterId}/portfolio/${imageIndex}`),
+    mutationFn: async ({ masterId, imageIndex }: { masterId: string; imageIndex: number }) => {
+      const res = await apiRequest("DELETE", `/api/owner/masters/${masterId}/portfolio/${imageIndex}`);
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: t("masters.portfolioDeleteSuccess", "Portfolio image removed"),
