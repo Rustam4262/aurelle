@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation } from "wouter";
 
 interface DashboardOverview {
   today: {
@@ -48,8 +48,7 @@ interface Activity {
 
 export function OwnerDashboardOverview() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setLocation] = useLocation();
 
   const { data: overview, isLoading: overviewLoading, error: overviewError, refetch } = useQuery<DashboardOverview>({
     queryKey: ["/api/owner/dashboard/overview"],
@@ -93,16 +92,16 @@ export function OwnerDashboardOverview() {
   const handleAlertAction = (alert: DashboardAlert) => {
     switch (alert.action) {
       case 'GO_BOOKINGS':
-        setSearchParams({ tab: 'bookings' });
+        setLocation('/owner?tab=bookings');
         break;
       case 'GO_SERVICES':
-        setSearchParams({ tab: 'services' });
+        setLocation('/owner?tab=services');
         break;
       case 'GO_MASTERS':
-        setSearchParams({ tab: 'masters' });
+        setLocation('/owner?tab=masters');
         break;
       case 'PUBLISH_SALON':
-        setSearchParams({ tab: 'salons' });
+        setLocation('/owner?tab=salons');
         break;
       default:
         break;
@@ -137,7 +136,7 @@ export function OwnerDashboardOverview() {
         description={t('dashboard.noSalonsDescription', 'Start by creating your first salon, then add services and masters to begin accepting bookings.')}
         action={{
           label: t('dashboard.createFirstSalon', 'Create First Salon'),
-          onClick: () => setSearchParams({ tab: 'salons' }),
+          onClick: () => setLocation('/owner?tab=salons'),
         }}
       />
     );
