@@ -196,10 +196,10 @@ export function BookingCalendar({
           {(disablePastDates || maxAdvanceBookingDays) && (
             <p className="text-xs text-muted-foreground">
               {disablePastDates && maxAdvanceBookingDays
-                ? t("marketplace.calendar.bookingWindow", { days: maxAdvanceBookingDays })
+                ? t("marketplace.calendar.bookingWindow.maxDaysAdvance", { days: maxAdvanceBookingDays })
                 : disablePastDates
-                ? t("marketplace.calendar.pastDatesDisabled")
-                : t("marketplace.calendar.maxDaysAdvance", { days: maxAdvanceBookingDays })}
+                ? t("marketplace.calendar.bookingWindow.pastDatesDisabled")
+                : t("marketplace.calendar.bookingWindow.maxDaysAdvance", { days: maxAdvanceBookingDays })}
             </p>
           )}
         </div>
