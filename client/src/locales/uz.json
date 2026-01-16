@@ -618,7 +618,32 @@
       "topFiveDays": "Oyning eng band 5 kuni",
       "outOf": "dan",
       "bookings": "bronlar",
-      "cancellationRate": "Bekor qilish foizi"
+      "cancellationRate": "Bekor qilish foizi",
+      "selectDateRange": "Davr tanlang",
+      "quickRanges": "Tez tanlov",
+      "customRange": "Ixtiyoriy davr",
+      "fromDate": "Dan",
+      "toDate": "Gacha",
+      "range": {
+        "last_7_days": "So'nggi 7 kun",
+        "last_30_days": "So'nggi 30 kun",
+        "last_90_days": "So'nggi 90 kun",
+        "this_month": "Joriy oy",
+        "last_month": "O'tgan oy",
+        "this_year": "Joriy yil"
+      },
+      "comparison": "Taqqoslash",
+      "compareTo": "Taqqoslash",
+      "previousPeriod": "Oldingi davr",
+      "masterPerformance": "Ustalarning ko'rsatkichlari",
+      "servicePerformance": "Xizmatlar ko'rsatkichlari",
+      "peakHours": "Eng band vaqtlar",
+      "clientRetention": "Mijozlarni ushlab qolish",
+      "newClients": "Yangi mijozlar",
+      "returningClients": "Qaytgan mijozlar",
+      "exportExcel": "Excel ga eksport",
+      "exportPDF": "PDF ga eksport",
+      "refreshData": "Ma'lumotlarni yangilash"
     },
     "common": {
       "loading": "Yuklanmoqda...",

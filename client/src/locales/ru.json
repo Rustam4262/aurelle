@@ -618,7 +618,32 @@
       "topFiveDays": "Топ-5 самых загруженных дней месяца",
       "outOf": "из",
       "bookings": "записей",
-      "cancellationRate": "Процент отмен"
+      "cancellationRate": "Процент отмен",
+      "selectDateRange": "Выберите период",
+      "quickRanges": "Быстрый выбор",
+      "customRange": "Произвольный период",
+      "fromDate": "С",
+      "toDate": "По",
+      "range": {
+        "last_7_days": "Последние 7 дней",
+        "last_30_days": "Последние 30 дней",
+        "last_90_days": "Последние 90 дней",
+        "this_month": "Текущий месяц",
+        "last_month": "Прошлый месяц",
+        "this_year": "Текущий год"
+      },
+      "comparison": "Сравнение",
+      "compareTo": "Сравнить с",
+      "previousPeriod": "Предыдущим периодом",
+      "masterPerformance": "Производительность мастеров",
+      "servicePerformance": "Производительность услуг",
+      "peakHours": "Часы пик",
+      "clientRetention": "Удержание клиентов",
+      "newClients": "Новые клиенты",
+      "returningClients": "Вернувшиеся клиенты",
+      "exportExcel": "Экспорт в Excel",
+      "exportPDF": "Экспорт в PDF",
+      "refreshData": "Обновить данные"
     },
     "common": {
       "loading": "Загрузка...",
