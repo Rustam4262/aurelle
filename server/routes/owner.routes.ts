@@ -9,6 +9,7 @@ import {
   salonWorkingHours,
   salonBreaks,
   salonExceptions,
+  salonManagers,
   userProfiles,
   users,
   masterServices,
@@ -17,8 +18,9 @@ import {
   insertServiceSchema,
   insertSalonBreakSchema,
   insertSalonExceptionSchema,
+  insertSalonManagerSchema,
 } from "@shared/schema";
-import { requirePermission, OWNER_PERMISSIONS } from "../lib/rbac";
+import { requirePermission, OWNER_PERMISSIONS, SALON_MANAGER_PERMISSIONS, DEFAULT_MANAGER_PERMISSIONS } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
 import { eq, and, desc, inArray, gte, lte, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -2572,6 +2574,272 @@ router.delete("/salons/:salonId/exceptions/:exceptionId", isAuthenticated, requi
   } catch (error) {
     console.error("Delete salon exception error:", error);
     return res.status(500).json({ error: "Failed to delete exception" });
+  }
+});
+
+// ============ SALON MANAGERS MANAGEMENT (Phase 11) ============
+
+// Get salon managers
+router.get("/salons/:id/managers", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const managers = await db.select({
+      id: salonManagers.id,
+      salonId: salonManagers.salonId,
+      userId: salonManagers.userId,
+      permissions: salonManagers.permissions,
+      status: salonManagers.status,
+      invitedAt: salonManagers.invitedAt,
+      acceptedAt: salonManagers.acceptedAt,
+      revokedAt: salonManagers.revokedAt,
+      // Join user profile for name and email
+      fullName: userProfiles.fullName,
+      email: users.email,
+    })
+      .from(salonManagers)
+      .leftJoin(userProfiles, eq(salonManagers.userId, userProfiles.userId))
+      .leftJoin(users, eq(salonManagers.userId, users.id))
+      .where(eq(salonManagers.salonId, salonId))
+      .orderBy(desc(salonManagers.invitedAt));
+
+    return res.json(managers);
+  } catch (error) {
+    console.error("Get salon managers error:", error);
+    return res.status(500).json({ error: "Failed to get managers" });
+  }
+});
+
+// Invite salon manager
+const inviteManagerSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  permissions: z.array(z.string()).optional(),
+});
+
+router.post("/salons/:id/managers/invite", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const parsed = inviteManagerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid invitation data", details: parsed.error.errors });
+    }
+
+    const { email, permissions } = parsed.data;
+
+    // Check if user exists
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+        message: "User with this email does not exist. They need to create an account first."
+      });
+    }
+
+    // Check if already a manager
+    const [existingManager] = await db.select()
+      .from(salonManagers)
+      .where(
+        and(
+          eq(salonManagers.salonId, salonId),
+          eq(salonManagers.userId, user.id)
+        )
+      );
+
+    if (existingManager) {
+      if (existingManager.status === 'active') {
+        return res.status(409).json({ error: "User is already a manager of this salon" });
+      } else if (existingManager.status === 'pending') {
+        return res.status(409).json({ error: "Invitation already sent to this user" });
+      } else if (existingManager.status === 'revoked') {
+        // Reactivate revoked manager
+        const [updated] = await db.update(salonManagers)
+          .set({
+            status: 'pending',
+            permissions: permissions || DEFAULT_MANAGER_PERMISSIONS,
+            invitedAt: new Date(),
+            revokedAt: null,
+            revokedBy: null,
+          })
+          .where(eq(salonManagers.id, existingManager.id))
+          .returning();
+
+        await logAudit(ownerId, "salon.reinvite_manager", "salons", salonId, {
+          managerId: updated.id,
+          userId: user.id,
+          email,
+        });
+
+        return res.status(200).json(updated);
+      }
+    }
+
+    // Create new manager invitation
+    const [manager] = await db.insert(salonManagers).values({
+      salonId,
+      userId: user.id,
+      permissions: permissions || DEFAULT_MANAGER_PERMISSIONS,
+      invitedBy: ownerId,
+      status: 'pending',
+    }).returning();
+
+    await logAudit(ownerId, "salon.invite_manager", "salons", salonId, {
+      managerId: manager.id,
+      userId: user.id,
+      email,
+      permissions: manager.permissions,
+    });
+
+    // TODO: Send email notification to invited user
+    // await sendManagerInvitationEmail(email, salon, ownerId);
+
+    return res.status(201).json(manager);
+  } catch (error) {
+    console.error("Invite manager error:", error);
+    return res.status(500).json({ error: "Failed to invite manager" });
+  }
+});
+
+// Accept manager invitation (called by the invited user)
+router.post("/salons/:salonId/managers/:managerId/accept", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId, managerId } = req.params;
+    const userId = req.user.claims.sub;
+
+    // Find invitation
+    const [invitation] = await db.select()
+      .from(salonManagers)
+      .where(
+        and(
+          eq(salonManagers.id, managerId),
+          eq(salonManagers.salonId, salonId),
+          eq(salonManagers.userId, userId),
+          eq(salonManagers.status, 'pending')
+        )
+      );
+
+    if (!invitation) {
+      return res.status(404).json({ error: "Invitation not found or already processed" });
+    }
+
+    // Accept invitation
+    const [updated] = await db.update(salonManagers)
+      .set({
+        status: 'active',
+        acceptedAt: new Date(),
+      })
+      .where(eq(salonManagers.id, managerId))
+      .returning();
+
+    await logAudit(userId, "salon.accept_manager_invitation", "salons", salonId, {
+      managerId,
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Accept invitation error:", error);
+    return res.status(500).json({ error: "Failed to accept invitation" });
+  }
+});
+
+// Update manager permissions
+router.patch("/salons/:salonId/managers/:managerId/permissions", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, managerId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const { permissions } = req.body;
+
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({ error: "permissions must be an array" });
+    }
+
+    const [updated] = await db.update(salonManagers)
+      .set({ permissions })
+      .where(
+        and(
+          eq(salonManagers.id, managerId),
+          eq(salonManagers.salonId, salonId)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Manager not found" });
+    }
+
+    await logAudit(ownerId, "salon.update_manager_permissions", "salons", salonId, {
+      managerId,
+      permissions,
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Update manager permissions error:", error);
+    return res.status(500).json({ error: "Failed to update permissions" });
+  }
+});
+
+// Revoke manager access
+router.delete("/salons/:salonId/managers/:managerId", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, managerId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const [revoked] = await db.update(salonManagers)
+      .set({
+        status: 'revoked',
+        revokedAt: new Date(),
+        revokedBy: ownerId,
+      })
+      .where(
+        and(
+          eq(salonManagers.id, managerId),
+          eq(salonManagers.salonId, salonId)
+        )
+      )
+      .returning();
+
+    if (!revoked) {
+      return res.status(404).json({ error: "Manager not found" });
+    }
+
+    await logAudit(ownerId, "salon.revoke_manager", "salons", salonId, {
+      managerId,
+      userId: revoked.userId,
+    });
+
+    return res.json({ success: true, message: "Manager access revoked" });
+  } catch (error) {
+    console.error("Revoke manager error:", error);
+    return res.status(500).json({ error: "Failed to revoke manager access" });
   }
 });
 

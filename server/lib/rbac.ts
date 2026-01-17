@@ -1,7 +1,17 @@
 import { db } from "../db";
-import { ownerPermissions } from "../../shared/schema";
-import { eq, and } from "drizzle-orm";
+import { ownerPermissions, salonManagers } from "../../shared/schema";
+import { eq, and, or } from "drizzle-orm";
 import { Request, Response, NextFunction } from "express";
+
+/**
+ * User roles
+ */
+export const ROLES = {
+  OWNER: 'owner',
+  SALON_MANAGER: 'salon_manager',
+  MASTER: 'master',
+  CLIENT: 'client',
+} as const;
 
 /**
  * Available owner permissions
@@ -20,6 +30,38 @@ export const OWNER_PERMISSIONS = {
   MANAGE_CALENDAR: 'owner.manage_calendar',
   READ_ANALYTICS: 'owner.read_analytics',
 } as const;
+
+/**
+ * Available salon manager permissions
+ */
+export const SALON_MANAGER_PERMISSIONS = {
+  READ_SALON_INFO: 'manager.read_salon',
+  READ_DASHBOARD: 'manager.read_dashboard',
+  READ_BOOKINGS: 'manager.read_bookings',
+  MANAGE_BOOKINGS: 'manager.manage_bookings',
+  READ_SERVICES: 'manager.read_services',
+  MANAGE_SERVICES: 'manager.manage_services',
+  READ_MASTERS: 'manager.read_masters',
+  MANAGE_MASTERS: 'manager.manage_masters',
+  READ_CALENDAR: 'manager.read_calendar',
+  MANAGE_CALENDAR: 'manager.manage_calendar',
+  VIEW_ANALYTICS: 'manager.view_analytics',
+  // Cannot: delete salon, change owner, manage finances, invite other managers
+} as const;
+
+/**
+ * Default permissions for new salon managers
+ */
+export const DEFAULT_MANAGER_PERMISSIONS = [
+  SALON_MANAGER_PERMISSIONS.READ_SALON_INFO,
+  SALON_MANAGER_PERMISSIONS.READ_DASHBOARD,
+  SALON_MANAGER_PERMISSIONS.READ_BOOKINGS,
+  SALON_MANAGER_PERMISSIONS.MANAGE_BOOKINGS,
+  SALON_MANAGER_PERMISSIONS.READ_SERVICES,
+  SALON_MANAGER_PERMISSIONS.READ_MASTERS,
+  SALON_MANAGER_PERMISSIONS.READ_CALENDAR,
+  SALON_MANAGER_PERMISSIONS.VIEW_ANALYTICS,
+] as const;
 
 /**
  * Check if owner has a specific permission
@@ -124,6 +166,89 @@ export function requirePermission(permission: string) {
 }
 
 /**
+ * Check if salon manager has a specific permission for a salon
+ */
+export async function hasManagerPermission(
+  userId: string,
+  salonId: string,
+  permission: string
+): Promise<boolean> {
+  try {
+    const result = await db
+      .select()
+      .from(salonManagers)
+      .where(
+        and(
+          eq(salonManagers.userId, userId),
+          eq(salonManagers.salonId, salonId),
+          eq(salonManagers.status, 'active')
+        )
+      )
+      .limit(1);
+
+    if (result.length === 0) {
+      return false;
+    }
+
+    const manager = result[0];
+    const permissions = manager.permissions as string[];
+    return permissions.includes(permission);
+  } catch (error) {
+    console.error('[RBAC] Error checking manager permission:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if user is a salon manager for a specific salon
+ */
+export async function isSalonManager(
+  userId: string,
+  salonId: string
+): Promise<boolean> {
+  try {
+    const result = await db
+      .select()
+      .from(salonManagers)
+      .where(
+        and(
+          eq(salonManagers.userId, userId),
+          eq(salonManagers.salonId, salonId),
+          eq(salonManagers.status, 'active')
+        )
+      )
+      .limit(1);
+
+    return result.length > 0;
+  } catch (error) {
+    console.error('[RBAC] Error checking manager status:', error);
+    return false;
+  }
+}
+
+/**
+ * Get all salons that a user manages
+ */
+export async function getManagedSalons(userId: string): Promise<string[]> {
+  try {
+    const result = await db
+      .select({ salonId: salonManagers.salonId })
+      .from(salonManagers)
+      .where(
+        and(
+          eq(salonManagers.userId, userId),
+          eq(salonManagers.status, 'active')
+        )
+      );
+
+    return result.map(r => r.salonId);
+  } catch (error) {
+    console.error('[RBAC] Error getting managed salons:', error);
+    return [];
+  }
+}
+
+/**
  * Check if owner has access to a specific salon
  */
 export async function canAccessSalon(
@@ -148,6 +273,46 @@ export async function canAccessSalon(
   } catch (error) {
     console.error('[RBAC] Error checking salon access:', error);
     return false;
+  }
+}
+
+/**
+ * Check if user (owner OR manager) has access to a salon
+ * This is the main function to use for most salon-related operations
+ */
+export async function canAccessSalonAsOwnerOrManager(
+  userId: string,
+  salonId: string
+): Promise<{ hasAccess: boolean; role: 'owner' | 'manager' | null }> {
+  try {
+    const { salons } = await import("../../shared/schema");
+
+    // Check if owner
+    const ownerResult = await db
+      .select()
+      .from(salons)
+      .where(
+        and(
+          eq(salons.id, salonId),
+          eq(salons.ownerId, userId)
+        )
+      )
+      .limit(1);
+
+    if (ownerResult.length > 0) {
+      return { hasAccess: true, role: 'owner' };
+    }
+
+    // Check if manager
+    const isManager = await isSalonManager(userId, salonId);
+    if (isManager) {
+      return { hasAccess: true, role: 'manager' };
+    }
+
+    return { hasAccess: false, role: null };
+  } catch (error) {
+    console.error('[RBAC] Error checking salon access:', error);
+    return { hasAccess: false, role: null };
   }
 }
 

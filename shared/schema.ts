@@ -623,3 +623,35 @@ export const insertSalonExceptionSchema = createInsertSchema(salonExceptions).om
 
 export type InsertSalonException = z.infer<typeof insertSalonExceptionSchema>;
 export type SalonException = typeof salonExceptions.$inferSelect;
+
+// ============ SALON MANAGERS ============
+export const salonManagers = pgTable("salon_managers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  salonId: varchar("salon_id").notNull(),
+  userId: varchar("user_id").notNull(), // References users table (from auth)
+  permissions: jsonb("permissions").default('[]').$type<string[]>(), // Array of permission strings
+  invitedBy: varchar("invited_by").notNull(), // Owner who sent invitation
+  invitedAt: timestamp("invited_at").defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, active, revoked
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: varchar("revoked_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_salon_managers_salon").on(table.salonId),
+  index("idx_salon_managers_user").on(table.userId),
+  index("idx_salon_managers_status").on(table.status),
+  // Unique constraint: one user can only be manager of same salon once
+  index("idx_salon_managers_unique").on(table.salonId, table.userId),
+]);
+
+export const insertSalonManagerSchema = createInsertSchema(salonManagers).omit({
+  id: true,
+  invitedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSalonManager = z.infer<typeof insertSalonManagerSchema>;
+export type SalonManager = typeof salonManagers.$inferSelect;
