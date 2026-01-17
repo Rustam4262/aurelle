@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MultiImageUpload } from "@/components/image-upload";
 import { LocationPicker } from "@/components/location-picker";
+import { SalonBreaksManagement } from "@/components/salon-breaks-management";
+import { SalonExceptionsManagement } from "@/components/salon-exceptions-management";
 import {
   ArrowLeft,
   Camera,
@@ -820,6 +822,16 @@ export default function OwnerSalonPage() {
                 ))}
               </div>
             </Card>
+
+            {/* Break Times Management */}
+            <div className="mt-6">
+              <SalonBreaksManagement salonId={id} />
+            </div>
+
+            {/* Exceptions/Holidays Management */}
+            <div className="mt-6">
+              <SalonExceptionsManagement salonId={id} />
+            </div>
           </TabsContent>
 
           <TabsContent value="bookings">
