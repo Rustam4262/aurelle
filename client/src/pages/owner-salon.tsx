@@ -831,18 +831,18 @@ export default function OwnerSalonPage() {
 
             {/* Break Times Management */}
             <div className="mt-6">
-              <SalonBreaksManagement salonId={id} />
+              <SalonBreaksManagement salonId={salonId} />
             </div>
 
             {/* Exceptions/Holidays Management */}
             <div className="mt-6">
-              <SalonExceptionsManagement salonId={id} />
+              <SalonExceptionsManagement salonId={salonId} />
             </div>
           </TabsContent>
 
           <TabsContent value="team">
             <Card className="p-6">
-              <SalonTeamManagement salonId={id} />
+              <SalonTeamManagement salonId={salonId} />
             </Card>
           </TabsContent>
 
