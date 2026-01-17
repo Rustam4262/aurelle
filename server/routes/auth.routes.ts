@@ -62,9 +62,16 @@ router.post("/logout", (req: any, res) => {
   if (req.session) {
     req.session.destroy((err: any) => {
       if (err) {
+        console.error("Logout error:", err);
         return res.status(500).json({ message: "Logout failed" });
       }
-      res.clearCookie("connect.sid");
+      // Clear cookie with all possible options to ensure it's removed
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       return res.json({ success: true, message: "Logged out successfully" });
     });
   } else {
@@ -80,7 +87,13 @@ router.get("/logout", (req: any, res) => {
         console.error("Logout error:", err);
         return res.redirect("/auth?error=logout_failed");
       }
-      res.clearCookie("connect.sid");
+      // Clear cookie with all possible options
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       return res.redirect("/auth");
     });
   } else {

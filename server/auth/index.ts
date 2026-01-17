@@ -47,11 +47,13 @@ export async function setupAuth(app: Express) {
       secret: process.env.SESSION_SECRET || "fallback-secret-change-in-production",
       resave: false,
       saveUninitialized: false,
+      rolling: true, // Reset cookie maxAge on every request
       cookie: {
+        path: "/",
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
+        sameSite: "lax", // Always lax for better compatibility
       },
     })
   );
