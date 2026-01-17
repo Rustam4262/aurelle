@@ -1491,11 +1491,13 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
       : 0;
 
     // Week stats
+    const twoWeeksAgo = new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000);
     const weekBookings = await db.select().from(bookings)
       .where(and(
         inArray(bookings.salonId, salonIds),
-        desc(bookings.bookingDate)
-      ));
+        gte(bookings.bookingDate, twoWeeksAgo)
+      ))
+      .orderBy(desc(bookings.bookingDate));
 
     const thisWeekBookings = weekBookings.filter(b =>
       new Date(b.bookingDate) >= weekAgo
