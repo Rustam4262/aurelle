@@ -254,6 +254,7 @@ export function ServiceManagement() {
   const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [assignedMasters, setAssignedMasters] = useState<string[]>([]);
 
   // Fetch services
   const { data: servicesData, isLoading } = useQuery<Service[]>({
@@ -273,6 +274,29 @@ export function ServiceManagement() {
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/owner/salons");
       return res.json();
+    },
+  });
+
+  // Fetch masters for the service's salon
+  const { data: salonMasters = [] } = useQuery<any[]>({
+    queryKey: [`/api/salons/${editingService?.salonId}/masters`],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/salons/${editingService?.salonId}/masters`);
+      return res.json();
+    },
+    enabled: !!editingService?.salonId,
+  });
+
+  // Fetch assigned masters when editing a service
+  useQuery<{ masterIds: string[] }>({
+    queryKey: [`/api/owner/services/${editingService?.id}/masters`],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/owner/services/${editingService?.id}/masters`);
+      return res.json();
+    },
+    enabled: !!editingService?.id,
+    onSuccess: (data) => {
+      setAssignedMasters(data.masterIds || []);
     },
   });
 
@@ -364,6 +388,27 @@ export function ServiceManagement() {
     },
   });
 
+  // Assign masters to service mutation (Phase 9)
+  const assignMastersMutation = useMutation({
+    mutationFn: async ({ serviceId, masterIds }: { serviceId: string; masterIds: string[] }) => {
+      const res = await apiRequest("PATCH", `/api/owner/services/${serviceId}/masters`, { masterIds });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t("services.assignMastersSuccess", "Masters assigned successfully"),
+      });
+      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("services.assignMastersError", "Failed to assign masters"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Reorder services mutation
   const reorderMutation = useMutation({
     mutationFn: async (data: { services: Array<{ id: string; displayOrder: number }> }) => {
@@ -420,6 +465,8 @@ export function ServiceManagement() {
       duration: service.duration,
       isActive: service.isActive,
     });
+    // Reset assigned masters - will be loaded by query
+    setAssignedMasters([]);
   };
 
   const handleDuplicate = (service: Service) => {
@@ -436,10 +483,17 @@ export function ServiceManagement() {
   const handleSaveEdit = () => {
     if (!editingService || !editFormData) return;
 
+    // Save service data
     updateServiceMutation.mutate({
       salonId: editingService.salonId,
       serviceId: editingService.id,
       data: editFormData,
+    });
+
+    // Save master assignments
+    assignMastersMutation.mutate({
+      serviceId: editingService.id,
+      masterIds: assignedMasters,
     });
   };
 
@@ -558,7 +612,12 @@ export function ServiceManagement() {
       </Card>
 
       {/* Edit Service Dialog */}
-      <Dialog open={!!editingService} onOpenChange={() => setEditingService(null)}>
+      <Dialog open={!!editingService} onOpenChange={(open) => {
+        if (!open) {
+          setEditingService(null);
+          setAssignedMasters([]);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("services.editService", "Edit Service")}</DialogTitle>
@@ -705,6 +764,46 @@ export function ServiceManagement() {
                     })
                   }
                 />
+              </div>
+
+              {/* Assigned Masters */}
+              <div className="space-y-2">
+                <Label>{t("services.assignedMasters", "Assigned Masters")}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("services.assignedMastersDesc", "Select which masters can perform this service")}
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                  {salonMasters.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("services.noMasters", "No masters available for this salon")}
+                    </p>
+                  ) : (
+                    salonMasters.map((master: any) => (
+                      <div key={master.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`master-${master.id}`}
+                          checked={assignedMasters.includes(master.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setAssignedMasters([...assignedMasters, master.id]);
+                            } else {
+                              setAssignedMasters(assignedMasters.filter((id) => id !== master.id));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`master-${master.id}`}
+                          className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {typeof master.name === 'object' ? master.name.en || master.name.ru || master.name.uz : master.name}
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {assignedMasters.length} {t("services.mastersSelected", "master(s) selected")}
+                </p>
               </div>
             </div>
           )}
