@@ -1136,6 +1136,52 @@
       "profileImage": "Profil rasmi",
       "logo": "Logotip",
       "noImage": "Rasm mavjud emas"
+    },
+    "team": {
+      "title": "Jamoa",
+      "description": "Salon menejerlari va ularning huquqlarini boshqarish",
+      "inviteManager": "Menejerni taklif qilish",
+      "inviteFirstManager": "Birinchi menejerni taklif qilish",
+      "noManagers": "Hozircha menejerlar yo'q",
+      "email": "Email",
+      "emailHint": "Foydalanuvchining akkauti bo'lishi kerak",
+      "selectPermissions": "Huquqlarni tanlang",
+      "permissionsHint": "Bu menejer nima qila olishini tanlang",
+      "inviteInfo": "Taklif qilingan foydalanuvchi bildirishnoma oladi va taklifni qabul qilishi kerak",
+      "sendInvite": "Taklifni yuborish",
+      "inviteSuccess": "Menejer muvaffaqiyatli taklif qilindi",
+      "inviteSent": "Taklif yuborildi",
+      "inviteFailed": "Taklifni yuborib bo'lmadi",
+      "invalidEmail": "Noto'g'ri email manzil",
+      "unnamed": "Ismsiz",
+      "permissions": "Huquqlar",
+      "permission": {
+        "read_salon": "Salon haqida ma'lumotni ko'rish",
+        "read_dashboard": "Boshqaruv panelini ko'rish",
+        "read_bookings": "Bronlarni ko'rish",
+        "manage_bookings": "Bronlarni boshqarish",
+        "read_services": "Xizmatlarni ko'rish",
+        "manage_services": "Xizmatlarni boshqarish",
+        "read_masters": "Ustalarni ko'rish",
+        "manage_masters": "Ustalarni boshqarish",
+        "read_calendar": "Kalendarni ko'rish",
+        "manage_calendar": "Kalendarni boshqarish",
+        "view_analytics": "Analitikani ko'rish"
+      },
+      "status": {
+        "active": "Faol",
+        "pending": "Kutilmoqda",
+        "revoked": "Bekor qilingan"
+      },
+      "invitedAt": "Taklif qilindi",
+      "acceptedAt": "Qabul qilindi",
+      "editPermissions": "Huquqlarni tahrirlash",
+      "managerDetails": "Menejer haqida",
+      "permissionsUpdated": "Huquqlar muvaffaqiyatli yangilandi",
+      "updateFailed": "Huquqlarni yangilab bo'lmadi",
+      "confirmRevoke": "Bu menejerni kirishini bekor qilmoqchimisiz?",
+      "managerRevoked": "Menejer kirishi bekor qilindi",
+      "revokeFailed": "Kirishni bekor qilib bo'lmadi"
     }
   }
 }

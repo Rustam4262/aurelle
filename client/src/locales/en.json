@@ -1135,6 +1135,52 @@
       "profileImage": "Profile image",
       "logo": "Logo",
       "noImage": "No image available"
+    },
+    "team": {
+      "title": "Team",
+      "description": "Manage salon managers and their permissions",
+      "inviteManager": "Invite Manager",
+      "inviteFirstManager": "Invite First Manager",
+      "noManagers": "No managers yet",
+      "email": "Email",
+      "emailHint": "User must have an existing account",
+      "selectPermissions": "Select Permissions",
+      "permissionsHint": "Choose what this manager can do",
+      "inviteInfo": "The invited user will receive a notification and must accept the invitation",
+      "sendInvite": "Send Invite",
+      "inviteSuccess": "Manager invited successfully",
+      "inviteSent": "Invitation sent",
+      "inviteFailed": "Failed to send invitation",
+      "invalidEmail": "Invalid email address",
+      "unnamed": "Unnamed User",
+      "permissions": "Permissions",
+      "permission": {
+        "read_salon": "View salon info",
+        "read_dashboard": "View dashboard",
+        "read_bookings": "View bookings",
+        "manage_bookings": "Manage bookings",
+        "read_services": "View services",
+        "manage_services": "Manage services",
+        "read_masters": "View masters",
+        "manage_masters": "Manage masters",
+        "read_calendar": "View calendar",
+        "manage_calendar": "Manage calendar",
+        "view_analytics": "View analytics"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "revoked": "Revoked"
+      },
+      "invitedAt": "Invited",
+      "acceptedAt": "Accepted",
+      "editPermissions": "Edit Permissions",
+      "managerDetails": "Manager Details",
+      "permissionsUpdated": "Permissions updated successfully",
+      "updateFailed": "Failed to update permissions",
+      "confirmRevoke": "Are you sure you want to revoke this manager's access?",
+      "managerRevoked": "Manager access revoked",
+      "revokeFailed": "Failed to revoke access"
     }
   }
 }

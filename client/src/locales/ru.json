@@ -1136,6 +1136,52 @@
       "profileImage": "Фото профиля",
       "logo": "Логотип",
       "noImage": "Изображение недоступно"
+    },
+    "team": {
+      "title": "Команда",
+      "description": "Управление менеджерами салона и их правами",
+      "inviteManager": "Пригласить менеджера",
+      "inviteFirstManager": "Пригласить первого менеджера",
+      "noManagers": "Менеджеров пока нет",
+      "email": "Email",
+      "emailHint": "У пользователя должен быть аккаунт",
+      "selectPermissions": "Выберите права",
+      "permissionsHint": "Выберите, что может делать этот менеджер",
+      "inviteInfo": "Приглашённый пользователь получит уведомление и должен принять приглашение",
+      "sendInvite": "Отправить приглашение",
+      "inviteSuccess": "Менеджер успешно приглашён",
+      "inviteSent": "Приглашение отправлено",
+      "inviteFailed": "Не удалось отправить приглашение",
+      "invalidEmail": "Неверный email адрес",
+      "unnamed": "Без имени",
+      "permissions": "Права",
+      "permission": {
+        "read_salon": "Просмотр информации о салоне",
+        "read_dashboard": "Просмотр дашборда",
+        "read_bookings": "Просмотр записей",
+        "manage_bookings": "Управление записями",
+        "read_services": "Просмотр услуг",
+        "manage_services": "Управление услугами",
+        "read_masters": "Просмотр мастеров",
+        "manage_masters": "Управление мастерами",
+        "read_calendar": "Просмотр календаря",
+        "manage_calendar": "Управление календарём",
+        "view_analytics": "Просмотр аналитики"
+      },
+      "status": {
+        "active": "Активен",
+        "pending": "Ожидает",
+        "revoked": "Отозван"
+      },
+      "invitedAt": "Приглашён",
+      "acceptedAt": "Принято",
+      "editPermissions": "Изменить права",
+      "managerDetails": "Информация о менеджере",
+      "permissionsUpdated": "Права успешно обновлены",
+      "updateFailed": "Не удалось обновить права",
+      "confirmRevoke": "Вы уверены, что хотите отозвать доступ этого менеджера?",
+      "managerRevoked": "Доступ менеджера отозван",
+      "revokeFailed": "Не удалось отозвать доступ"
     }
   }
 }

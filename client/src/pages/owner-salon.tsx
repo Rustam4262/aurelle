@@ -18,6 +18,7 @@ import { MultiImageUpload } from "@/components/image-upload";
 import { LocationPicker } from "@/components/location-picker";
 import { SalonBreaksManagement } from "@/components/salon-breaks-management";
 import { SalonExceptionsManagement } from "@/components/salon-exceptions-management";
+import { SalonTeamManagement } from "@/components/salon-team-management";
 import {
   ArrowLeft,
   Camera,
@@ -30,7 +31,8 @@ import {
   Star,
   Save,
   MapPin,
-  User
+  User,
+  UserCog
 } from "lucide-react";
 import type { Salon, Service, Master, WorkingHours, Booking } from "@shared/schema";
 
@@ -408,7 +410,7 @@ export default function OwnerSalonPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="info" data-testid="tab-salon-info">
               <Camera className="h-4 w-4 mr-2" />
               {t("marketplace.owner.info")}
@@ -424,6 +426,10 @@ export default function OwnerSalonPage() {
             <TabsTrigger value="hours" data-testid="tab-salon-hours">
               <Clock className="h-4 w-4 mr-2" />
               {t("marketplace.owner.hours")}
+            </TabsTrigger>
+            <TabsTrigger value="team" data-testid="tab-salon-team">
+              <UserCog className="h-4 w-4 mr-2" />
+              {t("team.title")}
             </TabsTrigger>
             <TabsTrigger value="bookings" data-testid="tab-salon-bookings">
               <Calendar className="h-4 w-4 mr-2" />
@@ -832,6 +838,12 @@ export default function OwnerSalonPage() {
             <div className="mt-6">
               <SalonExceptionsManagement salonId={id} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="team">
+            <Card className="p-6">
+              <SalonTeamManagement salonId={id} />
+            </Card>
           </TabsContent>
 
           <TabsContent value="bookings">
