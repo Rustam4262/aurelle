@@ -9,6 +9,7 @@ import {
   salonWorkingHours,
   userProfiles,
   users,
+  masterServices,
   insertSalonSchema,
   insertMasterSchema,
   insertServiceSchema,
@@ -892,6 +893,214 @@ router.post("/services/:serviceId/duplicate", isAuthenticated, async (req: any, 
   } catch (error) {
     console.error("Duplicate service error:", error);
     return res.status(500).json({ error: "Failed to duplicate service" });
+  }
+});
+
+// ============ PHASE 9: MASTER-SERVICE ASSIGNMENT ============
+
+// Get assigned masters for a service
+router.get("/services/:id/masters", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id: serviceId } = req.params;
+
+    // Get service and verify ownership
+    const [service] = await db.select().from(services).where(eq(services.id, serviceId));
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, service.salonId), eq(salons.ownerId, ownerId)));
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Get assigned master IDs
+    const assignments = await db.select({ masterId: masterServices.masterId })
+      .from(masterServices)
+      .where(eq(masterServices.serviceId, serviceId));
+
+    return res.json({ masterIds: assignments.map(a => a.masterId) });
+  } catch (error) {
+    console.error("Get service masters error:", error);
+    return res.status(500).json({ error: "Failed to get service masters" });
+  }
+});
+
+// Assign masters to a service
+router.patch("/services/:id/masters", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SERVICES), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id: serviceId } = req.params;
+
+    const assignMastersSchema = z.object({
+      masterIds: z.array(z.string()),
+    });
+
+    const parsed = assignMastersSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const { masterIds } = parsed.data;
+
+    // Get service and verify ownership
+    const [service] = await db.select().from(services).where(eq(services.id, serviceId));
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, service.salonId), eq(salons.ownerId, ownerId)));
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Verify all masters belong to the same salon
+    if (masterIds.length > 0) {
+      const mastersToAssign = await db.select().from(masters)
+        .where(and(
+          inArray(masters.id, masterIds),
+          eq(masters.salonId, service.salonId)
+        ));
+
+      if (mastersToAssign.length !== masterIds.length) {
+        return res.status(400).json({ error: "Some masters do not belong to this salon" });
+      }
+    }
+
+    // Delete existing assignments
+    await db.delete(masterServices).where(eq(masterServices.serviceId, serviceId));
+
+    // Create new assignments
+    if (masterIds.length > 0) {
+      await db.insert(masterServices).values(
+        masterIds.map(masterId => ({
+          masterId,
+          serviceId,
+        }))
+      );
+    }
+
+    // Audit log
+    await logAudit(ownerId, "service.assign_masters", "services", serviceId, {
+      masterIds,
+      serviceId,
+      salonId: service.salonId,
+    });
+
+    return res.json({ success: true, masterIds });
+  } catch (error) {
+    console.error("Assign masters to service error:", error);
+    return res.status(500).json({ error: "Failed to assign masters" });
+  }
+});
+
+// Toggle service visibility (quick enable/disable)
+router.patch("/services/:id/toggle", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SERVICES), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id: serviceId } = req.params;
+
+    const toggleSchema = z.object({
+      isActive: z.boolean(),
+    });
+
+    const parsed = toggleSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const { isActive } = parsed.data;
+
+    // Get service and verify ownership
+    const [service] = await db.select().from(services).where(eq(services.id, serviceId));
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, service.salonId), eq(salons.ownerId, ownerId)));
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Update service
+    const [updated] = await db.update(services)
+      .set({ isActive })
+      .where(eq(services.id, serviceId))
+      .returning();
+
+    // Audit log
+    await logAudit(ownerId, `service.${isActive ? "activate" : "deactivate"}`, "services", serviceId, {
+      serviceId,
+      salonId: service.salonId,
+      isActive,
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Toggle service error:", error);
+    return res.status(500).json({ error: "Failed to toggle service" });
+  }
+});
+
+// Bulk toggle services (enable/disable multiple services)
+router.post("/services/bulk-toggle", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SERVICES), async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    const bulkToggleSchema = z.object({
+      serviceIds: z.array(z.string()).min(1),
+      isActive: z.boolean(),
+    });
+
+    const parsed = bulkToggleSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const { serviceIds, isActive } = parsed.data;
+
+    // Get all services and verify ownership
+    const allServices = await db.select().from(services)
+      .where(inArray(services.id, serviceIds));
+
+    if (allServices.length === 0) {
+      return res.status(404).json({ error: "No services found" });
+    }
+
+    // Get salon IDs and verify ownership
+    const salonIds = [...new Set(allServices.map(s => s.salonId))];
+    const ownerSalons = await db.select().from(salons)
+      .where(and(
+        inArray(salons.id, salonIds),
+        eq(salons.ownerId, ownerId)
+      ));
+
+    if (ownerSalons.length !== salonIds.length) {
+      return res.status(403).json({ error: "Not authorized for some services" });
+    }
+
+    // Bulk update
+    const updated = await db.update(services)
+      .set({ isActive })
+      .where(inArray(services.id, serviceIds))
+      .returning();
+
+    // Audit log
+    await logAudit(ownerId, `service.bulk_${isActive ? "activate" : "deactivate"}`, "services", null, {
+      serviceIds,
+      salonIds,
+      isActive,
+      count: updated.length,
+    });
+
+    return res.json({ success: true, updated });
+  } catch (error) {
+    console.error("Bulk toggle services error:", error);
+    return res.status(500).json({ error: "Failed to bulk toggle services" });
   }
 });
 
