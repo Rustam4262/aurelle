@@ -981,8 +981,8 @@ router.get("/bookings/advanced", isAuthenticated, requirePermission(OWNER_PERMIS
     if (status) conditions.push(eq(bookings.status, status as any));
     if (salonId) conditions.push(eq(bookings.salonId, salonId as string));
     if (masterId) conditions.push(eq(bookings.masterId, masterId as string));
-    if (dateFrom) conditions.push(gte(bookings.date, new Date(dateFrom as string)));
-    if (dateTo) conditions.push(lte(bookings.date, new Date(dateTo as string)));
+    if (dateFrom) conditions.push(gte(bookings.bookingDate, new Date(dateFrom as string)));
+    if (dateTo) conditions.push(lte(bookings.bookingDate, new Date(dateTo as string)));
 
     // Get bookings with joined data
     let query = db.select({
@@ -991,11 +991,12 @@ router.get("/bookings/advanced", isAuthenticated, requirePermission(OWNER_PERMIS
       clientId: bookings.clientId,
       masterId: bookings.masterId,
       serviceId: bookings.serviceId,
-      date: bookings.date,
-      time: bookings.time,
-      duration: bookings.duration,
+      date: bookings.bookingDate,
+      bookingDate: bookings.bookingDate,
+      startTime: bookings.startTime,
+      endTime: bookings.endTime,
       status: bookings.status,
-      price: bookings.price,
+      price: bookings.priceSnapshot,
       notes: bookings.notes,
       modifiedBy: bookings.modifiedBy,
       modificationHistory: bookings.modificationHistory,
@@ -1013,7 +1014,7 @@ router.get("/bookings/advanced", isAuthenticated, requirePermission(OWNER_PERMIS
       .leftJoin(services, eq(bookings.serviceId, services.id))
       .leftJoin(sql`users`, sql`bookings.client_id = users.id`)
       .where(and(...conditions))
-      .orderBy(desc(bookings.date), desc(bookings.time))
+      .orderBy(desc(bookings.bookingDate), desc(bookings.startTime))
       .limit(parseInt(limit as string))
       .offset(parseInt(offset as string));
 

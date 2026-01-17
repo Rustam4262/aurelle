@@ -18,7 +18,11 @@ import {
   History,
   RefreshCw,
   Search,
+  Calendar as CalendarIcon,
+  Plus,
 } from "lucide-react";
+import { BookingRescheduleDialog } from "./booking-reschedule-dialog";
+import { BookingManualCreateDialog } from "./booking-manual-create-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +63,9 @@ interface Booking {
   masterId: string;
   serviceId: string;
   date: string;
-  time: string;
-  duration: number;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
   price: number;
   notes?: string;
@@ -111,6 +116,9 @@ export function BookingManagement() {
   const [showBulkDialog, setShowBulkDialog] = useState(false);
   const [viewingHistory, setViewingHistory] = useState<Booking | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState<Booking | null>(null);
+  const [manualBookingDialogOpen, setManualBookingDialogOpen] = useState(false);
 
   // Build query params
   const queryParams = new URLSearchParams();
@@ -234,11 +242,11 @@ export function BookingManagement() {
         accessorKey: "date",
         header: t("bookings.date", "Date"),
         cell: ({ row }) => {
-          const date = new Date(row.original.date);
+          const date = new Date(row.original.bookingDate);
           return (
             <div>
               <div className="font-medium">{date.toLocaleDateString()}</div>
-              <div className="text-sm text-muted-foreground">{row.original.time}</div>
+              <div className="text-sm text-muted-foreground">{row.original.startTime} - {row.original.endTime}</div>
             </div>
           );
         },
@@ -266,12 +274,7 @@ export function BookingManagement() {
       {
         accessorKey: "serviceName",
         header: t("bookings.service", "Service"),
-        cell: ({ row }) => (
-          <div>
-            <div>{row.original.serviceName?.[currentLang] || row.original.serviceName?.en || "N/A"}</div>
-            <div className="text-sm text-muted-foreground">{row.original.duration} min</div>
-          </div>
-        ),
+        cell: ({ row }) => row.original.serviceName?.[currentLang] || row.original.serviceName?.en || "N/A",
       },
       {
         accessorKey: "status",
@@ -291,16 +294,32 @@ export function BookingManagement() {
         id: "actions",
         header: t("common.actions", "Actions"),
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setViewingHistory(row.original);
-              fetchHistory(row.original.id);
-            }}
-          >
-            <History className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setViewingHistory(row.original);
+                fetchHistory(row.original.id);
+              }}
+              title={t("bookings.viewHistory", "View History")}
+            >
+              <History className="h-4 w-4" />
+            </Button>
+            {row.original.status !== "cancelled" && row.original.status !== "completed" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedBookingForReschedule(row.original);
+                  setRescheduleDialogOpen(true);
+                }}
+                title={t("bookings.reschedule.title", "Reschedule Booking")}
+              >
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         ),
       },
     ],
@@ -385,6 +404,14 @@ export function BookingManagement() {
               </p>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setManualBookingDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t("bookings.manual.title", "Create Manual Booking")}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {t("common.refresh", "Refresh")}
@@ -670,6 +697,31 @@ export function BookingManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reschedule Dialog */}
+      {selectedBookingForReschedule && (
+        <BookingRescheduleDialog
+          open={rescheduleDialogOpen}
+          onOpenChange={(open) => {
+            setRescheduleDialogOpen(open);
+            if (!open) setSelectedBookingForReschedule(null);
+          }}
+          booking={{
+            id: selectedBookingForReschedule.id,
+            bookingDate: selectedBookingForReschedule.bookingDate,
+            startTime: selectedBookingForReschedule.startTime,
+            endTime: selectedBookingForReschedule.endTime,
+            masterId: selectedBookingForReschedule.masterId,
+          }}
+        />
+      )}
+
+      {/* Manual Booking Dialog */}
+      <BookingManualCreateDialog
+        open={manualBookingDialogOpen}
+        onOpenChange={setManualBookingDialogOpen}
+        salons={salons}
+      />
     </div>
   );
 }
