@@ -7,12 +7,16 @@ import {
   services,
   bookings,
   salonWorkingHours,
+  salonBreaks,
+  salonExceptions,
   userProfiles,
   users,
   masterServices,
   insertSalonSchema,
   insertMasterSchema,
   insertServiceSchema,
+  insertSalonBreakSchema,
+  insertSalonExceptionSchema,
 } from "@shared/schema";
 import { requirePermission, OWNER_PERMISSIONS } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
@@ -2331,6 +2335,241 @@ router.post("/bookings/manual", isAuthenticated, requirePermission("BOOKINGS", "
   } catch (error) {
     console.error("Manual booking creation error:", error);
     return res.status(500).json({ error: "Failed to create manual booking" });
+  }
+});
+
+// ============ SALON BREAKS MANAGEMENT (Phase 10) ============
+
+// Get salon breaks
+router.get("/salons/:id/breaks", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const breaks = await db.select()
+      .from(salonBreaks)
+      .where(eq(salonBreaks.salonId, salonId))
+      .orderBy(salonBreaks.dayOfWeek, salonBreaks.startTime);
+
+    return res.json(breaks);
+  } catch (error) {
+    console.error("Get salon breaks error:", error);
+    return res.status(500).json({ error: "Failed to get breaks" });
+  }
+});
+
+// Create salon break
+router.post("/salons/:id/breaks", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const parsed = insertSalonBreakSchema.safeParse({ ...req.body, salonId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid break data", details: parsed.error.errors });
+    }
+
+    const [breakEntry] = await db.insert(salonBreaks).values(parsed.data as any).returning();
+
+    await logAudit(ownerId, "salon.add_break", "salons", salonId, {
+      dayOfWeek: breakEntry.dayOfWeek,
+      startTime: breakEntry.startTime,
+      endTime: breakEntry.endTime,
+      label: breakEntry.label,
+    });
+
+    return res.status(201).json(breakEntry);
+  } catch (error) {
+    console.error("Create salon break error:", error);
+    return res.status(500).json({ error: "Failed to create break" });
+  }
+});
+
+// Update salon break
+router.patch("/salons/:salonId/breaks/:breakId", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, breakId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const { dayOfWeek, startTime, endTime, label } = req.body;
+    const [updated] = await db.update(salonBreaks)
+      .set({ dayOfWeek, startTime, endTime, label })
+      .where(and(eq(salonBreaks.id, breakId), eq(salonBreaks.salonId, salonId)))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Break not found" });
+    }
+
+    await logAudit(ownerId, "salon.update_break", "salons", salonId, { breakId });
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Update salon break error:", error);
+    return res.status(500).json({ error: "Failed to update break" });
+  }
+});
+
+// Delete salon break
+router.delete("/salons/:salonId/breaks/:breakId", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, breakId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    await db.delete(salonBreaks)
+      .where(and(eq(salonBreaks.id, breakId), eq(salonBreaks.salonId, salonId)));
+
+    await logAudit(ownerId, "salon.delete_break", "salons", salonId, { breakId });
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Delete salon break error:", error);
+    return res.status(500).json({ error: "Failed to delete break" });
+  }
+});
+
+// ============ SALON EXCEPTIONS MANAGEMENT (Phase 10) ============
+
+// Get salon exceptions
+router.get("/salons/:id/exceptions", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const { from, to } = req.query;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    let query = db.select().from(salonExceptions).where(eq(salonExceptions.salonId, salonId));
+
+    // Optional date range filtering
+    if (from) {
+      query = query.where(gte(salonExceptions.exceptionDate, from as string)) as any;
+    }
+    if (to) {
+      query = query.where(lte(salonExceptions.exceptionDate, to as string)) as any;
+    }
+
+    const exceptions = await query.orderBy(salonExceptions.exceptionDate);
+
+    return res.json(exceptions);
+  } catch (error) {
+    console.error("Get salon exceptions error:", error);
+    return res.status(500).json({ error: "Failed to get exceptions" });
+  }
+});
+
+// Create salon exception
+router.post("/salons/:id/exceptions", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { id: salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const parsed = insertSalonExceptionSchema.safeParse({ ...req.body, salonId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid exception data", details: parsed.error.errors });
+    }
+
+    const [exception] = await db.insert(salonExceptions).values(parsed.data as any).returning();
+
+    await logAudit(ownerId, "salon.add_exception", "salons", salonId, {
+      date: exception.exceptionDate,
+      isClosed: exception.isClosed,
+      reason: exception.reason,
+    });
+
+    return res.status(201).json(exception);
+  } catch (error) {
+    console.error("Create salon exception error:", error);
+    return res.status(500).json({ error: "Failed to create exception" });
+  }
+});
+
+// Update salon exception
+router.patch("/salons/:salonId/exceptions/:exceptionId", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, exceptionId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const { exceptionDate, isClosed, openTime, closeTime, reason } = req.body;
+    const [updated] = await db.update(salonExceptions)
+      .set({ exceptionDate, isClosed, openTime, closeTime, reason })
+      .where(and(eq(salonExceptions.id, exceptionId), eq(salonExceptions.salonId, salonId)))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: "Exception not found" });
+    }
+
+    await logAudit(ownerId, "salon.update_exception", "salons", salonId, { exceptionId });
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Update salon exception error:", error);
+    return res.status(500).json({ error: "Failed to update exception" });
+  }
+});
+
+// Delete salon exception
+router.delete("/salons/:salonId/exceptions/:exceptionId", isAuthenticated, requirePermission(OWNER_PERMISSIONS.MANAGE_SALONS), async (req: any, res) => {
+  try {
+    const { salonId, exceptionId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons).where(eq(salons.id, salonId));
+    if (!salon || salon.ownerId !== ownerId) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    await db.delete(salonExceptions)
+      .where(and(eq(salonExceptions.id, exceptionId), eq(salonExceptions.salonId, salonId)));
+
+    await logAudit(ownerId, "salon.delete_exception", "salons", salonId, { exceptionId });
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Delete salon exception error:", error);
+    return res.status(500).json({ error: "Failed to delete exception" });
   }
 });
 
