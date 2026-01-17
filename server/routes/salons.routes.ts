@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { salons, masters, services, salonWorkingHours, masterWorkingHours, reviews, bookings, salonSettings } from "@shared/schema";
+import { salons, masters, services, salonWorkingHours, masterWorkingHours, reviews, bookings, salonSettings, salonBreaks, salonExceptions } from "@shared/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
 
 const router = Router();
@@ -165,6 +165,33 @@ router.get("/masters/:id/availability", async (req, res) => {
     // Parse the date
     const bookingDate = new Date(date as string);
     const dayOfWeek = bookingDate.getDay(); // 0=Sunday, 1=Monday, etc.
+    const dateString = bookingDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    // Check for salon exceptions first (holidays, special hours, closures)
+    const [exception] = await db.select()
+      .from(salonExceptions)
+      .where(
+        and(
+          eq(salonExceptions.salonId, master.salonId),
+          eq(salonExceptions.exceptionDate, dateString)
+        )
+      );
+
+    // If exception exists and salon is closed, return empty slots
+    if (exception && exception.isClosed) {
+      return res.json({
+        masterId: id,
+        date: bookingDate,
+        serviceDuration,
+        bufferMinutes,
+        slots: [],
+        totalSlots: 0,
+        availableSlots: 0,
+        closed: true,
+        reason: exception.reason || 'Salon closed on this date',
+        exception: true
+      });
+    }
 
     // Get master-specific working hours for this day
     const [masterHours] = await db.select()
@@ -190,8 +217,17 @@ router.get("/masters/:id/availability", async (req, res) => {
       workingHours = salonHours;
     }
 
-    // If no working hours defined or salon is closed on this day, return empty slots
-    if (!workingHours || workingHours.isClosed) {
+    // If exception has custom hours, override working hours
+    let openTime: string;
+    let closeTime: string;
+    if (exception && !exception.isClosed && exception.openTime && exception.closeTime) {
+      openTime = exception.openTime;
+      closeTime = exception.closeTime;
+    } else if (workingHours && !workingHours.isClosed) {
+      openTime = workingHours.openTime;
+      closeTime = workingHours.closeTime;
+    } else {
+      // No working hours defined or salon is closed on this day
       return res.json({
         masterId: id,
         date: bookingDate,
@@ -204,6 +240,16 @@ router.get("/masters/:id/availability", async (req, res) => {
         reason: workingHours?.isClosed ? 'Closed on this day' : 'No working hours configured'
       });
     }
+
+    // Get salon breaks for this day
+    const salonBreaksForDay = await db.select()
+      .from(salonBreaks)
+      .where(
+        and(
+          eq(salonBreaks.salonId, master.salonId),
+          eq(salonBreaks.dayOfWeek, dayOfWeek)
+        )
+      );
 
     // Get all bookings for this master on this date (excluding cancelled)
     const existingBookings = await db.select({
@@ -238,8 +284,23 @@ router.get("/masters/:id/availability", async (req, res) => {
     const slotInterval = 30; // 30 minute intervals
 
     // Parse working hours
-    const openMinutes = parseTime(workingHours.openTime);
-    const closeMinutes = parseTime(workingHours.closeTime);
+    const openMinutes = parseTime(openTime);
+    const closeMinutes = parseTime(closeTime);
+
+    // Helper function to check if time slot conflicts with breaks
+    const isInBreakTime = (slotStartMinutes: number, slotEndMinutes: number): boolean => {
+      for (const breakPeriod of salonBreaksForDay) {
+        const breakStart = parseTime(breakPeriod.startTime);
+        const breakEnd = parseTime(breakPeriod.endTime);
+
+        // Check for overlap: (start1 < end2) AND (start2 < end1)
+        const hasOverlap = (slotStartMinutes < breakEnd) && (breakStart < slotEndMinutes);
+        if (hasOverlap) {
+          return true;
+        }
+      }
+      return false;
+    };
 
     // Generate slots from open to close time
     for (let slotStartMinutes = openMinutes; slotStartMinutes < closeMinutes; slotStartMinutes += slotInterval) {
@@ -250,6 +311,17 @@ router.get("/masters/:id/availability", async (req, res) => {
 
       const slotStart = formatTime(slotStartMinutes);
       const slotEnd = formatTime(slotEndMinutes);
+
+      // Check if this slot conflicts with break times
+      if (isInBreakTime(slotStartMinutes, slotEndMinutes)) {
+        slots.push({
+          startTime: slotStart,
+          endTime: slotEnd,
+          isAvailable: false,
+          conflictReason: 'break',
+        });
+        continue;
+      }
 
       // Check if this slot conflicts with any existing booking
       let isAvailable = true;
@@ -289,10 +361,21 @@ router.get("/masters/:id/availability", async (req, res) => {
       date: bookingDate,
       dayOfWeek,
       workingHours: {
-        openTime: workingHours.openTime,
-        closeTime: workingHours.closeTime,
-        source: masterHours ? 'master' : 'salon'
+        openTime: openTime,
+        closeTime: closeTime,
+        source: exception && !exception.isClosed ? 'exception' : (masterHours ? 'master' : 'salon')
       },
+      exception: exception ? {
+        date: exception.exceptionDate,
+        isClosed: exception.isClosed,
+        reason: exception.reason,
+        hasCustomHours: !exception.isClosed && !!exception.openTime && !!exception.closeTime
+      } : null,
+      breaks: salonBreaksForDay.map(b => ({
+        startTime: b.startTime,
+        endTime: b.endTime,
+        label: b.label
+      })),
       serviceDuration,
       bufferMinutes,
       slots,
