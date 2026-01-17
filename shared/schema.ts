@@ -578,3 +578,48 @@ export const insertOwnerPermissionSchema = createInsertSchema(ownerPermissions).
 
 export type InsertOwnerPermission = z.infer<typeof insertOwnerPermissionSchema>;
 export type OwnerPermission = typeof ownerPermissions.$inferSelect;
+
+// ============ SALON BREAKS ============
+export const salonBreaks = pgTable("salon_breaks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  salonId: varchar("salon_id").notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 1=Monday, etc.
+  startTime: varchar("start_time", { length: 5 }).notNull(), // "13:00"
+  endTime: varchar("end_time", { length: 5 }).notNull(), // "14:00"
+  label: varchar("label", { length: 100 }), // "Lunch Break", "Cleaning", etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_salon_breaks_salon").on(table.salonId),
+  index("idx_salon_breaks_day").on(table.salonId, table.dayOfWeek),
+]);
+
+export const insertSalonBreakSchema = createInsertSchema(salonBreaks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSalonBreak = z.infer<typeof insertSalonBreakSchema>;
+export type SalonBreak = typeof salonBreaks.$inferSelect;
+
+// ============ SALON EXCEPTIONS ============
+export const salonExceptions = pgTable("salon_exceptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  salonId: varchar("salon_id").notNull(),
+  exceptionDate: varchar("exception_date", { length: 10 }).notNull(), // "2026-01-17" (YYYY-MM-DD)
+  isClosed: boolean("is_closed").default(true),
+  openTime: varchar("open_time", { length: 5 }), // If not closed, custom hours
+  closeTime: varchar("close_time", { length: 5 }),
+  reason: text("reason"), // "New Year", "Renovation", etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_salon_exceptions_salon").on(table.salonId),
+  index("idx_salon_exceptions_date").on(table.salonId, table.exceptionDate),
+]);
+
+export const insertSalonExceptionSchema = createInsertSchema(salonExceptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSalonException = z.infer<typeof insertSalonExceptionSchema>;
+export type SalonException = typeof salonExceptions.$inferSelect;
