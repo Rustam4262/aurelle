@@ -29,7 +29,9 @@ export function DashboardCharts({ trends, topServices, topMasters }: DashboardCh
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return new Intl.DateFormat(i18n.language, {
+    // Map language codes to valid Intl locale identifiers
+    const locale = i18n.language === 'uz' ? 'uz-UZ' : i18n.language === 'ru' ? 'ru-RU' : 'en-US';
+    return new Intl.DateFormat(locale, {
       month: 'short',
       day: 'numeric'
     }).format(date);
