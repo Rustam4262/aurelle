@@ -1,4 +1,4 @@
-// Dashboard charts with proper i18n locale handling (v1.1)
+// Dashboard charts with proper i18n locale handling (v1.2 - fixed cache)
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,8 @@ interface DashboardChartsProps {
   topServices: Array<{ id: string; name: any; count: number }>;
   topMasters: Array<{ id: string; name: string; revenue: number }>;
 }
+
+const COMPONENT_VERSION = '1.2.0'; // Force cache invalidation
 
 export function DashboardCharts({ trends, topServices, topMasters }: DashboardChartsProps) {
   const { t, i18n } = useTranslation();
