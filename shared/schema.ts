@@ -655,3 +655,25 @@ export const insertSalonManagerSchema = createInsertSchema(salonManagers).omit({
 
 export type InsertSalonManager = z.infer<typeof insertSalonManagerSchema>;
 export type SalonManager = typeof salonManagers.$inferSelect;
+
+// ============ PASSWORD RESET TOKENS ============
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(), // SHA-256 hash of random token
+  expiresAt: timestamp("expires_at").notNull(), // Tokens expire after 1 hour
+  usedAt: timestamp("used_at"), // Track if token was already used
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_password_reset_user").on(table.userId),
+  index("idx_password_reset_token").on(table.token),
+  index("idx_password_reset_expires").on(table.expiresAt),
+]);
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
