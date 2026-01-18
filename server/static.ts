@@ -18,10 +18,25 @@ export function serveStatic(app: Express) {
   const assetsPath = path.resolve(process.cwd(), "attached_assets");
   app.use("/assets", express.static(assetsPath));
 
-  app.use(express.static(distPath));
+  // Serve static files with caching for assets
+  app.use(express.static(distPath, {
+    maxAge: '1y', // Cache assets for 1 year (they have content hashes)
+    setHeaders: (res, filepath) => {
+      // Force no-cache for HTML files to always get fresh version
+      if (filepath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
+    // Set no-cache headers for HTML
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
