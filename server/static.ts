@@ -48,6 +48,7 @@ export function serveStatic(app: Express) {
       .replace(/src="\/assets\/([^"]+\.js)"/g, 'src="/assets/$1?v=' + timestamp + '"')
       .replace(/href="\/assets\/([^"]+\.css)"/g, 'href="/assets/$1?v=' + timestamp + '"');
 
+    console.log('[Cache-busting] Serving HTML with timestamp:', timestamp);
     res.send(modifiedHtml);
   });
 }
