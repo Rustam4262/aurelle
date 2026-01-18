@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import type { Express, Request, Response, NextFunction } from "express";
 
 /**
@@ -33,9 +32,6 @@ export function initializeSentry() {
 
     // Integrations
     integrations: [
-      // Node.js profiling
-      nodeProfilingIntegration(),
-
       // PostgreSQL integration (if needed)
       // Sentry.postgresIntegration(),
     ],
