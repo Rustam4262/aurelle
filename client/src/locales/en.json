@@ -1206,5 +1206,68 @@
       "managerRevoked": "Manager access revoked",
       "revokeFailed": "Failed to revoke access"
     }
+  },
+  "wizard": {
+    "title": "Create New Salon",
+    "description": "Follow the steps to set up your salon profile",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "back": "Back",
+    "next": "Next",
+    "createSalon": "Create Salon",
+    "step1": {
+      "title": "Basic Information",
+      "nameEn": "Salon Name (English)",
+      "nameRu": "Salon Name (Russian)",
+      "nameUz": "Salon Name (Uzbek)",
+      "phone": "Phone Number",
+      "address": "Address",
+      "description": "Description",
+      "descriptionPlaceholder": "Tell clients about your salon..."
+    },
+    "step2": {
+      "title": "Location",
+      "city": "City",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "mapHint": "You can get coordinates from Google Maps by right-clicking on your location"
+    },
+    "step3": {
+      "title": "Photos",
+      "uploadHint": "Upload up to 6 photos of your salon (JPG, PNG)",
+      "selectPhotos": "Select Photos",
+      "cover": "Cover",
+      "setCover": "Set as Cover"
+    },
+    "step4": {
+      "title": "Working Hours",
+      "closed": "Closed",
+      "hint": "You can modify these hours later and add breaks/exceptions"
+    },
+    "step5": {
+      "title": "Initial Setup",
+      "readyTitle": "Your Salon is Ready!",
+      "readyDescription": "Click 'Create Salon' to register your salon. You can add services and masters from your dashboard.",
+      "draftNote": "Your salon will be saved as a draft until you add at least one service and one master.",
+      "important": "Important",
+      "activationNote": "To activate your salon and make it visible to clients, add at least 1 service and 1 master from your salon dashboard."
+    },
+    "salon": {
+      "created": "Salon Created!",
+      "createdDescription": "Your salon has been registered successfully."
+    }
+  },
+  "common": {
+    "optional": "Optional",
+    "creating": "Creating...",
+    "error": "Error",
+    "days": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    }
   }
 }

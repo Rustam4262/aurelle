@@ -1207,5 +1207,68 @@
       "managerRevoked": "Menejer kirishi bekor qilindi",
       "revokeFailed": "Kirishni bekor qilib bo'lmadi"
     }
+  },
+  "wizard": {
+    "title": "Yangi salon yaratish",
+    "description": "Salon profilini sozlash uchun qadamlarni bajaring",
+    "stepProgress": "{{current}}-qadam, jami {{total}}",
+    "back": "Orqaga",
+    "next": "Keyingi",
+    "createSalon": "Salon yaratish",
+    "step1": {
+      "title": "Asosiy ma'lumotlar",
+      "nameEn": "Salon nomi (inglizcha)",
+      "nameRu": "Salon nomi (ruscha)",
+      "nameUz": "Salon nomi (o'zbekcha)",
+      "phone": "Telefon raqami",
+      "address": "Manzil",
+      "description": "Tavsif",
+      "descriptionPlaceholder": "Mijozlarga saloningiz haqida gapirib bering..."
+    },
+    "step2": {
+      "title": "Joylashuv",
+      "city": "Shahar",
+      "latitude": "Kenglik",
+      "longitude": "Uzunlik",
+      "mapHint": "Google Xaritalardan joylashuvingizga o'ng tugmani bosib koordinatalarni olishingiz mumkin"
+    },
+    "step3": {
+      "title": "Rasmlar",
+      "uploadHint": "Saloningizning 6 tagacha rasmini yuklang (JPG, PNG)",
+      "selectPhotos": "Rasmlarni tanlash",
+      "cover": "Muqova",
+      "setCover": "Muqova qilish"
+    },
+    "step4": {
+      "title": "Ish vaqti",
+      "closed": "Yopiq",
+      "hint": "Bu vaqtlarni keyinroq o'zgartirishingiz va tanaffuslar/istisnolarni qo'shishingiz mumkin"
+    },
+    "step5": {
+      "title": "Boshlang'ich sozlash",
+      "readyTitle": "Saloningiz tayyor!",
+      "readyDescription": "Salonni ro'yxatdan o'tkazish uchun 'Salon yaratish' tugmasini bosing. Xizmatlar va ustalarni boshqaruv panelidan qo'shishingiz mumkin.",
+      "draftNote": "Saloningiz kamida bitta xizmat va bitta ustani qo'shguningizcha qoralama sifatida saqlanadi.",
+      "important": "Muhim",
+      "activationNote": "Salonni faollashtirish va mijozlarga ko'rinishli qilish uchun, salon boshqaruv panelidan kamida 1 ta xizmat va 1 ta ustani qo'shing."
+    },
+    "salon": {
+      "created": "Salon yaratildi!",
+      "createdDescription": "Saloningiz muvaffaqiyatli ro'yxatdan o'tkazildi."
+    }
+  },
+  "common": {
+    "optional": "Ixtiyoriy",
+    "creating": "Yaratilmoqda...",
+    "error": "Xato",
+    "days": {
+      "sunday": "Yakshanba",
+      "monday": "Dushanba",
+      "tuesday": "Seshanba",
+      "wednesday": "Chorshanba",
+      "thursday": "Payshanba",
+      "friday": "Juma",
+      "saturday": "Shanba"
+    }
   }
 }
