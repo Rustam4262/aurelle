@@ -18,9 +18,10 @@ export function serveStatic(app: Express) {
   const assetsPath = path.resolve(process.cwd(), "attached_assets");
   app.use("/assets", express.static(assetsPath));
 
-  // Serve static files with caching for assets
+  // Serve static files with caching for assets (excluding HTML)
   app.use(express.static(distPath, {
     maxAge: '1y', // Cache assets for 1 year (they have content hashes)
+    index: false, // Don't serve index.html automatically - we'll handle it below
     setHeaders: (res, filepath) => {
       // Force no-cache for HTML files to always get fresh version
       if (filepath.endsWith('.html')) {
