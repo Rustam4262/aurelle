@@ -16,6 +16,8 @@ import Home from "@/pages/home";
 const NotFound = lazy(() => import("@/pages/not-found"));
 const SalonPage = lazy(() => import("@/pages/salon"));
 const AuthPage = lazy(() => import("@/pages/auth"));
+const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const OwnerPage = lazy(() => import("@/pages/owner"));
 const OwnerSalonPage = lazy(() => import("@/pages/owner-salon"));
@@ -42,6 +44,8 @@ function Router() {
         <Route path="/about" component={AboutPage} />
         <Route path="/salon/:id" component={SalonPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/auth/reset-password" component={ResetPasswordPage} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/owner" component={OwnerPage} />
         <Route path="/owner/salon/:id" component={OwnerSalonPage} />
