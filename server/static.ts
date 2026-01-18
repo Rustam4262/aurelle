@@ -45,8 +45,8 @@ export function serveStatic(app: Express) {
 
     // Add timestamp to all script and CSS tags
     const modifiedHtml = html
-      .replace(/src="(\/assets\/[^"]+\.js)"/g, `src="$1?v=${timestamp}"`)
-      .replace(/href="(\/assets\/[^"]+\.css)"/g, `href="$1?v=${timestamp}"`);
+      .replace(/src="\/assets\/([^"]+\.js)"/g, `src="/assets/$1?v=${timestamp}"`)
+      .replace(/href="\/assets\/([^"]+\.css)"/g, `href="/assets/$1?v=${timestamp}"`);
 
     res.send(modifiedHtml);
   });
