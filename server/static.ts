@@ -37,6 +37,17 @@ export function serveStatic(app: Express) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.sendFile(path.resolve(distPath, "index.html"));
+
+    // Read index.html and inject cache-busting timestamp
+    const htmlPath = path.resolve(distPath, "index.html");
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const timestamp = Date.now();
+
+    // Add timestamp to all script and CSS tags
+    const modifiedHtml = html
+      .replace(/src="(\/assets\/[^"]+\.js)"/g, `src="$1?v=${timestamp}"`)
+      .replace(/href="(\/assets\/[^"]+\.css)"/g, `href="$1?v=${timestamp}"`);
+
+    res.send(modifiedHtml);
   });
 }
