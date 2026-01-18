@@ -51,7 +51,7 @@ function goToAuth() {
 export default function OwnerPage() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth({ requireAuth: true });
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showAddSalon, setShowAddSalon] = useState(false);

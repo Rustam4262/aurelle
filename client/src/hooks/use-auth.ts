@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import type { User } from "@shared/models/auth";
 
 async function fetchUser(): Promise<User | null> {
@@ -7,6 +8,7 @@ async function fetchUser(): Promise<User | null> {
   });
 
   if (response.status === 401) {
+    // User is not authenticated
     return null;
   }
 
@@ -38,9 +40,9 @@ async function logout(): Promise<void> {
   }
 }
 
-export function useAuth() {
+export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }) {
   const queryClient = useQueryClient();
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading, error } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
@@ -53,6 +55,16 @@ export function useAuth() {
       queryClient.setQueryData(["/api/auth/user"], null);
     },
   });
+
+  // Auto-redirect to auth page if user is not authenticated and requireAuth is true
+  useEffect(() => {
+    if (options?.requireAuth && !isLoading && !user && !error) {
+      const redirectPath = options?.redirectTo || "/auth";
+      // Store current path for redirect after login
+      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+      window.location.href = redirectPath;
+    }
+  }, [user, isLoading, error, options?.requireAuth, options?.redirectTo]);
 
   return {
     user,

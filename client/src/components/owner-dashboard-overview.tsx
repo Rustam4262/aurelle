@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 interface TrendData {
   date: string;
@@ -57,6 +58,7 @@ interface Activity {
 export function OwnerDashboardOverview() {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
 
   const { data: overview, isLoading: overviewLoading, error: overviewError, refetch } = useQuery<DashboardOverview>({
     queryKey: ["/api/owner/dashboard/overview"],
@@ -64,7 +66,9 @@ export function OwnerDashboardOverview() {
       const res = await apiRequest("GET", "/api/owner/dashboard/overview");
       return res.json();
     },
+    enabled: isAuthenticated,
     refetchInterval: 60000, // Auto-refresh every 60 seconds
+    retry: false,
   });
 
   const { data: alerts = [] } = useQuery<DashboardAlert[]>({
@@ -73,7 +77,9 @@ export function OwnerDashboardOverview() {
       const res = await apiRequest("GET", "/api/owner/dashboard/alerts");
       return res.json();
     },
+    enabled: isAuthenticated,
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: false,
   });
 
   const { data: activity = [] } = useQuery<Activity[]>({
@@ -82,6 +88,8 @@ export function OwnerDashboardOverview() {
       const res = await apiRequest("GET", "/api/owner/dashboard/recent-activity");
       return res.json();
     },
+    enabled: isAuthenticated,
+    retry: false,
     refetchInterval: 30000,
   });
 

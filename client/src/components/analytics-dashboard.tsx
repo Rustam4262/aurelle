@@ -34,6 +34,8 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
     queryFn: async () => {
       return apiRequest("GET", `/api/calendar/monthly-stats?salonId=${salonId}&year=${year}&month=${month}`);
     },
+    enabled: !!salonId,
+    retry: false,
   });
 
   if (isLoading) {
