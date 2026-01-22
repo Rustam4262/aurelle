@@ -14,6 +14,21 @@ export async function expireSanctions() {
 
     console.log(`[Cron] Checking for expired sanctions at ${now.toISOString()}`);
 
+    // Check if sanctions table exists first
+    const tableCheck = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'sanctions'
+      );
+    `);
+
+    const tableExists = tableCheck.rows[0]?.exists;
+    if (!tableExists) {
+      // Table doesn't exist yet - skip silently (admin module not deployed)
+      return 0;
+    }
+
     // Find all active sanctions with ends_at in the past
     const expiredSanctions = await db
       .update(sanctions)
@@ -37,8 +52,6 @@ export async function expireSanctions() {
           `  - ${s.targetType}:${s.targetId} (${s.sanctionType}) - expired at ${s.endsAt}`
         );
       });
-    } else {
-      console.log(`[Cron] No sanctions expired`);
     }
 
     return expiredSanctions.length;
