@@ -19,6 +19,7 @@ import { LocationPicker } from "@/components/location-picker";
 import { SalonBreaksManagement } from "@/components/salon-breaks-management";
 import { SalonExceptionsManagement } from "@/components/salon-exceptions-management";
 import { SalonTeamManagement } from "@/components/salon-team-management";
+import { SalonStatusManager } from "@/components/salon-status-manager";
 import {
   ArrowLeft,
   Camera,
@@ -438,11 +439,16 @@ export default function OwnerSalonPage() {
           </TabsList>
 
           <TabsContent value="info">
-            <Card className="p-6">
-              <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.salonInfo")}</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label>{t("marketplace.owner.photos")}</Label>
+            <div className="space-y-6">
+              {/* Salon Status Management */}
+              <SalonStatusManager salon={salon} />
+
+              {/* Salon Info Card */}
+              <Card className="p-6">
+                <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.salonInfo")}</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label>{t("marketplace.owner.photos")}</Label>
                   <div className="mt-2 grid grid-cols-4 gap-4">
                     {salon.photos && salon.photos.length > 0 ? (
                       salon.photos.map((photo, idx) => (
@@ -502,6 +508,7 @@ export default function OwnerSalonPage() {
                 </div>
               </div>
             </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="services">

@@ -13,6 +13,7 @@ import {
   userProfiles,
   users,
   masterServices,
+  auditLogs,
   insertSalonSchema,
   insertMasterSchema,
   insertServiceSchema,
@@ -231,6 +232,88 @@ router.patch("/salons/:id", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     console.error("Update salon error:", error);
     return res.status(500).json({ error: "Failed to update salon" });
+  }
+});
+
+// Update salon status (draft/active/paused)
+router.patch("/salons/:id/status", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Validate status value
+    const statusSchema = z.object({
+      status: z.enum(["draft", "active", "paused"]),
+    });
+
+    const parsed = statusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid status value. Must be draft, active, or paused." });
+    }
+
+    // Verify ownership
+    const [salon] = await db.select().from(salons)
+      .where(and(eq(salons.id, id), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(404).json({ error: "Salon not found or access denied" });
+    }
+
+    const newStatus = parsed.data.status;
+
+    // If trying to activate, check for at least 1 service and 1 master
+    if (newStatus === "active") {
+      const servicesCount = await db.select({ count: sql`count(*)` })
+        .from(services)
+        .where(eq(services.salonId, id));
+
+      const mastersCount = await db.select({ count: sql`count(*)` })
+        .from(masters)
+        .where(eq(masters.salonId, id));
+
+      const hasServices = Number(servicesCount[0]?.count || 0) > 0;
+      const hasMasters = Number(mastersCount[0]?.count || 0) > 0;
+
+      if (!hasServices || !hasMasters) {
+        return res.status(400).json({
+          error: "Cannot activate salon",
+          details: {
+            hasServices,
+            hasMasters,
+            message: "Salon must have at least 1 service and 1 master to be activated.",
+          },
+        });
+      }
+    }
+
+    // Update status
+    const [updatedSalon] = await db.update(salons)
+      .set({
+        status: newStatus,
+        isActive: newStatus === "active",
+        updatedAt: new Date(),
+      })
+      .where(eq(salons.id, id))
+      .returning();
+
+    // Log the action
+    await db.insert(auditLogs).values({
+      actorId: ownerId,
+      action: "salon.status_change",
+      entityType: "salons",
+      entityId: id,
+      details: {
+        previousStatus: salon.status,
+        newStatus: newStatus,
+      },
+      result: "success",
+    });
+
+    console.log(`[Salon Status] Salon ${id} status changed: ${salon.status} -> ${newStatus}`);
+    return res.json(updatedSalon);
+  } catch (error) {
+    console.error("Update salon status error:", error);
+    return res.status(500).json({ error: "Failed to update salon status" });
   }
 });
 

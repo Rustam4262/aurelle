@@ -1259,6 +1259,8 @@
   "common": {
     "optional": "Optional",
     "creating": "Creating...",
+    "saving": "Saving...",
+    "save": "Save",
     "error": "Error",
     "days": {
       "sunday": "Sunday",
@@ -1269,5 +1271,23 @@
       "friday": "Friday",
       "saturday": "Saturday"
     }
+  },
+  "salonStatus": {
+    "title": "Salon Status",
+    "draft": "Draft",
+    "active": "Active",
+    "paused": "Paused",
+    "draftDescription": "Your salon is not visible to clients. Add at least 1 service and 1 master to activate.",
+    "activeDescription": "Your salon is live and visible to clients in the marketplace.",
+    "pausedDescription": "Your salon is temporarily hidden from clients. You can reactivate it anytime.",
+    "changeStatus": "Change Status",
+    "updated": "Status Updated",
+    "updateSuccess": "Salon status has been updated successfully.",
+    "updateFailed": "Failed to update salon status",
+    "noChanges": "No Changes",
+    "noChangesDescription": "The status is already set to the selected value.",
+    "viewPublicPage": "View Public Page",
+    "activationRequired": "Activation Required",
+    "activationRequiredDescription": "To make your salon visible to clients, you need to add at least 1 service and 1 master from the respective tabs."
   }
 }

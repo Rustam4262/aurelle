@@ -1260,6 +1260,8 @@
   "common": {
     "optional": "Ixtiyoriy",
     "creating": "Yaratilmoqda...",
+    "saving": "Saqlanmoqda...",
+    "save": "Saqlash",
     "error": "Xato",
     "days": {
       "sunday": "Yakshanba",
@@ -1270,5 +1272,23 @@
       "friday": "Juma",
       "saturday": "Shanba"
     }
+  },
+  "salonStatus": {
+    "title": "Salon holati",
+    "draft": "Qoralama",
+    "active": "Faol",
+    "paused": "To'xtatilgan",
+    "draftDescription": "Saloningiz mijozlarga ko'rinmaydi. Faollashtirish uchun kamida 1 ta xizmat va 1 ta ustani qo'shing.",
+    "activeDescription": "Saloningiz faol va mijozlarga marketpleysda ko'rinadi.",
+    "pausedDescription": "Saloningiz vaqtincha mijozlardan yashirilgan. Istalgan vaqtda qayta faollashtirishingiz mumkin.",
+    "changeStatus": "Holatni o'zgartirish",
+    "updated": "Holat yangilandi",
+    "updateSuccess": "Salon holati muvaffaqiyatli yangilandi.",
+    "updateFailed": "Salon holatini yangilab bo'lmadi",
+    "noChanges": "O'zgarishlar yo'q",
+    "noChangesDescription": "Holat allaqachon tanlangan qiymatga o'rnatilgan.",
+    "viewPublicPage": "Ommaviy sahifani ko'rish",
+    "activationRequired": "Faollashtirish talab qilinadi",
+    "activationRequiredDescription": "Salonni mijozlarga ko'rsatish uchun tegishli tablardagi kamida 1 ta xizmat va 1 ta ustani qo'shing."
   }
 }

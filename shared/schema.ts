@@ -20,6 +20,7 @@ export const salons = pgTable("salons", {
   email: varchar("email", { length: 255 }),
   photos: text("photos").array(),
   isActive: boolean("is_active").default(true),
+  status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused
   averageRating: decimal("average_rating", { precision: 2, scale: 1 }).default("0"),
   reviewCount: integer("review_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
