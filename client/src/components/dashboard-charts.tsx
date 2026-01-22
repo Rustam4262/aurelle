@@ -34,10 +34,15 @@ export function DashboardCharts({ trends, topServices, topMasters }: DashboardCh
     const date = new Date(dateStr);
     // Map language codes to valid Intl locale identifiers
     const locale = i18n.language === 'uz' ? 'uz-UZ' : i18n.language === 'ru' ? 'ru-RU' : 'en-US';
-    return new Intl.DateFormat(locale, {
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        month: 'short',
+        day: 'numeric'
+      }).format(date);
+    } catch {
+      // Fallback for environments where Intl is not available
+      return date.toLocaleDateString();
+    }
   };
 
   // Prepare top services data with localized names
