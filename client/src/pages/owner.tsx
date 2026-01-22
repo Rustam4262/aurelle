@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -211,12 +212,27 @@ export default function OwnerPage() {
             {salons.map((salon) => {
               const name = getLocalizedText(salon.name as any, currentLang);
               const city = getLocalizedText(salon.city as any, currentLang);
-              
+              const status = (salon as any).status || "draft";
+
+              const getStatusBadge = () => {
+                switch (status) {
+                  case "active":
+                    return <Badge variant="default" className="bg-green-500">{t("salonStatus.active")}</Badge>;
+                  case "paused":
+                    return <Badge variant="secondary" className="bg-yellow-500 text-yellow-900">{t("salonStatus.paused")}</Badge>;
+                  default:
+                    return <Badge variant="outline">{t("salonStatus.draft")}</Badge>;
+                }
+              };
+
               return (
                 <Card key={salon.id} className="p-6 hover-elevate" data-testid={`card-owner-salon-${salon.id}`}>
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-medium text-foreground">{name}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-foreground">{name}</h3>
+                        {getStatusBadge()}
+                      </div>
                       <p className="text-muted-foreground text-sm">{city}</p>
                     </div>
                     {salon.averageRating && Number(salon.averageRating) > 0 && (
