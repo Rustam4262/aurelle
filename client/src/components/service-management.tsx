@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
@@ -253,7 +253,6 @@ export function ServiceManagement() {
   const [duplicatingService, setDuplicatingService] = useState<Service | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [showBulkActions, setShowBulkActions] = useState(false);
   const [assignedMasters, setAssignedMasters] = useState<string[]>([]);
 
   // Fetch services
@@ -263,10 +262,14 @@ export function ServiceManagement() {
       const res = await apiRequest("GET", "/api/owner/services/stats");
       return res.json();
     },
-    onSuccess: (data) => {
-      setServices(data);
-    },
   });
+
+  // Update services state when data changes
+  useEffect(() => {
+    if (servicesData) {
+      setServices(servicesData);
+    }
+  }, [servicesData]);
 
   // Fetch owner salons for duplication
   const { data: salons = [] } = useQuery<any[]>({
@@ -279,26 +282,30 @@ export function ServiceManagement() {
 
   // Fetch masters for the service's salon
   const { data: salonMasters = [] } = useQuery<any[]>({
-    queryKey: [`/api/salons/${editingService?.salonId}/masters`],
+    queryKey: [`/api/owner/salons/${editingService?.salonId}/masters`],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/salons/${editingService?.salonId}/masters`);
+      const res = await apiRequest("GET", `/api/owner/salons/${editingService?.salonId}/masters`);
       return res.json();
     },
     enabled: !!editingService?.salonId,
   });
 
   // Fetch assigned masters when editing a service
-  useQuery<{ masterIds: string[] }>({
+  const { data: assignedMastersData } = useQuery<{ masterIds: string[] }>({
     queryKey: [`/api/owner/services/${editingService?.id}/masters`],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/owner/services/${editingService?.id}/masters`);
       return res.json();
     },
     enabled: !!editingService?.id,
-    onSuccess: (data) => {
-      setAssignedMasters(data.masterIds || []);
-    },
   });
+
+  // Update assigned masters state when data changes
+  useEffect(() => {
+    if (assignedMastersData) {
+      setAssignedMasters(assignedMastersData.masterIds || []);
+    }
+  }, [assignedMastersData]);
 
   // Update service mutation
   const updateServiceMutation = useMutation({
@@ -310,7 +317,7 @@ export function ServiceManagement() {
       toast({
         title: t("services.updateSuccess", "Service updated successfully"),
       });
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
       setEditingService(null);
       setEditFormData(null);
     },
@@ -333,7 +340,7 @@ export function ServiceManagement() {
       toast({
         title: t("services.duplicateSuccess", "Service duplicated successfully"),
       });
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
       setDuplicatingService(null);
     },
     onError: (error: any) => {
@@ -352,7 +359,7 @@ export function ServiceManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
     },
     onError: (error: any) => {
       toast({
@@ -360,7 +367,7 @@ export function ServiceManagement() {
         description: error.message,
         variant: "destructive",
       });
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
     },
   });
 
@@ -375,7 +382,7 @@ export function ServiceManagement() {
         title: t("services.bulkToggleSuccess", "Services updated"),
         description: t("services.bulkToggleDesc", `${variables.serviceIds.length} services ${variables.isActive ? 'activated' : 'deactivated'}`),
       });
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
       setSelectedServices([]);
       setShowBulkActions(false);
     },
@@ -398,7 +405,7 @@ export function ServiceManagement() {
       toast({
         title: t("services.assignMastersSuccess", "Masters assigned successfully"),
       });
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
     },
     onError: (error: any) => {
       toast({
@@ -422,7 +429,7 @@ export function ServiceManagement() {
         variant: "destructive",
       });
       // Revert to original order
-      queryClient.invalidateQueries(["/api/owner/services/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
     },
   });
 

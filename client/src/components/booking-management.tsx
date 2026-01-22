@@ -166,8 +166,8 @@ export function BookingManagement() {
       toast({
         title: t("bookings.bulkUpdateSuccess", "Bookings updated successfully"),
       });
-      queryClient.invalidateQueries(["/api/owner/bookings/advanced"]);
-      queryClient.invalidateQueries(["/api/owner/dashboard/overview"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/bookings/advanced"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/dashboard/overview"] });
       setSelectedBookings([]);
       setShowBulkDialog(false);
       setBulkAction("");
@@ -356,18 +356,20 @@ export function BookingManagement() {
       if (filters.dateTo) queryParams.append("dateTo", filters.dateTo);
 
       const response = await fetch(`/api/owner/bookings/export?${queryParams.toString()}`, {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
+        method: "GET",
+        credentials: "include",
       });
 
-      if (!response.ok) throw new Error("Export failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Export failed");
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "bookings.csv";
+      a.download = `bookings_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -376,9 +378,10 @@ export function BookingManagement() {
       toast({
         title: t("bookings.exportSuccess", "Bookings exported successfully"),
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: t("bookings.exportError", "Failed to export bookings"),
+        description: error.message,
         variant: "destructive",
       });
     }

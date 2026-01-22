@@ -49,22 +49,28 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
   const [notes, setNotes] = useState("");
 
   // Fetch services for selected salon
-  const { data: services = [] } = useQuery({
+  const { data: services = [] } = useQuery<Array<{ id: string; name: string | { en: string; ru: string; uz: string }; duration: number; price: number }>>({
     queryKey: [`/api/salons/${salonId}/services`],
-    queryFn: () => apiRequest("GET", `/salons/${salonId}/services`),
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/salons/${salonId}/services`);
+      return res.json();
+    },
     enabled: !!salonId,
   });
 
   // Fetch masters for selected salon
-  const { data: masters = [] } = useQuery({
+  const { data: masters = [] } = useQuery<Array<{ id: string; fullName: string; specialties?: string[] }>>({
     queryKey: [`/api/salons/${salonId}/masters`],
-    queryFn: () => apiRequest("GET", `/salons/${salonId}/masters`),
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/salons/${salonId}/masters`);
+      return res.json();
+    },
     enabled: !!salonId,
   });
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("POST", "/owner/bookings/manual", data);
+      return apiRequest("POST", "/api/owner/bookings/manual", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/bookings"] });

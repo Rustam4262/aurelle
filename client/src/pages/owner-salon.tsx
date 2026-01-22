@@ -206,6 +206,13 @@ export default function OwnerSalonPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "services"] });
       toast({ title: t("marketplace.owner.serviceDeleted") });
     },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message || t("marketplace.owner.deleteServiceError", "Failed to delete service"),
+        variant: "destructive"
+      });
+    },
   });
 
   const createMasterMutation = useMutation({
@@ -233,6 +240,13 @@ export default function OwnerSalonPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "masters"] });
       toast({ title: t("marketplace.owner.masterDeleted") });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("marketplace.owner.error"),
+        description: error.message || t("marketplace.owner.deleteMasterError", "Failed to delete master"),
+        variant: "destructive"
+      });
     },
   });
 

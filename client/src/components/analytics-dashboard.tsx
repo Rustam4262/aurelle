@@ -29,13 +29,14 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
-  const { data: stats, isLoading } = useQuery<MonthlyStats>({
+  const { data: stats, isLoading, error } = useQuery<MonthlyStats>({
     queryKey: ["/api/calendar/monthly-stats", { salonId, year, month }],
     queryFn: async () => {
-      return apiRequest("GET", `/api/calendar/monthly-stats?salonId=${salonId}&year=${year}&month=${month}`);
+      const res = await apiRequest("GET", `/api/calendar/monthly-stats?salonId=${salonId}&year=${year}&month=${month}`);
+      return res.json();
     },
     enabled: !!salonId,
-    retry: false,
+    retry: 1,
   });
 
   if (isLoading) {
@@ -52,8 +53,30 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <XCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
+            <p>{t("analytics.loadError", "Failed to load analytics data")}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!stats) {
-    return <div>No data available</div>;
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <Calendar className="h-8 w-8 mx-auto mb-2" />
+            <p>{t("analytics.noData", "No analytics data available")}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const metrics = [

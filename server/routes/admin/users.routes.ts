@@ -99,6 +99,85 @@ router.patch("/:id", requirePermission("users.write"), async (req, res) => {
   }
 });
 
+// POST /api/admin/users/:id/block - Block user
+router.post("/:id/block", requirePermission("users.write"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const [oldUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!oldUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({
+        isBlocked: true,
+        blockReason: reason || "Blocked by admin",
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    await logAuditAction({
+      actorUserId: req.user!.id,
+      actorRole: req.admin!.roleName,
+      action: "user.block",
+      entityType: "user",
+      entityId: id,
+      oldData: { isBlocked: false },
+      newData: { isBlocked: true, blockReason: reason },
+      req,
+    });
+
+    res.json({ user: updated, message: "User blocked successfully" });
+  } catch (error: any) {
+    console.error("Block user error:", error);
+    res.status(500).json({ error: "Failed to block user" });
+  }
+});
+
+// POST /api/admin/users/:id/unblock - Unblock user
+router.post("/:id/unblock", requirePermission("users.write"), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [oldUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!oldUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({
+        isBlocked: false,
+        blockReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    await logAuditAction({
+      actorUserId: req.user!.id,
+      actorRole: req.admin!.roleName,
+      action: "user.unblock",
+      entityType: "user",
+      entityId: id,
+      oldData: { isBlocked: true },
+      newData: { isBlocked: false },
+      req,
+    });
+
+    res.json({ user: updated, message: "User unblocked successfully" });
+  } catch (error: any) {
+    console.error("Unblock user error:", error);
+    res.status(500).json({ error: "Failed to unblock user" });
+  }
+});
+
 // DELETE /api/admin/users/:id - Soft delete user
 router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
   try {

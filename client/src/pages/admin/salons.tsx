@@ -28,19 +28,33 @@ export default function AdminSalons() {
 
   const verifyMutation = useMutation({
     mutationFn: (salonId: string) =>
-      apiRequest(`/api/admin/salons/${salonId}/verify`, { method: "PATCH" }),
+      apiRequest("PATCH", `/api/admin/salons/${salonId}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: "Salon verified successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to verify salon",
+        description: error.message,
+        variant: "destructive"
+      });
     },
   });
 
   const unverifyMutation = useMutation({
     mutationFn: (salonId: string) =>
-      apiRequest(`/api/admin/salons/${salonId}/unverify`, { method: "PATCH" }),
+      apiRequest("PATCH", `/api/admin/salons/${salonId}/unverify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: "Salon unverified" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to unverify salon",
+        description: error.message,
+        variant: "destructive"
+      });
     },
   });
 

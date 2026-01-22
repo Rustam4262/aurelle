@@ -60,7 +60,7 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
       newEndTime: string;
       reason: string;
     }) => {
-      return apiRequest("PATCH", `/bookings/${data.bookingId}/reschedule`, {
+      return apiRequest("PATCH", `/api/owner/bookings/${data.bookingId}/reschedule`, {
         newBookingDate: data.newBookingDate,
         newStartTime: data.newStartTime,
         newEndTime: data.newEndTime,
