@@ -5,9 +5,29 @@ import { isGitHubConfigured } from "../githubAuth";
 import { isPhoneAuthConfigured } from "../phoneAuth";
 import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 const router = Router();
+
+// Helper to check if admin tables exist
+let adminTablesExist: boolean | null = null;
+async function checkAdminTablesExist(): Promise<boolean> {
+  if (adminTablesExist !== null) return adminTablesExist;
+  try {
+    const result = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'admin_users'
+      );
+    `);
+    adminTablesExist = result.rows[0]?.exists === true;
+    return adminTablesExist;
+  } catch {
+    adminTablesExist = false;
+    return false;
+  }
+}
 
 // Get current authenticated user
 router.get("/auth/user", async (req: any, res) => {
@@ -16,30 +36,32 @@ router.get("/auth/user", async (req: any, res) => {
     const user = req.session.passport.user;
     const userId = user.claims.sub;
 
-    // Check if user is admin
+    // Check if user is admin (only if admin tables exist)
     let adminRole = null;
     try {
-      const adminUser = await db
-        .select({
-          roleName: adminRoles.name,
-          roleDisplayName: adminRoles.displayName,
-        })
-        .from(adminUsers)
-        .innerJoin(adminRoles, eq(adminUsers.roleId, adminRoles.id))
-        .where(
-          and(
-            eq(adminUsers.userId, userId),
-            eq(adminUsers.isActive, true),
-            eq(adminRoles.isActive, true)
+      if (await checkAdminTablesExist()) {
+        const adminUser = await db
+          .select({
+            roleName: adminRoles.name,
+            roleDisplayName: adminRoles.displayName,
+          })
+          .from(adminUsers)
+          .innerJoin(adminRoles, eq(adminUsers.roleId, adminRoles.id))
+          .where(
+            and(
+              eq(adminUsers.userId, userId),
+              eq(adminUsers.isActive, true),
+              eq(adminRoles.isActive, true)
+            )
           )
-        )
-        .limit(1);
+          .limit(1);
 
-      if (adminUser && adminUser.length > 0) {
-        adminRole = adminUser[0].roleName;
+        if (adminUser && adminUser.length > 0) {
+          adminRole = adminUser[0].roleName;
+        }
       }
     } catch (error) {
-      console.error("Error checking admin status:", error);
+      // Silently ignore - admin tables may not exist yet
     }
 
     return res.json({
