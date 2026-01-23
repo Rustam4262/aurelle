@@ -92,8 +92,8 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/owner/salons/${salonId}/managers`] });
       toast({
-        title: t("team.inviteSuccess"),
-        description: t("team.inviteSent"),
+        title: t("marketplace.team.inviteSuccess"),
+        description: t("marketplace.team.inviteSent"),
       });
       setInviteDialogOpen(false);
       setInviteEmail("");
@@ -101,8 +101,8 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     },
     onError: (error: any) => {
       toast({
-        title: t("common.error"),
-        description: error.message || t("team.inviteFailed"),
+        title: t("marketplace.common.error"),
+        description: error.message || t("marketplace.team.inviteFailed"),
         variant: "destructive",
       });
     },
@@ -119,14 +119,14 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/owner/salons/${salonId}/managers`] });
       toast({
-        title: t("team.permissionsUpdated"),
+        title: t("marketplace.team.permissionsUpdated"),
       });
       setEditPermissionsDialog({ open: false });
     },
     onError: (error: any) => {
       toast({
-        title: t("common.error"),
-        description: error.message || t("team.updateFailed"),
+        title: t("marketplace.common.error"),
+        description: error.message || t("marketplace.team.updateFailed"),
         variant: "destructive",
       });
     },
@@ -141,13 +141,13 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/owner/salons/${salonId}/managers`] });
       toast({
-        title: t("team.managerRevoked"),
+        title: t("marketplace.team.managerRevoked"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: t("common.error"),
-        description: error.message || t("team.revokeFailed"),
+        title: t("marketplace.common.error"),
+        description: error.message || t("marketplace.team.revokeFailed"),
         variant: "destructive",
       });
     },
@@ -156,8 +156,8 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
   const handleInvite = () => {
     if (!inviteEmail || !inviteEmail.includes("@")) {
       toast({
-        title: t("common.error"),
-        description: t("team.invalidEmail"),
+        title: t("marketplace.common.error"),
+        description: t("marketplace.team.invalidEmail"),
         variant: "destructive",
       });
       return;
@@ -177,7 +177,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
   };
 
   const handleRevoke = (managerId: string) => {
-    if (confirm(t("team.confirmRevoke"))) {
+    if (confirm(t("marketplace.team.confirmRevoke"))) {
       revokeMutation.mutate(managerId);
     }
   };
@@ -196,21 +196,21 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
         return (
           <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
             <CheckCircle className="h-3 w-3 mr-1" />
-            {t("team.status.active")}
+            {t("marketplace.team.status.active")}
           </Badge>
         );
       case "pending":
         return (
           <Badge variant="secondary">
             <Clock className="h-3 w-3 mr-1" />
-            {t("team.status.pending")}
+            {t("marketplace.team.status.pending")}
           </Badge>
         );
       case "revoked":
         return (
           <Badge variant="destructive">
             <XCircle className="h-3 w-3 mr-1" />
-            {t("team.status.revoked")}
+            {t("marketplace.team.status.revoked")}
           </Badge>
         );
     }
@@ -221,25 +221,25 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">{t("team.title")}</h3>
-          <p className="text-sm text-muted-foreground">{t("team.description")}</p>
+          <h3 className="text-lg font-semibold text-foreground">{t("marketplace.team.title")}</h3>
+          <p className="text-sm text-muted-foreground">{t("marketplace.team.description")}</p>
         </div>
         <Button onClick={() => setInviteDialogOpen(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
-          {t("team.inviteManager")}
+          {t("marketplace.team.inviteManager")}
         </Button>
       </div>
 
       {/* Managers List */}
       {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
+        <div className="text-center py-8 text-muted-foreground">{t("marketplace.common.loading")}</div>
       ) : managers.length === 0 ? (
         <Card className="p-8 text-center">
           <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">{t("team.noManagers")}</p>
+          <p className="text-muted-foreground mb-4">{t("marketplace.team.noManagers")}</p>
           <Button onClick={() => setInviteDialogOpen(true)} variant="outline">
             <UserPlus className="h-4 w-4 mr-2" />
-            {t("team.inviteFirstManager")}
+            {t("marketplace.team.inviteFirstManager")}
           </Button>
         </Card>
       ) : (
@@ -251,7 +251,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <div>
                       <h4 className="font-medium text-foreground">
-                        {manager.fullName || t("team.unnamed")}
+                        {manager.fullName || t("marketplace.team.unnamed")}
                       </h4>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Mail className="h-3 w-3" />
@@ -265,17 +265,17 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                   <div className="mt-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                       <Shield className="h-3 w-3" />
-                      <span>{t("team.permissions")} ({manager.permissions.length})</span>
+                      <span>{t("marketplace.team.permissions")} ({manager.permissions.length})</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {manager.permissions.slice(0, 5).map((perm) => (
                         <Badge key={perm} variant="outline" className="text-xs">
-                          {t(`team.permission.${perm.replace("manager.", "")}`)}
+                          {t(`marketplace.team.permission.${perm.replace("manager.", "")}`)}
                         </Badge>
                       ))}
                       {manager.permissions.length > 5 && (
                         <Badge variant="outline" className="text-xs">
-                          +{manager.permissions.length - 5} {t("common.more")}
+                          +{manager.permissions.length - 5}
                         </Badge>
                       )}
                     </div>
@@ -283,9 +283,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
                   {/* Timestamps */}
                   <div className="mt-3 text-xs text-muted-foreground">
-                    <div>{t("team.invitedAt")}: {new Date(manager.invitedAt).toLocaleDateString()}</div>
+                    <div>{t("marketplace.team.invitedAt")}: {new Date(manager.invitedAt).toLocaleDateString()}</div>
                     {manager.acceptedAt && (
-                      <div>{t("team.acceptedAt")}: {new Date(manager.acceptedAt).toLocaleDateString()}</div>
+                      <div>{t("marketplace.team.acceptedAt")}: {new Date(manager.acceptedAt).toLocaleDateString()}</div>
                     )}
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                       }}
                     >
                       <Shield className="h-4 w-4 mr-1" />
-                      {t("team.editPermissions")}
+                      {t("marketplace.team.editPermissions")}
                     </Button>
                   )}
                   {(manager.status === "active" || manager.status === "pending") && (
@@ -325,12 +325,12 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("team.inviteManager")}</DialogTitle>
+            <DialogTitle>{t("marketplace.team.inviteManager")}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="invite-email">{t("team.email")}</Label>
+              <Label htmlFor="invite-email">{t("marketplace.team.email")}</Label>
               <Input
                 id="invite-email"
                 type="email"
@@ -339,14 +339,14 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                 onChange={(e) => setInviteEmail(e.target.value)}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {t("team.emailHint")}
+                {t("marketplace.team.emailHint")}
               </p>
             </div>
 
             <div>
-              <Label>{t("team.selectPermissions")}</Label>
+              <Label>{t("marketplace.team.selectPermissions")}</Label>
               <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-md p-3">
-                {Object.entries(MANAGER_PERMISSIONS).map(([key, value]) => (
+                {Object.entries(MANAGER_PERMISSIONS).map(([, value]) => (
                   <div key={value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`perm-${value}`}
@@ -357,13 +357,13 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                       htmlFor={`perm-${value}`}
                       className="text-sm cursor-pointer flex-1"
                     >
-                      {t(`team.permission.${value.replace("manager.", "")}`)}
+                      {t(`marketplace.team.permission.${value.replace("manager.", "")}`)}
                     </label>
                   </div>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("team.permissionsHint")}
+                {t("marketplace.team.permissionsHint")}
               </p>
             </div>
 
@@ -371,7 +371,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-blue-800 dark:text-blue-200">
-                  {t("team.inviteInfo")}
+                  {t("marketplace.team.inviteInfo")}
                 </div>
               </div>
             </div>
@@ -379,10 +379,10 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-              {t("common.cancel")}
+              {t("marketplace.common.cancel")}
             </Button>
             <Button onClick={handleInvite} disabled={inviteMutation.isPending}>
-              {inviteMutation.isPending ? t("common.sending") : t("team.sendInvite")}
+              {inviteMutation.isPending ? t("marketplace.common.sending") : t("marketplace.team.sendInvite")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -395,23 +395,23 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("team.editPermissions")}</DialogTitle>
+            <DialogTitle>{t("marketplace.team.editPermissions")}</DialogTitle>
           </DialogHeader>
 
           {editPermissionsDialog.manager && (
             <div className="space-y-4">
               <div>
-                <Label>{t("team.managerDetails")}</Label>
+                <Label>{t("marketplace.team.managerDetails")}</Label>
                 <div className="mt-2 text-sm">
-                  <p className="font-medium">{editPermissionsDialog.manager.fullName || t("team.unnamed")}</p>
+                  <p className="font-medium">{editPermissionsDialog.manager.fullName || t("marketplace.team.unnamed")}</p>
                   <p className="text-muted-foreground">{editPermissionsDialog.manager.email}</p>
                 </div>
               </div>
 
               <div>
-                <Label>{t("team.permissions")}</Label>
+                <Label>{t("marketplace.team.permissions")}</Label>
                 <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-md p-3">
-                  {Object.entries(MANAGER_PERMISSIONS).map(([key, value]) => (
+                  {Object.entries(MANAGER_PERMISSIONS).map(([, value]) => (
                     <div key={value} className="flex items-center space-x-2">
                       <Checkbox
                         id={`edit-perm-${value}`}
@@ -422,7 +422,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                         htmlFor={`edit-perm-${value}`}
                         className="text-sm cursor-pointer flex-1"
                       >
-                        {t(`team.permission.${value.replace("manager.", "")}`)}
+                        {t(`marketplace.team.permission.${value.replace("manager.", "")}`)}
                       </label>
                     </div>
                   ))}
@@ -436,7 +436,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               variant="outline"
               onClick={() => setEditPermissionsDialog({ open: false })}
             >
-              {t("common.cancel")}
+              {t("marketplace.common.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -446,7 +446,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               }}
               disabled={updatePermissionsMutation.isPending}
             >
-              {updatePermissionsMutation.isPending ? t("common.saving") : t("common.save")}
+              {updatePermissionsMutation.isPending ? t("marketplace.common.saving") : t("marketplace.common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
