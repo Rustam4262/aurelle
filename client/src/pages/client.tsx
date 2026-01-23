@@ -36,7 +36,6 @@ import {
   Store,
   CheckCircle,
   Wallet,
-  TrendingUp,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
