@@ -441,6 +441,7 @@
       "phonePlaceholder": "Telefon raqamingizni kiriting",
       "city": "Shahar",
       "cityPlaceholder": "masalan, Toshkent",
+      "avatar": "Profil rasmi",
       "avatarUrl": "Avatar URL manzili",
       "avatarUrlPlaceholder": "Avatar rasm URL manzilini kiriting",
       "saveProfile": "Profilni saqlash",
@@ -510,7 +511,13 @@
       "responseError": "Javobni yuborishda xatolik",
       "responseRequired": "Javob matni talab qilinadi",
       "ratingRequired": "Iltimos, bahoni tanlang",
-      "masterLabel": "Usta"
+      "masterLabel": "Usta",
+      "copied": "Buferga nusxalandi",
+      "copyError": "Nusxalashda xatolik",
+      "copyDetails": "Ma'lumotlarni nusxalash",
+      "share": "Ulashish",
+      "shareBookingTitle": "Mening tashrifim",
+      "comingSoon": "Tez orada"
     },
     "calendar": {
       "title": "Kalendar",

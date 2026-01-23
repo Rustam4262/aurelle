@@ -441,6 +441,7 @@
       "phonePlaceholder": "Enter your phone number",
       "city": "City",
       "cityPlaceholder": "e.g. Tashkent",
+      "avatar": "Profile Photo",
       "avatarUrl": "Avatar URL",
       "avatarUrlPlaceholder": "Enter avatar image URL",
       "saveProfile": "Save Profile",
@@ -509,7 +510,13 @@
       "responseError": "Failed to submit response",
       "responseRequired": "Response text is required",
       "ratingRequired": "Please select a rating",
-      "masterLabel": "Master"
+      "masterLabel": "Master",
+      "copied": "Copied to clipboard",
+      "copyError": "Failed to copy",
+      "copyDetails": "Copy Details",
+      "share": "Share",
+      "shareBookingTitle": "My Appointment",
+      "comingSoon": "Coming soon"
     },
     "calendar": {
       "title": "Calendar",

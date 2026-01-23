@@ -41,8 +41,12 @@ import {
   Info,
   Phone,
   Scissors,
+  Share2,
+  Copy,
+  Bell,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ImageUpload } from "@/components/image-upload";
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -305,6 +309,86 @@ export default function ClientPage() {
     return reviewsData?.some(r => r.bookingId === bookingId) || false;
   };
 
+  const copyBookingToClipboard = async (booking: EnrichedBooking) => {
+    const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
+    const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+    const bookingDate = new Date(booking.bookingDate).toLocaleDateString(
+      currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+      { weekday: "long", day: "numeric", month: "long", year: "numeric" }
+    );
+
+    const bookingText = `
+${t("marketplace.client.bookingDetails")}
+━━━━━━━━━━━━━━━━━━━━━━
+
+📍 ${salonName}
+${booking.salon?.address || ""}
+
+💇 ${serviceName}
+⏱ ${booking.service?.duration} ${t("marketplace.client.minutes")}
+
+${booking.master ? `👤 ${booking.master.name}` : ""}
+
+📅 ${bookingDate}
+🕐 ${booking.startTime} - ${booking.endTime}
+
+💰 ${formatCurrency(booking.priceSnapshot || 0)}
+
+━━━━━━━━━━━━━━━━━━━━━━
+ID: ${booking.id.slice(0, 8)}
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(bookingText);
+      toast({ title: t("marketplace.client.copied") });
+    } catch (err) {
+      toast({ title: t("marketplace.client.copyError"), variant: "destructive" });
+    }
+  };
+
+  const shareBooking = async (booking: EnrichedBooking) => {
+    const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
+    const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+    const bookingDate = new Date(booking.bookingDate).toLocaleDateString(
+      currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+      { weekday: "long", day: "numeric", month: "long" }
+    );
+
+    const shareData = {
+      title: t("marketplace.client.shareBookingTitle"),
+      text: `${serviceName} @ ${salonName}\n${bookingDate}, ${booking.startTime}`,
+      url: `${window.location.origin}/salon/${booking.salonId}`,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or share failed, fall back to copy
+        copyBookingToClipboard(booking);
+      }
+    } else {
+      // Fallback to clipboard copy
+      copyBookingToClipboard(booking);
+    }
+  };
+
+  const isUpcomingBooking = (booking: EnrichedBooking) => {
+    const now = new Date();
+    const bookingDate = new Date(booking.bookingDate);
+    return bookingDate >= now && booking.status !== "cancelled" && booking.status !== "completed";
+  };
+
+  const isBookingSoon = (booking: EnrichedBooking) => {
+    if (!isUpcomingBooking(booking)) return false;
+    const now = new Date();
+    const bookingDate = new Date(booking.bookingDate);
+    const [hours, minutes] = booking.startTime.split(":").map(Number);
+    bookingDate.setHours(hours, minutes, 0, 0);
+    const hoursUntil = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    return hoursUntil > 0 && hoursUntil <= 24;
+  };
+
   const canEditReview = (review: EnrichedReview) => {
     if (!review.createdAt) return false;
     const reviewDate = new Date(review.createdAt);
@@ -516,26 +600,31 @@ export default function ClientPage() {
               <h2 className="font-serif text-lg text-foreground mb-6">{t("marketplace.client.editProfile")}</h2>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
-                  <div className="flex items-center gap-4 mb-6">
-                    <Avatar className="h-20 w-20">
-                      <AvatarImage src={profileData.avatarUrl || undefined} />
-                      <AvatarFallback>
-                        <User className="h-10 w-10" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={form.watch("avatarUrl") || profileData.avatarUrl || undefined} />
+                        <AvatarFallback className="text-2xl">
+                          <User className="h-12 w-12" />
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <div className="flex-1 w-full">
                       <FormField
                         control={form.control}
                         name="avatarUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("marketplace.client.avatarUrl")}</FormLabel>
+                            <FormLabel>{t("marketplace.client.avatar")}</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder={t("marketplace.client.avatarUrlPlaceholder")}
-                                {...field}
+                              <ImageUpload
                                 value={field.value || ""}
-                                data-testid="input-avatar-url"
+                                onChange={(url) => field.onChange(url)}
+                                onRemove={() => field.onChange("")}
+                                uploadType="avatars"
+                                maxSize={5}
+                                preview={false}
+                                label=""
                               />
                             </FormControl>
                             <FormMessage />
@@ -657,6 +746,12 @@ export default function ClientPage() {
                             <Badge className={STATUS_COLORS[booking.status || "pending"]}>
                               {t(`marketplace.client.status.${booking.status}`)}
                             </Badge>
+                            {isBookingSoon(booking) && (
+                              <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 dark:bg-orange-900/20">
+                                <Bell className="h-3 w-3 mr-1" />
+                                {t("marketplace.client.comingSoon")}
+                              </Badge>
+                            )}
                           </div>
                           <div className="space-y-1 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
@@ -1059,8 +1154,28 @@ export default function ClientPage() {
               </div>
 
               {/* Booking ID */}
-              <div className="text-xs text-muted-foreground">
-                {t("marketplace.client.bookingId")}: {selectedBooking.id.slice(0, 8)}
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{t("marketplace.client.bookingId")}: {selectedBooking.id.slice(0, 8)}</span>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyBookingToClipboard(selectedBooking)}
+                    className="h-8 w-8 p-0"
+                    title={t("marketplace.client.copyDetails")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => shareBooking(selectedBooking)}
+                    className="h-8 w-8 p-0"
+                    title={t("marketplace.client.share")}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}

@@ -441,6 +441,7 @@
       "phonePlaceholder": "Введите ваш номер телефона",
       "city": "Город",
       "cityPlaceholder": "напр. Ташкент",
+      "avatar": "Фото профиля",
       "avatarUrl": "URL аватара",
       "avatarUrlPlaceholder": "Введите URL изображения аватара",
       "saveProfile": "Сохранить профиль",
@@ -510,7 +511,13 @@
       "responseError": "Не удалось отправить ответ",
       "responseRequired": "Требуется текст ответа",
       "ratingRequired": "Пожалуйста, выберите оценку",
-      "masterLabel": "Мастер"
+      "masterLabel": "Мастер",
+      "copied": "Скопировано в буфер обмена",
+      "copyError": "Не удалось скопировать",
+      "copyDetails": "Копировать детали",
+      "share": "Поделиться",
+      "shareBookingTitle": "Мой визит",
+      "comingSoon": "Скоро"
     },
     "calendar": {
       "title": "Календарь",

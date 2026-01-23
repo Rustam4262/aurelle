@@ -1303,14 +1303,16 @@ router.get("/bookings/advanced", isAuthenticated, requirePermission(OWNER_PERMIS
       salonName: salons.name,
       masterName: masters.name,
       serviceName: services.name,
-      clientName: sql<string>`users.full_name`,
+      clientName: userProfiles.fullName,
       clientEmail: sql<string>`users.email`,
+      clientAvatar: userProfiles.avatarUrl,
     })
       .from(bookings)
       .leftJoin(salons, eq(bookings.salonId, salons.id))
       .leftJoin(masters, eq(bookings.masterId, masters.id))
       .leftJoin(services, eq(bookings.serviceId, services.id))
       .leftJoin(sql`users`, sql`bookings.client_id = users.id`)
+      .leftJoin(userProfiles, sql`bookings.client_id = user_profiles.user_id`)
       .where(and(...conditions))
       .orderBy(desc(bookings.bookingDate), desc(bookings.startTime))
       .limit(parseInt(limit as string))

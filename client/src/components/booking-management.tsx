@@ -55,6 +55,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Booking {
   id: string;
@@ -78,6 +79,7 @@ interface Booking {
   serviceName?: { en: string; ru: string; uz: string };
   clientName?: string;
   clientEmail?: string;
+  clientAvatar?: string;
 }
 
 interface HistoryEntry {
@@ -255,9 +257,17 @@ export function BookingManagement() {
         accessorKey: "clientName",
         header: t("bookings.client", "Client"),
         cell: ({ row }) => (
-          <div>
-            <div className="font-medium">{row.original.clientName || "N/A"}</div>
-            <div className="text-sm text-muted-foreground">{row.original.clientEmail}</div>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={row.original.clientAvatar || undefined} />
+              <AvatarFallback className="text-xs">
+                {row.original.clientName?.[0] || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{row.original.clientName || "N/A"}</div>
+              <div className="text-sm text-muted-foreground">{row.original.clientEmail}</div>
+            </div>
           </div>
         ),
       },
