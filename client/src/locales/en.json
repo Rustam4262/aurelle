@@ -421,6 +421,13 @@
       "welcome": "Welcome",
       "noAccount": "No client account found for this user.",
       "backHome": "Back to Home",
+      "unnamed": "Unnamed User",
+      "stats": {
+        "totalBookings": "Total Bookings",
+        "completed": "Completed",
+        "totalSpent": "Total Spent",
+        "favorites": "Favorites"
+      },
       "tabs": {
         "profile": "Profile",
         "bookings": "Bookings",

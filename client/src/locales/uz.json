@@ -421,6 +421,13 @@
       "welcome": "Xush kelibsiz",
       "noAccount": "Bu foydalanuvchi uchun mijoz hisobi topilmadi.",
       "backHome": "Bosh sahifaga",
+      "unnamed": "Ismsiz foydalanuvchi",
+      "stats": {
+        "totalBookings": "Jami bronlar",
+        "completed": "Tugallangan",
+        "totalSpent": "Jami sarflangan",
+        "favorites": "Sevimlilar"
+      },
       "tabs": {
         "profile": "Profil",
         "bookings": "Bronlar",
