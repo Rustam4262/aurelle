@@ -34,6 +34,9 @@ import {
   MapPin,
   Clock,
   Store,
+  CheckCircle,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -313,6 +316,20 @@ export default function ClientPage() {
     return null;
   }
 
+  // Calculate statistics
+  const stats = {
+    totalBookings: bookingsData?.length || 0,
+    completedBookings: bookingsData?.filter(b => b.status === "completed").length || 0,
+    totalSpent: bookingsData
+      ?.filter(b => b.status === "completed")
+      .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
+    favoritesCount: favoritesData?.length || 0,
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
+  };
+
   const filteredBookings = () => {
     if (!bookingsData) return [];
     const now = new Date();
@@ -350,15 +367,70 @@ export default function ClientPage() {
                 </p>
               </div>
             </div>
-            <LanguageSwitcher />
-            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-client">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout-client">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-6">
+        {/* Profile Card with Statistics */}
+        <Card className="p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={profileData.avatarUrl || undefined} />
+              <AvatarFallback className="text-xl">
+                {profileData.fullName?.[0] || user.firstName?.[0] || user.email?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h2 className="font-medium text-foreground text-lg">
+                {profileData.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || t("marketplace.client.unnamed")}
+              </h2>
+              <p className="text-muted-foreground">{user.email}</p>
+              {profileData.phone && (
+                <p className="text-sm text-muted-foreground">{profileData.phone}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
+                <Calendar className="h-5 w-5 text-primary" />
+                {stats.totalBookings}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.totalBookings")}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                {stats.completedBookings}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.completed")}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
+                <Wallet className="h-5 w-5 text-primary" />
+                <span className="text-lg">{formatCurrency(stats.totalSpent)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.totalSpent")}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
+                <Heart className="h-5 w-5 text-pink-500" />
+                {stats.favoritesCount}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.favorites")}</p>
+            </div>
+          </div>
+        </Card>
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="profile" data-testid="tab-profile">
