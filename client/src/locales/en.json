@@ -452,12 +452,21 @@
         "cancelled": "Cancelled"
       },
       "status": {
+        "label": "Status",
         "pending": "Pending",
         "confirmed": "Confirmed",
         "completed": "Completed",
         "cancelled": "Cancelled"
       },
       "noBookings": "No bookings found",
+      "bookingDetails": "Booking Details",
+      "details": "Details",
+      "master": "Master",
+      "date": "Date",
+      "time": "Time",
+      "price": "Price",
+      "minutes": "min",
+      "bookingId": "Booking ID",
       "viewSalon": "View Salon",
       "rebook": "Book Again",
       "cancelBooking": "Cancel Booking",

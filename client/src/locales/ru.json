@@ -452,12 +452,21 @@
         "cancelled": "Отменённые"
       },
       "status": {
+        "label": "Статус",
         "pending": "Ожидает",
         "confirmed": "Подтверждено",
         "completed": "Завершено",
         "cancelled": "Отменено"
       },
       "noBookings": "Записи не найдены",
+      "bookingDetails": "Детали записи",
+      "details": "Детали",
+      "master": "Мастер",
+      "date": "Дата",
+      "time": "Время",
+      "price": "Стоимость",
+      "minutes": "мин",
+      "bookingId": "ID записи",
       "viewSalon": "Посмотреть салон",
       "rebook": "Записаться снова",
       "cancelBooking": "Отменить запись",

@@ -452,12 +452,21 @@
         "cancelled": "Bekor qilingan"
       },
       "status": {
+        "label": "Holat",
         "pending": "Kutilmoqda",
         "confirmed": "Tasdiqlangan",
         "completed": "Tugallangan",
         "cancelled": "Bekor qilingan"
       },
       "noBookings": "Bronlar topilmadi",
+      "bookingDetails": "Bron tafsilotlari",
+      "details": "Tafsilotlar",
+      "master": "Usta",
+      "date": "Sana",
+      "time": "Vaqt",
+      "price": "Narx",
+      "minutes": "daq",
+      "bookingId": "Bron ID",
       "viewSalon": "Salonni ko'rish",
       "rebook": "Qayta yozilish",
       "cancelBooking": "Bronni bekor qilish",

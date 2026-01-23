@@ -38,6 +38,9 @@ import {
   Wallet,
   RotateCcw,
   ExternalLink,
+  Info,
+  Phone,
+  Scissors,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -97,6 +100,8 @@ export default function ClientPage() {
   const [selectedReview, setSelectedReview] = useState<EnrichedReview | null>(null);
   const [editRating, setEditRating] = useState(5);
   const [editComment, setEditComment] = useState("");
+  const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<EnrichedBooking | null>(null);
 
   const { data: profileData, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/client/profile"],
@@ -105,12 +110,12 @@ export default function ClientPage() {
 
   const { data: bookingsData, isLoading: bookingsLoading } = useQuery<EnrichedBooking[]>({
     queryKey: ["/api/client/bookings"],
-    enabled: !!user && (activeTab === "bookings" || activeTab === "calendar"),
+    enabled: !!user,
   });
 
   const { data: favoritesData, isLoading: favoritesLoading } = useQuery<EnrichedFavorite[]>({
     queryKey: ["/api/client/favorites"],
-    enabled: !!user && activeTab === "favorites",
+    enabled: !!user,
   });
 
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery<EnrichedReview[]>({
@@ -248,6 +253,11 @@ export default function ClientPage() {
     if (selectedReview) {
       deleteReviewMutation.mutate(selectedReview.id);
     }
+  };
+
+  const openBookingDetails = (booking: EnrichedBooking) => {
+    setSelectedBooking(booking);
+    setBookingDetailsOpen(true);
   };
 
   const canEditReview = (review: EnrichedReview) => {
@@ -628,6 +638,15 @@ export default function ClientPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openBookingDetails(booking)}
+                            data-testid={`button-booking-details-${booking.id}`}
+                          >
+                            <Info className="h-4 w-4 mr-1" />
+                            {t("marketplace.client.details")}
+                          </Button>
                           <Link href={`/salon/${booking.salonId}`}>
                             <Button variant="outline" size="sm" data-testid={`button-view-salon-${booking.id}`}>
                               <ExternalLink className="h-4 w-4 mr-1" />
@@ -896,6 +915,125 @@ export default function ClientPage() {
               {deleteReviewMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {t("marketplace.client.confirmDelete")}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking Details Dialog */}
+      <Dialog open={bookingDetailsOpen} onOpenChange={setBookingDetailsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("marketplace.client.bookingDetails")}</DialogTitle>
+          </DialogHeader>
+          {selectedBooking && (
+            <div className="space-y-4">
+              {/* Status Badge */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("marketplace.client.status.label")}</span>
+                <Badge className={STATUS_COLORS[selectedBooking.status || "pending"]}>
+                  {t(`marketplace.client.status.${selectedBooking.status}`)}
+                </Badge>
+              </div>
+
+              {/* Service Info */}
+              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                <div className="flex items-start gap-3">
+                  <Scissors className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium">{getLocalizedText(selectedBooking.service?.name as any, currentLang)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedBooking.service?.duration} {t("marketplace.client.minutes")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Store className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium">{getLocalizedText(selectedBooking.salon?.name as any, currentLang)}</p>
+                    <p className="text-sm text-muted-foreground">{selectedBooking.salon?.address}</p>
+                  </div>
+                </div>
+
+                {selectedBooking.master && (
+                  <div className="flex items-start gap-3">
+                    <User className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">{selectedBooking.master.name}</p>
+                      <p className="text-sm text-muted-foreground">{t("marketplace.client.master")}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Date & Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t("marketplace.client.date")}</p>
+                    <p className="font-medium">
+                      {new Date(selectedBooking.bookingDate).toLocaleDateString(
+                        currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+                        { weekday: "short", day: "numeric", month: "long" }
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t("marketplace.client.time")}</p>
+                    <p className="font-medium">{selectedBooking.startTime} - {selectedBooking.endTime}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <span className="text-muted-foreground">{t("marketplace.client.price")}</span>
+                <span className="text-xl font-bold">{formatCurrency(selectedBooking.priceSnapshot || 0)}</span>
+              </div>
+
+              {/* Booking ID */}
+              <div className="text-xs text-muted-foreground">
+                {t("marketplace.client.bookingId")}: {selectedBooking.id.slice(0, 8)}
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 flex-wrap">
+            {selectedBooking && (
+              <>
+                <Link href={`/salon/${selectedBooking.salonId}`}>
+                  <Button variant="outline" onClick={() => setBookingDetailsOpen(false)}>
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    {t("marketplace.client.viewSalon")}
+                  </Button>
+                </Link>
+                {selectedBooking.status === "completed" && (
+                  <Link href={`/salon/${selectedBooking.salonId}?serviceId=${selectedBooking.serviceId}${selectedBooking.masterId ? `&masterId=${selectedBooking.masterId}` : ""}`}>
+                    <Button onClick={() => setBookingDetailsOpen(false)}>
+                      <RotateCcw className="h-4 w-4 mr-1" />
+                      {t("marketplace.client.rebook")}
+                    </Button>
+                  </Link>
+                )}
+                {new Date(selectedBooking.bookingDate) >= new Date() &&
+                 selectedBooking.status !== "cancelled" &&
+                 selectedBooking.status !== "completed" && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setBookingDetailsOpen(false);
+                      openCancelDialog(selectedBooking.id);
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    {t("marketplace.client.cancelBooking")}
+                  </Button>
+                )}
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
