@@ -459,6 +459,7 @@
       },
       "noBookings": "Bronlar topilmadi",
       "viewSalon": "Salonni ko'rish",
+      "rebook": "Qayta yozilish",
       "cancelBooking": "Bronni bekor qilish",
       "cancelBookingConfirm": "Haqiqatan ham bu bronni bekor qilmoqchimisiz?",
       "confirmCancel": "Bekor qilishni tasdiqlash",

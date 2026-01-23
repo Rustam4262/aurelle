@@ -459,6 +459,7 @@
       },
       "noBookings": "No bookings found",
       "viewSalon": "View Salon",
+      "rebook": "Book Again",
       "cancelBooking": "Cancel Booking",
       "cancelBookingConfirm": "Are you sure you want to cancel this booking?",
       "confirmCancel": "Confirm Cancellation",

@@ -36,6 +36,8 @@ import {
   Store,
   CheckCircle,
   Wallet,
+  RotateCcw,
+  ExternalLink,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -625,12 +627,21 @@ export default function ClientPage() {
                             {booking.priceSnapshot?.toLocaleString()} UZS
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Link href={`/salon/${booking.salonId}`}>
                             <Button variant="outline" size="sm" data-testid={`button-view-salon-${booking.id}`}>
+                              <ExternalLink className="h-4 w-4 mr-1" />
                               {t("marketplace.client.viewSalon")}
                             </Button>
                           </Link>
+                          {booking.status === "completed" && (
+                            <Link href={`/salon/${booking.salonId}?serviceId=${booking.serviceId}${booking.masterId ? `&masterId=${booking.masterId}` : ""}`}>
+                              <Button variant="secondary" size="sm" data-testid={`button-rebook-${booking.id}`}>
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                {t("marketplace.client.rebook")}
+                              </Button>
+                            </Link>
+                          )}
                           {isUpcoming && (
                             <Button
                               variant="destructive"
