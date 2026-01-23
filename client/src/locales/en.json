@@ -502,6 +502,7 @@
       "alreadyReviewed": "You have already reviewed this booking",
       "mustBeCompleted": "You can only review completed bookings",
       "reviewSuccess": "Review submitted successfully",
+      "reviewed": "Reviewed",
       "thankYou": "Thank you for your feedback!",
       "submitError": "Failed to submit review",
       "responseSuccess": "Response submitted successfully",

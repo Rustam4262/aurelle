@@ -102,6 +102,10 @@ export default function ClientPage() {
   const [editComment, setEditComment] = useState("");
   const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<EnrichedBooking | null>(null);
+  const [writeReviewDialogOpen, setWriteReviewDialogOpen] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState<EnrichedBooking | null>(null);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState("");
 
   const { data: profileData, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/client/profile"],
@@ -120,7 +124,7 @@ export default function ClientPage() {
 
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery<EnrichedReview[]>({
     queryKey: ["/api/client/reviews"],
-    enabled: !!user && activeTab === "reviews",
+    enabled: !!user,
   });
 
   const form = useForm<ProfileFormValues>({
@@ -215,6 +219,24 @@ export default function ClientPage() {
     },
   });
 
+  const createReviewMutation = useMutation({
+    mutationFn: async (data: { bookingId: string; salonId: string; masterId?: string; rating: number; comment: string }) => {
+      return apiRequest("POST", "/api/client/reviews", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/bookings"] });
+      setWriteReviewDialogOpen(false);
+      setReviewBooking(null);
+      setNewReviewRating(5);
+      setNewReviewComment("");
+      toast({ title: t("marketplace.client.reviewSuccess") });
+    },
+    onError: () => {
+      toast({ title: t("marketplace.client.submitError"), variant: "destructive" });
+    },
+  });
+
   const handleLogout = async () => {
     await logout();
     navigate("/");
@@ -258,6 +280,29 @@ export default function ClientPage() {
   const openBookingDetails = (booking: EnrichedBooking) => {
     setSelectedBooking(booking);
     setBookingDetailsOpen(true);
+  };
+
+  const openWriteReviewDialog = (booking: EnrichedBooking) => {
+    setReviewBooking(booking);
+    setNewReviewRating(5);
+    setNewReviewComment("");
+    setWriteReviewDialogOpen(true);
+  };
+
+  const handleSubmitReview = () => {
+    if (reviewBooking && newReviewRating > 0) {
+      createReviewMutation.mutate({
+        bookingId: reviewBooking.id,
+        salonId: reviewBooking.salonId,
+        masterId: reviewBooking.masterId || undefined,
+        rating: newReviewRating,
+        comment: newReviewComment,
+      });
+    }
+  };
+
+  const hasReviewForBooking = (bookingId: string) => {
+    return reviewsData?.some(r => r.bookingId === bookingId) || false;
   };
 
   const canEditReview = (review: EnrichedReview) => {
@@ -654,12 +699,30 @@ export default function ClientPage() {
                             </Button>
                           </Link>
                           {booking.status === "completed" && (
-                            <Link href={`/salon/${booking.salonId}?serviceId=${booking.serviceId}${booking.masterId ? `&masterId=${booking.masterId}` : ""}`}>
-                              <Button variant="secondary" size="sm" data-testid={`button-rebook-${booking.id}`}>
-                                <RotateCcw className="h-4 w-4 mr-1" />
-                                {t("marketplace.client.rebook")}
-                              </Button>
-                            </Link>
+                            <>
+                              {!hasReviewForBooking(booking.id) ? (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => openWriteReviewDialog(booking)}
+                                  data-testid={`button-write-review-${booking.id}`}
+                                >
+                                  <Star className="h-4 w-4 mr-1" />
+                                  {t("marketplace.client.writeReview")}
+                                </Button>
+                              ) : (
+                                <Badge variant="outline" className="text-green-600">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  {t("marketplace.client.reviewed")}
+                                </Badge>
+                              )}
+                              <Link href={`/salon/${booking.salonId}?serviceId=${booking.serviceId}${booking.masterId ? `&masterId=${booking.masterId}` : ""}`}>
+                                <Button variant="secondary" size="sm" data-testid={`button-rebook-${booking.id}`}>
+                                  <RotateCcw className="h-4 w-4 mr-1" />
+                                  {t("marketplace.client.rebook")}
+                                </Button>
+                              </Link>
+                            </>
                           )}
                           {isUpcoming && (
                             <Button
@@ -1034,6 +1097,89 @@ export default function ClientPage() {
                 )}
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Write Review Dialog */}
+      <Dialog open={writeReviewDialogOpen} onOpenChange={setWriteReviewDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("marketplace.client.writeReview")}</DialogTitle>
+            <DialogDescription>
+              {reviewBooking && getLocalizedText(reviewBooking.salon?.name as any, currentLang)}
+            </DialogDescription>
+          </DialogHeader>
+          {reviewBooking && (
+            <div className="space-y-4">
+              {/* Service & Master Info */}
+              <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Scissors className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{getLocalizedText(reviewBooking.service?.name as any, currentLang)}</span>
+                </div>
+                {reviewBooking.master && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>{reviewBooking.master.name}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {new Date(reviewBooking.bookingDate).toLocaleDateString(
+                      currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div>
+                <label className="text-sm font-medium">{t("marketplace.client.yourRating")}</label>
+                <div className="flex items-center gap-1 mt-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setNewReviewRating(i + 1)}
+                      className="focus:outline-none transition-transform hover:scale-110"
+                      data-testid={`new-star-rating-${i + 1}`}
+                    >
+                      <Star
+                        className={`h-8 w-8 ${i < newReviewRating ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div>
+                <label className="text-sm font-medium">{t("marketplace.client.yourComment")}</label>
+                <Textarea
+                  value={newReviewComment}
+                  onChange={(e) => setNewReviewComment(e.target.value)}
+                  placeholder={t("marketplace.client.commentPlaceholder")}
+                  className="mt-2"
+                  rows={4}
+                  data-testid="textarea-new-review-comment"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWriteReviewDialogOpen(false)}>
+              {t("marketplace.client.close")}
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={createReviewMutation.isPending || newReviewRating === 0}
+              data-testid="button-submit-new-review"
+            >
+              {createReviewMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              {t("marketplace.client.submitReview")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
