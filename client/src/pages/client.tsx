@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -107,6 +109,13 @@ const profileFormSchema = z.object({
   phone: z.string().max(20).optional(),
   avatarUrl: z.string().max(500).optional().nullable(),
   city: z.string().max(100).optional(),
+  gender: z.string().optional(),
+  birthday: z.string().optional(),
+  notifyEmail: z.boolean().optional(),
+  notifyReminder24h: z.boolean().optional(),
+  notifyReminder2h: z.boolean().optional(),
+  notifyBookingUpdates: z.boolean().optional(),
+  notifyPromotions: z.boolean().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -166,6 +175,13 @@ export default function ClientPage() {
       phone: "",
       avatarUrl: "",
       city: "",
+      gender: "",
+      birthday: "",
+      notifyEmail: true,
+      notifyReminder24h: true,
+      notifyReminder2h: true,
+      notifyBookingUpdates: true,
+      notifyPromotions: false,
     },
   });
 
@@ -176,6 +192,13 @@ export default function ClientPage() {
         phone: profileData.phone || "",
         avatarUrl: profileData.avatarUrl || "",
         city: profileData.city || "",
+        gender: (profileData as any).gender || "",
+        birthday: (profileData as any).birthday || "",
+        notifyEmail: (profileData as any).notifyEmail ?? true,
+        notifyReminder24h: (profileData as any).notifyReminder24h ?? true,
+        notifyReminder2h: (profileData as any).notifyReminder2h ?? true,
+        notifyBookingUpdates: (profileData as any).notifyBookingUpdates ?? true,
+        notifyPromotions: (profileData as any).notifyPromotions ?? false,
       });
     }
   }, [profileData, form]);
@@ -872,6 +895,202 @@ ID: ${booking.id.slice(0, 8)}
                       </FormItem>
                     )}
                   />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("marketplace.client.gender")}</FormLabel>
+                          <Select value={field.value || ""} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("marketplace.client.genderPlaceholder")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">{t("marketplace.client.male")}</SelectItem>
+                              <SelectItem value="female">{t("marketplace.client.female")}</SelectItem>
+                              <SelectItem value="other">{t("marketplace.client.other")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="birthday"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("marketplace.client.birthday")}</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start text-left font-normal"
+                                >
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  {field.value ? (
+                                    format(new Date(field.value), "dd.MM.yyyy")
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      {t("marketplace.client.birthdayPlaceholder")}
+                                    </span>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={field.value ? new Date(field.value) : undefined}
+                                onSelect={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                                disabled={(date) => date > new Date()}
+                                initialFocus
+                                captionLayout="dropdown-buttons"
+                                fromYear={1930}
+                                toYear={new Date().getFullYear()}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium flex items-center gap-2">
+                        <Bell className="h-4 w-4" />
+                        {t("marketplace.client.notifications.title")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {t("marketplace.client.notifications.description")}
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="notifyEmail"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              {t("marketplace.client.notifications.email")}
+                            </FormLabel>
+                            <FormDescription>
+                              {t("marketplace.client.notifications.emailDescription")}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notifyReminder24h"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              {t("marketplace.client.notifications.reminder24h")}
+                            </FormLabel>
+                            <FormDescription>
+                              {t("marketplace.client.notifications.reminder24hDescription")}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notifyReminder2h"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              {t("marketplace.client.notifications.reminder2h")}
+                            </FormLabel>
+                            <FormDescription>
+                              {t("marketplace.client.notifications.reminder2hDescription")}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notifyBookingUpdates"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              {t("marketplace.client.notifications.bookingUpdates")}
+                            </FormLabel>
+                            <FormDescription>
+                              {t("marketplace.client.notifications.bookingUpdatesDescription")}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notifyPromotions"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              {t("marketplace.client.notifications.promotions")}
+                            </FormLabel>
+                            <FormDescription>
+                              {t("marketplace.client.notifications.promotionsDescription")}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <Button
                     type="submit"
