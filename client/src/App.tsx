@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -35,43 +35,45 @@ function PageLoader() {
   );
 }
 
-// Router component
+// Router component with ErrorBoundary that resets on navigation
 function Router() {
+  const [location] = useLocation();
+
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/about" component={AboutPage} />
-        <Route path="/salon/:id" component={SalonPage} />
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
-        <Route path="/auth/reset-password" component={ResetPasswordPage} />
-        <Route path="/profile" component={ProfilePage} />
-        <Route path="/owner" component={OwnerPage} />
-        <Route path="/owner/salon/:id" component={OwnerSalonPage} />
-        <Route path="/master" component={MasterPage} />
-        <Route path="/client" component={ClientPage} />
-        <Route path="/admin" component={AdminPage} />
-        <Route path="/admin/:rest*" component={AdminPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
+    <ErrorBoundary key={location}>
+      <Suspense fallback={<PageLoader />}>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about" component={AboutPage} />
+          <Route path="/salon/:id" component={SalonPage} />
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+          <Route path="/auth/reset-password" component={ResetPasswordPage} />
+          <Route path="/profile" component={ProfilePage} />
+          <Route path="/owner" component={OwnerPage} />
+          <Route path="/owner/salon/:id" component={OwnerSalonPage} />
+          <Route path="/master" component={MasterPage} />
+          <Route path="/client" component={ClientPage} />
+          <Route path="/admin" component={AdminPage} />
+          <Route path="/admin/:rest*" component={AdminPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="system" storageKey="aurelle-ui-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <SkipToContent />
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <ThemeProvider defaultTheme="system" storageKey="aurelle-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SkipToContent />
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -13,6 +13,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorKey: number;
 }
 
 /**
@@ -32,10 +33,11 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorKey: 0,
     };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI
     return {
       hasError: true,
@@ -58,9 +60,18 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
+  }
 
-    // TODO: Log to external service (Sentry, LogRocket, etc.)
-    // logErrorToService(error, errorInfo);
+  // Reset error state when children change (e.g., navigation)
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+        errorKey: this.state.errorKey + 1,
+      });
+    }
   }
 
   handleReset = () => {
@@ -68,6 +79,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorKey: this.state.errorKey + 1,
     });
   };
 

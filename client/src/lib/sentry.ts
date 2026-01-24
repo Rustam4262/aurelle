@@ -32,35 +32,19 @@ export function initializeSentry() {
     // Integrations
     integrations: [
       // Browser Tracing for performance monitoring
-      Sentry.browserTracingIntegration({
-        // Trace navigation between pages
-        tracePropagationTargets: [
-          "localhost",
-          /^https:\/\/aurelle\.uz/,
-          /^https:\/\/staging\.aurelle\.uz/,
-          /^\/api\//,
-        ],
-      }),
+      Sentry.browserTracingIntegration(),
 
       // Session Replay - records user sessions for debugging
       Sentry.replayIntegration({
         // Mask all text and input content for privacy
         maskAllText: true,
         blockAllMedia: true,
-        // Capture sessions where errors occur
-        replaysSessionSampleRate: 0.1, // 10% of sessions
-        replaysOnErrorSampleRate: 1.0, // 100% of error sessions
       }),
 
       // User Feedback - allows users to submit feedback on errors
       Sentry.feedbackIntegration({
         colorScheme: "system",
         autoInject: false, // Manually trigger when needed
-      }),
-
-      // React Error Boundary
-      Sentry.reactRouterV6BrowserTracingIntegration({
-        useEffect: Sentry.React.useEffect,
       }),
     ],
 
