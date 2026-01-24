@@ -467,7 +467,27 @@
         "all": "All",
         "upcoming": "Upcoming",
         "completed": "Completed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "byService": "By Service",
+        "byDate": "By Date",
+        "allServices": "All Services",
+        "dateFrom": "From",
+        "dateTo": "To",
+        "clearFilters": "Clear Filters",
+        "search": "Search bookings",
+        "sortBy": "Sort By",
+        "newest": "Newest First",
+        "oldest": "Oldest First",
+        "priceHigh": "Price (High)",
+        "priceLow": "Price (Low)"
+      },
+      "reschedule": {
+        "title": "Reschedule Booking",
+        "selectDate": "Select new date",
+        "selectTime": "Select new time",
+        "confirm": "Confirm Reschedule",
+        "success": "Booking rescheduled successfully",
+        "error": "Failed to reschedule booking"
       },
       "status": {
         "label": "Status",

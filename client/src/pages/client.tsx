@@ -9,6 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ru, uz } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +54,11 @@ import {
   PieChart,
   Download,
   CalendarRange,
+  Filter,
+  Search,
+  SortAsc,
+  SortDesc,
+  RefreshCw,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ImageUpload } from "@/components/image-upload";
@@ -102,6 +112,12 @@ export default function ClientPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
   const [bookingFilter, setBookingFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [showFilters, setShowFilters] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
   const [editReviewDialogOpen, setEditReviewDialogOpen] = useState(false);
@@ -554,23 +570,95 @@ ID: ${booking.id.slice(0, 8)}
 
   const analytics = calculateAnalytics();
 
+  // Get unique services for filter dropdown
+  const uniqueServices = () => {
+    if (!bookingsData) return [];
+    const services = new Map<string, string>();
+    bookingsData.forEach(b => {
+      const serviceName = getLocalizedText(b.service?.name as any, currentLang);
+      if (serviceName && b.serviceId) {
+        services.set(b.serviceId, serviceName);
+      }
+    });
+    return Array.from(services, ([id, name]) => ({ id, name }));
+  };
+
+  const clearFilters = () => {
+    setBookingFilter("all");
+    setServiceFilter("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setSearchQuery("");
+    setSortBy("newest");
+  };
+
+  const hasActiveFilters = bookingFilter !== "all" || serviceFilter !== "all" || dateFrom || dateTo || searchQuery;
+
   const filteredBookings = () => {
     if (!bookingsData) return [];
     const now = new Date();
-    
+
+    let result = [...bookingsData];
+
+    // Status filter
     switch (bookingFilter) {
       case "upcoming":
-        return bookingsData.filter(b => {
+        result = result.filter(b => {
           const bookingDate = new Date(b.bookingDate);
           return bookingDate >= now && b.status !== "cancelled" && b.status !== "completed";
         });
+        break;
       case "completed":
-        return bookingsData.filter(b => b.status === "completed");
+        result = result.filter(b => b.status === "completed");
+        break;
       case "cancelled":
-        return bookingsData.filter(b => b.status === "cancelled");
-      default:
-        return bookingsData;
+        result = result.filter(b => b.status === "cancelled");
+        break;
     }
+
+    // Service filter
+    if (serviceFilter !== "all") {
+      result = result.filter(b => b.serviceId === serviceFilter);
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      result = result.filter(b => new Date(b.bookingDate) >= dateFrom);
+    }
+    if (dateTo) {
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      result = result.filter(b => new Date(b.bookingDate) <= endOfDay);
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(b => {
+        const salonName = getLocalizedText(b.salon?.name as any, currentLang).toLowerCase();
+        const serviceName = getLocalizedText(b.service?.name as any, currentLang).toLowerCase();
+        const masterName = (b.master?.name || "").toLowerCase();
+        return salonName.includes(query) || serviceName.includes(query) || masterName.includes(query);
+      });
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "newest":
+        result.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
+        break;
+      case "oldest":
+        result.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+        break;
+      case "priceHigh":
+        result.sort((a, b) => (b.priceSnapshot || 0) - (a.priceSnapshot || 0));
+        break;
+      case "priceLow":
+        result.sort((a, b) => (a.priceSnapshot || 0) - (b.priceSnapshot || 0));
+        break;
+    }
+
+    return result;
   };
 
   return (
@@ -794,19 +882,137 @@ ID: ${booking.id.slice(0, 8)}
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6">
-            <div className="flex items-center gap-2 flex-wrap">
-              {["all", "upcoming", "completed", "cancelled"].map((filter) => (
+            {/* Search and Filter Header */}
+            <div className="flex flex-col gap-4">
+              {/* Search Bar */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t("marketplace.client.filter.search")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
                 <Button
-                  key={filter}
-                  variant={bookingFilter === filter ? "default" : "outline"}
+                  variant={showFilters ? "secondary" : "outline"}
                   size="sm"
-                  onClick={() => setBookingFilter(filter)}
-                  data-testid={`filter-${filter}`}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2"
                 >
-                  {t(`marketplace.client.filter.${filter}`)}
+                  <Filter className="h-4 w-4" />
+                  {t("marketplace.client.filter.byDate")}
                 </Button>
-              ))}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px]">
+                    <SortAsc className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("marketplace.client.filter.newest")}</SelectItem>
+                    <SelectItem value="oldest">{t("marketplace.client.filter.oldest")}</SelectItem>
+                    <SelectItem value="priceHigh">{t("marketplace.client.filter.priceHigh")}</SelectItem>
+                    <SelectItem value="priceLow">{t("marketplace.client.filter.priceLow")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    {t("marketplace.client.filter.clearFilters")}
+                  </Button>
+                )}
+              </div>
+
+              {/* Status Filter Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {["all", "upcoming", "completed", "cancelled"].map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={bookingFilter === filter ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setBookingFilter(filter)}
+                    data-testid={`filter-${filter}`}
+                  >
+                    {t(`marketplace.client.filter.${filter}`)}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <Card className="p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Service Filter */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">{t("marketplace.client.filter.byService")}</label>
+                      <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("marketplace.client.filter.allServices")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("marketplace.client.filter.allServices")}</SelectItem>
+                          {uniqueServices().map((service) => (
+                            <SelectItem key={service.id} value={service.id}>
+                              {service.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Date From */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">{t("marketplace.client.filter.dateFrom")}</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {dateFrom ? format(dateFrom, "PPP", { locale: currentLang === "ru" ? ru : currentLang === "uz" ? uz : undefined }) : t("marketplace.client.filter.dateFrom")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={dateFrom}
+                            onSelect={setDateFrom}
+                            locale={currentLang === "ru" ? ru : currentLang === "uz" ? uz : undefined}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {/* Date To */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">{t("marketplace.client.filter.dateTo")}</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {dateTo ? format(dateTo, "PPP", { locale: currentLang === "ru" ? ru : currentLang === "uz" ? uz : undefined }) : t("marketplace.client.filter.dateTo")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={dateTo}
+                            onSelect={setDateTo}
+                            locale={currentLang === "ru" ? ru : currentLang === "uz" ? uz : undefined}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </Card>
+              )}
             </div>
+
+            {/* Results count */}
+            {!bookingsLoading && (
+              <div className="text-sm text-muted-foreground">
+                {filteredBookings().length} {t("marketplace.client.analytics.visits")}
+              </div>
+            )}
 
             {bookingsLoading ? (
               <div className="flex justify-center py-8">

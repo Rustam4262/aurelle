@@ -467,7 +467,27 @@
         "all": "Hammasi",
         "upcoming": "Kelayotgan",
         "completed": "Tugallangan",
-        "cancelled": "Bekor qilingan"
+        "cancelled": "Bekor qilingan",
+        "byService": "Xizmat bo'yicha",
+        "byDate": "Sana bo'yicha",
+        "allServices": "Barcha xizmatlar",
+        "dateFrom": "Dan",
+        "dateTo": "Gacha",
+        "clearFilters": "Filtrlarni tozalash",
+        "search": "Bronlarni qidirish",
+        "sortBy": "Saralash",
+        "newest": "Avval yangilari",
+        "oldest": "Avval eskilari",
+        "priceHigh": "Narx bo'yicha (qimmat)",
+        "priceLow": "Narx bo'yicha (arzon)"
+      },
+      "reschedule": {
+        "title": "Bronni ko'chirish",
+        "selectDate": "Yangi sanani tanlang",
+        "selectTime": "Yangi vaqtni tanlang",
+        "confirm": "Ko'chirishni tasdiqlash",
+        "success": "Bron muvaffaqiyatli ko'chirildi",
+        "error": "Bronni ko'chirib bo'lmadi"
       },
       "status": {
         "label": "Holat",
