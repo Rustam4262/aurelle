@@ -62,6 +62,13 @@ import {
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ImageUpload } from "@/components/image-upload";
+import {
+  BookingCardSkeleton,
+  ClientProfileSkeleton,
+  AnalyticsCardsSkeleton,
+  FavoriteCardSkeleton,
+  ClientReviewSkeleton,
+} from "@/components/skeletons";
 
 function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
   if (!obj) return "";
@@ -1015,8 +1022,10 @@ ID: ${booking.id.slice(0, 8)}
             )}
 
             {bookingsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <BookingCardSkeleton key={i} />
+                ))}
               </div>
             ) : filteredBookings().length === 0 ? (
               <Card className="p-8 text-center">
@@ -1308,8 +1317,10 @@ ID: ${booking.id.slice(0, 8)}
 
           <TabsContent value="favorites" className="space-y-6">
             {favoritesLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <FavoriteCardSkeleton key={i} />
+                ))}
               </div>
             ) : !favoritesData || favoritesData.length === 0 ? (
               <Card className="p-8 text-center">
@@ -1370,8 +1381,10 @@ ID: ${booking.id.slice(0, 8)}
 
           <TabsContent value="reviews" className="space-y-6">
             {reviewsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <ClientReviewSkeleton key={i} />
+                ))}
               </div>
             ) : !reviewsData || reviewsData.length === 0 ? (
               <Card className="p-8 text-center">
