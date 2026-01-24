@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import { CalendarDays, TrendingUp, Users, Clock } from "lucide-react";
@@ -42,15 +41,16 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
   const startDate = format(startOfMonth(currentMonth), "yyyy-MM-dd");
   const endDate = format(endOfMonth(currentMonth), "yyyy-MM-dd");
 
-  const { data: calendarData, isLoading: isLoadingCalendar } = useQuery<DayData[]>({
+  const { data: calendarData } = useQuery<DayData[]>({
     queryKey: ["/api/calendar/availability", { salonId, masterId, startDate, endDate }],
-    queryFn: async () => {
+    queryFn: async (): Promise<DayData[]> => {
       const params = new URLSearchParams();
       if (salonId) params.append("salonId", salonId);
       if (masterId) params.append("masterId", masterId);
       params.append("startDate", startDate);
       params.append("endDate", endDate);
-      return apiRequest("GET", `/api/calendar/availability?${params}`);
+      const res = await apiRequest("GET", `/api/calendar/availability?${params}`);
+      return res.json() as Promise<DayData[]>;
     },
     enabled: !!(salonId || masterId),
   });
@@ -58,12 +58,13 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
   // Get detailed schedule for selected day
   const { data: daySchedule, isLoading: isLoadingSchedule } = useQuery<DayBooking[]>({
     queryKey: ["/api/calendar/day-schedule", { salonId, masterId, date: format(selectedDate, "yyyy-MM-dd") }],
-    queryFn: async () => {
+    queryFn: async (): Promise<DayBooking[]> => {
       const params = new URLSearchParams();
       if (salonId) params.append("salonId", salonId);
       if (masterId) params.append("masterId", masterId);
       params.append("date", format(selectedDate, "yyyy-MM-dd"));
-      return apiRequest("GET", `/api/calendar/day-schedule?${params}`);
+      const res = await apiRequest("GET", `/api/calendar/day-schedule?${params}`);
+      return res.json() as Promise<DayBooking[]>;
     },
     enabled: !!(salonId || masterId),
   });

@@ -143,7 +143,7 @@ export default function ProfilePage() {
       ?.filter((b) => b.status === "completed")
       .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
     favoriteServicesCount: favorites?.length || 0,
-    memberSince: user?.createdAt || new Date().toISOString(),
+    memberSince: user?.createdAt ? (typeof user.createdAt === 'string' ? user.createdAt : user.createdAt.toISOString()) : new Date().toISOString(),
   };
 
   // Cancel booking mutation
@@ -536,10 +536,10 @@ export default function ProfilePage() {
                           <MapPin className="h-3 w-3" />
                           {getLocalizedName(salon.city)}
                         </div>
-                        {salon.rating && (
+                        {salon.averageRating && Number(salon.averageRating) > 0 && (
                           <div className="flex items-center gap-1 mt-1">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">{Number(salon.rating).toFixed(1)}</span>
+                            <span className="text-sm font-medium">{Number(salon.averageRating).toFixed(1)}</span>
                           </div>
                         )}
                       </div>

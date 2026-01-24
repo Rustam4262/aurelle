@@ -280,18 +280,12 @@ export const errorHandlers = {
   /**
    * Network error with retry option
    */
-  network: (error: any, retryFn?: () => void) => {
+  network: (error: any) => {
     const apiError = parseApiError(error);
     toast({
       variant: "destructive",
       title: "Ошибка сети",
       description: "Проверьте подключение к интернету",
-      action: retryFn
-        ? {
-            label: "Повторить",
-            onClick: retryFn,
-          }
-        : undefined,
     });
     return apiError;
   },

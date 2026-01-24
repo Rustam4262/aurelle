@@ -31,7 +31,6 @@ import {
   Share2,
   CheckCircle,
   Calendar,
-  ChevronRight,
   Scissors,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -182,10 +181,10 @@ function MasterCard({ master, onBook }: { master: Master; onBook: (master: Maste
             </div>
           )}
           <Button
-            variant="link"
+            variant="ghost"
             size="sm"
             onClick={() => setShowPortfolio(!showPortfolio)}
-            className="px-0 mt-2"
+            className="px-0 mt-2 underline"
           >
             {showPortfolio ? t("portfolio.hide") : t("portfolio.show")}
           </Button>

@@ -1556,7 +1556,7 @@ ID: ${booking.id.slice(0, 8)}
                 {favoritesData.map((favorite) => {
                   const salonName = getLocalizedText(favorite.salon?.name as any, currentLang);
                   const salonDescription = getLocalizedText(favorite.salon?.description as any, currentLang);
-                  const coverImage = favorite.salon?.photos?.[0] || favorite.salon?.coverImage;
+                  const coverImage = favorite.salon?.photos?.[0];
 
                   return (
                     <Card key={favorite.id} className="overflow-hidden group" data-testid={`favorite-card-${favorite.id}`}>
@@ -1585,10 +1585,10 @@ ID: ${booking.id.slice(0, 8)}
                           <Heart className="h-4 w-4 fill-red-500 text-red-500" />
                         </Button>
                         {/* Rating badge */}
-                        {favorite.salon?.averageRating && favorite.salon.averageRating > 0 && (
+                        {favorite.salon?.averageRating && Number(favorite.salon.averageRating) > 0 && (
                           <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
                             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                            {favorite.salon.averageRating.toFixed(1)}
+                            {Number(favorite.salon.averageRating).toFixed(1)}
                           </div>
                         )}
                       </div>

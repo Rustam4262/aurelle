@@ -44,7 +44,7 @@ export function TimeSlotPicker({
   // Fetch availability data
   const { data: availability, isLoading, refetch } = useQuery<AvailabilityResponse>({
     queryKey: ["/api/salons/masters", masterId, "availability", { date, serviceId }],
-    queryFn: async () => {
+    queryFn: async (): Promise<AvailabilityResponse> => {
       if (!masterId || !date) {
         throw new Error("Master ID and date are required");
       }
@@ -52,7 +52,8 @@ export function TimeSlotPicker({
       if (serviceId) {
         params.append("serviceId", serviceId);
       }
-      return apiRequest("GET", `/api/salons/masters/${masterId}/availability?${params}`);
+      const res = await apiRequest("GET", `/api/salons/masters/${masterId}/availability?${params}`);
+      return res.json() as Promise<AvailabilityResponse>;
     },
     enabled: !!masterId && !!date,
     staleTime: 1000 * 60 * 2, // 2 minutes
@@ -108,13 +109,6 @@ export function TimeSlotPicker({
     );
   }
 
-  const getSlotStatus = (slot: TimeSlot) => {
-    if (slot.isAvailable) return "available";
-    if (slot.conflictReason === "booked") return "booked";
-    if (slot.conflictReason === "pending") return "pending";
-    return "unavailable";
-  };
-
   const getSlotVariant = (slot: TimeSlot, isSelected: boolean) => {
     if (isSelected) return "default";
     if (slot.isAvailable) return "outline";
@@ -163,7 +157,6 @@ export function TimeSlotPicker({
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
         {availability.slots.map((slot) => {
           const isSelected = selectedTime === slot.startTime;
-          const status = getSlotStatus(slot);
 
           return (
             <Button

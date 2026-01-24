@@ -1008,7 +1008,7 @@ export default function MasterPage() {
               ) : portfolioData && portfolioData.length > 0 ? (
                 <PortfolioGallery
                   images={portfolioData.map((item) => item.imageUrl)}
-                  masterName={masterData?.name}
+                  masterName={masterData?.master?.name}
                 />
               ) : (
                 <p className="text-center text-muted-foreground py-8">

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth";
 
 // Convert base64 string to Uint8Array for VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -20,8 +20,17 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
+interface VapidKeyResponse {
+  publicKey: string;
+}
+
+interface Subscription {
+  id: string;
+  endpoint: string;
+}
+
 export function usePushNotifications() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSupported, setIsSupported] = useState(false);
@@ -38,12 +47,13 @@ export function usePushNotifications() {
   }, []);
 
   // Get VAPID public key
-  const { data: vapidKey } = useQuery({
+  const { data: vapidKey } = useQuery<string | null>({
     queryKey: ["/api/push/vapid-public-key"],
-    queryFn: async () => {
+    queryFn: async (): Promise<string | null> => {
       try {
         const response = await apiRequest("GET", "/api/push/vapid-public-key");
-        return response.publicKey;
+        const data = await response.json() as VapidKeyResponse;
+        return data.publicKey;
       } catch (error) {
         console.log("Push notifications not configured on server");
         return null;
@@ -166,10 +176,11 @@ export function usePushNotifications() {
   });
 
   // Get current subscription status
-  const { data: subscriptions } = useQuery({
+  const { data: subscriptions } = useQuery<Subscription[]>({
     queryKey: ["/api/push/subscriptions"],
-    queryFn: async () => {
-      return apiRequest("GET", "/api/push/subscriptions");
+    queryFn: async (): Promise<Subscription[]> => {
+      const response = await apiRequest("GET", "/api/push/subscriptions");
+      return response.json() as Promise<Subscription[]>;
     },
     enabled: isSupported && !!user && !!vapidKey,
   });
