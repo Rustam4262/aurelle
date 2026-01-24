@@ -384,7 +384,6 @@ export function ServiceManagement() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
       setSelectedServices([]);
-      setShowBulkActions(false);
     },
     onError: (error: any) => {
       toast({

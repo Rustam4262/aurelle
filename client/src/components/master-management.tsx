@@ -117,7 +117,7 @@ export function MasterManagement() {
       toast({
         title: t("masters.updateSuccess", "Master updated successfully"),
       });
-      queryClient.invalidateQueries(["/api/owner/masters/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/masters/stats"] });
       setEditingMaster(null);
       setEditFormData(null);
     },
@@ -140,7 +140,7 @@ export function MasterManagement() {
       toast({
         title: t("masters.portfolioUploadSuccess", "Portfolio image added"),
       });
-      queryClient.invalidateQueries(["/api/owner/masters/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/masters/stats"] });
       setPortfolioUrl("");
     },
     onError: (error: any) => {
@@ -162,7 +162,7 @@ export function MasterManagement() {
       toast({
         title: t("masters.portfolioDeleteSuccess", "Portfolio image removed"),
       });
-      queryClient.invalidateQueries(["/api/owner/masters/stats"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/masters/stats"] });
     },
     onError: (error: any) => {
       toast({

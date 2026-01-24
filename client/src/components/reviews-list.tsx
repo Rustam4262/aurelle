@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/star-rating";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { MessageCircle, User } from "lucide-react";
 
@@ -34,7 +34,7 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [response, setResponse] = useState("");
 
@@ -48,7 +48,8 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
     queryKey: [endpoint, { limit }],
     queryFn: async () => {
       if (!endpoint) return [];
-      return apiRequest("GET", `${endpoint}?limit=${limit}`);
+      const res = await apiRequest("GET", `${endpoint}?limit=${limit}`);
+      return res.json();
     },
     enabled: !!endpoint,
   });
