@@ -432,7 +432,24 @@
         "profile": "Profile",
         "bookings": "Bookings",
         "favorites": "Favorites",
-        "reviews": "Reviews"
+        "reviews": "Reviews",
+        "analytics": "Analytics"
+      },
+      "analytics": {
+        "title": "Financial Analytics",
+        "thisMonth": "This Month",
+        "thisYear": "This Year",
+        "allTime": "All Time",
+        "averageCheck": "Average Check",
+        "mostExpensive": "Most Expensive Visit",
+        "monthlyExpenses": "Monthly Expenses",
+        "serviceBreakdown": "By Service",
+        "noData": "No data to display",
+        "topService": "Top Service",
+        "visits": "visits",
+        "spentOn": "spent on",
+        "exportPdf": "Export to PDF",
+        "exportExcel": "Export to Excel"
       },
       "editProfile": "Edit Profile",
       "fullName": "Full Name",

@@ -432,7 +432,24 @@
         "profile": "Профиль",
         "bookings": "Записи",
         "favorites": "Избранное",
-        "reviews": "Отзывы"
+        "reviews": "Отзывы",
+        "analytics": "Аналитика"
+      },
+      "analytics": {
+        "title": "Финансовая аналитика",
+        "thisMonth": "В этом месяце",
+        "thisYear": "В этом году",
+        "allTime": "Всего",
+        "averageCheck": "Средний чек",
+        "mostExpensive": "Самый дорогой визит",
+        "monthlyExpenses": "Расходы по месяцам",
+        "serviceBreakdown": "По услугам",
+        "noData": "Нет данных для отображения",
+        "topService": "Популярная услуга",
+        "visits": "визитов",
+        "spentOn": "потрачено на",
+        "exportPdf": "Экспорт в PDF",
+        "exportExcel": "Экспорт в Excel"
       },
       "editProfile": "Редактировать профиль",
       "fullName": "Полное имя",

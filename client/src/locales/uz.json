@@ -432,7 +432,24 @@
         "profile": "Profil",
         "bookings": "Bronlar",
         "favorites": "Sevimlilar",
-        "reviews": "Sharhlar"
+        "reviews": "Sharhlar",
+        "analytics": "Tahlil"
+      },
+      "analytics": {
+        "title": "Moliyaviy tahlil",
+        "thisMonth": "Bu oyda",
+        "thisYear": "Bu yilda",
+        "allTime": "Jami",
+        "averageCheck": "O'rtacha chek",
+        "mostExpensive": "Eng qimmat tashrif",
+        "monthlyExpenses": "Oylik xarajatlar",
+        "serviceBreakdown": "Xizmatlar bo'yicha",
+        "noData": "Ko'rsatish uchun ma'lumot yo'q",
+        "topService": "Mashhur xizmat",
+        "visits": "tashrif",
+        "spentOn": "sarflangan",
+        "exportPdf": "PDF ga eksport",
+        "exportExcel": "Excel ga eksport"
       },
       "editProfile": "Profilni tahrirlash",
       "fullName": "To'liq ism",
