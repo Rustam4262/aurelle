@@ -1555,41 +1555,73 @@ ID: ${booking.id.slice(0, 8)}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {favoritesData.map((favorite) => {
                   const salonName = getLocalizedText(favorite.salon?.name as any, currentLang);
-                  
+                  const salonDescription = getLocalizedText(favorite.salon?.description as any, currentLang);
+                  const coverImage = favorite.salon?.photos?.[0] || favorite.salon?.coverImage;
+
                   return (
-                    <Card key={favorite.id} className="p-4" data-testid={`favorite-card-${favorite.id}`}>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-foreground truncate">{salonName}</h3>
-                          {favorite.salon && (
-                            <div className="space-y-1 text-sm text-muted-foreground mt-2">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span className="truncate">{favorite.salon.address}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Star className="h-4 w-4 text-amber-500" />
-                                <span>{favorite.salon.averageRating} ({favorite.salon.reviewCount} {t("marketplace.salon.reviews")})</span>
-                              </div>
+                    <Card key={favorite.id} className="overflow-hidden group" data-testid={`favorite-card-${favorite.id}`}>
+                      {/* Cover Image */}
+                      <div className="relative h-40 bg-muted">
+                        {coverImage ? (
+                          <img
+                            src={coverImage}
+                            alt={salonName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Store className="h-12 w-12 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        {/* Quick remove button */}
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeFavoriteMutation.mutate(favorite.salonId)}
+                          disabled={removeFavoriteMutation.isPending}
+                          data-testid={`button-remove-favorite-${favorite.id}`}
+                        >
+                          <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                        </Button>
+                        {/* Rating badge */}
+                        {favorite.salon?.averageRating && favorite.salon.averageRating > 0 && (
+                          <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            {favorite.salon.averageRating.toFixed(1)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <h3 className="font-medium text-foreground truncate mb-1">{salonName}</h3>
+                        {favorite.salon && (
+                          <>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{favorite.salon.address}</span>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Link href={`/salon/${favorite.salonId}`}>
-                            <Button variant="outline" size="sm" data-testid={`button-view-favorite-${favorite.id}`}>
-                              {t("marketplace.client.viewSalon")}
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeFavoriteMutation.mutate(favorite.salonId)}
-                            disabled={removeFavoriteMutation.isPending}
-                            data-testid={`button-remove-favorite-${favorite.id}`}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                            {salonDescription && (
+                              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                                {salonDescription}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <Link href={`/salon/${favorite.salonId}`} className="flex-1">
+                                <Button variant="default" size="sm" className="w-full" data-testid={`button-book-favorite-${favorite.id}`}>
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  {t("marketplace.salon.bookNow")}
+                                </Button>
+                              </Link>
+                              <Link href={`/salon/${favorite.salonId}`}>
+                                <Button variant="outline" size="sm" data-testid={`button-view-favorite-${favorite.id}`}>
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </Card>
                   );
