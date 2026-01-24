@@ -581,6 +581,8 @@
       "title": "Kalendar",
       "selectDate": "Sanani tanlang",
       "today": "Bugun",
+      "dayView": "Kun",
+      "weekView": "Hafta",
       "noDateSelected": "Sana tanlanmagan",
       "selectDatePrompt": "Jadvalni ko'rish uchun sanani tanlang",
       "hasBookings": "Bronlar mavjud",

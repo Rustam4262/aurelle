@@ -581,6 +581,8 @@
       "title": "Календарь",
       "selectDate": "Выберите дату",
       "today": "Сегодня",
+      "dayView": "День",
+      "weekView": "Неделя",
       "noDateSelected": "Дата не выбрана",
       "selectDatePrompt": "Выберите дату для просмотра расписания",
       "hasBookings": "Есть записи",

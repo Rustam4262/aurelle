@@ -14,6 +14,8 @@ import {
   Plus,
   Store,
   Calendar,
+  CalendarDays,
+  CalendarRange,
   Users,
   Settings,
   Star,
@@ -22,6 +24,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { BookingCalendar } from "@/components/booking-calendar";
+import { CalendarWeekView } from "@/components/calendar-week-view";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OwnerDashboardOverview } from "@/components/owner-dashboard-overview";
@@ -54,6 +57,7 @@ export default function OwnerPage() {
   const [, navigate] = useLocation();
   const [showAddSalon, setShowAddSalon] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [calendarView, setCalendarView] = useState<"day" | "week">("day");
 
   const { data: salons, isLoading: salonsLoading } = useQuery<Salon[]>({
     queryKey: ["/api/owner/salons"],
@@ -62,6 +66,11 @@ export default function OwnerPage() {
 
   const { data: bookingsData, isLoading: bookingsLoading } = useQuery<EnrichedBooking[]>({
     queryKey: ["/api/owner/bookings"],
+    enabled: !!user && activeTab === "calendar",
+  });
+
+  const { data: mastersData } = useQuery<Master[]>({
+    queryKey: ["/api/owner/masters"],
     enabled: !!user && activeTab === "calendar",
   });
 
@@ -282,12 +291,54 @@ export default function OwnerPage() {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <BookingCalendar
-              bookings={bookingsData || []}
-              isLoading={bookingsLoading}
-              showMaster={true}
-              showClient={true}
-            />
+            {/* Calendar View Toggle */}
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-2xl text-foreground">{t("marketplace.calendar.title")}</h2>
+              <div className="flex items-center gap-1 border rounded-lg p-1">
+                <Button
+                  variant={calendarView === "day" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setCalendarView("day")}
+                  className="gap-2"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  {t("marketplace.calendar.dayView", "Day")}
+                </Button>
+                <Button
+                  variant={calendarView === "week" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setCalendarView("week")}
+                  className="gap-2"
+                >
+                  <CalendarRange className="h-4 w-4" />
+                  {t("marketplace.calendar.weekView", "Week")}
+                </Button>
+              </div>
+            </div>
+
+            {calendarView === "day" ? (
+              <BookingCalendar
+                bookings={bookingsData || []}
+                isLoading={bookingsLoading}
+                showMaster={true}
+                showClient={true}
+              />
+            ) : (
+              <CalendarWeekView
+                bookings={bookingsData || []}
+                masters={mastersData || []}
+                salons={salons?.map(s => ({
+                  id: s.id,
+                  name: s.name as { en: string; ru: string; uz: string }
+                })) || []}
+                isLoading={bookingsLoading}
+                showClient={true}
+                onBookingClick={(booking) => {
+                  // Could open booking details modal here
+                  console.log("Booking clicked:", booking.id);
+                }}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">

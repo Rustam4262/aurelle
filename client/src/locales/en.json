@@ -580,6 +580,8 @@
       "title": "Calendar",
       "selectDate": "Select Date",
       "today": "Today",
+      "dayView": "Day",
+      "weekView": "Week",
       "noDateSelected": "No date selected",
       "selectDatePrompt": "Select a date to view schedule",
       "hasBookings": "Has bookings",
