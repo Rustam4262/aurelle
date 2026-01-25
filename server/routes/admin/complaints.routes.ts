@@ -1,21 +1,28 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../../db";
 import { complaints, sanctions } from "@shared/admin-schema";
 import { users } from "@shared/schema";
-import { eq, and, desc, or, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 
 const router = Router();
+
+// Helper to get user ID from session
+function getUserId(req: Request): string {
+  return (req.session as any)?.passport?.user?.claims?.sub || "";
+}
 
 // GET /api/admin/complaints - List complaints with filters
 router.get("/", requirePermission("complaints.read"), async (req, res) => {
   try {
     const { status, category, targetType, assignedToMe, limit = "50", offset = "0" } = req.query;
+    const userId = getUserId(req);
 
     let query = db
       .select({
         complaint: complaints,
-        complainantName: users.fullName,
+        complainantFirstName: users.firstName,
+        complainantLastName: users.lastName,
         complainantEmail: users.email,
       })
       .from(complaints)
@@ -26,8 +33,8 @@ router.get("/", requirePermission("complaints.read"), async (req, res) => {
     if (status) conditions.push(eq(complaints.status, status as string));
     if (category) conditions.push(eq(complaints.category, category as string));
     if (targetType) conditions.push(eq(complaints.targetType, targetType as string));
-    if (assignedToMe === "true") {
-      conditions.push(eq(complaints.assignedAdminId, req.user!.id));
+    if (assignedToMe === "true" && userId) {
+      conditions.push(eq(complaints.assignedAdminId, userId));
     }
 
     if (conditions.length > 0) {
@@ -54,7 +61,8 @@ router.get("/:id", requirePermission("complaints.read"), async (req, res) => {
     const [complaint] = await db
       .select({
         complaint: complaints,
-        complainantName: users.fullName,
+        complainantFirstName: users.firstName,
+        complainantLastName: users.lastName,
         complainantEmail: users.email,
       })
       .from(complaints)
@@ -78,8 +86,9 @@ router.patch("/:id/assign", requirePermission("complaints.resolve"), async (req,
   try {
     const { id } = req.params;
     const { adminId } = req.body;
+    const userId = getUserId(req);
 
-    const assignTo = adminId || req.user!.id; // Assign to self if no adminId provided
+    const assignTo = adminId || userId; // Assign to self if no adminId provided
 
     const [updated] = await db
       .update(complaints)
@@ -96,7 +105,7 @@ router.patch("/:id/assign", requirePermission("complaints.resolve"), async (req,
     }
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "complaint.assign",
       entityType: "complaint",
@@ -117,6 +126,7 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
   try {
     const { id } = req.params;
     const { decision, resolutionComment, createSanction, sanctionData } = req.body;
+    const userId = getUserId(req);
 
     if (!decision || !["warning", "sanction_applied", "no_action"].includes(decision)) {
       return res.status(400).json({ error: "Invalid decision" });
@@ -148,14 +158,14 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
           internalNote: sanctionData.internalNote,
           endsAt: sanctionData.endsAt ? new Date(sanctionData.endsAt) : undefined,
           features: sanctionData.features,
-          createdBy: req.user!.id,
+          createdBy: userId,
         })
         .returning();
 
       sanctionId = newSanction.id;
 
       await logAuditAction({
-        actorUserId: req.user!.id,
+        actorUserId: userId,
         actorRole: req.admin!.roleName,
         action: "sanction.create",
         entityType: oldComplaint.targetType,
@@ -181,7 +191,7 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
       .returning();
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "complaint.resolve",
       entityType: "complaint",
@@ -204,6 +214,7 @@ router.patch("/:id/reject", requirePermission("complaints.resolve"), async (req,
   try {
     const { id } = req.params;
     const { resolutionComment } = req.body;
+    const userId = getUserId(req);
 
     const [oldComplaint] = await db
       .select()
@@ -228,7 +239,7 @@ router.patch("/:id/reject", requirePermission("complaints.resolve"), async (req,
       .returning();
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "complaint.reject",
       entityType: "complaint",

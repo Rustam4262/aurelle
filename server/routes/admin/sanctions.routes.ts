@@ -1,11 +1,16 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../../db";
 import { sanctions, sanctionReasonCodes } from "@shared/admin-schema";
 import { insertSanctionSchema, insertSanctionReasonCodeSchema } from "@shared/admin-schema";
-import { eq, and, desc, or, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 
 const router = Router();
+
+// Helper to get user ID from session
+function getUserId(req: Request): string {
+  return (req.session as any)?.passport?.user?.claims?.sub || "";
+}
 
 // GET /api/admin/sanctions - List all sanctions
 router.get("/", requirePermission("sanctions.read"), async (req, res) => {
@@ -40,12 +45,13 @@ router.get("/", requirePermission("sanctions.read"), async (req, res) => {
 router.post("/", requirePermission("sanctions.create"), async (req, res) => {
   try {
     const validatedData = insertSanctionSchema.parse(req.body);
+    const userId = getUserId(req);
 
     const [newSanction] = await db
       .insert(sanctions)
       .values({
         ...validatedData,
-        createdBy: req.user!.id,
+        createdBy: userId,
         startsAt: validatedData.startsAt
           ? new Date(validatedData.startsAt)
           : new Date(),
@@ -55,7 +61,7 @@ router.post("/", requirePermission("sanctions.create"), async (req, res) => {
 
     // Log audit action
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "sanction.create",
       entityType: validatedData.targetType,
@@ -80,6 +86,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
   try {
     const { id } = req.params;
     const { reason } = req.body;
+    const userId = getUserId(req);
 
     if (!reason) {
       return res.status(400).json({ error: "Revoke reason is required" });
@@ -100,7 +107,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
       .set({
         status: "revoked",
         revokedAt: new Date(),
-        revokedBy: req.user!.id,
+        revokedBy: userId,
         revokeReason: reason,
         updatedAt: new Date(),
       })
@@ -109,7 +116,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
 
     // Log audit action
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "sanction.revoke",
       entityType: oldSanction.targetType,
@@ -175,6 +182,7 @@ router.get("/reasons", requirePermission("sanctions.read"), async (req, res) => 
 router.post("/reasons", requirePermission("sanctions.write"), async (req, res) => {
   try {
     const validatedData = insertSanctionReasonCodeSchema.parse(req.body);
+    const userId = getUserId(req);
 
     const [newReason] = await db
       .insert(sanctionReasonCodes)
@@ -182,7 +190,7 @@ router.post("/reasons", requirePermission("sanctions.write"), async (req, res) =
       .returning();
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "sanction_reason.create",
       entityType: "sanction_reason_code",

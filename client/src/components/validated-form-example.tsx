@@ -72,10 +72,14 @@ export function ValidatedFormExample() {
     };
 
     const error = validator.current.validateField(fieldName, value, rules[fieldName]);
-    setErrors((prev) => ({
-      ...prev,
-      [fieldName]: error || undefined,
-    }));
+    if (error) {
+      setErrors((prev) => ({ ...prev, [fieldName]: error }));
+    } else {
+      setErrors((prev) => {
+        const { [fieldName]: _, ...rest } = prev;
+        return rest;
+      });
+    }
 
     return error;
   };

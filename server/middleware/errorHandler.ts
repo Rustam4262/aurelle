@@ -84,7 +84,7 @@ export function errorHandler(
 ) {
   // Default to 500 if not an AppError
   const statusCode = err instanceof AppError ? err.statusCode : 500;
-  const code = err instanceof AppError ? err.code : "INTERNAL_SERVER_ERROR";
+  const code = err instanceof AppError ? (err.code || "INTERNAL_SERVER_ERROR") : "INTERNAL_SERVER_ERROR";
   const message = err.message || "Internal Server Error";
   const details = err instanceof AppError ? err.details : undefined;
 

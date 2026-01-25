@@ -1,22 +1,29 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../../db";
-import { chatThreads, chatMessages, chatMessageReads } from "@shared/admin-schema";
+import { chatThreads, chatMessages } from "@shared/admin-schema";
 import { users } from "@shared/schema";
-import { eq, and, desc, or } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { insertChatMessageSchema } from "@shared/admin-schema";
 
 const router = Router();
 
+// Helper to get user ID from session
+function getUserId(req: Request): string {
+  return (req.session as any)?.passport?.user?.claims?.sub || "";
+}
+
 // GET /api/admin/chat/threads - List chat threads
 router.get("/threads", requirePermission("chat.read"), async (req, res) => {
   try {
     const { status, assignedToMe, limit = "50", offset = "0" } = req.query;
+    const userId = getUserId(req);
 
     let query = db
       .select({
         thread: chatThreads,
-        userName: users.fullName,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
         userEmail: users.email,
       })
       .from(chatThreads)
@@ -24,8 +31,8 @@ router.get("/threads", requirePermission("chat.read"), async (req, res) => {
 
     const conditions = [];
     if (status) conditions.push(eq(chatThreads.status, status as string));
-    if (assignedToMe === "true") {
-      conditions.push(eq(chatThreads.assignedAdminId, req.user!.id));
+    if (assignedToMe === "true" && userId) {
+      conditions.push(eq(chatThreads.assignedAdminId, userId));
     }
 
     if (conditions.length > 0) {
@@ -52,7 +59,8 @@ router.get("/threads/:id/messages", requirePermission("chat.read"), async (req, 
     const messages = await db
       .select({
         message: chatMessages,
-        senderName: users.fullName,
+        senderFirstName: users.firstName,
+        senderLastName: users.lastName,
       })
       .from(chatMessages)
       .leftJoin(users, eq(chatMessages.senderUserId, users.id))
@@ -70,11 +78,12 @@ router.get("/threads/:id/messages", requirePermission("chat.read"), async (req, 
 router.post("/threads/:id/messages", requirePermission("chat.write"), async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = getUserId(req);
 
     const messageData = {
       threadId: id,
       senderType: "admin" as const,
-      senderUserId: req.user!.id,
+      senderUserId: userId,
       text: req.body.text,
       attachments: req.body.attachments,
     };
@@ -106,7 +115,8 @@ router.post("/threads/:id/messages", requirePermission("chat.write"), async (req
 router.patch("/threads/:id/assign", requirePermission("chat.write"), async (req, res) => {
   try {
     const { id } = req.params;
-    const assignTo = req.body.adminId || req.user!.id;
+    const userId = getUserId(req);
+    const assignTo = req.body.adminId || userId;
 
     const [updated] = await db
       .update(chatThreads)
@@ -133,13 +143,14 @@ router.patch("/threads/:id/close", requirePermission("chat.write"), async (req, 
   try {
     const { id } = req.params;
     const { closeReason } = req.body;
+    const userId = getUserId(req);
 
     const [updated] = await db
       .update(chatThreads)
       .set({
         status: "closed",
         closedAt: new Date(),
-        closedBy: req.user!.id,
+        closedBy: userId,
         closeReason,
         updatedAt: new Date(),
       })
@@ -151,7 +162,7 @@ router.patch("/threads/:id/close", requirePermission("chat.write"), async (req, 
     }
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
       action: "chat_thread.close",
       entityType: "chat_thread",

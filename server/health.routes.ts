@@ -36,19 +36,14 @@ router.get("/ready", async (_req, res) => {
 
   // Check Redis (graceful degradation - optional)
   try {
-    const { default: redisClient } = await import("./cache");
-    if (redisClient) {
-      const redisStart = Date.now();
-      // Redis might be optional, so we don't fail if it's not available
-      checks.redis = {
-        status: "up",
-        latency: Date.now() - redisStart,
-      };
-    } else {
-      checks.redis = {
-        status: "disabled",
-      };
-    }
+    const { getCache } = await import("./cache");
+    const redisStart = Date.now();
+    // Try to get a test key to check if Redis is working
+    await getCache("health-check");
+    checks.redis = {
+      status: "up",
+      latency: Date.now() - redisStart,
+    };
   } catch (error) {
     // Redis is optional, so this is just a warning
     checks.redis = {

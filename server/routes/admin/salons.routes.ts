@@ -1,20 +1,25 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../../db";
 import { salons } from "@shared/schema";
-import { eq, desc, like, or } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 
 const router = Router();
 
+// Helper to get user ID from session
+function getUserId(req: Request): string {
+  return (req.session as any)?.passport?.user?.claims?.sub || "";
+}
+
 // GET /api/admin/salons - List salons
 router.get("/", requirePermission("salons.read"), async (req, res) => {
   try {
-    const { search, verified, limit = "50", offset = "0" } = req.query;
+    const { status, limit = "50", offset = "0" } = req.query;
 
     let query = db.select().from(salons);
 
-    if (verified !== undefined) {
-      query = query.where(eq(salons.isVerified, verified === "true")) as any;
+    if (status !== undefined) {
+      query = query.where(eq(salons.status, status as string)) as any;
     }
 
     const allSalons = await query
@@ -29,10 +34,11 @@ router.get("/", requirePermission("salons.read"), async (req, res) => {
   }
 });
 
-// PATCH /api/admin/salons/:id/verify - Verify salon
-router.patch("/:id/verify", requirePermission("salons.verify"), async (req, res) => {
+// PATCH /api/admin/salons/:id/activate - Activate salon (set status to active)
+router.patch("/:id/activate", requirePermission("salons.verify"), async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = getUserId(req);
 
     const [oldSalon] = await db.select().from(salons).where(eq(salons.id, id)).limit(1);
 
@@ -42,32 +48,33 @@ router.patch("/:id/verify", requirePermission("salons.verify"), async (req, res)
 
     const [updated] = await db
       .update(salons)
-      .set({ isVerified: true })
+      .set({ status: "active", updatedAt: new Date() })
       .where(eq(salons.id, id))
       .returning();
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
-      action: "salon.verify",
+      action: "salon.activate",
       entityType: "salon",
       entityId: id,
-      oldData: { isVerified: oldSalon.isVerified },
-      newData: { isVerified: true },
+      oldData: { status: oldSalon.status },
+      newData: { status: "active" },
       req,
     });
 
     res.json({ salon: updated });
   } catch (error: any) {
-    console.error("Verify salon error:", error);
-    res.status(500).json({ error: "Failed to verify salon" });
+    console.error("Activate salon error:", error);
+    res.status(500).json({ error: "Failed to activate salon" });
   }
 });
 
-// PATCH /api/admin/salons/:id/unverify - Unverify salon
-router.patch("/:id/unverify", requirePermission("salons.verify"), async (req, res) => {
+// PATCH /api/admin/salons/:id/pause - Pause salon (set status to paused)
+router.patch("/:id/pause", requirePermission("salons.verify"), async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = getUserId(req);
 
     const [oldSalon] = await db.select().from(salons).where(eq(salons.id, id)).limit(1);
 
@@ -77,25 +84,25 @@ router.patch("/:id/unverify", requirePermission("salons.verify"), async (req, re
 
     const [updated] = await db
       .update(salons)
-      .set({ isVerified: false })
+      .set({ status: "paused", updatedAt: new Date() })
       .where(eq(salons.id, id))
       .returning();
 
     await logAuditAction({
-      actorUserId: req.user!.id,
+      actorUserId: userId,
       actorRole: req.admin!.roleName,
-      action: "salon.unverify",
+      action: "salon.pause",
       entityType: "salon",
       entityId: id,
-      oldData: { isVerified: oldSalon.isVerified },
-      newData: { isVerified: false },
+      oldData: { status: oldSalon.status },
+      newData: { status: "paused" },
       req,
     });
 
     res.json({ salon: updated });
   } catch (error: any) {
-    console.error("Unverify salon error:", error);
-    res.status(500).json({ error: "Failed to unverify salon" });
+    console.error("Pause salon error:", error);
+    res.status(500).json({ error: "Failed to pause salon" });
   }
 });
 

@@ -90,32 +90,25 @@ export function initializeSentry() {
 
 /**
  * Setup Sentry middleware for Express
+ * Note: In Sentry SDK v8+, Handlers.requestHandler and tracingHandler are deprecated.
+ * Performance monitoring is auto-enabled via the integrations in init().
  */
-export function setupSentryMiddleware(app: Express) {
+export function setupSentryMiddleware(_app: Express) {
   // Only setup middleware if Sentry is initialized
   if (!process.env.SENTRY_DSN) {
     return;
   }
 
-  // Request handler - must be the first middleware
-  app.use(Sentry.Handlers.requestHandler({
-    // Include IP address
-    ip: true,
-    // Include request data
-    request: ["method", "url", "headers", "query_string", "data"],
-    // Include user data from session
-    user: ["id", "email", "username"],
-  }));
-
-  // Tracing handler - tracks performance
-  app.use(Sentry.Handlers.tracingHandler());
-
-  console.log("✅ Sentry middleware configured");
+  // In Sentry SDK v8+, request handling is automatic via the init() integrations
+  // No manual middleware setup is required
+  console.log("✅ Sentry middleware configured (auto-instrumentation enabled)");
 }
 
 /**
  * Setup Sentry error handler for Express
  * Must be called AFTER all routes and BEFORE other error handlers
+ * Note: In Sentry SDK v8+, error handling is also automatic but we keep a manual
+ * middleware for filtering which errors to capture.
  */
 export function setupSentryErrorHandler(app: Express) {
   // Only setup error handler if Sentry is initialized
@@ -123,15 +116,16 @@ export function setupSentryErrorHandler(app: Express) {
     return;
   }
 
-  // Error handler - must be before any other error middleware
-  app.use(Sentry.Handlers.errorHandler({
-    shouldHandleError(error) {
-      // Capture all errors with status code >= 500
-      // Skip client errors (4xx)
-      const statusCode = (error as any).status || (error as any).statusCode || 500;
-      return statusCode >= 500;
-    },
-  }));
+  // Custom error handler middleware that captures errors to Sentry
+  app.use((error: Error & { status?: number; statusCode?: number }, _req: Request, _res: Response, next: NextFunction) => {
+    // Capture all errors with status code >= 500
+    // Skip client errors (4xx)
+    const statusCode = error.status || error.statusCode || 500;
+    if (statusCode >= 500) {
+      Sentry.captureException(error);
+    }
+    next(error);
+  });
 
   console.log("✅ Sentry error handler configured");
 }
@@ -194,12 +188,13 @@ export function addBreadcrumb(breadcrumb: {
 }
 
 /**
- * Start a transaction for performance monitoring
+ * Start a span for performance monitoring
+ * Note: In Sentry SDK v8+, startTransaction is replaced with startSpan
  */
 export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({
-    name,
-    op,
+  return Sentry.startSpan({ name, op }, () => {
+    // Return undefined as the span is now auto-managed
+    return undefined;
   });
 }
 

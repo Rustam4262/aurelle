@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../../db";
 import { auditLogs } from "@shared/admin-schema";
 import { users } from "@shared/schema";
-import { eq, and, desc, like, or, gte, lte } from "drizzle-orm";
+import { eq, and, desc, like, gte, lte } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
 
 const router = Router();
@@ -24,7 +24,8 @@ router.get("/", requirePermission("audit.read"), async (req, res) => {
     let query = db
       .select({
         log: auditLogs,
-        actorName: users.fullName,
+        actorFirstName: users.firstName,
+        actorLastName: users.lastName,
         actorEmail: users.email,
       })
       .from(auditLogs)
@@ -61,7 +62,8 @@ router.get("/:id", requirePermission("audit.read"), async (req, res) => {
     const [log] = await db
       .select({
         log: auditLogs,
-        actorName: users.fullName,
+        actorFirstName: users.firstName,
+        actorLastName: users.lastName,
         actorEmail: users.email,
       })
       .from(auditLogs)
@@ -89,7 +91,8 @@ router.get("/entity/:entityType/:entityId", requirePermission("audit.read"), asy
     const logs = await db
       .select({
         log: auditLogs,
-        actorName: users.fullName,
+        actorFirstName: users.firstName,
+        actorLastName: users.lastName,
         actorEmail: users.email,
       })
       .from(auditLogs)

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../../db";
 import { users, salons, masters, bookings } from "@shared/schema";
 import { complaints, sanctions } from "@shared/admin-schema";
-import { eq, sql, and, gte, lte } from "drizzle-orm";
+import { eq, sql, gte } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
 
 const router = Router();
@@ -48,11 +48,11 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
       .from(users)
       .where(gte(users.createdAt, sevenDaysAgo));
 
-    // Verified salons
-    const [verifiedSalons] = await db
+    // Active salons (status = 'active')
+    const [activeSalons] = await db
       .select({ count: sql<number>`count(*)` })
       .from(salons)
-      .where(eq(salons.isVerified, true));
+      .where(eq(salons.status, "active"));
 
     res.json({
       stats: {
@@ -62,7 +62,7 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
         },
         salons: {
           total: Number(totalSalons.count),
-          verified: Number(verifiedSalons.count),
+          active: Number(activeSalons.count),
         },
         masters: {
           total: Number(totalMasters.count),

@@ -137,7 +137,7 @@ export function setupPhoneAuth(app: Express) {
         await db.insert(userProfiles).values({
           userId,
           role: "client",
-          phoneNumber,
+          phone: phoneNumber,
           isProfileComplete: false,
         });
       }
