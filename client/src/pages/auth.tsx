@@ -677,6 +677,35 @@ export default function AuthPage() {
                           ? t("marketplace.auth.signIn")
                           : t("marketplace.auth.createAccount")}
                     </Button>
+
+                    {/* Switch between login and register with clear link */}
+                    <div className="text-center pt-4 border-t border-border mt-4">
+                      {authMode === "register" ? (
+                        <p className="text-sm text-muted-foreground">
+                          {t("marketplace.auth.alreadyHaveAccount", "Already have an account?")}{" "}
+                          <button
+                            type="button"
+                            onClick={() => setAuthMode("login")}
+                            className="text-primary font-medium hover:underline"
+                            data-testid="link-switch-to-login"
+                          >
+                            {t("marketplace.auth.signIn")}
+                          </button>
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {t("marketplace.auth.dontHaveAccount", "Don't have an account?")}{" "}
+                          <button
+                            type="button"
+                            onClick={() => setAuthMode("register")}
+                            className="text-primary font-medium hover:underline"
+                            data-testid="link-switch-to-register"
+                          >
+                            {t("marketplace.auth.register")}
+                          </button>
+                        </p>
+                      )}
+                    </div>
                   </form>
                 </div>
               </TabsContent>

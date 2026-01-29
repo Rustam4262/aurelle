@@ -172,6 +172,8 @@
       "registerSuccess": "Ro'yxatdan o'tish muvaffaqiyatli",
       "accountCreated": "Hisobingiz yaratildi",
       "passwordMismatch": "Parollar mos kelmaydi",
+      "alreadyHaveAccount": "Hisobingiz bormi?",
+      "dontHaveAccount": "Hisobingiz yo'qmi?",
       "or": "yoki",
       "moreOptions": "Boshqa kirish usullari",
       "forClients": "Mijozlar uchun",

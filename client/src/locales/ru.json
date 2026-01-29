@@ -172,6 +172,8 @@
       "registerSuccess": "Регистрация успешна",
       "accountCreated": "Ваш аккаунт создан",
       "passwordMismatch": "Пароли не совпадают",
+      "alreadyHaveAccount": "Уже есть аккаунт?",
+      "dontHaveAccount": "Нет аккаунта?",
       "or": "или",
       "moreOptions": "Другие способы входа",
       "forClients": "Для клиентов",

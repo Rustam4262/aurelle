@@ -172,6 +172,8 @@
       "registerSuccess": "Registration Successful",
       "accountCreated": "Your account has been created",
       "passwordMismatch": "Passwords do not match",
+      "alreadyHaveAccount": "Already have an account?",
+      "dontHaveAccount": "Don't have an account?",
       "or": "or",
       "moreOptions": "More sign-in options",
       "forClients": "For Clients",
