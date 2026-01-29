@@ -87,10 +87,7 @@ export function ValidatedFormExample() {
   /**
    * Handle field change with real-time validation
    */
-  const handleChange = (
-    field: keyof FormData,
-    value: string
-  ) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Validate if field has been touched
@@ -221,9 +218,7 @@ export function ValidatedFormExample() {
 
   return (
     <Card className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-serif font-semibold mb-6">
-        Validated Form Example
-      </h2>
+      <h2 className="text-2xl font-serif font-semibold mb-6">Validated Form Example</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         {/* Email Field */}
@@ -330,9 +325,7 @@ export function ValidatedFormExample() {
                 </p>
               )}
             </div>
-            <span className="text-xs text-muted-foreground">
-              {formData.description.length}/500
-            </span>
+            <span className="text-xs text-muted-foreground">{formData.description.length}/500</span>
           </div>
         </div>
 
@@ -365,11 +358,7 @@ export function ValidatedFormExample() {
 
         {/* Submit Button */}
         <div className="flex gap-3 pt-4">
-          <Button
-            type="submit"
-            disabled={!isFormValid() || isSubmitting}
-            className="flex-1"
-          >
+          <Button type="submit" disabled={!isFormValid() || isSubmitting} className="flex-1">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -412,9 +401,7 @@ export function ValidatedFormExample() {
               </div>
               <div>
                 <strong>Errors:</strong>{" "}
-                {Object.keys(errors).length > 0
-                  ? JSON.stringify(errors, null, 2)
-                  : "None"}
+                {Object.keys(errors).length > 0 ? JSON.stringify(errors, null, 2) : "None"}
               </div>
               <div>
                 <strong>Touched:</strong> {JSON.stringify(touched, null, 2)}

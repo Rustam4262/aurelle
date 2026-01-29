@@ -85,7 +85,7 @@ export default function ResetPassword() {
             <CardDescription>
               {t(
                 "auth.passwordResetSuccessDescription",
-                "Your password has been successfully reset. You can now log in with your new password."
+                "Your password has been successfully reset. You can now log in with your new password.",
               )}
             </CardDescription>
           </CardHeader>
@@ -109,7 +109,7 @@ export default function ResetPassword() {
             <CardDescription>
               {t(
                 "auth.invalidResetLinkDescription",
-                "This password reset link is invalid or has expired. Please request a new one."
+                "This password reset link is invalid or has expired. Please request a new one.",
               )}
             </CardDescription>
           </CardHeader>

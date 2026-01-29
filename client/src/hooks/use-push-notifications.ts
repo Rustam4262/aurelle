@@ -6,10 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 
 // Convert base64 string to Uint8Array for VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
 
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
@@ -38,7 +36,7 @@ export function usePushNotifications() {
 
   // Check if push notifications are supported
   useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+    const supported = "serviceWorker" in navigator && "PushManager" in window;
     setIsSupported(supported);
 
     if (supported) {
@@ -52,7 +50,7 @@ export function usePushNotifications() {
     queryFn: async (): Promise<string | null> => {
       try {
         const response = await apiRequest("GET", "/api/push/vapid-public-key");
-        const data = await response.json() as VapidKeyResponse;
+        const data = (await response.json()) as VapidKeyResponse;
         return data.publicKey;
       } catch (error) {
         console.log("Push notifications not configured on server");
@@ -82,7 +80,7 @@ export function usePushNotifications() {
       }
 
       // Register service worker
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
       // Subscribe to push notifications

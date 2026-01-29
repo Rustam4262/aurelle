@@ -36,6 +36,7 @@ The platform supports two authentication methods:
 **Issue**: Raw SQL template strings with user-controlled data allowed SQL injection attacks.
 
 **Locations Fixed**:
+
 - [server/routes.ts:667](server/routes.ts#L667) - Service details query
 - [server/routes.ts:1476-1482](server/routes.ts#L1476-L1482) - Batch service queries
 
@@ -43,12 +44,13 @@ The platform supports two authentication methods:
 
 ```typescript
 // BEFORE (VULNERABLE):
-const services = await db.select().from(services)
+const services = await db
+  .select()
+  .from(services)
   .where(sql`${services.id} IN ${serviceIds}`);
 
 // AFTER (SECURE):
-const services = await db.select().from(services)
-  .where(inArray(services.id, serviceIds));
+const services = await db.select().from(services).where(inArray(services.id, serviceIds));
 ```
 
 ### 2. Rate Limiting ✅
@@ -57,15 +59,16 @@ const services = await db.select().from(services)
 
 **Limiters Configured**:
 
-| Limiter | Window | Max Requests | Applied To |
-|---------|--------|--------------|------------|
-| `authLimiter` | 15 min | 5 | Login, password reset |
-| `registerLimiter` | 15 min | 3 | Registration |
-| `createLimiter` | 1 min | 10 | Bookings, reviews, favorites |
-| `updateLimiter` | 1 min | 30 | Profile updates, master edits |
-| `globalLimiter` | 1 min | 200 | All API routes |
+| Limiter           | Window | Max Requests | Applied To                    |
+| ----------------- | ------ | ------------ | ----------------------------- |
+| `authLimiter`     | 15 min | 5            | Login, password reset         |
+| `registerLimiter` | 15 min | 3            | Registration                  |
+| `createLimiter`   | 1 min  | 10           | Bookings, reviews, favorites  |
+| `updateLimiter`   | 1 min  | 30           | Profile updates, master edits |
+| `globalLimiter`   | 1 min  | 200          | All API routes                |
 
 **Endpoints Protected**:
+
 - `/api/auth/login` - authLimiter
 - `/api/auth/register` - registerLimiter
 - `/api/bookings` (POST) - createLimiter
@@ -80,20 +83,27 @@ const services = await db.select().from(services)
 **Examples**:
 
 1. **Salon Updates** ([routes.ts:1139-1169](server/routes.ts#L1139-L1169)):
+
 ```typescript
 const updateSalonSchema = z.object({
-  name: z.object({
-    en: z.string().min(1),
-    ru: z.string().min(1),
-    uz: z.string().min(1),
-  }).optional(),
+  name: z
+    .object({
+      en: z.string().min(1),
+      ru: z.string().min(1),
+      uz: z.string().min(1),
+    })
+    .optional(),
   address: z.string().min(5).optional(),
-  phone: z.string().regex(/^\+?[0-9\s\-()]+$/).optional(),
+  phone: z
+    .string()
+    .regex(/^\+?[0-9\s\-()]+$/)
+    .optional(),
   // ... all fields validated
 });
 ```
 
 2. **Authentication** ([localAuth.ts:9-19](server/localAuth.ts#L9-L19)):
+
 ```typescript
 const registerSchema = z.object({
   email: z.string().email(),
@@ -104,12 +114,13 @@ const registerSchema = z.object({
 ```
 
 **Validation Pattern**:
+
 ```typescript
 const parsed = schema.safeParse(req.body);
 if (!parsed.success) {
   return res.status(400).json({
     error: "Invalid input",
-    details: parsed.error.errors
+    details: parsed.error.errors,
   });
 }
 ```
@@ -136,6 +147,7 @@ cookie: {
 **Hashing Algorithm**: bcrypt with 12 rounds
 
 **Locations**:
+
 - [localAuth.ts:22](server/localAuth.ts#L22) - Registration
 - [routes.ts:1181](server/routes.ts#L1181) - Master account creation
 
@@ -151,6 +163,7 @@ const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 **Critical Operations Using Transactions**:
 
 1. **Master Creation with User Account** ([routes.ts:1203-1255](server/routes.ts#L1203-L1255)):
+
 ```typescript
 const result = await db.transaction(async (tx) => {
   // Create user account
@@ -172,15 +185,15 @@ const result = await db.transaction(async (tx) => {
 **Solution**: Batch loading with `inArray()`
 
 **Example** ([routes.ts:663-667](server/routes.ts#L663-L667)):
+
 ```typescript
 // Extract all service IDs
 const serviceIds = bookings
-  .flatMap(b => b.serviceIds)
+  .flatMap((b) => b.serviceIds)
   .filter((id, idx, arr) => arr.indexOf(id) === idx);
 
 // Single batch query instead of N queries
-const serviceDetails = await db.select().from(services)
-  .where(inArray(services.id, serviceIds));
+const serviceDetails = await db.select().from(services).where(inArray(services.id, serviceIds));
 ```
 
 ## Environment Variables Security
@@ -233,6 +246,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
 ### Future Recommendation
 
 Migrate to cloud storage (Cloudinary/AWS S3) with:
+
 - Signed upload URLs
 - Content-Type validation
 - Virus scanning
@@ -287,11 +301,12 @@ Migrate to cloud storage (Cloudinary/AWS S3) with:
 
 ```typescript
 // Example: Only salon owner can update salon
-const ownerSalons = await db.select({ id: salons.id })
+const ownerSalons = await db
+  .select({ id: salons.id })
   .from(salons)
   .where(eq(salons.ownerId, userId));
 
-const ownedSalonIds = ownerSalons.map(s => s.id);
+const ownedSalonIds = ownerSalons.map((s) => s.id);
 if (!ownedSalonIds.includes(salonId)) {
   return res.status(403).json({ error: "Forbidden" });
 }
@@ -344,6 +359,7 @@ Before deploying to production:
 ## Security Contacts
 
 For security vulnerabilities, please contact:
+
 - **Email**: [Your security email]
 - **Response Time**: Within 48 hours
 - **Disclosure Policy**: Responsible disclosure - 90 days before public release

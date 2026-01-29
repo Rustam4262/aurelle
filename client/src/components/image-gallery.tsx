@@ -64,7 +64,7 @@ export function ImageGallery({
             key={index}
             className={cn(
               "relative group cursor-pointer overflow-hidden rounded-lg border bg-muted",
-              aspectClass
+              aspectClass,
             )}
             onClick={() => openLightbox(index)}
           >
@@ -72,7 +72,7 @@ export function ImageGallery({
               src={image}
               alt={`Gallery image ${index + 1}`}
               className={cn(
-                "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
               )}
               loading={enableLazyLoad ? "lazy" : undefined}
             />
@@ -205,9 +205,7 @@ export function SalonGallery({ images, className = "" }: SalonGalleryProps) {
                   {/* +N more overlay on last image */}
                   {isLastVisible && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white text-2xl font-semibold">
-                        +{remainingCount}
-                      </span>
+                      <span className="text-white text-2xl font-semibold">+{remainingCount}</span>
                     </div>
                   )}
 

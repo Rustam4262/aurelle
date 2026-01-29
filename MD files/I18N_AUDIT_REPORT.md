@@ -8,6 +8,7 @@
 ## 📋 Audit Scope
 
 ### Pages Audited:
+
 1. ✅ Admin Panel (Users, Complaints, Dashboard)
 2. ✅ Master Dashboard & Portfolio
 3. ✅ Salon Page
@@ -23,6 +24,7 @@
 #### 1. **Admin Panel - Users Management** (`client/src/pages/admin/users.tsx`)
 
 **Hardcoded Strings Found:**
+
 ```typescript
 // Line 203-204
 <h1>User Management</h1>
@@ -136,72 +138,69 @@ This action cannot be undone.
 #### 2. **Portfolio Upload Component** (`client/src/components/portfolio-upload.tsx`)
 
 **Hardcoded Strings Found:**
+
 ```typescript
 // Line 69
-"Too many images"
-`You can upload up to ${maxImages} images at a time`
+"Too many images"`You can upload up to ${maxImages} images at a time`;
 
 // Line 78
-"Invalid file type"
-`${file.name} is not an image file`
+"Invalid file type"`${file.name} is not an image file`;
 
 // Line 88
-"File too large"
-`${file.name} exceeds 5MB limit`
+"File too large"`${file.name} exceeds 5MB limit`;
 
 // Line 212
-"Upload Portfolio Images"
+("Upload Portfolio Images");
 
 // Line 215
-"Drag & drop images here, or click to select files"
+("Drag & drop images here, or click to select files");
 
 // Line 222
 "Choose Files"
-
 // Line 227
 `${images.length} / ${maxImages} images • Max 5MB per image • JPEG, PNG, WebP`
-
 // Line 237
-`Selected Images ({images.length})`
+`Selected Images ({images.length})`;
 
 // Line 241
-"Clear All"
+("Clear All");
 
 // Line 251
-{uploading ? "Uploading..." : "Upload All"}
+{
+  uploading ? "Uploading..." : "Upload All";
+}
 
 // Line 295
-"Uploaded"
+("Uploaded");
 
 // Line 328
-"No images selected yet. Drag & drop or click to select."
+("No images selected yet. Drag & drop or click to select.");
 
 // Line 335
-"Edit Image Details"
+("Edit Image Details");
 
 // Line 346
-"Title (Optional)"
-placeholder="e.g., Balayage Hair Color"
+("Title (Optional)");
+placeholder = "e.g., Balayage Hair Color";
 
 // Line 354
-"Description (Optional)"
-placeholder="Describe your work..."
+("Description (Optional)");
+placeholder = "Describe your work...";
 
 // Line 363
-"Category (Optional)"
-placeholder="e.g., Hair Color, Manicure, Makeup"
+("Category (Optional)");
+placeholder = "e.g., Hair Color, Manicure, Makeup";
 
 // Line 375
-"Cancel"
+("Cancel");
 
 // Line 377
-"Save Details"
+("Save Details");
 
 // Toast messages
-"Success"
-`${files.length} image(s) uploaded successfully`
-"Upload failed"
-"Failed to upload some images. Please try again."
+"Success"`${files.length} image(s) uploaded successfully`;
+("Upload failed");
+("Failed to upload some images. Please try again.");
 ```
 
 **Recommendation:** Create `portfolio.upload.*` namespace
@@ -211,17 +210,20 @@ placeholder="e.g., Hair Color, Manicure, Makeup"
 #### 3. **Booking Calendar Enhanced** (`client/src/components/booking-calendar.tsx`)
 
 **New Hardcoded Strings (from enhancements):**
+
 ```typescript
 // Line 157
-{t("marketplace.calendar.today")} // ✅ Already using i18n
+{
+  t("marketplace.calendar.today");
+} // ✅ Already using i18n
 
 // Line 199 (if added)
-`You can book up to ${days} days in advance`
-"Past dates are not available for booking"
-`Booking available up to ${days} days ahead`
+`You can book up to ${days} days in advance`;
+"Past dates are not available for booking"`Booking available up to ${days} days ahead`;
 ```
 
 **Status:** ✅ Mostly translated, need to add new keys for:
+
 - `marketplace.calendar.bookingWindow`
 - `marketplace.calendar.pastDatesDisabled`
 - `marketplace.calendar.maxDaysAdvance`
@@ -231,6 +233,7 @@ placeholder="e.g., Hair Color, Manicure, Makeup"
 #### 4. **Image Gallery Components** (`client/src/components/image-gallery.tsx`)
 
 **Hardcoded Strings Found:**
+
 ```typescript
 // Line 31
 "No images available"
@@ -265,6 +268,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 ```
 
 **Recommendation:** Replace with i18n:
+
 ```typescript
 const getErrorMessage = (code: string, t: TFunction): string => {
   return t(`errors.${code}`);
@@ -276,22 +280,24 @@ const getErrorMessage = (code: string, t: TFunction): string => {
 #### 6. **Form Validation** (`client/src/lib/validation.ts`)
 
 **Hardcoded Error Messages:**
+
 ```typescript
-"Обязательное поле"
-"Минимум ${min} символов"
-"Максимум ${max} символов"
-"Некорректный формат email"
-"Некорректный номер телефона"
+"Обязательное поле";
+"Минимум ${min} символов";
+"Максимум ${max} символов";
+"Некорректный формат email";
+"Некорректный номер телефона";
 // ... more Russian messages
 ```
 
 **Recommendation:** Use i18n with parameters:
+
 ```typescript
-t('validation.required')
-t('validation.minLength', { min: 8 })
-t('validation.maxLength', { max: 100 })
-t('validation.invalidEmail')
-t('validation.invalidPhone')
+t("validation.required");
+t("validation.minLength", { min: 8 });
+t("validation.maxLength", { max: 100 });
+t("validation.invalidEmail");
+t("validation.invalidPhone");
 ```
 
 ---
@@ -299,6 +305,7 @@ t('validation.invalidPhone')
 ## 📝 Translation Keys Needed
 
 ### Admin Panel
+
 ```json
 {
   "admin": {
@@ -371,6 +378,7 @@ t('validation.invalidPhone')
 ```
 
 ### Portfolio Upload
+
 ```json
 {
   "portfolio": {
@@ -418,6 +426,7 @@ t('validation.invalidPhone')
 ```
 
 ### Booking Calendar (New Keys)
+
 ```json
 {
   "marketplace": {
@@ -432,6 +441,7 @@ t('validation.invalidPhone')
 ```
 
 ### Gallery
+
 ```json
 {
   "gallery": {
@@ -443,6 +453,7 @@ t('validation.invalidPhone')
 ```
 
 ### Errors (i18n version)
+
 ```json
 {
   "errors": {
@@ -469,6 +480,7 @@ t('validation.invalidPhone')
 ```
 
 ### Validation (i18n version)
+
 ```json
 {
   "validation": {
@@ -507,30 +519,57 @@ t('validation.invalidPhone')
 ## ✅ Already Translated (Good Examples)
 
 ### Master Dashboard (`client/src/pages/master.tsx`)
+
 ```typescript
 // ✅ Good - Using t()
-{t("marketplace.master.tabs.portfolio")}
-{t("marketplace.master.myPortfolio")}
-{t("marketplace.master.addPhoto")}
-{t("marketplace.master.noPortfolio")}
+{
+  t("marketplace.master.tabs.portfolio");
+}
+{
+  t("marketplace.master.myPortfolio");
+}
+{
+  t("marketplace.master.addPhoto");
+}
+{
+  t("marketplace.master.noPortfolio");
+}
 ```
 
 ### Salon Page (`client/src/pages/salon.tsx`)
+
 ```typescript
 // ✅ Good - Using t()
-{t("marketplace.salon.verified")}
-{t("marketplace.salon.reviews")}
-{t("marketplace.salon.services")}
-{t("marketplace.salon.bookNow")}
+{
+  t("marketplace.salon.verified");
+}
+{
+  t("marketplace.salon.reviews");
+}
+{
+  t("marketplace.salon.services");
+}
+{
+  t("marketplace.salon.bookNow");
+}
 ```
 
 ### Time Slot Picker (`client/src/components/time-slot-picker.tsx`)
+
 ```typescript
 // ✅ Good - Using t()
-{t("marketplace.salon.availableSlots")}
-{t("marketplace.salon.available")}
-{t("marketplace.salon.booked")}
-{t("marketplace.salon.pending")}
+{
+  t("marketplace.salon.availableSlots");
+}
+{
+  t("marketplace.salon.available");
+}
+{
+  t("marketplace.salon.booked");
+}
+{
+  t("marketplace.salon.pending");
+}
 ```
 
 ---
@@ -538,6 +577,7 @@ t('validation.invalidPhone')
 ## 🔧 Action Items
 
 ### Priority 1 - Critical (User-Facing)
+
 1. ✅ Add admin panel translations (users, complaints)
 2. ✅ Add portfolio upload translations
 3. ✅ Add booking calendar new keys
@@ -545,11 +585,13 @@ t('validation.invalidPhone')
 5. ✅ Replace validation hardcoded messages with i18n
 
 ### Priority 2 - Important (Alt Text & Internal)
+
 6. ⏳ Add gallery component translations
 7. ⏳ Update error-handler.ts to use i18n
 8. ⏳ Update validation.ts to use i18n
 
 ### Priority 3 - Enhancement
+
 9. ⏳ Test all pages in 3 languages
 10. ⏳ Get native speaker review for UZ translations
 11. ⏳ Add missing keys to all 3 locale files
@@ -559,12 +601,14 @@ t('validation.invalidPhone')
 ## 📊 Statistics
 
 ### Current State:
+
 - **Total components audited:** 15+
 - **Hardcoded strings found:** ~150+
 - **Already translated:** ~80% (existing pages)
 - **New components need i18n:** ~20% (recent additions)
 
 ### Translation Coverage by Section:
+
 - ✅ **Home Page:** 95% translated
 - ✅ **Salon Page:** 90% translated
 - ✅ **Master Dashboard:** 85% translated
@@ -582,6 +626,7 @@ t('validation.invalidPhone')
 ### Step 1: Add Translation Keys
 
 **File:** `client/src/locales/en.json`
+
 ```json
 {
   // Add all keys from "Translation Keys Needed" section above
@@ -589,6 +634,7 @@ t('validation.invalidPhone')
 ```
 
 **File:** `client/src/locales/ru.json`
+
 ```json
 {
   // Same structure, translated to Russian
@@ -596,6 +642,7 @@ t('validation.invalidPhone')
 ```
 
 **File:** `client/src/locales/uz.json`
+
 ```json
 {
   // Same structure, translated to Uzbek
@@ -605,6 +652,7 @@ t('validation.invalidPhone')
 ### Step 2: Update Components
 
 **Example:** Admin Users Page
+
 ```typescript
 // Before
 <h1>User Management</h1>
@@ -614,17 +662,21 @@ t('validation.invalidPhone')
 ```
 
 **Example:** Portfolio Upload
+
 ```typescript
 // Before
-"Upload Portfolio Images"
+"Upload Portfolio Images";
 
 // After
-{t("portfolio.upload.title")}
+{
+  t("portfolio.upload.title");
+}
 ```
 
 ### Step 3: Update Error Handler
 
 **File:** `client/src/lib/error-handler.ts`
+
 ```typescript
 // Add i18n import
 import { useTranslation } from "react-i18next";
@@ -646,6 +698,7 @@ export function handleApiError(error: any, customMessage?: string) {
 ### Step 4: Update Validation
 
 **File:** `client/src/lib/validation.ts`
+
 ```typescript
 // Add i18n parameter
 export class FormValidator {
@@ -672,15 +725,18 @@ const validator = new FormValidator(t);
 ## 🌍 Language Support Status
 
 ### English (EN) - Base Language
+
 - ✅ Complete for existing pages
 - ⏳ Need to add new keys
 
 ### Russian (RU) - Primary Target
+
 - ✅ Most pages translated
 - ⚠️ Error messages hardcoded in Russian (need i18n)
 - ⏳ Need to add new keys
 
 ### Uzbek (UZ) - Secondary Target
+
 - ⚠️ Partial translations
 - ⏳ Need native speaker review
 - ⏳ Need to add new keys

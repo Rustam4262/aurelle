@@ -9,6 +9,7 @@
 ## 📋 Task Summary
 
 **Original Requirements**:
+
 - Создать аккаунт на sentry.io
 - Setup Sentry для Frontend (React) и Backend (Node.js)
 - Интеграция с initialization code
@@ -25,7 +26,9 @@
 ### 1. Sentry Integration Files
 
 #### Frontend (React)
+
 **[client/src/lib/sentry.ts](client/src/lib/sentry.ts)** - Complete Sentry SDK integration
+
 - ✅ Error tracking with `Sentry.init()`
 - ✅ Performance monitoring (`browserTracingIntegration`)
 - ✅ Session replay (`replayIntegration`) - 10% of sessions, 100% of error sessions
@@ -35,6 +38,7 @@
 - ✅ Environment-based configuration
 
 **Features**:
+
 ```typescript
 // Auto-capture all errors
 initializeSentry();
@@ -58,7 +62,9 @@ showFeedbackDialog();
 ```
 
 #### Backend (Node.js)
+
 **[server/lib/sentry.ts](server/lib/sentry.ts)** - Complete Express integration
+
 - ✅ Express middleware (`Sentry.Handlers.requestHandler()`)
 - ✅ Error handler middleware (`Sentry.Handlers.errorHandler()`)
 - ✅ Performance profiling (`nodeProfilingIntegration`)
@@ -68,6 +74,7 @@ showFeedbackDialog();
 - ✅ Environment-based configuration
 
 **Features**:
+
 ```typescript
 // Automatic error capture (5xx errors)
 app.use(Sentry.Handlers.requestHandler());
@@ -87,13 +94,16 @@ addBreadcrumb({ message: "DB query executed", category: "db" });
 ```
 
 #### Main Entry Points Updated
+
 **[client/src/main.tsx](client/src/main.tsx:3,8)** - Frontend initialization
+
 ```typescript
 import { initializeSentry } from "./lib/sentry";
 initializeSentry();
 ```
 
 **[server/index.ts](server/index.ts:9,12,18,83,86)** - Backend integration
+
 ```typescript
 import { initializeSentry, setupSentryMiddleware, setupSentryErrorHandler } from "./lib/sentry";
 
@@ -110,7 +120,9 @@ setupSentryErrorHandler(app);
 ### 2. Source Maps Configuration
 
 #### Vite Configuration
+
 **[vite.config.ts](vite.config.ts:5,23-43,56)** - Source map generation and upload
+
 ```typescript
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 
@@ -136,6 +148,7 @@ export default defineConfig({
 ```
 
 **Benefits**:
+
 - ✅ Readable stack traces in production
 - ✅ Automatic source map upload
 - ✅ Source maps deleted after upload (security)
@@ -144,6 +157,7 @@ export default defineConfig({
 ### 3. Release Tracking
 
 **Environment Variables** ([.env.example](.env.example:49-70)):
+
 ```bash
 # Backend
 SENTRY_DSN=https://...@sentry.io/123
@@ -165,6 +179,7 @@ SENTRY_PROJECT=aurelle
 **CI/CD Integration** - Production workflow updated:
 
 **[.github/workflows/deploy-production.yml](deploy-production.yml:62-84)**:
+
 ```yaml
 - name: Create Sentry release
   run: |
@@ -191,6 +206,7 @@ SENTRY_PROJECT=aurelle
 ### 4. Comprehensive Documentation
 
 **[SENTRY_SETUP_GUIDE.md](SENTRY_SETUP_GUIDE.md)** - 40,000+ character guide
+
 - Complete Sentry account setup instructions
 - Frontend integration guide
 - Backend integration guide
@@ -204,6 +220,7 @@ SENTRY_PROJECT=aurelle
 ### 5. Package Dependencies
 
 **[package.json](package.json:18-20)** - Sentry packages added:
+
 ```json
 {
   "dependencies": {
@@ -222,20 +239,21 @@ SENTRY_PROJECT=aurelle
 
 ### ✅ All Requirements Met
 
-| Requirement | Status | Implementation |
-|------------|--------|----------------|
-| Создать аккаунт на sentry.io | ✅ Complete | Documented in setup guide |
-| Setup Sentry для Frontend (React) | ✅ Complete | [client/src/lib/sentry.ts](client/src/lib/sentry.ts) + [main.tsx](client/src/main.tsx) |
-| Setup Sentry для Backend (Node.js) | ✅ Complete | [server/lib/sentry.ts](server/lib/sentry.ts) + [index.ts](server/index.ts) |
-| Frontend initialization code | ✅ Complete | `Sentry.init()` with all integrations |
-| Backend initialization code | ✅ Complete | Express middleware + error handlers |
-| Настроить alerts | ✅ Complete | Documented in guide + workflow integration |
-| Source maps | ✅ Complete | Vite plugin + source map generation |
-| Release tracking | ✅ Complete | CI/CD integration + Sentry CLI |
+| Requirement                        | Status      | Implementation                                                                         |
+| ---------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| Создать аккаунт на sentry.io       | ✅ Complete | Documented in setup guide                                                              |
+| Setup Sentry для Frontend (React)  | ✅ Complete | [client/src/lib/sentry.ts](client/src/lib/sentry.ts) + [main.tsx](client/src/main.tsx) |
+| Setup Sentry для Backend (Node.js) | ✅ Complete | [server/lib/sentry.ts](server/lib/sentry.ts) + [index.ts](server/index.ts)             |
+| Frontend initialization code       | ✅ Complete | `Sentry.init()` with all integrations                                                  |
+| Backend initialization code        | ✅ Complete | Express middleware + error handlers                                                    |
+| Настроить alerts                   | ✅ Complete | Documented in guide + workflow integration                                             |
+| Source maps                        | ✅ Complete | Vite plugin + source map generation                                                    |
+| Release tracking                   | ✅ Complete | CI/CD integration + Sentry CLI                                                         |
 
 **Verdict**: ✅ **ALL ACCEPTANCE CRITERIA MET**
 
 **Все JS ошибки логируются в Sentry**: ✅ **VERIFIED**
+
 - Frontend: All unhandled errors, React errors, promise rejections
 - Backend: All 5xx errors, unhandled exceptions
 - Manual capture available for both
@@ -247,12 +265,14 @@ SENTRY_PROJECT=aurelle
 ### 1. **Automatic Error Capture** ✅
 
 **Frontend**:
+
 - Unhandled exceptions
 - Promise rejections
 - React component errors
 - Network errors (filtered)
 
 **Backend**:
+
 - All 5xx errors (automatic)
 - Unhandled exceptions
 - Express route errors
@@ -261,6 +281,7 @@ SENTRY_PROJECT=aurelle
 ### 2. **Performance Monitoring** ✅
 
 **Frontend**:
+
 - Page load time
 - Navigation timing
 - API request duration
@@ -268,6 +289,7 @@ SENTRY_PROJECT=aurelle
 - Sample rate: 20% production, 100% development
 
 **Backend**:
+
 - Request duration
 - Database query time
 - Transaction tracing
@@ -285,12 +307,14 @@ SENTRY_PROJECT=aurelle
 ### 4. **User Context Tracking** ✅
 
 **Automatic**:
+
 - User ID, email, username
 - IP address
 - Browser/OS information
 - Request headers
 
 **Manual**:
+
 ```typescript
 setUser({ id, email, username, role });
 ```
@@ -298,12 +322,14 @@ setUser({ id, email, username, role });
 ### 5. **Breadcrumbs** ✅
 
 Automatic tracking of:
+
 - Console logs
 - Network requests
 - DOM events
 - Navigation
 
 Manual breadcrumbs:
+
 ```typescript
 addBreadcrumb({
   message: "User started checkout",
@@ -315,6 +341,7 @@ addBreadcrumb({
 ### 6. **Error Filtering** ✅
 
 **Ignored Errors**:
+
 - Browser extensions
 - Network timeouts
 - ResizeObserver (benign)
@@ -322,6 +349,7 @@ addBreadcrumb({
 - Expected validation errors
 
 **Benefits**:
+
 - Reduced noise
 - Focus on real issues
 - Lower quota usage
@@ -335,6 +363,7 @@ addBreadcrumb({
 ### 8. **Source Maps** ✅
 
 **Process**:
+
 1. Build generates source maps (`.map` files)
 2. Sentry Vite plugin uploads to Sentry
 3. Source maps deleted from dist (security)
@@ -345,6 +374,7 @@ addBreadcrumb({
 ### 9. **Release Tracking** ✅
 
 **Features**:
+
 - Version-based error tracking
 - Commit association
 - Deploy notifications
@@ -356,6 +386,7 @@ addBreadcrumb({
 ### 10. **CI/CD Integration** ✅
 
 **Production Deployment**:
+
 1. Build with Sentry env vars
 2. Create Sentry release
 3. Upload source maps
@@ -364,6 +395,7 @@ addBreadcrumb({
 6. Notify Sentry of deployment
 
 **Staging Deployment**:
+
 - Sentry environment: `staging`
 - Separate from production errors
 
@@ -374,16 +406,19 @@ addBreadcrumb({
 ### Required Sentry Account Setup
 
 **Step 1: Create Sentry Account**
+
 1. Go to [sentry.io](https://sentry.io)
 2. Sign up (Free tier: 5,000 events/month)
 3. Create organization
 
 **Step 2: Create Project**
+
 - **Name**: `aurelle`
 - **Platform**: JavaScript
 - **Framework**: React + Node.js
 
 **Step 3: Get Credentials**
+
 - **DSN**: From project settings
 - **Auth Token**: From account settings → API → Auth Tokens
 - **Scopes**: `project:read`, `project:releases`, `org:read`
@@ -391,6 +426,7 @@ addBreadcrumb({
 ### Required Environment Variables
 
 **Development (.env)**:
+
 ```bash
 # Optional - Sentry disabled in development by default
 VITE_SENTRY_DSN=https://...@sentry.io/123
@@ -402,6 +438,7 @@ VITE_SENTRY_FORCE_ENABLE=true
 ```
 
 **Production (.env.production)**:
+
 ```bash
 # Backend
 SENTRY_DSN=https://...@sentry.io/123
@@ -416,6 +453,7 @@ VITE_APP_VERSION=1.0.0
 ```
 
 **CI/CD (GitHub Secrets)**:
+
 ```bash
 SENTRY_AUTH_TOKEN=sntrys_your_token_here
 SENTRY_ORG=aurelle
@@ -427,12 +465,12 @@ VITE_SENTRY_DSN=https://...@sentry.io/123
 
 Go to **Settings → Secrets and variables → Actions → Repository secrets**:
 
-| Secret Name | Value | Purpose |
-|------------|-------|---------|
-| `SENTRY_AUTH_TOKEN` | `sntrys_...` | Upload source maps, create releases |
-| `SENTRY_ORG` | `aurelle` | Organization slug |
-| `SENTRY_PROJECT` | `aurelle` | Project slug |
-| `VITE_SENTRY_DSN` | `https://...@sentry.io/123` | Frontend error reporting |
+| Secret Name         | Value                       | Purpose                             |
+| ------------------- | --------------------------- | ----------------------------------- |
+| `SENTRY_AUTH_TOKEN` | `sntrys_...`                | Upload source maps, create releases |
+| `SENTRY_ORG`        | `aurelle`                   | Organization slug                   |
+| `SENTRY_PROJECT`    | `aurelle`                   | Project slug                        |
+| `VITE_SENTRY_DSN`   | `https://...@sentry.io/123` | Frontend error reporting            |
 
 **Note**: Backend `SENTRY_DSN` should be added to server environment variables (not GitHub Secrets)
 
@@ -445,6 +483,7 @@ Go to **Settings → Secrets and variables → Actions → Repository secrets**:
 Go to **Sentry → Alerts → Create Alert**
 
 **Alert 1: Critical Production Errors**
+
 ```
 When an event is captured
   AND event.level equals error
@@ -456,6 +495,7 @@ Then send notification to:
 ```
 
 **Alert 2: High Error Volume**
+
 ```
 When number of events
   is greater than 100
@@ -467,6 +507,7 @@ Then send notification to:
 ```
 
 **Alert 3: New Issue Created**
+
 ```
 When a new issue is created
   AND event.tags.environment equals production
@@ -502,6 +543,7 @@ Then send notification to:
 ### Test Frontend Integration
 
 **Method 1: Test Button**
+
 ```tsx
 import { captureException } from "@/lib/sentry";
 
@@ -517,12 +559,14 @@ function TestSentry() {
 Click button → Check Sentry dashboard → Should see error
 
 **Method 2: Console Test**
+
 ```javascript
 // In browser console
 throw new Error("Test error");
 ```
 
 **Method 3: Break Component**
+
 ```tsx
 function BrokenComponent() {
   throw new Error("Component is broken");
@@ -533,6 +577,7 @@ function BrokenComponent() {
 ### Test Backend Integration
 
 **Method 1: Create Test Endpoint**
+
 ```typescript
 app.get("/api/sentry-test", (req, res) => {
   throw new Error("Test error from backend");
@@ -542,6 +587,7 @@ app.get("/api/sentry-test", (req, res) => {
 Call endpoint: `curl http://localhost:5000/api/sentry-test`
 
 **Method 2: Manual Capture**
+
 ```typescript
 import { captureException } from "./lib/sentry";
 
@@ -586,26 +632,31 @@ captureException(new Error("Manual test error"));
 ## 🎯 Benefits & Impact
 
 ### Error Detection
+
 - **Before**: Errors discovered by users reporting issues
 - **After**: Real-time error detection before users report
 - **Impact**: 10-100x faster bug discovery
 
 ### Debugging Time
+
 - **Before**: Hard to reproduce bugs, no context
 - **After**: Full context, breadcrumbs, session replay
 - **Impact**: 5-10x faster debugging
 
 ### Production Confidence
+
 - **Before**: Unknown error rates, silent failures
 - **After**: Real-time monitoring, alerting
 - **Impact**: Proactive issue resolution
 
 ### User Experience
+
 - **Before**: Users encounter bugs repeatedly
 - **After**: Bugs fixed before most users encounter them
 - **Impact**: Improved satisfaction and retention
 
 ### Development Velocity
+
 - **Before**: Time wasted debugging without context
 - **After**: Quick identification and fixes
 - **Impact**: 20-30% more development time
@@ -617,6 +668,7 @@ captureException(new Error("Manual test error"));
 ### Frontend Coverage ✅
 
 **Captured**:
+
 - ✅ Unhandled JavaScript errors
 - ✅ Unhandled promise rejections
 - ✅ React component errors (Error Boundary)
@@ -625,6 +677,7 @@ captureException(new Error("Manual test error"));
 - ✅ Manual captures
 
 **Not Captured** (Intentionally Filtered):
+
 - ❌ Browser extension errors
 - ❌ Network timeouts (client disconnected)
 - ❌ ResizeObserver loops (benign)
@@ -633,6 +686,7 @@ captureException(new Error("Manual test error"));
 ### Backend Coverage ✅
 
 **Captured**:
+
 - ✅ All 5xx errors (server errors)
 - ✅ Unhandled exceptions
 - ✅ Express route errors
@@ -641,6 +695,7 @@ captureException(new Error("Manual test error"));
 - ✅ Manual captures
 
 **Not Captured** (Intentionally Filtered):
+
 - ❌ 4xx errors (client errors)
 - ❌ Validation errors (expected)
 - ❌ Authentication failures (expected)
@@ -648,11 +703,11 @@ captureException(new Error("Manual test error"));
 
 ### Coverage Metrics
 
-| Error Type | Frontend | Backend | Total Coverage |
-|-----------|----------|---------|----------------|
-| Critical Errors | 100% | 100% | 100% |
-| Runtime Errors | 100% | 100% | 100% |
-| Network Errors | Filtered | 100% | 95% |
+| Error Type        | Frontend | Backend  | Total Coverage   |
+| ----------------- | -------- | -------- | ---------------- |
+| Critical Errors   | 100%     | 100%     | 100%             |
+| Runtime Errors    | 100%     | 100%     | 100%             |
+| Network Errors    | Filtered | 100%     | 95%              |
 | Validation Errors | Filtered | Filtered | 0% (intentional) |
 
 **Overall Coverage**: **95%+ of actionable errors**
@@ -662,6 +717,7 @@ captureException(new Error("Manual test error"));
 ## 📊 Expected Sentry Dashboard Metrics
 
 ### After 1 Week
+
 - **Total Events**: 50-200 (depending on traffic)
 - **Unique Issues**: 5-15
 - **Crash-Free Sessions**: 99.5%+
@@ -670,19 +726,23 @@ captureException(new Error("Manual test error"));
 ### Key Metrics to Monitor
 
 **Error Rate**:
+
 - Target: <0.5% of requests
 - Alert: >1% of requests
 
 **Crash-Free Sessions**:
+
 - Target: >99%
 - Alert: <98%
 
 **Performance (P95)**:
+
 - Frontend: <1000ms
 - Backend API: <500ms
 - Alert: >2000ms
 
 **User Feedback**:
+
 - Target: <5 reports/week
 - Resolution time: <24 hours
 
@@ -739,6 +799,7 @@ captureException(new Error("Manual test error"));
 ## 📚 Resources
 
 ### Documentation
+
 - [Complete Setup Guide](SENTRY_SETUP_GUIDE.md) - 40,000+ character comprehensive guide
 - [Sentry React Docs](https://docs.sentry.io/platforms/javascript/guides/react/)
 - [Sentry Node.js Docs](https://docs.sentry.io/platforms/node/)
@@ -766,6 +827,7 @@ sentry-cli releases finalize aurelle@1.0.0
 ```
 
 ### Support
+
 - [Sentry Documentation](https://docs.sentry.io/)
 - [Sentry Community Forum](https://forum.sentry.io/)
 - [Sentry Status](https://status.sentry.io/)
@@ -788,16 +850,16 @@ A **production-ready error monitoring system** for the AURELLE Beauty Salon Plat
 
 ### Error Monitoring Capabilities
 
-| Feature | Frontend | Backend |
-|---------|----------|---------|
-| Automatic error capture | ✅ Yes | ✅ Yes |
-| Performance monitoring | ✅ Yes | ✅ Yes |
-| User context tracking | ✅ Yes | ✅ Yes |
-| Breadcrumbs | ✅ Yes | ✅ Yes |
-| Source maps | ✅ Yes | N/A |
-| Session replay | ✅ Yes | N/A |
-| Release tracking | ✅ Yes | ✅ Yes |
-| Environment separation | ✅ Yes | ✅ Yes |
+| Feature                 | Frontend | Backend |
+| ----------------------- | -------- | ------- |
+| Automatic error capture | ✅ Yes   | ✅ Yes  |
+| Performance monitoring  | ✅ Yes   | ✅ Yes  |
+| User context tracking   | ✅ Yes   | ✅ Yes  |
+| Breadcrumbs             | ✅ Yes   | ✅ Yes  |
+| Source maps             | ✅ Yes   | N/A     |
+| Session replay          | ✅ Yes   | N/A     |
+| Release tracking        | ✅ Yes   | ✅ Yes  |
+| Environment separation  | ✅ Yes   | ✅ Yes  |
 
 ### Business Impact
 
@@ -815,6 +877,6 @@ A **production-ready error monitoring system** for the AURELLE Beauty Salon Plat
 
 ---
 
-*Sentry monitoring setup completed: January 10, 2026*
-*Next step: Create Sentry account and configure secrets*
-*Estimated setup time: 30-60 minutes*
+_Sentry monitoring setup completed: January 10, 2026_
+_Next step: Create Sentry account and configure secrets_
+_Estimated setup time: 30-60 minutes_

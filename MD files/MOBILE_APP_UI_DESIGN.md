@@ -13,6 +13,7 @@
 This document provides a comprehensive UI/UX design specification for the AURELLE native mobile application. The design adapts the existing web platform to native mobile patterns while maintaining brand consistency and adding mobile-specific enhancements.
 
 **Goals**:
+
 - Adapt web design to native iOS/Android patterns
 - Create intuitive bottom navigation
 - Implement gesture-based interactions
@@ -43,6 +44,7 @@ This document provides a comprehensive UI/UX design specification for the AURELL
 **Core Philosophy**: AURELLE mobile is not a "shrunk web app" — it's a native experience optimized for mobile usage patterns.
 
 **Key Differences from Web**:
+
 - **Navigation**: Bottom tab bar (not top navbar)
 - **Gestures**: Swipe, pull-to-refresh, long-press
 - **Interactions**: Tap-optimized (min 44x44pt hit areas)
@@ -64,11 +66,13 @@ This document provides a comprehensive UI/UX design specification for the AURELL
 ### Screen Sizes & Breakpoints
 
 **iOS Devices** (Design for):
+
 - iPhone SE: 375 x 667 pt (smallest)
 - iPhone 13/14/15: 390 x 844 pt (standard)
 - iPhone 15 Pro Max: 430 x 932 pt (largest)
 
 **Android Devices** (Design for):
+
 - Small: 360 x 640 dp
 - Medium: 390 x 844 dp
 - Large: 412 x 915 dp
@@ -85,6 +89,7 @@ This document provides a comprehensive UI/UX design specification for the AURELL
 #### 1. Navigation Paradigm
 
 **Web** (Current):
+
 ```
 ┌─────────────────────────────────┐
 │ Top Navbar (Logo, Links, Auth) │
@@ -97,6 +102,7 @@ This document provides a comprehensive UI/UX design specification for the AURELL
 ```
 
 **Mobile** (New):
+
 ```
 ┌─────────────────────────────────┐
 │ Status Bar (System)             │
@@ -118,27 +124,29 @@ This document provides a comprehensive UI/UX design specification for the AURELL
 
 #### 2. UI Components Mapping
 
-| Web Component | Native iOS | Native Android | React Native |
-|---------------|------------|----------------|--------------|
-| Button | UIButton | Material Button | Pressable + styled View |
-| Input | UITextField | TextInput | TextInput |
-| Card | UIView (shadow) | CardView (elevation) | View (shadow/elevation) |
-| Modal | UIModalPresentationStyle | BottomSheetDialog | Modal (slide from bottom) |
-| Dropdown | UIPickerView | Spinner | Custom Picker |
-| Switch | UISwitch | Switch | Switch |
-| Tab Navigation | UITabBar | BottomNavigationView | react-navigation bottom-tabs |
-| Alert | UIAlertController | AlertDialog | Alert API |
-| Toast | - | Snackbar | Custom Toast (react-native-toast-message) |
+| Web Component  | Native iOS               | Native Android       | React Native                              |
+| -------------- | ------------------------ | -------------------- | ----------------------------------------- |
+| Button         | UIButton                 | Material Button      | Pressable + styled View                   |
+| Input          | UITextField              | TextInput            | TextInput                                 |
+| Card           | UIView (shadow)          | CardView (elevation) | View (shadow/elevation)                   |
+| Modal          | UIModalPresentationStyle | BottomSheetDialog    | Modal (slide from bottom)                 |
+| Dropdown       | UIPickerView             | Spinner              | Custom Picker                             |
+| Switch         | UISwitch                 | Switch               | Switch                                    |
+| Tab Navigation | UITabBar                 | BottomNavigationView | react-navigation bottom-tabs              |
+| Alert          | UIAlertController        | AlertDialog          | Alert API                                 |
+| Toast          | -                        | Snackbar             | Custom Toast (react-native-toast-message) |
 
 ---
 
 #### 3. Typography Adaptation
 
 **Web Typography** (from DESIGN_SYSTEM.md):
+
 - Font: Inter (sans), Cormorant Garamond (serif)
 - Sizes: 48px → 12px
 
 **Native Typography** (iOS SF Pro / Android Roboto):
+
 ```
 Display 1 (Hero):     34pt / 41pt line (iOS Large Title)
 Heading 1:            28pt / 34pt line (iOS Title 1)
@@ -151,6 +159,7 @@ Caption:              13pt / 18pt line (iOS Caption 1)
 ```
 
 **Font Stack**:
+
 - **iOS**: SF Pro Text, SF Pro Display (system default)
 - **Android**: Roboto, Noto Sans (system default)
 - **Custom Serif**: Cormorant Garamond (for brand headings only)
@@ -162,6 +171,7 @@ Caption:              13pt / 18pt line (iOS Caption 1)
 #### 4. Spacing Adaptation
 
 **Web Spacing** (px → pt/dp):
+
 ```
 spacing-0: 0px   → 0pt
 spacing-1: 4px   → 4pt
@@ -175,6 +185,7 @@ spacing-10: 40pt → 40pt
 ```
 
 **Mobile-Specific Additions**:
+
 ```
 safe-top: 47pt (notch area)
 safe-bottom: 34pt (home indicator)
@@ -187,24 +198,26 @@ nav-bar-height: 44pt (iOS), 56dp (Android)
 #### 5. Color System
 
 **Keep Web Colors** (from DESIGN_SYSTEM.md):
+
 - Primary: `#C81D60` (light), `#E84281` (dark)
 - Background: `#FFFFFF` (light), `#121212` (dark)
 - All semantic colors maintained
 
 **Mobile Additions**:
+
 ```javascript
 // iOS specific
 colors.ios = {
-  systemGray: 'rgba(142, 142, 147, 1)',
-  systemGray2: 'rgba(174, 174, 178, 1)',
-  separator: 'rgba(60, 60, 67, 0.29)',
-  separatorDark: 'rgba(84, 84, 88, 0.65)',
+  systemGray: "rgba(142, 142, 147, 1)",
+  systemGray2: "rgba(174, 174, 178, 1)",
+  separator: "rgba(60, 60, 67, 0.29)",
+  separatorDark: "rgba(84, 84, 88, 0.65)",
 };
 
 // Android specific
 colors.android = {
-  ripple: 'rgba(0, 0, 0, 0.12)',
-  rippleDark: 'rgba(255, 255, 255, 0.12)',
+  ripple: "rgba(0, 0, 0, 0.12)",
+  rippleDark: "rgba(255, 255, 255, 0.12)",
 };
 ```
 
@@ -213,6 +226,7 @@ colors.android = {
 #### 6. Gesture Interactions
 
 **Web Interactions**:
+
 - Click, Hover, Scroll
 - Desktop-first (mouse/trackpad)
 
@@ -252,6 +266,7 @@ colors.android = {
 **Purpose**: Brand introduction during app launch (1-2 seconds)
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │                                 │
@@ -267,6 +282,7 @@ colors.android = {
 ```
 
 **Elements**:
+
 - **Background**: Gradient (primary to accent)
   ```
   Linear gradient: #C81D60 (top) → #E8D9DF (bottom)
@@ -282,11 +298,13 @@ colors.android = {
   - Style: iOS ActivityIndicator / Android CircularProgressIndicator
 
 **Animation**:
+
 - Fade in logo (300ms)
 - Rotate spinner
 - Fade out to onboarding/home (300ms)
 
 **Technical Notes**:
+
 - Use `react-native-splash-screen` library
 - Static image for instant display
 - JavaScript takes over for animations
@@ -300,6 +318,7 @@ colors.android = {
 #### Onboarding Screen 1: Welcome
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ Status Bar                      │
@@ -319,6 +338,7 @@ colors.android = {
 ```
 
 **Elements**:
+
 - **Illustration**: 300x300pt (from ICONOGRAPHY guide)
   - Person waving with sparkles
   - AURELLE logo
@@ -340,6 +360,7 @@ colors.android = {
 #### Onboarding Screen 2: Discover
 
 **Content**:
+
 - **Illustration**: Map with salon pins
 - **Heading**: "Discover Nearby Salons"
 - **Subheading**: "Find the perfect salon for your needs"
@@ -349,6 +370,7 @@ colors.android = {
 #### Onboarding Screen 3: Book & Reminders
 
 **Content**:
+
 - **Illustration**: Calendar with notification bell
 - **Heading**: "Book & Get Reminders"
 - **Subheading**: "Never miss an appointment"
@@ -356,6 +378,7 @@ colors.android = {
 - **Buttons**: "Skip" | "Get Started" (primary, full width)
 
 **Gestures**:
+
 - Swipe left/right to navigate screens
 - Tap dots to jump to screen
 
@@ -364,6 +387,7 @@ colors.android = {
 ### 5. Login Screen
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ Status Bar                      │
@@ -392,6 +416,7 @@ colors.android = {
 ```
 
 **Elements**:
+
 - **Navigation Bar**:
   - Back button (← top left)
   - Title: "Sign In" (iOS) or empty (Android uses heading)
@@ -452,11 +477,13 @@ colors.android = {
   - Action: Navigate to Register screen
 
 **Validation**:
+
 - Real-time email validation (format check)
 - Password min 8 characters
 - Error states: Red border, helper text below field
 
 **Gestures**:
+
 - Tap outside to dismiss keyboard
 - Swipe from left edge to go back (iOS)
 
@@ -465,6 +492,7 @@ colors.android = {
 ### 6. Register Screen
 
 **Layout**: Similar to Login, with additions:
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Create Account        │
@@ -488,12 +516,14 @@ colors.android = {
 ```
 
 **Additional Fields**:
+
 - **Full Name**: Text input, required
 - **Phone**: Phone keyboard, country code selector
 - **Confirm Password**: Must match password
 - **Terms Checkbox**: Required, tappable link to open Terms modal
 
 **Validation**:
+
 - All fields required
 - Email format validation
 - Phone format validation
@@ -505,6 +535,7 @@ colors.android = {
 ### 7. Home Screen (Search Salons)
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ Status Bar                      │
@@ -535,6 +566,7 @@ colors.android = {
 ```
 
 **Navigation Bar** (Custom, not system):
+
 - **Logo**: AURELLE wordmark (left)
   - Size: 100pt width
   - Font: Cormorant Garamond
@@ -546,6 +578,7 @@ colors.android = {
   - Action: Open profile screen
 
 **Search Bar**:
+
 - Height: 56pt
 - Border radius: 28pt (fully rounded)
 - Background: Card color
@@ -555,12 +588,14 @@ colors.android = {
 - Action: Tap to open search screen (dedicated)
 
 **Location Selector**:
+
 - Display: "📍 Tashkent ▼"
 - Position: Below search bar (8pt gap)
 - Action: Open location picker bottom sheet
 - Shows current city or "Nearby"
 
 **Category Tabs**:
+
 - Horizontal scroll (snap to item)
 - Items: All, Haircuts, Nails, Spa, Makeup, Massage
 - Active tab: Primary color background, white text
@@ -569,6 +604,7 @@ colors.android = {
 - Pill shape (fully rounded)
 
 **Salon Cards** (Vertical list):
+
 - **Layout**: Horizontal (image left, content right)
   - **Image**: 100x100pt, rounded 12pt, left aligned
   - **Content**:
@@ -586,10 +622,12 @@ colors.android = {
 - **Gesture**: Swipe right on card → Quick favorite toggle (haptic feedback)
 
 **Pull-to-Refresh**:
+
 - Pull down list to refresh salon data
 - Shows loading indicator at top
 
 **Empty State**:
+
 - Illustration: No salons found (from ICONOGRAPHY guide)
 - Text: "No salons found"
 - CTA: "Clear filters"
@@ -599,6 +637,7 @@ colors.android = {
 ### 8. Salon Detail Screen
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ [Photo Gallery]                 │ ← Full width, swipeable
@@ -626,6 +665,7 @@ colors.android = {
 ```
 
 **Photo Gallery**:
+
 - Full width, 300pt height
 - Horizontal swipe to view photos
 - Page indicators (dots) at bottom
@@ -635,6 +675,7 @@ colors.android = {
 - Heart/Share buttons (top right, white icons)
 
 **Salon Info Card**:
+
 - **Name**: Heading 1 (28pt), Cormorant Garamond
 - **Rating**: ⭐ 4.8 (120 reviews)
   - Tap to open reviews tab
@@ -649,11 +690,13 @@ colors.android = {
   - 🗺️ Directions
 
 **Tab Navigation** (Segmented Control):
+
 - Tabs: Services | Team | Reviews | About
 - Active tab: Underline (primary color)
 - Swipe left/right to change tabs (synced with content)
 
 **Services Tab**:
+
 - List of service cards
 - Each card:
   - Service name (Heading 3)
@@ -663,6 +706,7 @@ colors.android = {
 - Grouped by category (e.g., "Haircuts", "Nails")
 
 **Team Tab**:
+
 - Grid of master cards (2 columns on small screens)
 - Each card:
   - Photo (circular, 80pt)
@@ -672,6 +716,7 @@ colors.android = {
   - "Book with [Name]" button
 
 **Reviews Tab**:
+
 - List of review cards
 - Each review:
   - Avatar + name
@@ -682,12 +727,14 @@ colors.android = {
 - "Write a Review" button at top
 
 **About Tab**:
+
 - Description (expandable if long)
 - Amenities (icons + labels)
 - Working hours (all days)
 - Location map (embedded, tappable for fullscreen)
 
 **Sticky Book Button** (Fixed bottom):
+
 - Full width
 - Height: 56pt + safe area
 - Background: Primary
@@ -701,6 +748,7 @@ colors.android = {
 **Layout**: Multi-step flow (5 steps) adapted from BOOKING_FLOW_REDESIGN.md
 
 **Step 1: Select Service**
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Select Service        │
@@ -725,6 +773,7 @@ colors.android = {
 ```
 
 **Step 2: Select Master (Optional)**
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Select Master         │
@@ -747,6 +796,7 @@ colors.android = {
 ```
 
 **Step 3: Select Date**
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Select Date           │
@@ -768,6 +818,7 @@ colors.android = {
 ```
 
 **Step 4: Select Time**
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Select Time           │
@@ -788,6 +839,7 @@ colors.android = {
 ```
 
 **Step 5: Confirm**
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Confirm Booking       │
@@ -814,10 +866,12 @@ colors.android = {
 ```
 
 **Gestures**:
+
 - Swipe right to go back to previous step
 - Tap "Edit" to jump back to specific step (state preserved)
 
 **Success Screen** (After confirmation):
+
 ```
 ┌─────────────────────────────────┐
 │                                 │
@@ -846,6 +900,7 @@ colors.android = {
 ### 10. Profile Screen
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ Status Bar                      │
@@ -880,6 +935,7 @@ colors.android = {
 ```
 
 **Header**:
+
 - **Avatar**: 100pt circle
   - Editable (tap to upload photo)
 - **Name**: Heading 2
@@ -887,6 +943,7 @@ colors.android = {
 - **Edit Profile Button**: Secondary button, rounded
 
 **Menu Sections**:
+
 - **Card 1 (Personal)**:
   - My Bookings → Navigate to bookings list
   - Favorites → Navigate to saved salons
@@ -901,6 +958,7 @@ colors.android = {
   - Privacy Policy → Web view
 
 **Sign Out Button**:
+
 - Full width
 - Destructive color (red)
 - Height: 56pt
@@ -911,6 +969,7 @@ colors.android = {
 ### 11. Notifications Screen
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────┐
 │ [← Back]  Notifications         │
@@ -941,6 +1000,7 @@ colors.android = {
 ```
 
 **Notification Card**:
+
 - Icon (left, 40pt): 🔔 / ⭐ / 📅 / ❤️
 - Content:
   - **Title**: Heading 4 (20pt), bold
@@ -951,6 +1011,7 @@ colors.android = {
 - Swipe left: Delete (iOS) / Options (Android)
 
 **Empty State**:
+
 - Illustration: Bell with checkmark
 - Text: "No notifications"
 - Description: "You're all caught up!"
@@ -965,6 +1026,7 @@ colors.android = {
 ### Tab Bar Design
 
 **iOS Style** (UITabBar):
+
 ```
 ┌─────────────────────────────────┐
 │ [🏠] [🔍] [❤️] [📅] [👤]       │
@@ -975,6 +1037,7 @@ colors.android = {
 ```
 
 **Android Style** (BottomNavigationView):
+
 ```
 ┌─────────────────────────────────┐
 │ [🏠] [🔍] [❤️] [📅] [👤]       │
@@ -985,15 +1048,16 @@ colors.android = {
 
 ### 5 Tabs
 
-| Icon | Label | Screen | Badge |
-|------|-------|--------|-------|
-| 🏠 Home | Home | Home (Search Salons) | - |
-| 🔍 Search | Search | Dedicated search screen | - |
-| ❤️ Favorites | Fav | Saved salons list | - |
-| 📅 Bookings | Book | User bookings list | Count if upcoming |
-| 👤 Profile | Profile | User profile | Dot if new notification |
+| Icon         | Label   | Screen                  | Badge                   |
+| ------------ | ------- | ----------------------- | ----------------------- |
+| 🏠 Home      | Home    | Home (Search Salons)    | -                       |
+| 🔍 Search    | Search  | Dedicated search screen | -                       |
+| ❤️ Favorites | Fav     | Saved salons list       | -                       |
+| 📅 Bookings  | Book    | User bookings list      | Count if upcoming       |
+| 👤 Profile   | Profile | User profile            | Dot if new notification |
 
 **Specifications**:
+
 - Height: 83pt (iOS), 56dp (Android)
 - Icon size: 24pt
 - Active state: Primary color icon + label
@@ -1002,6 +1066,7 @@ colors.android = {
 - Long press: Show tooltip (iOS)
 
 **Accessibility**:
+
 - VoiceOver labels: "Home tab", "Search tab", etc.
 - Minimum touch target: 44x44pt
 
@@ -1011,29 +1076,30 @@ colors.android = {
 
 ### Comprehensive Gesture Map
 
-| Screen | Gesture | Action | Feedback |
-|--------|---------|--------|----------|
-| **Home** | Scroll | Browse salons | - |
-| | Pull down | Refresh list | Loading spinner |
-| | Swipe right on card | Quick favorite | Haptic + animation |
-| | Tap card | Open detail | - |
-| **Salon Detail** | Swipe photos | View gallery | Page indicators |
-| | Pinch photo | Zoom | - |
-| | Scroll | View content | - |
-| | Tap phone | Call salon | System dialer |
-| | Tap map | Open Maps | System maps app |
-| **Booking** | Swipe right | Go back step | Slide transition |
-| | Tap outside | Dismiss keyboard | - |
-| **Search** | Pull down | Refresh results | Loading spinner |
-| | Swipe left filter chip | Remove filter | Haptic |
-| **Notifications** | Swipe left (iOS) | Delete | Red delete button |
-| | Swipe right (Android) | Mark read | Gray checkmark |
-| | Pull down | Refresh | Loading spinner |
-| **Profile** | Long press avatar | Upload photo | Action sheet |
+| Screen            | Gesture                | Action           | Feedback           |
+| ----------------- | ---------------------- | ---------------- | ------------------ |
+| **Home**          | Scroll                 | Browse salons    | -                  |
+|                   | Pull down              | Refresh list     | Loading spinner    |
+|                   | Swipe right on card    | Quick favorite   | Haptic + animation |
+|                   | Tap card               | Open detail      | -                  |
+| **Salon Detail**  | Swipe photos           | View gallery     | Page indicators    |
+|                   | Pinch photo            | Zoom             | -                  |
+|                   | Scroll                 | View content     | -                  |
+|                   | Tap phone              | Call salon       | System dialer      |
+|                   | Tap map                | Open Maps        | System maps app    |
+| **Booking**       | Swipe right            | Go back step     | Slide transition   |
+|                   | Tap outside            | Dismiss keyboard | -                  |
+| **Search**        | Pull down              | Refresh results  | Loading spinner    |
+|                   | Swipe left filter chip | Remove filter    | Haptic             |
+| **Notifications** | Swipe left (iOS)       | Delete           | Red delete button  |
+|                   | Swipe right (Android)  | Mark read        | Gray checkmark     |
+|                   | Pull down              | Refresh          | Loading spinner    |
+| **Profile**       | Long press avatar      | Upload photo     | Action sheet       |
 
 ### Haptic Feedback
 
 **Use Cases**:
+
 - Toggle favorite (light impact)
 - Delete notification (medium impact)
 - Booking confirmed (success notification)
@@ -1050,30 +1116,36 @@ colors.android = {
 ### iOS (Human Interface Guidelines)
 
 **Navigation Patterns**:
+
 - Use UINavigationBar for hierarchical navigation
 - Back button always on top left (< Back or screen title)
 - Large titles for top-level screens (Home, Profile)
 - Inline titles for detail screens
 
 **Modals**:
+
 - Present modally for interrupting tasks (booking flow)
 - Sheet presentation style (iOS 15+) for partial screens
 - Swipe down to dismiss
 
 **System Icons**:
+
 - Use SF Symbols where applicable
 - Outline style (not filled, unless active state)
 
 **Typography**:
+
 - SF Pro Text for body (<20pt)
 - SF Pro Display for headings (≥20pt)
 - Dynamic Type support (accessibility)
 
 **Spacing**:
+
 - Safe area insets (notch, home indicator)
 - Edge-to-edge content with proper padding
 
 **Interactions**:
+
 - Haptic Feedback on important actions
 - Long press for context menus
 - Swipe from left edge to go back
@@ -1083,33 +1155,40 @@ colors.android = {
 ### Android (Material Design 3)
 
 **Navigation Patterns**:
+
 - Use Toolbar for top navigation
 - Up button (←) for hierarchical navigation
 - No back button text (just icon)
 
 **Modals**:
+
 - BottomSheet for options, filters
 - Dialog for alerts, confirmations
 - Scrim (overlay) when modal is open
 
 **System Icons**:
+
 - Material Icons (outlined style)
 - 24dp size (standard)
 
 **Typography**:
+
 - Roboto for UI text
 - Scale: Display, Headline, Title, Body, Label
 
 **Spacing**:
+
 - 8dp grid system
 - Edge-to-edge with system bars
 
 **Interactions**:
+
 - Ripple effect on tap
 - Long press for context menus
 - Swipe to dismiss (bottom sheets)
 
 **Elevation**:
+
 - Use elevation (shadow) for cards
 - 2dp (cards), 4dp (buttons), 8dp (modals)
 
@@ -1146,20 +1225,24 @@ colors.android = {
 ### Element Animations
 
 **Shared Element Transitions**:
+
 - Salon card image → Detail hero image
 - Duration: 400ms
 - Easing: Ease-in-out
 
 **List Animations**:
+
 - Fade in on scroll (stagger 50ms between items)
 - Scale in when added to favorites
 
 **Loading States**:
+
 - Skeleton screens (shimmer effect)
 - Spinner for async actions
 - Progress bar for multi-step flows
 
 **Micro-interactions**:
+
 - Button press: Scale down to 0.95
 - Checkbox check: Scale in checkmark
 - Heart favorite: Scale pulse + color change
@@ -1171,6 +1254,7 @@ colors.android = {
 ### Design Specifications
 
 **Figma File Structure**:
+
 ```
 AURELLE Mobile App v1.0
 ├── 📄 Cover (Project info, changelog)
@@ -1304,100 +1388,103 @@ aurelle-mobile/
 
 **Design → Code**:
 
-| Design Component | React Native Component | Library |
-|------------------|------------------------|---------|
-| Button (Primary) | `<Button variant="primary" />` | Custom |
-| Input | `<TextInput />` | react-native |
-| Card | `<View style={styles.card} />` | Custom |
-| Bottom Tabs | `<Tab.Navigator />` | @react-navigation/bottom-tabs |
-| Modal | `<Modal />` | react-native |
-| Image | `<FastImage />` | react-native-fast-image |
-| Icon | `<Svg />` | react-native-svg |
-| Safe Area | `<SafeAreaView />` | react-native-safe-area-context |
+| Design Component | React Native Component         | Library                        |
+| ---------------- | ------------------------------ | ------------------------------ |
+| Button (Primary) | `<Button variant="primary" />` | Custom                         |
+| Input            | `<TextInput />`                | react-native                   |
+| Card             | `<View style={styles.card} />` | Custom                         |
+| Bottom Tabs      | `<Tab.Navigator />`            | @react-navigation/bottom-tabs  |
+| Modal            | `<Modal />`                    | react-native                   |
+| Image            | `<FastImage />`                | react-native-fast-image        |
+| Icon             | `<Svg />`                      | react-native-svg               |
+| Safe Area        | `<SafeAreaView />`             | react-native-safe-area-context |
 
 ---
 
 ### Design Tokens Export
 
 **colors.ts**:
+
 ```typescript
 export const colors = {
   light: {
-    primary: '#C81D60',
-    primaryForeground: '#FEF5F8',
-    background: '#FFFFFF',
-    foreground: '#171717',
-    border: '#E6E6E6',
-    card: '#FAFAFA',
-    cardForeground: '#171717',
-    muted: '#E0E0E0',
-    mutedForeground: '#595959',
-    destructive: '#E12626',
-    destructiveForeground: '#FEF2F2',
+    primary: "#C81D60",
+    primaryForeground: "#FEF5F8",
+    background: "#FFFFFF",
+    foreground: "#171717",
+    border: "#E6E6E6",
+    card: "#FAFAFA",
+    cardForeground: "#171717",
+    muted: "#E0E0E0",
+    mutedForeground: "#595959",
+    destructive: "#E12626",
+    destructiveForeground: "#FEF2F2",
   },
   dark: {
-    primary: '#E84281',
-    primaryForeground: '#2B1D1F',
-    background: '#121212',
-    foreground: '#FAFAFA',
-    border: '#292929',
-    card: '#171717',
-    cardForeground: '#FAFAFA',
-    muted: '#2E2E2E',
-    mutedForeground: '#B3B3B3',
-    destructive: '#FF5252',
-    destructiveForeground: '#FFFFFF',
+    primary: "#E84281",
+    primaryForeground: "#2B1D1F",
+    background: "#121212",
+    foreground: "#FAFAFA",
+    border: "#292929",
+    card: "#171717",
+    cardForeground: "#FAFAFA",
+    muted: "#2E2E2E",
+    mutedForeground: "#B3B3B3",
+    destructive: "#FF5252",
+    destructiveForeground: "#FFFFFF",
   },
 };
 ```
 
 **typography.ts**:
+
 ```typescript
 export const typography = {
   display1: {
     fontSize: 34,
     lineHeight: 41,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
   },
   heading1: {
     fontSize: 28,
     lineHeight: 34,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
   },
   heading2: {
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
   },
   heading3: {
     fontSize: 20,
     lineHeight: 25,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
   },
   bodyLarge: {
     fontSize: 17,
     lineHeight: 22,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
   },
   body: {
     fontSize: 16,
     lineHeight: 21,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
   },
   bodySmall: {
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
   },
   caption: {
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
   },
 };
 ```
 
 **spacing.ts**:
+
 ```typescript
 export const spacing = {
   0: 0,
@@ -1422,6 +1509,7 @@ export const spacing = {
 ### Accessibility
 
 **VoiceOver/TalkBack Labels**:
+
 ```typescript
 <Button
   accessibilityLabel="Sign in to your account"
@@ -1433,15 +1521,18 @@ export const spacing = {
 ```
 
 **Minimum Touch Targets**:
+
 - iOS: 44x44pt
 - Android: 48x48dp
 - All interactive elements must meet this size
 
 **Color Contrast**:
+
 - Text: ≥4.5:1 (WCAG AA)
 - UI components: ≥3:1
 
 **Dynamic Type** (iOS):
+
 - Support system font sizes
 - Use `useWindowDimensions` for responsive layouts
 
@@ -1452,6 +1543,7 @@ export const spacing = {
 ### Phase 1: Setup & Foundation (Week 1-2)
 
 **Tasks**:
+
 - [ ] Initialize React Native project (TypeScript)
 - [ ] Set up navigation (react-navigation)
 - [ ] Configure design tokens (colors, typography, spacing)
@@ -1460,6 +1552,7 @@ export const spacing = {
 - [ ] Create base components (Button, Input, Card)
 
 **Deliverables**:
+
 - Running app with splash screen
 - Design system implemented in code
 - Navigation structure
@@ -1469,6 +1562,7 @@ export const spacing = {
 ### Phase 2: Authentication Screens (Week 3)
 
 **Tasks**:
+
 - [ ] Onboarding screens (3 screens with swipe)
 - [ ] Login screen
 - [ ] Register screen
@@ -1476,6 +1570,7 @@ export const spacing = {
 - [ ] Integrate auth API
 
 **Deliverables**:
+
 - Complete auth flow
 - Form validation
 - API integration
@@ -1485,6 +1580,7 @@ export const spacing = {
 ### Phase 3: Core Screens (Week 4-5)
 
 **Tasks**:
+
 - [ ] Home screen (salon list, search, filters)
 - [ ] Salon detail screen (tabs, photos)
 - [ ] Search screen (dedicated)
@@ -1492,6 +1588,7 @@ export const spacing = {
 - [ ] Pull-to-refresh
 
 **Deliverables**:
+
 - Main app navigation
 - Salon browsing functionality
 
@@ -1500,6 +1597,7 @@ export const spacing = {
 ### Phase 4: Booking Flow (Week 6)
 
 **Tasks**:
+
 - [ ] 5-step booking screen
 - [ ] Date picker (calendar)
 - [ ] Time slot picker
@@ -1507,6 +1605,7 @@ export const spacing = {
 - [ ] Success screen
 
 **Deliverables**:
+
 - End-to-end booking
 - Progress indicator
 - Gesture navigation
@@ -1516,6 +1615,7 @@ export const spacing = {
 ### Phase 5: User Features (Week 7)
 
 **Tasks**:
+
 - [ ] Profile screen
 - [ ] Bookings list screen
 - [ ] Favorites screen
@@ -1523,6 +1623,7 @@ export const spacing = {
 - [ ] Settings
 
 **Deliverables**:
+
 - User account management
 - Notifications
 
@@ -1531,6 +1632,7 @@ export const spacing = {
 ### Phase 6: Polish & Testing (Week 8-9)
 
 **Tasks**:
+
 - [ ] Animations & transitions
 - [ ] Haptic feedback
 - [ ] Error states & empty states
@@ -1540,6 +1642,7 @@ export const spacing = {
 - [ ] Performance optimization
 
 **Deliverables**:
+
 - Production-ready app
 - App Store / Play Store ready
 
@@ -1590,6 +1693,7 @@ export const spacing = {
 This comprehensive Mobile App UI design adapts AURELLE's web platform to native iOS and Android experiences while maintaining brand consistency and adding mobile-specific enhancements.
 
 **Key Achievements**:
+
 - 🎨 **11 Screens Designed**: Complete app flow from splash to booking
 - 📱 **Native UI Patterns**: Platform-specific iOS/Android adaptations
 - 👆 **Gesture Interactions**: Swipe, pull-to-refresh, haptic feedback
@@ -1599,6 +1703,7 @@ This comprehensive Mobile App UI design adapts AURELLE's web platform to native 
 - ♿ **Accessibility**: VoiceOver/TalkBack support, WCAG AA compliant
 
 **Expected Impact**:
+
 - 📲 **Mobile-First**: Optimized for 70% of traffic (mobile users)
 - ⚡ **Performance**: Native app speed vs web
 - 📶 **Offline Support**: Browse cached salons, queue bookings
@@ -1607,6 +1712,7 @@ This comprehensive Mobile App UI design adapts AURELLE's web platform to native 
 - 💼 **Professional**: Matches iOS HIG and Material Design standards
 
 **Next Steps**:
+
 1. Create Figma prototype (11 screens with transitions)
 2. Review with stakeholders
 3. Begin React Native development (9-week roadmap)

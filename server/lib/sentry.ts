@@ -117,15 +117,22 @@ export function setupSentryErrorHandler(app: Express) {
   }
 
   // Custom error handler middleware that captures errors to Sentry
-  app.use((error: Error & { status?: number; statusCode?: number }, _req: Request, _res: Response, next: NextFunction) => {
-    // Capture all errors with status code >= 500
-    // Skip client errors (4xx)
-    const statusCode = error.status || error.statusCode || 500;
-    if (statusCode >= 500) {
-      Sentry.captureException(error);
-    }
-    next(error);
-  });
+  app.use(
+    (
+      error: Error & { status?: number; statusCode?: number },
+      _req: Request,
+      _res: Response,
+      next: NextFunction,
+    ) => {
+      // Capture all errors with status code >= 500
+      // Skip client errors (4xx)
+      const statusCode = error.status || error.statusCode || 500;
+      if (statusCode >= 500) {
+        Sentry.captureException(error);
+      }
+      next(error);
+    },
+  );
 
   console.log("✅ Sentry error handler configured");
 }

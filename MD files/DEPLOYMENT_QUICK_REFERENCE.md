@@ -3,23 +3,28 @@
 ## 🚀 Quick Start
 
 ### Deploy to Staging
+
 ```bash
 git checkout develop
 git add .
 git commit -m "feat: your feature"
 git push origin develop
 ```
+
 → Automatically deploys to **staging.aurelle.uz**
 
 ### Deploy to Production
+
 ```bash
 git checkout main
 git merge develop
 git push origin main
 ```
+
 → Triggers workflow → **Approve in GitHub Actions** → Deploys to **aurelle.uz**
 
 ### Rollback
+
 1. Go to: [Actions → Rollback Deployment](https://github.com/Rustam4262/aurelle/actions/workflows/rollback.yml)
 2. Click "Run workflow"
 3. Select environment: `production` or `staging`
@@ -32,12 +37,12 @@ git push origin main
 
 ### Workflows Created
 
-| Workflow | File | Purpose | Trigger |
-|----------|------|---------|---------|
-| CI | [ci.yml](.github/workflows/ci.yml) | Type check, build, tests | Push to any branch |
-| Deploy Staging | [deploy-staging.yml](.github/workflows/deploy-staging.yml) | Auto-deploy to staging | Push to `develop` |
-| Deploy Production | [deploy-production.yml](.github/workflows/deploy-production.yml) | Deploy to production with approval | Push to `main` |
-| Rollback | [rollback.yml](.github/workflows/rollback.yml) | Emergency rollback | Manual only |
+| Workflow          | File                                                             | Purpose                            | Trigger            |
+| ----------------- | ---------------------------------------------------------------- | ---------------------------------- | ------------------ |
+| CI                | [ci.yml](.github/workflows/ci.yml)                               | Type check, build, tests           | Push to any branch |
+| Deploy Staging    | [deploy-staging.yml](.github/workflows/deploy-staging.yml)       | Auto-deploy to staging             | Push to `develop`  |
+| Deploy Production | [deploy-production.yml](.github/workflows/deploy-production.yml) | Deploy to production with approval | Push to `main`     |
+| Rollback          | [rollback.yml](.github/workflows/rollback.yml)                   | Emergency rollback                 | Manual only        |
 
 ### Key Features
 
@@ -67,6 +72,7 @@ I've successfully completed **P2 Task #43 - CI/CD Pipeline Setup** with a compre
 ### 🎯 Key Achievements
 
 **4 GitHub Actions Workflows Created**:
+
 1. **[ci.yml](.github/workflows/ci.yml)** - Continuous Integration for all branches
 2. **[deploy-staging.yml](.github/workflows/deploy-staging.yml)** - Auto-deploy to staging on push to `develop`
 3. **[deploy-production.yml](.github/workflows/deploy-production.yml)** - Production deployment with manual approval
@@ -75,24 +81,28 @@ I've successfully completed **P2 Task #43 - CI/CD Pipeline Setup** with a compre
 ### Key Features Implemented
 
 ✅ **Automated CI/CD Pipeline**:
+
 - TypeScript checking, builds, and security audits on all branches
 - Automatic deployment to staging on push to `develop`
 - Manual approval required for production deployments
 - Zero-downtime deployments with PM2
 
 ✅ **Deployment Automation**:
+
 - Automatic backups (5 for staging, 10 for production)
 - Database migrations with Drizzle
 - PM2 process management (reload for zero-downtime)
 - Comprehensive health checks
 
 ✅ **Rollback Mechanism**:
+
 - One-click rollback via GitHub Actions
 - Supports both staging and production
 - Backs up failed version
 - Generates incident reports
 
 ✅ **Notifications**:
+
 - Telegram notifications (success/failure)
 - Slack notifications (optional)
 - Rich notifications with deployment details
@@ -153,29 +163,34 @@ I've successfully completed P2 Task #43 - CI/CD Pipeline Setup! Here's what was 
 ## 🎯 Key Features
 
 ### 1. **Complete CI/CD Pipeline**
+
 - CI workflow for all branches
 - Automated staging deployment
 - Production deployment with approval
 - Rollback mechanism
 
 ### 2. **Zero-Downtime Deployments**
+
 - PM2 reload for production (zero-downtime)
 - PM2 restart for staging
 - Health checks before/after
 
 ### 3. **Safety Features**
+
 - Automatic backups (5 staging, 10 production)
 - Database backups (production)
 - Manual approval gates
 - One-click rollback
 
 ### 4. **Comprehensive Monitoring**
+
 - Health checks (PM2, HTTP, response time, memory)
 - Smoke tests (production)
 - Telegram & Slack notifications
 - Incident reports
 
 ### 5. **Complete Documentation**
+
 - 50,000+ character setup guide
 - Step-by-step instructions
 - Troubleshooting guide

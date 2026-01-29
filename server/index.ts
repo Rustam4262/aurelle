@@ -6,7 +6,12 @@ import { createServer } from "http";
 import { initializeUploadDirectories } from "./initUploads";
 import { initializeEmail } from "./email";
 import { startSanctionExpiryJob } from "./jobs/expire-sanctions";
-import { initializeSentry, setupSentryMiddleware, setupSentryErrorHandler, trackUserMiddleware } from "./lib/sentry";
+import {
+  initializeSentry,
+  setupSentryMiddleware,
+  setupSentryErrorHandler,
+  trackUserMiddleware,
+} from "./lib/sentry";
 
 // Initialize Sentry as early as possible
 initializeSentry();

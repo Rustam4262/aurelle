@@ -8,9 +8,9 @@ export function PreloadHints() {
   useEffect(() => {
     // Preload critical route chunks
     const criticalRoutes = [
-      "/auth",     // Auth page - users often navigate here
-      "/salon/",   // Salon detail pages - high traffic
-      "/profile",  // Profile - authenticated users
+      "/auth", // Auth page - users often navigate here
+      "/salon/", // Salon detail pages - high traffic
+      "/profile", // Profile - authenticated users
     ];
 
     // Create preload links for route chunks

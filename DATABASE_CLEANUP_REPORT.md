@@ -18,28 +18,28 @@
 
 #### Количество удаленных записей:
 
-| Таблица | Удалено записей |
-|---------|----------------|
-| **sessions** | 3 |
-| **notifications** | 0 |
-| **push_subscriptions** | 0 |
-| **favorites** | 0 |
-| **reviews** | 0 |
-| **waitlist** | 0 |
-| **booking_history** | 0 |
-| **bookings** | 0 |
-| **portfolio_items** | 0 |
-| **master_portfolio** | 0 |
-| **master_statistics** | 0 |
-| **master_services** | 0 |
-| **master_working_hours** | 0 |
-| **masters** | 0 |
-| **services** | 0 |
-| **salon_working_hours** | 0 |
-| **salon_settings** | 0 |
-| **salons** | 0 |
-| **user_profiles** | 2 |
-| **users** | 2 |
+| Таблица                  | Удалено записей |
+| ------------------------ | --------------- |
+| **sessions**             | 3               |
+| **notifications**        | 0               |
+| **push_subscriptions**   | 0               |
+| **favorites**            | 0               |
+| **reviews**              | 0               |
+| **waitlist**             | 0               |
+| **booking_history**      | 0               |
+| **bookings**             | 0               |
+| **portfolio_items**      | 0               |
+| **master_portfolio**     | 0               |
+| **master_statistics**    | 0               |
+| **master_services**      | 0               |
+| **master_working_hours** | 0               |
+| **masters**              | 0               |
+| **services**             | 0               |
+| **salon_working_hours**  | 0               |
+| **salon_settings**       | 0               |
+| **salons**               | 0               |
+| **user_profiles**        | 2               |
+| **users**                | 2               |
 
 #### Удаленные пользователи:
 
@@ -65,6 +65,7 @@
 #### Результаты:
 
 ✅ **Регистрация:** УСПЕШНО
+
 ```json
 {
   "success": true,
@@ -76,6 +77,7 @@
 ```
 
 ✅ **Авторизация:** УСПЕШНО
+
 ```json
 {
   "success": true,
@@ -87,6 +89,7 @@
 ```
 
 ✅ **Проверка сессии:** УСПЕШНО
+
 ```json
 {
   "id": "local:1768542623741-5h9ld5j4f",
@@ -103,15 +106,15 @@
 
 ### Проверка пустых таблиц:
 
-| Таблица | Количество записей |
-|---------|-------------------|
-| users | 0 ✅ |
-| user_profiles | 0 ✅ |
-| salons | 0 ✅ |
-| services | 0 ✅ |
-| masters | 0 ✅ |
-| bookings | 0 ✅ |
-| sessions | 0 ✅ |
+| Таблица       | Количество записей |
+| ------------- | ------------------ |
+| users         | 0 ✅               |
+| user_profiles | 0 ✅               |
+| salons        | 0 ✅               |
+| services      | 0 ✅               |
+| masters       | 0 ✅               |
+| bookings      | 0 ✅               |
+| sessions      | 0 ✅               |
 
 **Все таблицы успешно очищены!**
 

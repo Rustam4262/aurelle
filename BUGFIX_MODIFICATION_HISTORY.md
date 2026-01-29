@@ -37,12 +37,14 @@ Error: 500: {
 ```typescript
 export const bookings = pgTable("bookings", {
   // ... other fields
-  modificationHistory: jsonb("modification_history").default('[]').$type<Array<{
-    timestamp: string;
-    action: string;
-    changedBy: string;
-    changes?: Record<string, any>;
-  }>>(), // Phase 1: Audit trail
+  modificationHistory: jsonb("modification_history").default("[]").$type<
+    Array<{
+      timestamp: string;
+      action: string;
+      changedBy: string;
+      changes?: Record<string, any>;
+    }>
+  >(), // Phase 1: Audit trail
   // ...
 });
 ```
@@ -50,6 +52,7 @@ export const bookings = pgTable("bookings", {
 ### But Database Column Was Missing
 
 При проверке структуры таблицы:
+
 ```sql
 SELECT column_name FROM information_schema.columns
 WHERE table_name = 'bookings' AND column_name = 'modification_history';
@@ -85,6 +88,7 @@ WHERE table_name = 'bookings' AND column_name = 'modification_history';
 ```
 
 **Result**:
+
 ```
      column_name      | data_type
 ----------------------+-----------
@@ -164,6 +168,7 @@ PM2 Restart #23
 ### Existing Bookings
 
 All existing bookings now have:
+
 ```json
 {
   "modification_history": []
@@ -175,6 +180,7 @@ Default empty array applied automatically.
 ### Future Bookings
 
 Will properly track modifications:
+
 ```json
 {
   "modification_history": [
@@ -201,6 +207,7 @@ Will properly track modifications:
 **User**: aurelle_user
 
 **Timeline**:
+
 1. 13:54 - Added column via ALTER TABLE
 2. 13:55 - Verified column exists
 3. 13:56 - Rebuilt application
@@ -208,6 +215,7 @@ Will properly track modifications:
 5. 13:58 - Verified logs (no errors)
 
 **PM2 Status**:
+
 - Restart count: #23
 - Status: online
 - Memory: 3.4 MB (stable)
@@ -227,11 +235,13 @@ Will properly track modifications:
 ### Prevention Measures
 
 **Immediate**:
+
 - ✅ Added modification_history column to production
 - ✅ Verified all other columns exist
 - ✅ Tested dashboard loading
 
 **Future**:
+
 1. **Pre-Deployment Checklist**:
    - [ ] Run schema validation script
    - [ ] Check all tables/columns exist
@@ -259,10 +269,12 @@ Will properly track modifications:
 ### Files Using modification_history
 
 **Backend**:
+
 - `server/routes/owner.routes.ts` - Lines 1215, 1307, 1314, 1363
 - `server/routes/bookings.routes.ts` - Booking modification tracking
 
 **Schema**:
+
 - `shared/schema.ts` - Line 227-232 (field definition)
 
 ### Endpoints Fixed
@@ -311,18 +323,21 @@ router.patch("/bookings/:id", isAuthenticated, async (req, res) => {
 ## 🎯 Next Steps
 
 ### Immediate (Testing)
+
 1. User tests dashboard loading
 2. Verify no console errors
 3. Test booking modifications
 4. Check modification history is saved
 
 ### Short-term (Prevention)
+
 1. Create schema validation script
 2. Add pre-deployment checks
 3. Document migration process
 4. Set up monitoring alerts
 
 ### Long-term (Infrastructure)
+
 1. Implement proper migration system
 2. Add database version tracking
 3. Create staging environment

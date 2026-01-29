@@ -73,7 +73,7 @@ export function formatPhone(phone: string): string {
   if (cleaned.startsWith("998") && cleaned.length === 12) {
     return `+998 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(
       8,
-      10
+      10,
     )} ${cleaned.slice(10)}`;
   }
 
@@ -81,7 +81,7 @@ export function formatPhone(phone: string): string {
   if (cleaned.length === 9) {
     return `${cleaned.slice(0, 2)} ${cleaned.slice(2, 5)} ${cleaned.slice(
       5,
-      7
+      7,
     )} ${cleaned.slice(7)}`;
   }
 
@@ -129,7 +129,7 @@ export function validateRequired(value: any, fieldName?: string): string | null 
 export function validateMinLength(
   value: string,
   minLength: number,
-  fieldName?: string
+  fieldName?: string,
 ): string | null {
   if (value && value.length < minLength) {
     return `${fieldName || "Это поле"} должно содержать минимум ${minLength} символов`;
@@ -143,7 +143,7 @@ export function validateMinLength(
 export function validateMaxLength(
   value: string,
   maxLength: number,
-  fieldName?: string
+  fieldName?: string,
 ): string | null {
   if (value && value.length > maxLength) {
     return `${fieldName || "Это поле"} должно содержать максимум ${maxLength} символов`;
@@ -158,7 +158,7 @@ export function validateNumberRange(
   value: number,
   min?: number,
   max?: number,
-  fieldName?: string
+  fieldName?: string,
 ): string | null {
   if (min !== undefined && value < min) {
     return `${fieldName || "Значение"} должно быть не меньше ${min}`;
@@ -227,15 +227,10 @@ export class FormValidator {
   /**
    * Validate a field with rules
    */
-  validateField(
-    fieldName: string,
-    value: any,
-    rules: ValidationRule
-  ): string | null {
+  validateField(fieldName: string, value: any, rules: ValidationRule): string | null {
     // Required validation
     if (rules.required) {
-      const message =
-        typeof rules.required === "string" ? rules.required : undefined;
+      const message = typeof rules.required === "string" ? rules.required : undefined;
       const error = validateRequired(value, message || fieldName);
       if (error) {
         this.errors[fieldName] = error;
@@ -254,7 +249,7 @@ export class FormValidator {
       const error = validateMinLength(
         value,
         rules.minLength.value,
-        rules.minLength.message || fieldName
+        rules.minLength.message || fieldName,
       );
       if (error) {
         this.errors[fieldName] = rules.minLength.message || error;
@@ -267,7 +262,7 @@ export class FormValidator {
       const error = validateMaxLength(
         value,
         rules.maxLength.value,
-        rules.maxLength.message || fieldName
+        rules.maxLength.message || fieldName,
       );
       if (error) {
         this.errors[fieldName] = rules.maxLength.message || error;

@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Shield } from "lucide-react";
 import { format } from "date-fns";
 
@@ -74,8 +81,8 @@ export default function AdminSanctions() {
                           sanction.status === "active"
                             ? "bg-red-100 text-red-800"
                             : sanction.status === "expired"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-green-100 text-green-800"
+                              ? "bg-gray-100 text-gray-800"
+                              : "bg-green-100 text-green-800"
                         }
                       >
                         {sanction.status}
@@ -88,7 +95,9 @@ export default function AdminSanctions() {
                     </TableCell>
                     <TableCell className="text-right">
                       {sanction.status === "active" && (
-                        <Button variant="ghost" size="sm">Revoke</Button>
+                        <Button variant="ghost" size="sm">
+                          Revoke
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

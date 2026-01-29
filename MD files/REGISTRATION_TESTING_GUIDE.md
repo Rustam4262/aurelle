@@ -8,6 +8,7 @@
 ## ✅ Что было сделано
 
 ### 1. Очистка базы данных ✅
+
 ```sql
 DELETE FROM users;    -- Удалено 3 пользователя
 DELETE FROM sessions; -- Очищены старые сессии
@@ -20,6 +21,7 @@ DELETE FROM sessions; -- Очищены старые сессии
 **Новый API endpoint:** `POST /api/auth/reset-password`
 
 **Как использовать:**
+
 ```bash
 curl -X POST https://aurelle.uz/api/auth/reset-password \
   -H "Content-Type: application/json" \
@@ -30,10 +32,12 @@ curl -X POST https://aurelle.uz/api/auth/reset-password \
 ```
 
 **Параметры:**
+
 - `email` - Email пользователя
 - `newPassword` - Новый пароль (минимум 8 символов)
 
 **Безопасность:**
+
 - Endpoint не раскрывает существует ли email в системе
 - Использует те же bcrypt rounds что и регистрация (12)
 - Защищен rate limiter'ом
@@ -43,6 +47,7 @@ curl -X POST https://aurelle.uz/api/auth/reset-password \
 **Коммит:** `aeb11544` - Add password reset endpoint for user account recovery
 
 **Статус сервера:**
+
 ```
 ✅ aurelle_app_1 - Up (port 5000)
 ✅ aurelle_postgres_1 - Up (port 5432)
@@ -131,13 +136,16 @@ curl -X POST https://aurelle.uz/api/auth/reset-password \
 ## 📊 Текущее состояние базы данных
 
 ### Пользователи
+
 ```sql
 SELECT COUNT(*) FROM users;
 -- Результат: 0 (база чистая)
 ```
 
 ### Доступные email для регистрации
+
 Любые! База данных полностью очищена. Можете использовать:
+
 - test@example.com
 - user@test.com
 - admin@aurelle.uz
@@ -157,6 +165,7 @@ SELECT COUNT(*) FROM users;
 **Решение 2:** Войти с существующим аккаунтом (если помните пароль)
 
 **Решение 3:** Сбросить пароль через API:
+
 ```bash
 curl -X POST https://aurelle.uz/api/auth/reset-password \
   -H "Content-Type: application/json" \
@@ -167,6 +176,7 @@ curl -X POST https://aurelle.uz/api/auth/reset-password \
 ```
 
 **Решение 4 (для администратора):** Удалить пользователя из БД:
+
 ```bash
 ssh root@89.39.94.194
 docker-compose -f /var/www/aurelle/docker-compose.yml exec -T postgres \
@@ -193,6 +203,7 @@ docker-compose -f /var/www/aurelle/docker-compose.yml exec -T postgres \
 **Причина:** Слишком много попыток входа/регистрации с одного IP
 
 **Решение:** Подождите 15 минут или перезапустите app контейнер:
+
 ```bash
 ssh root@89.39.94.194
 docker-compose -f /var/www/aurelle/docker-compose.yml restart app
@@ -217,6 +228,7 @@ docker-compose -f /var/www/aurelle/docker-compose.yml restart app
 ### 4. Настроить OAuth Redirect URIs
 
 Обновить redirect URIs для Google и Yandex OAuth:
+
 - Google: `https://aurelle.uz/api/auth/google/callback`
 - Yandex: `https://aurelle.uz/api/auth/yandex/callback`
 
@@ -225,6 +237,7 @@ docker-compose -f /var/www/aurelle/docker-compose.yml restart app
 ## 📝 API Endpoints
 
 ### Регистрация
+
 ```http
 POST /api/auth/register
 Content-Type: application/json
@@ -238,6 +251,7 @@ Content-Type: application/json
 ```
 
 ### Вход
+
 ```http
 POST /api/auth/login
 Content-Type: application/json
@@ -249,6 +263,7 @@ Content-Type: application/json
 ```
 
 ### Сброс пароля
+
 ```http
 POST /api/auth/reset-password
 Content-Type: application/json
@@ -260,11 +275,13 @@ Content-Type: application/json
 ```
 
 ### Выход
+
 ```http
 POST /api/auth/logout
 ```
 
 ### Проверка аутентификации
+
 ```http
 GET /api/auth/user
 ```

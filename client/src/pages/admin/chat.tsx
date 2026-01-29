@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 
@@ -59,13 +66,9 @@ export default function AdminChat() {
                     <TableCell>
                       <p className="font-medium">{userName || "User"}</p>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {userEmail}
-                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{userEmail}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={thread.status === "open" ? "default" : "outline"}
-                      >
+                      <Badge variant={thread.status === "open" ? "default" : "outline"}>
                         {thread.status}
                       </Badge>
                     </TableCell>
@@ -75,7 +78,9 @@ export default function AdminChat() {
                         : "No messages"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">Open Chat</Button>
+                      <Button variant="ghost" size="sm">
+                        Open Chat
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

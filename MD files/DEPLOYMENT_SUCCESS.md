@@ -9,34 +9,39 @@
 ## 🎉 ЧТО СДЕЛАНО
 
 ### ✅ Docker контейнеры запущены
+
 - **aurelle_app_1** - Node.js 20 приложение (порт 5000)
 - **aurelle_postgres_1** - PostgreSQL 14 база данных (порт 5432)
 
 ### ✅ База данных
+
 - PostgreSQL 14 Alpine (в Docker)
 - База: `aurelle`
 - Пользователь: `aurelle_user`
 - Схема применена успешно: `npm run db:push` ✓
 
 ### ✅ Nginx настроен
+
 - Прокси на Docker контейнер (порт 5000)
 - Gzip сжатие включено
 - Статические файлы кэшируются
 
 ### ✅ SSL сертификат установлен
+
 - Let's Encrypt SSL ✓
 - HTTP → HTTPS автоматический редирект ✓
 - Сертификат действителен до: **26 марта 2026**
 - Домены: `aurelle.uz`, `www.aurelle.uz`
 
 ### ✅ Авторизация работает
+
 ```json
 {
-  "local": true,      // Email + Password ✓
-  "yandex": true,     // Yandex OAuth ✓
-  "google": true,     // Google OAuth ✓
-  "github": false,    // GitHub OAuth (не настроен)
-  "phone": false      // Phone SMS (не настроен)
+  "local": true, // Email + Password ✓
+  "yandex": true, // Yandex OAuth ✓
+  "google": true, // Google OAuth ✓
+  "github": false, // GitHub OAuth (не настроен)
+  "phone": false // Phone SMS (не настроен)
 }
 ```
 
@@ -45,6 +50,7 @@
 ## 🔐 ВАЖНО: ОБНОВИТЕ OAUTH REDIRECT URIs
 
 ### Google OAuth Console
+
 1. Откройте: https://console.cloud.google.com/
 2. Перейдите: **APIs & Services** → **Credentials**
 3. Найдите OAuth Client ID: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj...`
@@ -57,6 +63,7 @@
 6. Сохраните
 
 ### Yandex OAuth
+
 1. Откройте: https://oauth.yandex.ru/
 2. Найдите приложение (Client ID: `3b79a753092d49bb977ce1ec5b3017ec`)
 3. Нажмите **Редактировать**
@@ -74,12 +81,14 @@
 ## 📊 ПРОВЕРКА РАБОТЫ
 
 ### Доступность
+
 - ✅ https://aurelle.uz - работает
 - ✅ https://www.aurelle.uz - работает
 - ✅ HTTP → HTTPS редирект - работает
 - ✅ SSL сертификат - валидный
 
 ### API endpoints
+
 - ✅ `/api/auth/providers` - работает
 - ✅ `/api/auth/register` - работает
 - ✅ `/api/auth/login` - работает
@@ -87,6 +96,7 @@
 - ✅ `/api/auth/yandex` - готов (добавьте redirect URI)
 
 ### База данных
+
 - ✅ PostgreSQL 14 запущен
 - ✅ Схема применена
 - ✅ Подключение работает
@@ -96,6 +106,7 @@
 ## 🛠️ ПОЛЕЗНЫЕ КОМАНДЫ
 
 ### Управление Docker контейнерами
+
 ```bash
 # Подключиться к серверу
 ssh root@89.39.94.194
@@ -121,6 +132,7 @@ docker-compose up -d
 ```
 
 ### Обновление проекта
+
 ```bash
 cd /var/www/aurelle
 
@@ -135,6 +147,7 @@ docker-compose exec app npm run db:push
 ```
 
 ### Nginx
+
 ```bash
 # Проверить конфигурацию
 nginx -t
@@ -148,6 +161,7 @@ tail -f /var/log/nginx/error.log
 ```
 
 ### SSL сертификат
+
 ```bash
 # Проверить статус
 certbot certificates
@@ -160,6 +174,7 @@ certbot renew --dry-run
 ```
 
 ### База данных
+
 ```bash
 # Войти в PostgreSQL контейнер
 docker-compose exec postgres psql -U aurelle_user -d aurelle
@@ -176,6 +191,7 @@ docker-compose exec -T postgres psql -U aurelle_user aurelle < backup.sql
 ## 🔧 РЕШЕНИЕ ПРОБЛЕМ С UBUNTU 16.04
 
 ### Проблемы которые были:
+
 1. ❌ Ubuntu 16.04 - слишком старая версия (EOL)
 2. ❌ GLIBC 2.23 - слишком старая (нужна 2.25-2.28)
 3. ❌ Node.js 20/18 не устанавливался
@@ -183,6 +199,7 @@ docker-compose exec -T postgres psql -U aurelle_user aurelle < backup.sql
 5. ❌ Vite требует Node.js 20+
 
 ### Решение - Docker! ✅
+
 - Node.js 20 Alpine в контейнере
 - PostgreSQL 14 Alpine в контейнере
 - Все зависимости изолированы от хост-системы
@@ -231,6 +248,7 @@ docker-compose exec -T postgres psql -U aurelle_user aurelle < backup.sql
 ## 📞 ДАННЫЕ ДОСТУПА
 
 ### Сервер
+
 ```
 IP:      89.39.94.194
 Логин:   root
@@ -239,6 +257,7 @@ SSH:     ssh root@89.39.94.194
 ```
 
 ### База данных (внутри Docker)
+
 ```
 Host:     postgres (внутри Docker сети)
 Port:     5432
@@ -248,6 +267,7 @@ Password: w2@nT*6D
 ```
 
 ### URL приложения
+
 ```
 Production: https://aurelle.uz
 Alternative: https://www.aurelle.uz

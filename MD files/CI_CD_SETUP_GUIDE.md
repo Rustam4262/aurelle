@@ -22,6 +22,7 @@
 This CI/CD pipeline provides automated deployment for the AURELLE Beauty Salon Platform with the following features:
 
 ### Features
+
 - ✅ Automated CI on all branches
 - ✅ Automated deployment to staging (develop branch)
 - ✅ Manual approval for production deployment (main branch)
@@ -87,10 +88,10 @@ This CI/CD pipeline provides automated deployment for the AURELLE Beauty Salon P
 
 ### Environments
 
-| Environment | Branch | URL | Auto-Deploy | Approval |
-|-------------|--------|-----|-------------|----------|
-| Staging | develop | staging.aurelle.uz | ✅ Yes | ❌ No |
-| Production | main | aurelle.uz | ❌ No | ✅ Required |
+| Environment | Branch  | URL                | Auto-Deploy | Approval    |
+| ----------- | ------- | ------------------ | ----------- | ----------- |
+| Staging     | develop | staging.aurelle.uz | ✅ Yes      | ❌ No       |
+| Production  | main    | aurelle.uz         | ❌ No       | ✅ Required |
 
 ---
 
@@ -153,6 +154,7 @@ sudo chown -R $USER:$USER /var/www/aurelle-staging*
 **Trigger**: Push to any branch, Pull requests to main/develop
 
 **Jobs**:
+
 - TypeScript type checking
 - Run tests (when configured)
 - Build project
@@ -160,6 +162,7 @@ sudo chown -R $USER:$USER /var/www/aurelle-staging*
 - Upload build artifacts
 
 **Status Badge**:
+
 ```markdown
 ![CI](https://github.com/Rustam4262/aurelle/actions/workflows/ci.yml/badge.svg)
 ```
@@ -167,10 +170,12 @@ sudo chown -R $USER:$USER /var/www/aurelle-staging*
 ### 2. Staging Deployment (deploy-staging.yml)
 
 **Trigger**:
+
 - Push to `develop` branch
 - Manual dispatch
 
 **Steps**:
+
 1. Checkout code
 2. Install dependencies
 3. TypeScript check
@@ -191,10 +196,12 @@ sudo chown -R $USER:$USER /var/www/aurelle-staging*
 ### 3. Production Deployment (deploy-production.yml)
 
 **Trigger**:
+
 - Push to `main` branch
 - Manual dispatch
 
 **Steps**:
+
 1. **Build Job**: Build and prepare deployment
 2. **Approval Job**: Manual approval required (uses `production-approval` environment)
 3. **Deploy Job**:
@@ -219,11 +226,13 @@ sudo chown -R $USER:$USER /var/www/aurelle-staging*
 **Trigger**: Manual dispatch only
 
 **Inputs**:
+
 - `environment`: production or staging
 - `backup_timestamp`: Specific backup or "latest"
 - `reason`: Reason for rollback
 
 **Steps**:
+
 1. Validate rollback request
 2. SSH to server:
    - Locate backup
@@ -280,39 +289,39 @@ Go to: **Settings → Secrets and variables → Actions**
 
 Add these secrets to the `staging` environment:
 
-| Secret Name | Description | Example |
-|------------|-------------|---------|
-| `STAGING_HOST` | Server IP or hostname | `staging.aurelle.uz` or `192.168.1.100` |
-| `STAGING_USER` | SSH username | `deploy` or `ubuntu` |
-| `STAGING_SSH_KEY` | Private SSH key | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `STAGING_PORT` | SSH port (optional, default 22) | `22` |
-| `STAGING_DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/aurelle_staging` |
+| Secret Name            | Description                     | Example                                                 |
+| ---------------------- | ------------------------------- | ------------------------------------------------------- |
+| `STAGING_HOST`         | Server IP or hostname           | `staging.aurelle.uz` or `192.168.1.100`                 |
+| `STAGING_USER`         | SSH username                    | `deploy` or `ubuntu`                                    |
+| `STAGING_SSH_KEY`      | Private SSH key                 | `-----BEGIN OPENSSH PRIVATE KEY-----...`                |
+| `STAGING_PORT`         | SSH port (optional, default 22) | `22`                                                    |
+| `STAGING_DATABASE_URL` | PostgreSQL connection string    | `postgresql://user:pass@localhost:5432/aurelle_staging` |
 
 ### Production Environment Secrets
 
 Add these secrets to the `production` environment:
 
-| Secret Name | Description | Example |
-|------------|-------------|---------|
-| `PRODUCTION_HOST` | Server IP or hostname | `aurelle.uz` or `192.168.1.101` |
-| `PRODUCTION_USER` | SSH username | `deploy` or `ubuntu` |
-| `PRODUCTION_SSH_KEY` | Private SSH key | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `PRODUCTION_PORT` | SSH port (optional, default 22) | `22` |
-| `PRODUCTION_DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/aurelle_production` |
-| `PRODUCTION_DB_HOST` | Database host (for pg_dump) | `localhost` |
-| `PRODUCTION_DB_USER` | Database username | `aurelle_user` |
-| `PRODUCTION_DB_PASSWORD` | Database password | `secure_password` |
-| `PRODUCTION_DB_NAME` | Database name | `aurelle_production` |
+| Secret Name               | Description                     | Example                                                    |
+| ------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `PRODUCTION_HOST`         | Server IP or hostname           | `aurelle.uz` or `192.168.1.101`                            |
+| `PRODUCTION_USER`         | SSH username                    | `deploy` or `ubuntu`                                       |
+| `PRODUCTION_SSH_KEY`      | Private SSH key                 | `-----BEGIN OPENSSH PRIVATE KEY-----...`                   |
+| `PRODUCTION_PORT`         | SSH port (optional, default 22) | `22`                                                       |
+| `PRODUCTION_DATABASE_URL` | PostgreSQL connection string    | `postgresql://user:pass@localhost:5432/aurelle_production` |
+| `PRODUCTION_DB_HOST`      | Database host (for pg_dump)     | `localhost`                                                |
+| `PRODUCTION_DB_USER`      | Database username               | `aurelle_user`                                             |
+| `PRODUCTION_DB_PASSWORD`  | Database password               | `secure_password`                                          |
+| `PRODUCTION_DB_NAME`      | Database name                   | `aurelle_production`                                       |
 
 ### Repository Secrets (Global)
 
 Add these secrets at repository level (Settings → Secrets → Actions):
 
-| Secret Name | Description | Required | How to Get |
-|------------|-------------|----------|------------|
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token | Optional | [@BotFather](https://t.me/BotFather) |
-| `TELEGRAM_CHAT_ID` | Telegram chat/channel ID | Optional | [@userinfobot](https://t.me/userinfobot) |
-| `SLACK_WEBHOOK_URL` | Slack incoming webhook | Optional | [Slack API](https://api.slack.com/messaging/webhooks) |
+| Secret Name          | Description              | Required | How to Get                                            |
+| -------------------- | ------------------------ | -------- | ----------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token       | Optional | [@BotFather](https://t.me/BotFather)                  |
+| `TELEGRAM_CHAT_ID`   | Telegram chat/channel ID | Optional | [@userinfobot](https://t.me/userinfobot)              |
+| `SLACK_WEBHOOK_URL`  | Slack incoming webhook   | Optional | [Slack API](https://api.slack.com/messaging/webhooks) |
 
 ---
 
@@ -483,34 +492,34 @@ Create `ecosystem.config.js` in application root:
 module.exports = {
   apps: [
     {
-      name: 'aurelle-production',
-      script: './dist/index.cjs',
-      instances: 'max',
-      exec_mode: 'cluster',
+      name: "aurelle-production",
+      script: "./dist/index.cjs",
+      instances: "max",
+      exec_mode: "cluster",
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
         PORT: 5000,
       },
-      error_file: '/var/log/pm2/aurelle-production-error.log',
-      out_file: '/var/log/pm2/aurelle-production-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      max_memory_restart: '1G',
+      error_file: "/var/log/pm2/aurelle-production-error.log",
+      out_file: "/var/log/pm2/aurelle-production-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      max_memory_restart: "1G",
       autorestart: true,
       watch: false,
     },
     {
-      name: 'aurelle-staging',
-      script: './dist/index.cjs',
+      name: "aurelle-staging",
+      script: "./dist/index.cjs",
       instances: 2,
-      exec_mode: 'cluster',
+      exec_mode: "cluster",
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
         PORT: 5001,
       },
-      error_file: '/var/log/pm2/aurelle-staging-error.log',
-      out_file: '/var/log/pm2/aurelle-staging-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      max_memory_restart: '512M',
+      error_file: "/var/log/pm2/aurelle-staging-error.log",
+      out_file: "/var/log/pm2/aurelle-staging-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      max_memory_restart: "512M",
       autorestart: true,
       watch: false,
     },
@@ -563,6 +572,7 @@ pm2 startup
 ### Automatic Deployment (Staging)
 
 1. Push to `develop` branch:
+
    ```bash
    git checkout develop
    git add .
@@ -586,6 +596,7 @@ pm2 startup
 #### Method 1: Via Push to Main
 
 1. Merge `develop` into `main`:
+
    ```bash
    git checkout main
    git merge develop
@@ -696,17 +707,20 @@ pm2 logs aurelle-production --lines 50
 After rollback:
 
 1. Check PM2 status:
+
    ```bash
    pm2 status
    pm2 describe aurelle-production
    ```
 
 2. Check application logs:
+
    ```bash
    pm2 logs aurelle-production --lines 100
    ```
 
 3. Test critical endpoints:
+
    ```bash
    curl -I https://aurelle.uz/
    curl https://aurelle.uz/api/salons
@@ -725,6 +739,7 @@ After rollback:
 #### Setup Telegram Bot
 
 1. Create bot via [@BotFather](https://t.me/BotFather):
+
    ```
    /newbot
    Your bot name: AURELLE Deployments
@@ -744,6 +759,7 @@ After rollback:
 #### Notification Types
 
 **Staging Deployment**:
+
 ```
 ✅ Staging Deployment Successful
 
@@ -757,6 +773,7 @@ Time: 2026-01-10T14:30:25Z
 ```
 
 **Production Deployment**:
+
 ```
 🎉 Production Deployment Successful
 
@@ -774,6 +791,7 @@ Deployment time: 2026-01-10T15:00:00Z
 ```
 
 **Rollback**:
+
 ```
 🔄 Rollback Successful
 
@@ -837,6 +855,7 @@ pm2 logs
 **Error**: `Permission denied (publickey)`
 
 **Solution**:
+
 ```bash
 # Verify SSH key is added to server
 ssh -i aurelle-deploy-key deploy@aurelle.uz
@@ -853,6 +872,7 @@ cat ~/.ssh/authorized_keys
 **Error**: `npm run build failed`
 
 **Solution**:
+
 ```bash
 # Check TypeScript errors
 npm run check
@@ -870,6 +890,7 @@ npm install
 **Error**: `drizzle-kit push failed`
 
 **Solution**:
+
 ```bash
 # Check database connectivity
 psql $DATABASE_URL
@@ -889,6 +910,7 @@ npx drizzle-kit push
 **Error**: `pm2 reload failed`
 
 **Solution**:
+
 ```bash
 # Check PM2 status
 pm2 status
@@ -910,6 +932,7 @@ pm2 save
 **Error**: `curl http://localhost:5000 returns connection refused`
 
 **Solution**:
+
 ```bash
 # Check if app is running
 pm2 status
@@ -933,6 +956,7 @@ node dist/index.cjs
 **Error**: Workflow stuck after approval
 
 **Solution**:
+
 1. Check GitHub Actions logs
 2. Verify all required secrets are set
 3. Check server SSH access
@@ -943,6 +967,7 @@ node dist/index.cjs
 **Error**: Backup not found
 
 **Solution**:
+
 ```bash
 # List available backups
 ls -lt /var/www/aurelle-production-backups
@@ -990,6 +1015,7 @@ pm2 logs aurelle-production --raw
 ### Development Workflow
 
 1. **Feature Development**:
+
    ```bash
    git checkout develop
    git pull origin develop

@@ -7,14 +7,17 @@
 ## ✅ Проверка готовности
 
 ### 1. Сервер доступен
+
 Сервер **89.39.94.194** пингуется (25-61ms). ✅
 
 ### 2. Скрипты деплоя созданы
+
 - ✅ `scripts/deploy-to-server.sh` (Linux/Mac)
 - ✅ `scripts/deploy-to-server.bat` (Windows)
 - ✅ Оба скрипта добавлены в Git
 
 ### 3. Документация готова
+
 - ✅ [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md) - Полное руководство
 - ✅ [DEPLOY_TO_PRODUCTION_NOW.md](./DEPLOY_TO_PRODUCTION_NOW.md) - Быстрая инструкция
 
@@ -27,16 +30,19 @@
 Запустите скрипт прямо из терминала VS Code:
 
 **Windows:**
+
 ```bash
 scripts\deploy-to-server.bat
 ```
 
 **Linux/Mac:**
+
 ```bash
 bash scripts/deploy-to-server.sh
 ```
 
 **Что произойдет:**
+
 1. ✅ Проверка git статуса
 2. ✅ Коммит изменений (если есть)
 3. ✅ Push в GitHub
@@ -59,6 +65,7 @@ bash scripts/deploy-to-server.sh
 4. Нажмите **"Run workflow"**
 
 После сборки:
+
 1. **Review deployments** → Approve and deploy
 
 **Требует:** Настройку GitHub Secrets (см. [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md))
@@ -68,6 +75,7 @@ bash scripts/deploy-to-server.sh
 ### МЕТОД 3: Ручной деплой (SSH)
 
 Подключитесь к серверу:
+
 ```bash
 ssh root@89.39.94.194
 ```
@@ -90,16 +98,19 @@ ssh root@89.39.94.194 exit
 Если не работает:
 
 **1. Генерация SSH ключа (если нет):**
+
 ```bash
 ssh-keygen -t ed25519 -C "your_email@example.com"
 ```
 
 **2. Копирование ключа на сервер:**
+
 ```bash
 ssh-copy-id root@89.39.94.194
 ```
 
 Или вручную:
+
 ```bash
 # Скопируйте содержимое
 cat ~/.ssh/id_ed25519.pub
@@ -225,6 +236,7 @@ ssh -v root@89.39.94.194
 ### Проблема: Скрипт не запускается (Windows)
 
 Убедитесь, что используете **Git Bash** или **WSL**:
+
 - Git Bash поставляется с Git for Windows
 - Или используйте PowerShell/CMD для .bat версии
 
@@ -288,6 +300,7 @@ bash scripts/deploy-to-server.sh  # Linux/Mac
 ```
 
 Скрипт автоматически:
+
 - Подтянет изменения на сервере
 - Пересоберёт проект
 - Перезапустит приложение (zero-downtime)

@@ -51,5 +51,5 @@ export const useFeatureFlag = (flag: keyof FeatureFlags): boolean => {
  */
 export const useFeatureFlagsMultiple = (flags: (keyof FeatureFlags)[]): boolean => {
   const { data } = useFeatureFlags();
-  return flags.every(flag => data?.[flag] === true);
+  return flags.every((flag) => data?.[flag] === true);
 };

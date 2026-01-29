@@ -10,16 +10,19 @@
 ## ✅ Что Сделано
 
 ### 1. Добавлен Google Tag Manager
+
 - ✅ GTM код добавлен в `<head>` (строки 4-10)
 - ✅ GTM noscript добавлен после `<body>` (строки 46-49)
 - ✅ Container ID: **GTM-PWHFHFS8**
 
 ### 2. Совместимость с Google Analytics
+
 - ✅ Google Analytics (G-2NNQ2EXYV3) сохранён
 - ✅ Оба тега работают одновременно
 - ✅ GTM размещён первым (как рекомендовано Google)
 
 ### 3. Развёрнуто на продакшн
+
 - ✅ Код загружен на GitHub (commit: cf732e48)
 - ✅ Развёрнуто на сервер 89.39.94.194
 - ✅ Приложение пересобрано (build: 38.57s)
@@ -34,11 +37,18 @@
 
 ```html
 <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PWHFHFS8');</script>
+<script>
+  (function (w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != "dataLayer" ? "&l=" + l : "";
+    j.async = true;
+    j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, "script", "dataLayer", "GTM-PWHFHFS8");
+</script>
 <!-- End Google Tag Manager -->
 ```
 
@@ -46,8 +56,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 ```html
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PWHFHFS8"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript
+  ><iframe
+    src="https://www.googletagmanager.com/ns.html?id=GTM-PWHFHFS8"
+    height="0"
+    width="0"
+    style="display:none;visibility:hidden"
+  ></iframe
+></noscript>
 <!-- End Google Tag Manager (noscript) -->
 ```
 
@@ -56,18 +72,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 ## 🔍 Как Проверить
 
 ### 1. Визуальная проверка HTML:
+
 ```bash
 curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
 ```
+
 ✅ Должно найти 2 вхождения (script + noscript)
 
 ### 2. В браузере (Chrome DevTools):
+
 1. Открыть https://aurelle.uz
 2. Нажать F12 → вкладка **Network**
 3. Найти запрос к `gtm.js?id=GTM-PWHFHFS8`
 4. Проверить что статус 200 OK ✅
 
 ### 3. Google Tag Assistant:
+
 1. Установить [Tag Assistant Legacy](https://chrome.google.com/webstore/detail/tag-assistant-legacy-by-g/kejbdjndbnbjgmefkgdddjlbokphdefk)
 2. Открыть https://aurelle.uz
 3. Нажать на иконку Tag Assistant
@@ -76,6 +96,7 @@ curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
    - ✅ Google Analytics (GA4) - G-2NNQ2EXYV3
 
 ### 4. Через Google Tag Manager Console:
+
 1. Войти в [Google Tag Manager](https://tagmanager.google.com/)
 2. Выбрать контейнер GTM-PWHFHFS8
 3. Нажать **Preview** (режим отладки)
@@ -89,12 +110,14 @@ curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
 ### Зачем нужен GTM:
 
 **1. Централизованное управление тегами**
+
 - Управление всеми маркетинговыми тегами в одном месте
 - Не нужно менять код сайта для добавления новых тегов
 - Все изменения через веб-интерфейс GTM
 
 **2. Легко добавлять новые инструменты**
 Без изменения кода сайта можно подключить:
+
 - Facebook Pixel
 - LinkedIn Insight Tag
 - Yandex Metrica
@@ -103,6 +126,7 @@ curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
 
 **3. Настройка отслеживания событий**
 Можно настроить триггеры для:
+
 - Клики по кнопкам (например, "Забронировать")
 - Заполнение форм
 - Прокрутка страницы
@@ -111,10 +135,12 @@ curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
 - Отправка форм
 
 **4. A/B тестирование и эксперименты**
+
 - Запускать эксперименты без программирования
 - Показывать разные версии страниц разным пользователям
 
 **5. Контроль версий и откат**
+
 - История всех изменений
 - Откат к предыдущей версии одним кликом
 - Предварительный просмотр (Preview Mode)
@@ -126,47 +152,55 @@ curl -s https://aurelle.uz/ | grep "GTM-PWHFHFS8"
 ### Рекомендуемые теги для AURELLE:
 
 #### 1. **Отслеживание бронирований** (важно!)
+
 **Событие**: Когда клиент создаёт бронирование
 **Настройка в GTM**:
+
 - Тег: Google Analytics GA4 Event
 - Событие: `booking_created`
 - Параметры: salon_id, service_name, price, master_name
 - Триггер: Custom Event `booking_created`
 
 **Код для добавления на сайт** (в момент успешного бронирования):
+
 ```javascript
 window.dataLayer = window.dataLayer || [];
 window.dataLayer.push({
-  'event': 'booking_created',
-  'salon_id': salonId,
-  'service_name': serviceName,
-  'price': price,
-  'master_name': masterName,
-  'currency': 'UZS'
+  event: "booking_created",
+  salon_id: salonId,
+  service_name: serviceName,
+  price: price,
+  master_name: masterName,
+  currency: "UZS",
 });
 ```
 
 #### 2. **Отслеживание регистрации**
+
 **Событие**: Новый пользователь зарегистрировался
+
 ```javascript
 dataLayer.push({
-  'event': 'user_signup',
-  'user_role': 'client', // или 'owner', 'master'
-  'signup_method': 'email' // или 'google', 'phone'
+  event: "user_signup",
+  user_role: "client", // или 'owner', 'master'
+  signup_method: "email", // или 'google', 'phone'
 });
 ```
 
 #### 3. **Facebook Pixel** (для рекламы в Facebook/Instagram)
+
 - Добавить через GTM без изменения кода
 - Отслеживание конверсий для рекламных кампаний
 
 #### 4. **Яндекс.Метрика** (для российского рынка)
+
 - Тепловые карты
 - Записи сессий
 - Вебвизор
 - Карты скроллинга
 
 #### 5. **LinkedIn Insight Tag** (для B2B маркетинга)
+
 - Если планируете рекламу для владельцев салонов
 
 ---
@@ -186,10 +220,12 @@ dataLayer.push({
 ### Пример: Отслеживать клики по кнопке "Забронировать"
 
 **1. Создать триггер:**
+
 - Тип: Click - All Elements
 - Условие: Click Text содержит "Забронировать"
 
 **2. Создать тег:**
+
 - Тип: GA4 Event
 - Событие: `booking_button_click`
 - Триггер: (созданный выше)
@@ -220,16 +256,18 @@ dataLayer.push({
 
 ### Установленные теги:
 
-| Тег | ID | Статус | Назначение |
-|-----|----|---------| -----------|
-| Google Tag Manager | GTM-PWHFHFS8 | ✅ Активен | Контейнер для управления тегами |
-| Google Analytics GA4 | G-2NNQ2EXYV3 | ✅ Активен | Основная веб-аналитика |
+| Тег                  | ID           | Статус     | Назначение                      |
+| -------------------- | ------------ | ---------- | ------------------------------- |
+| Google Tag Manager   | GTM-PWHFHFS8 | ✅ Активен | Контейнер для управления тегами |
+| Google Analytics GA4 | G-2NNQ2EXYV3 | ✅ Активен | Основная веб-аналитика          |
 
 ### Триггеры (по умолчанию):
+
 - All Pages - срабатывает на всех страницах
 - Window Loaded - когда страница полностью загружена
 
 ### Переменные (встроенные):
+
 - Page URL
 - Page Path
 - Click Element
@@ -245,44 +283,50 @@ dataLayer.push({
 ### 1. Настроить Enhanced Ecommerce (Расширенная электронная торговля)
 
 Для AURELLE это будет:
+
 - Просмотр услуги (`view_item`)
 - Добавление в корзину (`add_to_cart`)
 - Начало оформления (`begin_checkout`)
 - Завершение бронирования (`purchase`)
 
 **Код для просмотра услуги**:
+
 ```javascript
 dataLayer.push({
-  'event': 'view_item',
-  'ecommerce': {
-    'items': [{
-      'item_id': serviceId,
-      'item_name': serviceName,
-      'price': servicePrice,
-      'item_category': serviceCategory,
-      'item_brand': salonName
-    }]
-  }
+  event: "view_item",
+  ecommerce: {
+    items: [
+      {
+        item_id: serviceId,
+        item_name: serviceName,
+        price: servicePrice,
+        item_category: serviceCategory,
+        item_brand: salonName,
+      },
+    ],
+  },
 });
 ```
 
 ### 2. Настроить User ID tracking
 
 Для отслеживания пути пользователя через разные устройства:
+
 ```javascript
-gtag('config', 'G-2NNQ2EXYV3', {
-  'user_id': userId // ваш внутренний ID пользователя
+gtag("config", "G-2NNQ2EXYV3", {
+  user_id: userId, // ваш внутренний ID пользователя
 });
 ```
 
 ### 3. Настроить Cross-Domain Tracking
 
 Если у вас есть поддомены:
+
 ```javascript
-gtag('config', 'G-2NNQ2EXYV3', {
-  'linker': {
-    'domains': ['aurelle.uz', 'app.aurelle.uz', 'admin.aurelle.uz']
-  }
+gtag("config", "G-2NNQ2EXYV3", {
+  linker: {
+    domains: ["aurelle.uz", "app.aurelle.uz", "admin.aurelle.uz"],
+  },
 });
 ```
 
@@ -291,15 +335,18 @@ gtag('config', 'G-2NNQ2EXYV3', {
 ## 🔗 Полезные Ссылки
 
 ### Документация:
+
 - **GTM**: https://support.google.com/tagmanager
 - **GA4**: https://support.google.com/analytics
 - **Tag Assistant**: https://tagassistant.google.com/
 
 ### Доступ к панелям:
+
 - **Google Tag Manager**: https://tagmanager.google.com/
 - **Google Analytics**: https://analytics.google.com/
 
 ### Обучение:
+
 - [GTM Fundamentals](https://analytics.google.com/analytics/academy/course/5)
 - [GA4 for Beginners](https://analytics.google.com/analytics/academy/course/10)
 
@@ -308,14 +355,17 @@ gtag('config', 'G-2NNQ2EXYV3', {
 ## 🛠 Техническая Информация
 
 ### Git:
+
 - **Commit**: cf732e48
 - **Message**: "Add Google Tag Manager (GTM-PWHFHFS8)"
 - **Дата**: 2026-01-17
 
 ### Файлы изменены:
+
 - `client/index.html` (+13 строк)
 
 ### Развёртывание:
+
 - **Сервер**: 89.39.94.194 (root)
 - **Путь**: /var/www/aurelle/current
 - **PM2**: aurelle-production (online, 113.7 MB)
@@ -344,6 +394,7 @@ gtag('config', 'G-2NNQ2EXYV3', {
 **✅ GOOGLE TAG MANAGER ПОЛНОСТЬЮ УСТАНОВЛЕН И РАБОТАЕТ**
 
 ### Что работает:
+
 - ✅ GTM Container загружается на всех страницах
 - ✅ dataLayer инициализирован
 - ✅ Google Analytics GA4 работает через GTM
@@ -351,6 +402,7 @@ gtag('config', 'G-2NNQ2EXYV3', {
 - ✅ Режим отладки (Preview) доступен
 
 ### Преимущества:
+
 - 🚀 Быстрое добавление новых трекеров
 - 🎯 Настройка событий без программирования
 - 📊 Централизованное управление

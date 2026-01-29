@@ -18,6 +18,7 @@ scripts\start-local.bat
 ```
 
 Этот скрипт автоматически:
+
 1. Проверит установку Node.js
 2. Установит зависимости (если нужно)
 3. Создаст тестовых пользователей
@@ -57,11 +58,12 @@ npm run dev
 
 ### 👑 Администратор
 
-| Email | Пароль | Роль | Описание |
-|-------|--------|------|----------|
+| Email            | Пароль      | Роль  | Описание                                 |
+| ---------------- | ----------- | ----- | ---------------------------------------- |
 | admin@aurelle.uz | password123 | Admin | Полный доступ ко всем функциям платформы |
 
 **Возможности:**
+
 - ✅ Управление всеми пользователями
 - ✅ Просмотр всех салонов и бронирований
 - ✅ Доступ к аналитике и метрикам
@@ -72,12 +74,13 @@ npm run dev
 
 ### 💼 Владельцы салонов
 
-| Email | Пароль | Роль | Салон |
-|-------|--------|------|-------|
+| Email             | Пароль      | Роль        | Салон                  |
+| ----------------- | ----------- | ----------- | ---------------------- |
 | salon1@aurelle.uz | password123 | Salon Owner | Beauty Lounge Tashkent |
 | salon2@aurelle.uz | password123 | Salon Owner | Elegant Salon Tashkent |
 
 **Возможности:**
+
 - ✅ Управление своим салоном (информация, часы работы, фото)
 - ✅ Управление услугами (добавление, редактирование, цены)
 - ✅ Управление специалистами
@@ -86,6 +89,7 @@ npm run dev
 - ✅ Управление расписанием
 
 **Созданные услуги** (автоматически для каждого салона):
+
 - Women Haircut - ₸150,000 (60 мин)
 - Men Haircut - ₸80,000 (30 мин)
 - Hair Coloring - ₸300,000 (120 мин)
@@ -97,13 +101,14 @@ npm run dev
 
 ### ✂️ Специалисты
 
-| Email | Пароль | Роль | Имя | Салон |
-|-------|--------|------|-----|-------|
-| specialist1@aurelle.uz | password123 | Specialist | Maria Ivanova | Beauty Lounge Tashkent |
-| specialist2@aurelle.uz | password123 | Specialist | Anna Petrova | Beauty Lounge Tashkent |
+| Email                  | Пароль      | Роль       | Имя            | Салон                  |
+| ---------------------- | ----------- | ---------- | -------------- | ---------------------- |
+| specialist1@aurelle.uz | password123 | Specialist | Maria Ivanova  | Beauty Lounge Tashkent |
+| specialist2@aurelle.uz | password123 | Specialist | Anna Petrova   | Beauty Lounge Tashkent |
 | specialist3@aurelle.uz | password123 | Specialist | Elena Sidorova | Beauty Lounge Tashkent |
 
 **Возможности:**
+
 - ✅ Просмотр своего расписания
 - ✅ Управление своими бронированиями
 - ✅ Просмотр профиля и отзывов
@@ -114,13 +119,14 @@ npm run dev
 
 ### 👥 Клиенты
 
-| Email | Пароль | Роль | Имя |
-|-------|--------|------|-----|
-| client1@aurelle.uz | password123 | Client | John Doe |
-| client2@aurelle.uz | password123 | Client | Jane Smith |
+| Email              | Пароль      | Роль   | Имя           |
+| ------------------ | ----------- | ------ | ------------- |
+| client1@aurelle.uz | password123 | Client | John Doe      |
+| client2@aurelle.uz | password123 | Client | Jane Smith    |
 | client3@aurelle.uz | password123 | Client | Alice Johnson |
 
 **Возможности:**
+
 - ✅ Поиск салонов и услуг
 - ✅ Создание бронирований
 - ✅ Просмотр истории бронирований
@@ -244,6 +250,7 @@ npx drizzle-kit studio
 ### Ошибка: "Cannot connect to database"
 
 **Решение:**
+
 1. Убедитесь, что PostgreSQL запущен
 2. Проверьте `DATABASE_URL` в `.env`
 3. Создайте базу данных: `createdb aurelle`
@@ -251,12 +258,14 @@ npx drizzle-kit studio
 ### Ошибка: "Port 5000 already in use"
 
 **Решение:**
+
 1. Измените `PORT` в `.env` на другой (например, 5001)
 2. Или остановите процесс, занимающий порт 5000
 
 ### Тестовые пользователи не созданы
 
 **Решение:**
+
 ```bash
 # Запустите скрипт вручную
 npx tsx scripts/create-test-users.ts
@@ -265,6 +274,7 @@ npx tsx scripts/create-test-users.ts
 ### Ошибка: "Module not found"
 
 **Решение:**
+
 ```bash
 # Переустановите зависимости
 rm -rf node_modules

@@ -11,6 +11,7 @@
 ### 1. Исправления в локальной версии ✅
 
 #### client/src/pages/admin.tsx
+
 - Добавлена проверка на `user.isAdmin` для доступа к панели администратора
 - Не-администраторы автоматически перенаправляются на `/profile`
 - Администраторы имеют полный доступ к админ-панели
@@ -29,6 +30,7 @@ useEffect(() => {
 ```
 
 #### server/routes/auth.routes.ts
+
 - Добавлен GET endpoint для `/logout` (редирект на `/auth`)
 - Добавлена проверка роли администратора в `/auth/user`
 - Возвращаются поля `isAdmin` и `adminRole` для авторизованных пользователей
@@ -47,6 +49,7 @@ useEffect(() => {
 ```
 
 #### shared/models/auth.ts
+
 - Расширен тип `User` полями `isAdmin` и `adminRole`
 
 ```typescript
@@ -57,6 +60,7 @@ export type User = typeof users.$inferSelect & {
 ```
 
 #### client/src/pages/profile.tsx
+
 - Добавлен автоматический редирект администраторов на `/admin`
 
 ```typescript
@@ -68,6 +72,7 @@ if (user.isAdmin) {
 ```
 
 #### Переводы (en.json, ru.json, uz.json)
+
 - Добавлены полные переводы для админ-панели на 3 языках
 - Секция `admin` с ~130 строками переводов:
   - Навигация (dashboard, users, salons, complaints, sanctions, chat, audit)
@@ -111,12 +116,14 @@ docker-compose ps
 ### 3. Настройка администратора ✅
 
 **Учётные данные администратора:**
+
 - **Email:** admin@aurelle.uz
 - **Пароль:** Admin2026!
 - **ID:** local:1767268202493-cz2amrl7q
 - **Роль:** super_admin (полный доступ ко всем функциям)
 
 **Проверка в базе данных:**
+
 ```sql
 -- Пользователь существует
 SELECT id, email FROM users WHERE email = 'admin@aurelle.uz';
@@ -138,6 +145,7 @@ SELECT name, display_name, permissions FROM admin_roles WHERE id = '75063b69-40e
 ### URL: https://aurelle.uz/admin
 
 ### Вход:
+
 1. Откройте https://aurelle.uz
 2. Нажмите "Вход" (Login)
 3. Введите учётные данные:
@@ -146,6 +154,7 @@ SELECT name, display_name, permissions FROM admin_roles WHERE id = '75063b69-40e
 4. После входа вы автоматически попадёте на `/admin/dashboard`
 
 ### Разделы админ-панели:
+
 - 📊 **Dashboard** - Общая статистика и метрики
 - 👥 **Users** - Управление пользователями
 - 🏪 **Salons & Masters** - Управление салонами и мастерами
@@ -159,19 +168,24 @@ SELECT name, display_name, permissions FROM admin_roles WHERE id = '75063b69-40e
 ## ✅ Проверка работоспособности
 
 ### 1. Статус контейнеров
+
 ```bash
 docker-compose ps
 ```
+
 ```
 aurelle_app_1        Up      0.0.0.0:5000->5000/tcp
 aurelle_postgres_1   Up      0.0.0.0:5432->5432/tcp
 ```
+
 ✅ Оба контейнера работают
 
 ### 2. Логи приложения
+
 ```bash
 docker-compose logs --tail=30 app
 ```
+
 ```
 ✓ Upload directories initialized
 Auth system initialized (local auth only)
@@ -181,22 +195,26 @@ Local auth (login/password) configured successfully
 4:45:01 PM [express] serving on port 5000
 [Cron] Starting sanction expiry job (runs every 5 minutes)
 ```
+
 ✅ Приложение запущено успешно
 
 ### 3. Проверка доступа
 
 **Тест 1: Вход администратора**
+
 1. ✅ Переход на https://aurelle.uz
 2. ✅ Вход с admin@aurelle.uz / Admin2026!
 3. ✅ Автоматический редирект на `/admin/dashboard`
 4. ✅ Отображается админ-панель
 
 **Тест 2: Защита от неавторизованных**
+
 1. ✅ Выход из системы
 2. ✅ Попытка доступа к `/admin`
 3. ✅ Редирект на `/auth`
 
 **Тест 3: Защита от не-админов**
+
 1. ✅ Вход как обычный пользователь
 2. ✅ Попытка доступа к `/admin`
 3. ✅ Редирект на `/profile`
@@ -206,6 +224,7 @@ Local auth (login/password) configured successfully
 ## 📋 Структура файлов
 
 ### Новые файлы (созданы):
+
 ```
 client/src/pages/admin.tsx                  - Главный компонент админ-панели
 client/src/pages/admin/dashboard.tsx        - Дашборд
@@ -233,6 +252,7 @@ shared/admin-schema.ts                       - Схема админ-табли�
 ```
 
 ### Изменённые файлы:
+
 ```
 client/src/App.tsx                          - Добавлен роут /admin/:rest*
 client/src/pages/profile.tsx                - Редирект админов на /admin
@@ -250,6 +270,7 @@ shared/models/auth.ts                       - Расширен тип User
 ### База данных - Новые таблицы:
 
 #### admin_roles
+
 ```sql
 - id (UUID, primary key)
 - name (varchar) - super_admin, admin, moderator
@@ -262,6 +283,7 @@ shared/models/auth.ts                       - Расширен тип User
 ```
 
 #### admin_users
+
 ```sql
 - id (UUID, primary key)
 - user_id (varchar, references users.id)
@@ -272,6 +294,7 @@ shared/models/auth.ts                       - Расширен тип User
 ```
 
 #### complaints
+
 ```sql
 - id (UUID, primary key)
 - complainant_id (varchar, references users.id)
@@ -290,6 +313,7 @@ shared/models/auth.ts                       - Расширен тип User
 ```
 
 #### sanctions
+
 ```sql
 - id (UUID, primary key)
 - user_id (varchar, references users.id)
@@ -304,6 +328,7 @@ shared/models/auth.ts                       - Расширен тип User
 ```
 
 #### admin_chat_messages
+
 ```sql
 - id (UUID, primary key)
 - conversation_id (UUID)
@@ -315,6 +340,7 @@ shared/models/auth.ts                       - Расширен тип User
 ```
 
 #### audit_logs
+
 ```sql
 - id (UUID, primary key)
 - admin_id (varchar, references users.id)
@@ -331,6 +357,7 @@ shared/models/auth.ts                       - Расширен тип User
 ### Роли и права:
 
 **super_admin** (Супер-администратор):
+
 - Разрешения: `["*"]` (все возможные действия)
 - Может управлять всеми пользователями, салонами, мастерами
 - Может назначать/удалять администраторов
@@ -338,6 +365,7 @@ shared/models/auth.ts                       - Расширен тип User
 - Доступ ко всем логам аудита
 
 **admin** (Администратор):
+
 - Управление пользователями (read, write, block)
 - Управление салонами и мастерами (read, write, verify)
 - Управление бронированиями (read, write, cancel)
@@ -347,6 +375,7 @@ shared/models/auth.ts                       - Расширен тип User
 - Просмотр аналитики и аудита
 
 **moderator** (Модератор):
+
 - Только чтение пользователей, салонов, мастеров
 - Модерация отзывов
 - Обработка жалоб
@@ -356,6 +385,7 @@ shared/models/auth.ts                       - Расширен тип User
 ### Cron задачи:
 
 **Expire Sanctions Job** (server/jobs/expire-sanctions.ts):
+
 - Запускается каждые 5 минут
 - Автоматически деактивирует истёкшие санкции
 - Логирует все действия
@@ -365,6 +395,7 @@ shared/models/auth.ts                       - Расширен тип User
 ## 🎉 Результат
 
 ### ✅ Полностью работает:
+
 1. Админ-панель доступна по адресу https://aurelle.uz/admin
 2. Администратор может войти с учётными данными admin@aurelle.uz / Admin2026!
 3. Автоматический редирект администраторов на `/admin` после входа
@@ -378,6 +409,7 @@ shared/models/auth.ts                       - Расширен тип User
 11. Логирование всех админ-действий
 
 ### 📊 Статистика развёртывания:
+
 - **Файлов изменено:** 49
 - **Строк добавлено:** 5,926+
 - **Новых компонентов:** 7 (admin pages)
@@ -393,20 +425,24 @@ shared/models/auth.ts                       - Расширен тип User
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Последние коммиты:**
+
 - `e647d86e` - Fix admin panel access and authentication
 - `8e46b485` - Add comprehensive documentation for session and auth fixes
 - `e173a6ca` - Add express-session configuration and trust proxy setting
 
 **Сервер:**
+
 - IP: 89.39.94.194
-- SSH: root@89.39.94.194 (пароль: w2@nT*6D)
+- SSH: root@89.39.94.194 (пароль: w2@nT\*6D)
 - Директория: /var/www/aurelle
 
 **Контейнеры Docker:**
+
 - aurelle_app_1 (Node.js приложение)
 - aurelle_postgres_1 (PostgreSQL 14)
 
 **Команды для управления:**
+
 ```bash
 # Подключение
 ssh root@89.39.94.194

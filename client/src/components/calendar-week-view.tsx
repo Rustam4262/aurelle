@@ -69,7 +69,7 @@ const STATUS_BORDER_COLORS: Record<string, string> = {
 
 function getLocalizedText(
   obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string
+  lang: string,
 ): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
@@ -102,7 +102,7 @@ export function CalendarWeekView({
   const locale = currentLang === "ru" ? ru : currentLang === "uz" ? uz : undefined;
 
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(new Date(), { weekStartsOn: 1 }),
   );
   const [selectedMasterId, setSelectedMasterId] = useState<string>("all");
   const [selectedSalonId, setSelectedSalonId] = useState<string>("all");
@@ -173,15 +173,13 @@ export function CalendarWeekView({
   const weekRange = `${format(currentWeekStart, "d MMM", { locale })} - ${format(
     endOfWeek(currentWeekStart, { weekStartsOn: 1 }),
     "d MMM yyyy",
-    { locale }
+    { locale },
   )}`;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-pulse text-muted-foreground">
-          {t("common.loading")}
-        </div>
+        <div className="animate-pulse text-muted-foreground">{t("common.loading")}</div>
       </div>
     );
   }
@@ -213,9 +211,7 @@ export function CalendarWeekView({
                 <SelectValue placeholder={t("marketplace.owner.selectMaster")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">
-                  {t("marketplace.client.filter.all")}
-                </SelectItem>
+                <SelectItem value="all">{t("marketplace.client.filter.all")}</SelectItem>
                 {masters.map((master) => (
                   <SelectItem key={master.id} value={master.id}>
                     {master.name}
@@ -233,9 +229,7 @@ export function CalendarWeekView({
                 <SelectValue placeholder={t("marketplace.dashboard.selectSalon")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">
-                  {t("marketplace.dashboard.allSalons")}
-                </SelectItem>
+                <SelectItem value="all">{t("marketplace.dashboard.allSalons")}</SelectItem>
                 {salons.map((salon) => (
                   <SelectItem key={salon.id} value={salon.id}>
                     {getLocalizedText(salon.name, currentLang)}
@@ -276,14 +270,10 @@ export function CalendarWeekView({
                 <div
                   key={day.toISOString()}
                   className={`p-3 text-center border-r last:border-r-0 ${
-                    isToday(day)
-                      ? "bg-primary/10 text-primary font-bold"
-                      : "text-foreground"
+                    isToday(day) ? "bg-primary/10 text-primary font-bold" : "text-foreground"
                   }`}
                 >
-                  <div className="text-sm font-medium">
-                    {format(day, "EEE", { locale })}
-                  </div>
+                  <div className="text-sm font-medium">{format(day, "EEE", { locale })}</div>
                   <div className={`text-lg ${isToday(day) ? "text-primary" : ""}`}>
                     {format(day, "d")}
                   </div>
@@ -356,7 +346,8 @@ export function CalendarWeekView({
       {/* Summary */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span>
-          {filteredBookings.length} {t("marketplace.calendar.bookings")} {t("marketplace.calendar.scheduleFor").toLowerCase()} {weekRange}
+          {filteredBookings.length} {t("marketplace.calendar.bookings")}{" "}
+          {t("marketplace.calendar.scheduleFor").toLowerCase()} {weekRange}
         </span>
       </div>
     </div>

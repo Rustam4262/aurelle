@@ -12,6 +12,7 @@
 **Requirement:** Создать красивую галерею для фото салонов
 
 ### Deliverables:
+
 - ✅ Установить библиотеку yet-another-react-lightbox
 - ✅ Создать компонент ImageGallery:
   - Grid view (3-4 колонки)
@@ -34,6 +35,7 @@
 ### 1. Components
 
 **[client/src/components/image-gallery.tsx](client/src/components/image-gallery.tsx)** (NEW)
+
 - **ImageGallery** - Generic gallery component with configurable columns
 - **SalonGallery** - Specialized variant for salon photos (hero + thumbnail grid)
 - **PortfolioGallery** - Optimized for master portfolio images
@@ -51,18 +53,20 @@
 Generic gallery component with flexible configuration.
 
 **Props:**
+
 ```typescript
 interface ImageGalleryProps {
   images: string[];
-  columns?: 2 | 3 | 4;  // Grid columns
+  columns?: 2 | 3 | 4; // Grid columns
   aspectRatio?: "square" | "video" | "portrait";
   className?: string;
   showExpandIcon?: boolean;
-  enableLazyLoad?: boolean;  // Default: true
+  enableLazyLoad?: boolean; // Default: true
 }
 ```
 
 **Features:**
+
 - ✅ Responsive grid (2/3/4 columns)
 - ✅ Configurable aspect ratios
 - ✅ Lightbox with full-screen view
@@ -75,15 +79,11 @@ interface ImageGalleryProps {
 - ✅ Empty state with icon
 
 **Usage Example:**
+
 ```tsx
 import { ImageGallery } from "@/components/image-gallery";
 
-<ImageGallery
-  images={photoUrls}
-  columns={3}
-  aspectRatio="video"
-  enableLazyLoad={true}
-/>
+<ImageGallery images={photoUrls} columns={3} aspectRatio="video" enableLazyLoad={true} />;
 ```
 
 ---
@@ -93,6 +93,7 @@ import { ImageGallery } from "@/components/image-gallery";
 Specialized gallery optimized for salon photos with hero image.
 
 **Props:**
+
 ```typescript
 interface SalonGalleryProps {
   images: string[];
@@ -101,6 +102,7 @@ interface SalonGalleryProps {
 ```
 
 **Features:**
+
 - ✅ Large hero image (first photo)
 - ✅ Thumbnail grid (4 columns)
 - ✅ "+N more" overlay on last thumbnail
@@ -110,6 +112,7 @@ interface SalonGalleryProps {
 - ✅ Mobile-optimized layout
 
 **Layout:**
+
 ```
 ┌─────────────────────────────┐
 │                             │
@@ -122,13 +125,15 @@ interface SalonGalleryProps {
 ```
 
 **Usage Example:**
+
 ```tsx
 import { SalonGallery } from "@/components/image-gallery";
 
-<SalonGallery images={salon.photos as string[]} />
+<SalonGallery images={salon.photos as string[]} />;
 ```
 
 **Integrated in:**
+
 - ✅ [client/src/pages/salon.tsx:468](client/src/pages/salon.tsx#L468) - "About" tab
 
 ---
@@ -138,15 +143,17 @@ import { SalonGallery } from "@/components/image-gallery";
 Gallery optimized for master portfolio photos.
 
 **Props:**
+
 ```typescript
 interface PortfolioGalleryProps {
   images: string[];
-  masterName?: string;  // Used in alt text
+  masterName?: string; // Used in alt text
   className?: string;
 }
 ```
 
 **Features:**
+
 - ✅ Masonry-style square grid
 - ✅ 2 columns mobile, 3 columns desktop
 - ✅ Zoom-in hover effect (scale 110%)
@@ -155,16 +162,15 @@ interface PortfolioGalleryProps {
 - ✅ Empty state with icon
 
 **Usage Example:**
+
 ```tsx
 import { PortfolioGallery } from "@/components/image-gallery";
 
-<PortfolioGallery
-  images={portfolioImages}
-  masterName="Anna Ivanova"
-/>
+<PortfolioGallery images={portfolioImages} masterName="Anna Ivanova" />;
 ```
 
 **Integrated in:**
+
 - ✅ [client/src/components/master-portfolio.tsx:52](client/src/components/master-portfolio.tsx#L52)
 - ✅ [client/src/pages/salon.tsx:200](client/src/pages/salon.tsx#L200) - Master cards
 
@@ -196,6 +202,7 @@ import { PortfolioGallery } from "@/components/image-gallery";
 ```
 
 **Controls:**
+
 - ✅ **Navigation:** Left/Right arrows (keyboard & buttons)
 - ✅ **Zoom:** Scroll wheel or pinch gesture
 - ✅ **Swipe:** Touch swipe on mobile
@@ -218,6 +225,7 @@ import { PortfolioGallery } from "@/components/image-gallery";
 ```
 
 **Breakpoints:**
+
 - Mobile: 2 columns
 - Tablet (sm): 3 columns
 - Desktop (lg): 4 columns
@@ -230,11 +238,12 @@ import { PortfolioGallery } from "@/components/image-gallery";
 <img
   src={image}
   alt="Gallery image"
-  loading="lazy"  // Native lazy loading
+  loading="lazy" // Native lazy loading
 />
 ```
 
 **Benefits:**
+
 - ✅ Faster initial page load
 - ✅ Reduced bandwidth usage
 - ✅ Better performance on slow connections
@@ -256,6 +265,7 @@ import { PortfolioGallery } from "@/components/image-gallery";
 ```
 
 **Visual feedback:**
+
 - ✅ Image zooms slightly (105%)
 - ✅ Dark overlay appears (40% black)
 - ✅ Expand icon fades in
@@ -265,12 +275,12 @@ import { PortfolioGallery } from "@/components/image-gallery";
 
 ## 📊 Integration Status
 
-| Location | Component Used | Status | File |
-|----------|---------------|--------|------|
-| **Salon Gallery** | SalonGallery | ✅ Integrated | [salon.tsx:468](client/src/pages/salon.tsx#L468) |
-| **Master Portfolio** | PortfolioGallery | ✅ Integrated | [master-portfolio.tsx:52](client/src/components/master-portfolio.tsx#L52) |
-| **Service Images** | ImageGallery | ⏳ Ready to use | - |
-| **Salon Header** | - | ⏳ Can replace single image | [salon.tsx:54-65](client/src/pages/salon.tsx#L54-L65) |
+| Location             | Component Used   | Status                      | File                                                                      |
+| -------------------- | ---------------- | --------------------------- | ------------------------------------------------------------------------- |
+| **Salon Gallery**    | SalonGallery     | ✅ Integrated               | [salon.tsx:468](client/src/pages/salon.tsx#L468)                          |
+| **Master Portfolio** | PortfolioGallery | ✅ Integrated               | [master-portfolio.tsx:52](client/src/components/master-portfolio.tsx#L52) |
+| **Service Images**   | ImageGallery     | ⏳ Ready to use             | -                                                                         |
+| **Salon Header**     | -                | ⏳ Can replace single image | [salon.tsx:54-65](client/src/pages/salon.tsx#L54-L65)                     |
 
 ---
 
@@ -356,19 +366,9 @@ Mobile View (2 columns):
 import { ImageGallery } from "@/components/image-gallery";
 
 function MyComponent() {
-  const images = [
-    "/uploads/photo1.jpg",
-    "/uploads/photo2.jpg",
-    "/uploads/photo3.jpg",
-  ];
+  const images = ["/uploads/photo1.jpg", "/uploads/photo2.jpg", "/uploads/photo3.jpg"];
 
-  return (
-    <ImageGallery
-      images={images}
-      columns={3}
-      aspectRatio="square"
-    />
-  );
+  return <ImageGallery images={images} columns={3} aspectRatio="square" />;
 }
 ```
 
@@ -376,14 +376,14 @@ function MyComponent() {
 
 ```tsx
 // In salon "About" tab
-{salon.photos && (salon.photos as string[]).length > 0 && (
-  <div>
-    <h3 className="font-medium text-foreground mb-3">
-      {t("marketplace.salon.gallery")}
-    </h3>
-    <SalonGallery images={salon.photos as string[]} />
-  </div>
-)}
+{
+  salon.photos && (salon.photos as string[]).length > 0 && (
+    <div>
+      <h3 className="font-medium text-foreground mb-3">{t("marketplace.salon.gallery")}</h3>
+      <SalonGallery images={salon.photos as string[]} />
+    </div>
+  );
+}
 ```
 
 ### Master Portfolio Integration
@@ -397,7 +397,7 @@ export function MasterPortfolio({ masterId, masterName }: MasterPortfolioProps) 
 
   if (!portfolioItems?.length) return <EmptyState />;
 
-  const images = portfolioItems.map(item => item.imageUrl);
+  const images = portfolioItems.map((item) => item.imageUrl);
 
   return <PortfolioGallery images={images} masterName={masterName} />;
 }
@@ -409,13 +409,13 @@ export function MasterPortfolio({ masterId, masterName }: MasterPortfolioProps) 
 
 ### Before vs After
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Initial Load** | All images load | Only visible | 🚀 70% faster |
-| **Bandwidth** | ~5MB | ~1.5MB | 💾 70% reduction |
-| **Lightbox** | ❌ None | ✅ Full-featured | ⭐ New feature |
-| **Mobile UX** | ❌ No zoom | ✅ Pinch zoom | 📱 Touch-optimized |
-| **Navigation** | ❌ No arrows | ✅ Full navigation | ⌨️ Keyboard support |
+| Metric           | Before          | After              | Improvement         |
+| ---------------- | --------------- | ------------------ | ------------------- |
+| **Initial Load** | All images load | Only visible       | 🚀 70% faster       |
+| **Bandwidth**    | ~5MB            | ~1.5MB             | 💾 70% reduction    |
+| **Lightbox**     | ❌ None         | ✅ Full-featured   | ⭐ New feature      |
+| **Mobile UX**    | ❌ No zoom      | ✅ Pinch zoom      | 📱 Touch-optimized  |
+| **Navigation**   | ❌ No arrows    | ✅ Full navigation | ⌨️ Keyboard support |
 
 ### Lazy Loading Impact
 
@@ -453,6 +453,7 @@ With lazy loading:
 ## 🎨 Best Practices Implemented
 
 ### UX Design:
+
 - ✅ Clear visual feedback (hover states)
 - ✅ Image counter badges (1/10)
 - ✅ Empty states with icons
@@ -461,6 +462,7 @@ With lazy loading:
 - ✅ Touch-friendly targets (min 44px)
 
 ### Performance:
+
 - ✅ Lazy loading by default
 - ✅ Preload only 2 images ahead
 - ✅ Native browser lazy loading
@@ -468,6 +470,7 @@ With lazy loading:
 - ✅ GPU-accelerated transforms
 
 ### Accessibility:
+
 - ✅ Alt text for all images
 - ✅ Keyboard navigation
 - ✅ Focus management
@@ -475,6 +478,7 @@ With lazy loading:
 - ✅ Screen reader compatible
 
 ### Code Quality:
+
 - ✅ TypeScript typed
 - ✅ Reusable components
 - ✅ Configurable props
@@ -490,6 +494,7 @@ With lazy loading:
 **Official Docs:** https://yet-another-react-lightbox.com/
 
 **Features Used:**
+
 - Core lightbox functionality
 - Zoom plugin (scroll & pinch)
 - Carousel navigation
@@ -500,6 +505,7 @@ With lazy loading:
 **Bundle Size:** ~15KB gzipped (minimal overhead)
 
 **Browser Support:**
+
 - ✅ Chrome/Edge 90+
 - ✅ Firefox 88+
 - ✅ Safari 14+
@@ -512,18 +518,21 @@ With lazy loading:
 ### Additional Features (Not Required):
 
 1. **Thumbnails Plugin:**
+
    ```tsx
    import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
    // Show thumbnail strip at bottom of lightbox
    ```
 
 2. **Fullscreen Plugin:**
+
    ```tsx
    import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
    // Add fullscreen button
    ```
 
 3. **Slideshow Plugin:**
+
    ```tsx
    import Slideshow from "yet-another-react-lightbox/plugins/slideshow";
    // Auto-play slideshow mode
@@ -545,6 +554,7 @@ With lazy loading:
 ## 🎯 Summary
 
 ### Выполнено:
+
 - ✅ **P0 #20** полностью завершена
 - ✅ **3 gallery components** созданы
 - ✅ **Lightbox** с full feature set
@@ -553,12 +563,14 @@ With lazy loading:
 - ✅ **Mobile-optimized** с swipe/zoom
 
 ### Код:
+
 - **Создано файлов:** 1 new + 2 updated
 - **Строк кода:** ~400+ lines
 - **Components:** 3 (ImageGallery, SalonGallery, PortfolioGallery)
 - **Features:** 10+ (zoom, swipe, lazy load, keyboard, etc.)
 
 ### Качество:
+
 - ✅ TypeScript типизация
 - ✅ Responsive design
 - ✅ Accessibility (ARIA)
@@ -573,6 +585,7 @@ With lazy loading:
 **Статус:** ✅ **ГОТОВО К PRODUCTION**
 
 P0 #20 полностью завершена. Приложение теперь имеет:
+
 - Professional image galleries
 - Full-featured lightbox
 - Mobile-optimized viewing

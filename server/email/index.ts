@@ -42,11 +42,7 @@ export function isEmailConfigured(): boolean {
 }
 
 // Send email helper
-async function sendEmail(
-  to: string,
-  subject: string,
-  html: string
-): Promise<void> {
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!transporter) {
     console.warn("Email not configured, skipping email send");
     return;
@@ -82,7 +78,7 @@ interface BookingConfirmationData {
 export async function sendBookingConfirmation(
   email: string,
   data: BookingConfirmationData,
-  language: string = "en"
+  language: string = "en",
 ): Promise<void> {
   const translations = {
     en: {
@@ -97,7 +93,8 @@ export async function sendBookingConfirmation(
       time: "Time",
       price: "Price",
       anyMaster: "Any available master",
-      instructions: "Please arrive 5 minutes early. If you need to cancel or reschedule, please do so at least 24 hours in advance.",
+      instructions:
+        "Please arrive 5 minutes early. If you need to cancel or reschedule, please do so at least 24 hours in advance.",
       viewBooking: "View Booking",
       footer: "Thank you for choosing AURELLE!",
     },
@@ -113,7 +110,8 @@ export async function sendBookingConfirmation(
       time: "Время",
       price: "Цена",
       anyMaster: "Любой свободный мастер",
-      instructions: "Пожалуйста, приходите за 5 минут до начала. Если вам нужно отменить или перенести запись, сделайте это минимум за 24 часа.",
+      instructions:
+        "Пожалуйста, приходите за 5 минут до начала. Если вам нужно отменить или перенести запись, сделайте это минимум за 24 часа.",
       viewBooking: "Посмотреть запись",
       footer: "Спасибо, что выбрали AURELLE!",
     },
@@ -129,7 +127,8 @@ export async function sendBookingConfirmation(
       time: "Vaqt",
       price: "Narx",
       anyMaster: "Har qanday bo'sh usta",
-      instructions: "Iltimos, 5 daqiqa oldin keling. Agar bekor qilish yoki o'zgartirish kerak bo'lsa, kamida 24 soat oldin qiling.",
+      instructions:
+        "Iltimos, 5 daqiqa oldin keling. Agar bekor qilish yoki o'zgartirish kerak bo'lsa, kamida 24 soat oldin qiling.",
       viewBooking: "Yozilishni ko'rish",
       footer: "AURELLE ni tanlaganingiz uchun rahmat!",
     },
@@ -234,7 +233,7 @@ interface BookingCancellationData {
 export async function sendBookingCancellation(
   email: string,
   data: BookingCancellationData,
-  language: string = "en"
+  language: string = "en",
 ): Promise<void> {
   const translations = {
     en: {
@@ -370,7 +369,7 @@ interface BookingReminderData {
 export async function sendBookingReminder(
   email: string,
   data: BookingReminderData,
-  language: string = "en"
+  language: string = "en",
 ): Promise<void> {
   const translations = {
     en: {

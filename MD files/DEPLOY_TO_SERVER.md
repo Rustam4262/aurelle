@@ -3,7 +3,7 @@
 **Сервер**: 89.39.94.194
 **Домен**: aurelle.uz, www.aurelle.uz
 **Логин**: root
-**Пароль**: w2@nT*6D
+**Пароль**: w2@nT\*6D
 
 ## Шаг 1: Подключение к серверу
 
@@ -317,6 +317,7 @@ curl http://89.39.94.194
 ```
 
 Откройте в браузере:
+
 - **http://aurelle.uz**
 - **http://www.aurelle.uz**
 - **http://89.39.94.194**
@@ -356,6 +357,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 ```
 
 Certbot автоматически:
+
 - Получит бесплатный SSL сертификат
 - Настроит HTTPS
 - Настроит автоматический редирект HTTP → HTTPS
@@ -368,6 +370,7 @@ Certbot автоматически:
 После настройки SSL обновите Redirect URIs на HTTPS:
 
 ### Google OAuth Console:
+
 1. https://console.cloud.google.com/
 2. Credentials → OAuth 2.0 Client IDs
 3. Удалите старые и добавьте:
@@ -375,6 +378,7 @@ Certbot автоматически:
    - `https://www.aurelle.uz/api/auth/google/callback`
 
 ### Yandex OAuth:
+
 1. https://oauth.yandex.ru/
 2. Ваше приложение → Редактировать
 3. Удалите старые и добавьте:
@@ -455,6 +459,7 @@ chmod +x deploy.sh
 ## Troubleshooting
 
 ### Порт 5000 занят
+
 ```bash
 netstat -tulpn | grep :5000
 kill -9 <PID>
@@ -462,6 +467,7 @@ pm2 restart aurelle
 ```
 
 ### База данных не подключается
+
 ```bash
 # Проверка что PostgreSQL запущен
 systemctl status postgresql
@@ -471,6 +477,7 @@ psql -U aurelle_user -d aurelle -h localhost
 ```
 
 ### Приложение не запускается
+
 ```bash
 pm2 logs aurelle --err
 pm2 delete aurelle

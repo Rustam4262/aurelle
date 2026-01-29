@@ -9,6 +9,7 @@
 ## 📋 Task Summary
 
 **Original Requirements**:
+
 - Setup Telegram бота для алертов (токен: `7985842709:AAE_0p3pDQdw8jis9RkCXlDFIMuqZZqmUvo`, Chat ID: `1680204574`)
 - Создать скрипт `telegram-send.sh`
 - Настроить alerts:
@@ -33,13 +34,16 @@
 ### 1. Telegram Notification System
 
 #### Core Script
+
 **[scripts/telegram-send.sh](scripts/telegram-send.sh)** - Universal Telegram notification script
 
 **Pre-configured with**:
+
 - Bot Token: `7985842709:AAE_0p3pDQdw8jis9RkCXlDFIMuqZZqmUvo`
 - Chat ID: `1680204574`
 
 **Features**:
+
 ```bash
 # 4 alert levels with emojis
 send_critical_alert "Title" "Description"   # 🚨 Red
@@ -55,6 +59,7 @@ telegram-send.sh success "Recovered" "System back to normal"
 ```
 
 **Message Format**:
+
 ```
 🚨 CRITICAL ALERT
 
@@ -72,14 +77,17 @@ Priority: CRITICAL
 ### 2. Infrastructure Monitoring Scripts
 
 #### [scripts/monitor-disk.sh](scripts/monitor-disk.sh) ✅
+
 **Purpose**: Disk usage monitoring
 
 **Thresholds**:
+
 - > 85%: Warning alert
 - > 90%: Critical alert
 - > 95%: Very critical alert
 
 **Features**:
+
 - Monitors all mounted filesystems
 - Shows filesystem, size, used, available
 - 1-hour alert cooldown
@@ -87,6 +95,7 @@ Priority: CRITICAL
 - Excludes tmpfs, loop devices
 
 **Alert Example**:
+
 ```
 ⚠️ CRITICAL: Disk Space Critical
 
@@ -101,20 +110,24 @@ Action Required: Please free up disk space immediately.
 ```
 
 #### [scripts/monitor-memory.sh](scripts/monitor-memory.sh) ✅
+
 **Purpose**: RAM usage monitoring
 
 **Thresholds**:
+
 - > 90%: Warning
 - > 92%: Critical
 - > 95%: Very critical
 
 **Features**:
+
 - Shows total, used, available memory
 - Lists top 5 memory-consuming processes
 - 30-minute alert cooldown
 - Recovery notifications
 
 **Alert Example**:
+
 ```
 🚨 Memory Usage Critical
 
@@ -132,14 +145,17 @@ Action Required: Investigate and reduce memory usage.
 ```
 
 #### [scripts/monitor-cpu.sh](scripts/monitor-cpu.sh) ✅
+
 **Purpose**: CPU usage monitoring (sustained)
 
 **Thresholds**:
+
 - > 80% for 5 minutes: Warning
 - > 90% for 5 minutes: Critical
 - > 95% for 5 minutes: Very critical
 
 **Features**:
+
 - Monitors CPU for 5 minutes (30 checks × 10s)
 - Only alerts if sustained (> 80% of checks show high CPU)
 - Shows top 5 CPU-consuming processes
@@ -147,6 +163,7 @@ Action Required: Investigate and reduce memory usage.
 - 30-minute alert cooldown
 
 **Alert Example**:
+
 ```
 ⚠️ High CPU Usage (Sustained)
 
@@ -163,13 +180,16 @@ Action Required: Investigate and optimize processes.
 ```
 
 #### [scripts/monitor-pm2.sh](scripts/monitor-pm2.sh) ✅
+
 **Purpose**: PM2 process monitoring
 
 **Monitored Apps**:
+
 - `aurelle-production`
 - `aurelle-staging`
 
 **Alerts**:
+
 - Process crashed/stopped: Critical
 - Process missing: Critical
 - Single restart: Warning
@@ -177,6 +197,7 @@ Action Required: Investigate and optimize processes.
 - High memory (> 1GB): Warning
 
 **Features**:
+
 - Tracks process status
 - Monitors restart count
 - Shows error logs on crashes
@@ -186,6 +207,7 @@ Action Required: Investigate and optimize processes.
 **Alert Examples**:
 
 **Process Crashed**:
+
 ```
 🚨 PM2 App Crashed
 
@@ -202,6 +224,7 @@ Action Required: Investigate and restart the application
 ```
 
 **Multiple Restarts**:
+
 ```
 🚨 PM2 App Multiple Restarts
 
@@ -216,14 +239,17 @@ Info: App has been automatically restarted by PM2
 ```
 
 #### [scripts/monitor-database.sh](scripts/monitor-database.sh) ✅
+
 **Purpose**: PostgreSQL connection monitoring
 
 **Alerts**:
+
 - Connection failed: Critical
 - High connections (> 80): Warning
 - Long queries (> 5 min): Warning
 
 **Features**:
+
 - Tests database connectivity
 - Shows database size
 - Monitors active connections
@@ -231,6 +257,7 @@ Info: App has been automatically restarted by PM2
 - 10-minute alert cooldown
 
 **Alert Example**:
+
 ```
 🚨 Database Connection Failed
 
@@ -251,19 +278,23 @@ sudo journalctl -u postgresql -n 50
 ```
 
 #### [scripts/monitor-ssl.sh](scripts/monitor-ssl.sh) ✅
+
 **Purpose**: SSL certificate expiration monitoring
 
 **Thresholds**:
+
 - Expired: Critical
 - < 7 days: Critical
 - < 30 days: Warning
 
 **Monitored Domains**:
+
 - aurelle.uz
 - www.aurelle.uz
 - staging.aurelle.uz
 
 **Features**:
+
 - Checks certificate expiration
 - Shows issuer and subject
 - Calculates days remaining
@@ -272,6 +303,7 @@ sudo journalctl -u postgresql -n 50
 **Alert Examples**:
 
 **Expiring Soon**:
+
 ```
 ⚠️ SSL Certificate Expiring
 
@@ -289,6 +321,7 @@ sudo certbot renew --dry-run
 ```
 
 **Expired**:
+
 ```
 🚨 SSL Certificate EXPIRED
 
@@ -311,21 +344,25 @@ sudo certbot certificates
 ```
 
 #### [scripts/monitor-health.sh](scripts/monitor-health.sh) ✅
+
 **Purpose**: Application health endpoint monitoring
 
 **Monitored Endpoints**:
+
 - https://aurelle.uz/api/health (production)
 - https://staging.aurelle.uz/api/health (staging)
 - http://localhost:5000/api/health (local production)
 - http://localhost:5001/api/health (local staging)
 
 **Alerts**:
+
 - Connection failed: Critical
 - HTTP 5xx: Critical
 - HTTP 4xx: Warning
 - Slow response (> 5s): Warning
 
 **Features**:
+
 - Checks multiple endpoints
 - Measures response time
 - Tracks availability
@@ -333,6 +370,7 @@ sudo certbot certificates
 - Recovery notifications
 
 **Alert Example**:
+
 ```
 🚨 Health Check Failed
 
@@ -361,6 +399,7 @@ curl -I https://aurelle.uz/api/health
 **URL**: `/api/health`
 
 **Returns**:
+
 ```json
 {
   "status": "healthy",
@@ -390,6 +429,7 @@ curl -I https://aurelle.uz/api/health
 ```
 
 **Status Codes**:
+
 - `200 OK`: All systems healthy
 - `503 Service Unavailable`: Database connection failed or other critical issue
 
@@ -400,6 +440,7 @@ curl -I https://aurelle.uz/api/health
 **[scripts/setup-monitoring.sh](scripts/setup-monitoring.sh)** - Complete monitoring setup automation
 
 **Features**:
+
 ```bash
 # 1. Makes all scripts executable
 chmod +x monitor-*.sh telegram-send.sh
@@ -418,11 +459,13 @@ mkdir -p /var/log/aurelle-monitoring
 ```
 
 **Usage**:
+
 ```bash
 bash scripts/setup-monitoring.sh
 ```
 
 **Output**:
+
 ```
 === AURELLE Monitoring Setup ===
 
@@ -453,16 +496,16 @@ Monitoring is now active! You will receive Telegram alerts for:
 
 **Schedule**:
 
-| Monitor | Frequency | Cron Expression |
-|---------|-----------|-----------------|
-| Disk | Every hour | `0 * * * *` |
-| Memory | Every 30 min | `*/30 * * * *` |
-| CPU | Every 15 min | `*/15 * * * *` |
-| PM2 | Every 5 min | `*/5 * * * *` |
-| Database | Every 5 min | `*/5 * * * *` |
-| Health | Every 5 min | `*/5 * * * *` |
-| SSL | Daily at 9 AM | `0 9 * * *` |
-| Log cleanup | Weekly Sun 3 AM | `0 3 * * 0` |
+| Monitor     | Frequency       | Cron Expression |
+| ----------- | --------------- | --------------- |
+| Disk        | Every hour      | `0 * * * *`     |
+| Memory      | Every 30 min    | `*/30 * * * *`  |
+| CPU         | Every 15 min    | `*/15 * * * *`  |
+| PM2         | Every 5 min     | `*/5 * * * *`   |
+| Database    | Every 5 min     | `*/5 * * * *`   |
+| Health      | Every 5 min     | `*/5 * * * *`   |
+| SSL         | Daily at 9 AM   | `0 9 * * *`     |
+| Log cleanup | Weekly Sun 3 AM | `0 3 * * 0`     |
 
 **Auto-configured by** [setup-monitoring.sh](scripts/setup-monitoring.sh)
 
@@ -473,6 +516,7 @@ Monitoring is now active! You will receive Telegram alerts for:
 **[INFRASTRUCTURE_MONITORING_GUIDE.md](INFRASTRUCTURE_MONITORING_GUIDE.md)** - 500+ lines comprehensive guide
 
 **Sections**:
+
 1. Overview - Features and capabilities
 2. Alert System - Levels, thresholds, cooldowns
 3. Monitoring Scripts - Detailed documentation for each script
@@ -486,6 +530,7 @@ Monitoring is now active! You will receive Telegram alerts for:
 **Dashboard Options Documented**:
 
 **Option 1: Netdata** (Recommended)
+
 - Real-time monitoring (1s granularity)
 - Zero configuration
 - Low resource usage
@@ -493,6 +538,7 @@ Monitoring is now active! You will receive Telegram alerts for:
 - Installation: One command
 
 **Option 2: Grafana + Prometheus**
+
 - Advanced metrics
 - Custom dashboards
 - Historical data
@@ -500,6 +546,7 @@ Monitoring is now active! You will receive Telegram alerts for:
 - Complete setup guide
 
 **Option 3: Simple HTML Dashboard**
+
 - Lightweight custom solution
 - Uses health endpoint data
 - Auto-refresh every 30s
@@ -513,20 +560,20 @@ Monitoring is now active! You will receive Telegram alerts for:
 
 ### ✅ All Requirements Met
 
-| Requirement | Status | Implementation |
-|------------|--------|----------------|
-| Setup Telegram бота | ✅ Complete | Pre-configured with token and chat ID |
+| Requirement              | Status      | Implementation                                       |
+| ------------------------ | ----------- | ---------------------------------------------------- |
+| Setup Telegram бота      | ✅ Complete | Pre-configured with token and chat ID                |
 | Создать telegram-send.sh | ✅ Complete | [scripts/telegram-send.sh](scripts/telegram-send.sh) |
-| Disk usage > 85% | ✅ Complete | [monitor-disk.sh](scripts/monitor-disk.sh) |
-| Memory usage > 90% | ✅ Complete | [monitor-memory.sh](scripts/monitor-memory.sh) |
-| CPU > 80% for 5min | ✅ Complete | [monitor-cpu.sh](scripts/monitor-cpu.sh) |
-| PM2 process crash | ✅ Complete | [monitor-pm2.sh](scripts/monitor-pm2.sh) |
-| Database failure | ✅ Complete | [monitor-database.sh](scripts/monitor-database.sh) |
-| SSL < 30 days | ✅ Complete | [monitor-ssl.sh](scripts/monitor-ssl.sh) |
-| Cron: hourly disk | ✅ Complete | Automated via setup script |
-| Cron: 5min health | ✅ Complete | Automated via setup script |
-| Cron: daily SSL | ✅ Complete | Automated via setup script |
-| Dashboard | ✅ Complete | Netdata, Grafana, custom options documented |
+| Disk usage > 85%         | ✅ Complete | [monitor-disk.sh](scripts/monitor-disk.sh)           |
+| Memory usage > 90%       | ✅ Complete | [monitor-memory.sh](scripts/monitor-memory.sh)       |
+| CPU > 80% for 5min       | ✅ Complete | [monitor-cpu.sh](scripts/monitor-cpu.sh)             |
+| PM2 process crash        | ✅ Complete | [monitor-pm2.sh](scripts/monitor-pm2.sh)             |
+| Database failure         | ✅ Complete | [monitor-database.sh](scripts/monitor-database.sh)   |
+| SSL < 30 days            | ✅ Complete | [monitor-ssl.sh](scripts/monitor-ssl.sh)             |
+| Cron: hourly disk        | ✅ Complete | Automated via setup script                           |
+| Cron: 5min health        | ✅ Complete | Automated via setup script                           |
+| Cron: daily SSL          | ✅ Complete | Automated via setup script                           |
+| Dashboard                | ✅ Complete | Netdata, Grafana, custom options documented          |
 
 **Verdict**: ✅ **ALL ACCEPTANCE CRITERIA MET**
 
@@ -536,30 +583,33 @@ Monitoring is now active! You will receive Telegram alerts for:
 
 ### 1. Comprehensive Monitoring Coverage ✅
 
-| System | Metrics Monitored | Alert Threshold |
-|--------|-------------------|-----------------|
-| **Disk** | Usage on all mount points | > 85% |
-| **Memory** | RAM usage | > 90% |
-| **CPU** | Sustained usage | > 80% for 5min |
-| **PM2** | Process status, restarts, memory | Crash, > 1GB |
-| **Database** | Connection, queries, connections | Failed, > 80, > 5min |
-| **SSL** | Certificate expiration | < 30 days |
-| **Health** | Endpoint availability, response time | Failed, > 5s |
+| System       | Metrics Monitored                    | Alert Threshold      |
+| ------------ | ------------------------------------ | -------------------- |
+| **Disk**     | Usage on all mount points            | > 85%                |
+| **Memory**   | RAM usage                            | > 90%                |
+| **CPU**      | Sustained usage                      | > 80% for 5min       |
+| **PM2**      | Process status, restarts, memory     | Crash, > 1GB         |
+| **Database** | Connection, queries, connections     | Failed, > 80, > 5min |
+| **SSL**      | Certificate expiration               | < 30 days            |
+| **Health**   | Endpoint availability, response time | Failed, > 5s         |
 
 ### 2. Smart Alerting System ✅
 
 **Alert Levels**:
+
 - 🚨 **CRITICAL**: Immediate action required
 - ⚠️ **WARNING**: Should be addressed soon
 - ℹ️ **INFO**: Informational updates
 - ✅ **SUCCESS**: Issue resolved
 
 **Anti-Spam Features**:
+
 - Configurable cooldown periods
 - Recovery notifications
 - Sustained condition checks (CPU)
 
 **Rich Notifications**:
+
 - Server name
 - Metric values
 - Top processes (CPU/Memory)
@@ -570,11 +620,13 @@ Monitoring is now active! You will receive Telegram alerts for:
 ### 3. Automated Installation ✅
 
 **One-Command Setup**:
+
 ```bash
 bash scripts/setup-monitoring.sh
 ```
 
 **Includes**:
+
 - Script permissions
 - Telegram test
 - Cron job installation
@@ -585,6 +637,7 @@ bash scripts/setup-monitoring.sh
 ### 4. Production-Ready ✅
 
 **Features**:
+
 - Tested and validated
 - Comprehensive error handling
 - Logging to files
@@ -595,6 +648,7 @@ bash scripts/setup-monitoring.sh
 ### 5. Developer-Friendly ✅
 
 **Documentation**:
+
 - Comprehensive setup guide
 - Troubleshooting section
 - Best practices
@@ -602,6 +656,7 @@ bash scripts/setup-monitoring.sh
 - Useful commands
 
 **Maintenance**:
+
 - Auto log cleanup (30 days)
 - Easy threshold adjustment
 - Simple script updates
@@ -695,6 +750,7 @@ crontab -l | grep aurelle
 ### Scenario: Disk Space Critical
 
 **1. Initial Alert (85% threshold crossed)**:
+
 ```
 ⚠️ Disk Space Warning
 
@@ -708,6 +764,7 @@ Time: 2026-01-10 14:00:00
 ```
 
 **2. Escalation (90% threshold crossed)**:
+
 ```
 🚨 Disk Space Critical
 
@@ -721,6 +778,7 @@ Time: 2026-01-10 14:30:00
 ```
 
 **3. Recovery (back below 85%)**:
+
 ```
 ✅ Disk Usage Recovered
 
@@ -734,6 +792,7 @@ Time: 2026-01-10 15:00:00
 ### Scenario: PM2 Process Crash
 
 **1. Crash Alert**:
+
 ```
 🚨 PM2 App Crashed
 
@@ -752,6 +811,7 @@ Time: 2026-01-10 16:00:00
 ```
 
 **2. After Restart (multiple restarts)**:
+
 ```
 🚨 PM2 App Multiple Restarts
 
@@ -772,18 +832,21 @@ Time: 2026-01-10 16:10:00
 ### Adjust Alert Thresholds
 
 **Disk**:
+
 ```bash
 # Edit scripts/monitor-disk.sh
 THRESHOLD=85  # Change to desired percentage
 ```
 
 **Memory**:
+
 ```bash
 # Edit scripts/monitor-memory.sh
 THRESHOLD=90  # Change to desired percentage
 ```
 
 **CPU**:
+
 ```bash
 # Edit scripts/monitor-cpu.sh
 THRESHOLD=80  # Change to desired percentage
@@ -809,6 +872,7 @@ DOMAINS=("aurelle.uz" "www.aurelle.uz" "staging.aurelle.uz" "api.aurelle.uz")
 ### Customize Telegram Messages
 
 Edit [scripts/telegram-send.sh](scripts/telegram-send.sh) functions:
+
 - `send_critical_alert()`
 - `send_warning_alert()`
 - `send_info_alert()`
@@ -821,6 +885,7 @@ Edit [scripts/telegram-send.sh](scripts/telegram-send.sh) functions:
 ### Option 1: Netdata (Recommended)
 
 **Install**:
+
 ```bash
 bash <(curl -Ss https://my-netdata.io/kickstart.sh)
 ```
@@ -828,6 +893,7 @@ bash <(curl -Ss https://my-netdata.io/kickstart.sh)
 **Access**: http://localhost:19999
 
 **Features**:
+
 - Real-time metrics (1s granularity)
 - Zero configuration
 - Auto-detects PostgreSQL, PM2, Nginx
@@ -836,6 +902,7 @@ bash <(curl -Ss https://my-netdata.io/kickstart.sh)
 ### Option 2: Grafana + Prometheus
 
 **Install**:
+
 ```bash
 # Install Prometheus
 sudo apt-get install -y prometheus
@@ -850,6 +917,7 @@ sudo apt-get install -y prometheus-node-exporter
 **Access**: http://localhost:3000 (Grafana)
 
 **Import Dashboards**:
+
 - Node Exporter Full (ID: 1860)
 - PostgreSQL (ID: 9628)
 
@@ -943,26 +1011,31 @@ pm2 status     # PM2
 A **production-ready infrastructure monitoring system** with:
 
 ✅ **8 Monitoring Scripts**:
+
 - Disk, Memory, CPU, PM2, Database, SSL, Health, Setup
 
 ✅ **Telegram Alert System**:
+
 - 4 severity levels
 - Smart cooldown
 - Recovery notifications
 - Rich message formatting
 
 ✅ **Automated Installation**:
+
 - One-command setup
 - Auto-configured cron jobs
 - Initial health checks
 - Test notifications
 
 ✅ **Health Endpoint**:
+
 - `/api/health` with system metrics
 - Database connectivity check
 - Performance data
 
 ✅ **Comprehensive Documentation**:
+
 - 1,200+ line setup guide
 - Troubleshooting section
 - Dashboard options
@@ -971,14 +1044,14 @@ A **production-ready infrastructure monitoring system** with:
 ### Monitoring Coverage
 
 | Component | Check Frequency | Alert Threshold | Implementation |
-|-----------|----------------|-----------------|----------------|
-| Disk | Hourly | > 85% | ✅ Complete |
-| Memory | 30 minutes | > 90% | ✅ Complete |
-| CPU | 15 minutes | > 80% (5min) | ✅ Complete |
-| PM2 | 5 minutes | Crash/restart | ✅ Complete |
-| Database | 5 minutes | Connection fail | ✅ Complete |
-| Health | 5 minutes | HTTP error | ✅ Complete |
-| SSL | Daily | < 30 days | ✅ Complete |
+| --------- | --------------- | --------------- | -------------- |
+| Disk      | Hourly          | > 85%           | ✅ Complete    |
+| Memory    | 30 minutes      | > 90%           | ✅ Complete    |
+| CPU       | 15 minutes      | > 80% (5min)    | ✅ Complete    |
+| PM2       | 5 minutes       | Crash/restart   | ✅ Complete    |
+| Database  | 5 minutes       | Connection fail | ✅ Complete    |
+| Health    | 5 minutes       | HTTP error      | ✅ Complete    |
+| SSL       | Daily           | < 30 days       | ✅ Complete    |
 
 ### Alert Coverage
 
@@ -997,6 +1070,6 @@ A **production-ready infrastructure monitoring system** with:
 
 ---
 
-*Infrastructure monitoring setup completed: January 10, 2026*
-*Next step: Run `bash scripts/setup-monitoring.sh` to activate monitoring*
-*Estimated setup time: 5 minutes*
+_Infrastructure monitoring setup completed: January 10, 2026_
+_Next step: Run `bash scripts/setup-monitoring.sh` to activate monitoring_
+_Estimated setup time: 5 minutes_

@@ -52,9 +52,7 @@ router.post("/", requirePermission("sanctions.create"), async (req, res) => {
       .values({
         ...validatedData,
         createdBy: userId,
-        startsAt: validatedData.startsAt
-          ? new Date(validatedData.startsAt)
-          : new Date(),
+        startsAt: validatedData.startsAt ? new Date(validatedData.startsAt) : new Date(),
         endsAt: validatedData.endsAt ? new Date(validatedData.endsAt) : undefined,
       })
       .returning();
@@ -92,11 +90,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
       return res.status(400).json({ error: "Revoke reason is required" });
     }
 
-    const [oldSanction] = await db
-      .select()
-      .from(sanctions)
-      .where(eq(sanctions.id, id))
-      .limit(1);
+    const [oldSanction] = await db.select().from(sanctions).where(eq(sanctions.id, id)).limit(1);
 
     if (!oldSanction) {
       return res.status(404).json({ error: "Sanction not found" });
@@ -135,32 +129,36 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
 });
 
 // GET /api/admin/sanctions/check/:targetType/:targetId - Check if entity is sanctioned
-router.get("/check/:targetType/:targetId", requirePermission("sanctions.read"), async (req, res) => {
-  try {
-    const { targetType, targetId } = req.params;
+router.get(
+  "/check/:targetType/:targetId",
+  requirePermission("sanctions.read"),
+  async (req, res) => {
+    try {
+      const { targetType, targetId } = req.params;
 
-    const activeSanctions = await db
-      .select()
-      .from(sanctions)
-      .where(
-        and(
-          eq(sanctions.targetType, targetType),
-          eq(sanctions.targetId, targetId),
-          eq(sanctions.status, "active")
-        )
-      );
+      const activeSanctions = await db
+        .select()
+        .from(sanctions)
+        .where(
+          and(
+            eq(sanctions.targetType, targetType),
+            eq(sanctions.targetId, targetId),
+            eq(sanctions.status, "active"),
+          ),
+        );
 
-    const isSanctioned = activeSanctions.length > 0;
+      const isSanctioned = activeSanctions.length > 0;
 
-    res.json({
-      isSanctioned,
-      sanctions: activeSanctions,
-    });
-  } catch (error: any) {
-    console.error("Check sanction error:", error);
-    res.status(500).json({ error: "Failed to check sanction status" });
-  }
-});
+      res.json({
+        isSanctioned,
+        sanctions: activeSanctions,
+      });
+    } catch (error: any) {
+      console.error("Check sanction error:", error);
+      res.status(500).json({ error: "Failed to check sanction status" });
+    }
+  },
+);
 
 // GET /api/admin/sanctions/reasons - List reason codes
 router.get("/reasons", requirePermission("sanctions.read"), async (req, res) => {
@@ -184,10 +182,7 @@ router.post("/reasons", requirePermission("sanctions.write"), async (req, res) =
     const validatedData = insertSanctionReasonCodeSchema.parse(req.body);
     const userId = getUserId(req);
 
-    const [newReason] = await db
-      .insert(sanctionReasonCodes)
-      .values(validatedData)
-      .returning();
+    const [newReason] = await db.insert(sanctionReasonCodes).values(validatedData).returning();
 
     await logAuditAction({
       actorUserId: userId,

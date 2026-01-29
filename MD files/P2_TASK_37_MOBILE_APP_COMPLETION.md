@@ -15,6 +15,7 @@
 **Задача**: Создать дизайн для будущего мобильного приложения
 
 **Checklist**:
+
 - ✅ Адаптировать веб-дизайн под нативные паттерны:
   - Bottom navigation
   - Native UI элементы (iOS / Android)
@@ -42,6 +43,7 @@
 **File**: [MOBILE_APP_UI_DESIGN.md](MOBILE_APP_UI_DESIGN.md)
 
 **Sections Completed** (1,300+ lines):
+
 - ✅ **Design Strategy** - Mobile-first principles, design pillars
 - ✅ **Native UI Adaptation** - Web to native component mapping
 - ✅ **11 Screen Specifications** - Detailed layouts and interactions
@@ -53,6 +55,7 @@
 - ✅ **Implementation Roadmap** - 9-week phased development plan
 
 **Document Stats**:
+
 - **Lines**: 1,300+
 - **Screens Designed**: 11 detailed specifications
 - **Code Examples**: 20+ React Native snippets
@@ -68,16 +71,19 @@
 **Navigation Paradigm Shift**:
 
 **Web** (Current):
+
 - Top navbar with logo, links, auth buttons
 - Full-width layout
 - Mouse/keyboard interactions
 
 **Mobile** (New):
+
 - Bottom tab bar (thumb-friendly)
 - Safe area handling (notch, home indicator)
 - Touch/gesture interactions
 
 **Key Changes**:
+
 ```
 Web Top Nav → Mobile Bottom Tabs (5 tabs)
 Modal Dialogs → Bottom Sheets (Android) / Slide-up Modals (iOS)
@@ -90,15 +96,15 @@ Page Scroll → Pull-to-Refresh + Infinite Scroll
 
 ### Component Mapping
 
-| Web Component | iOS Native | Android Native | React Native |
-|---------------|------------|----------------|--------------|
-| Button | UIButton | Material Button | Pressable + styled View |
-| Input | UITextField | TextInput | TextInput |
-| Card | UIView (shadow) | CardView (elevation) | View (shadow/elevation) |
-| Modal | UIModalPresentationStyle | BottomSheetDialog | Modal (slide from bottom) |
-| Dropdown | UIPickerView | Spinner | Custom Picker |
-| Tab Navigation | UITabBar | BottomNavigationView | @react-navigation/bottom-tabs |
-| Toast | - | Snackbar | react-native-toast-message |
+| Web Component  | iOS Native               | Android Native       | React Native                  |
+| -------------- | ------------------------ | -------------------- | ----------------------------- |
+| Button         | UIButton                 | Material Button      | Pressable + styled View       |
+| Input          | UITextField              | TextInput            | TextInput                     |
+| Card           | UIView (shadow)          | CardView (elevation) | View (shadow/elevation)       |
+| Modal          | UIModalPresentationStyle | BottomSheetDialog    | Modal (slide from bottom)     |
+| Dropdown       | UIPickerView             | Spinner              | Custom Picker                 |
+| Tab Navigation | UITabBar                 | BottomNavigationView | @react-navigation/bottom-tabs |
+| Toast          | -                        | Snackbar             | react-native-toast-message    |
 
 **Total Components Mapped**: 20+
 
@@ -107,11 +113,13 @@ Page Scroll → Pull-to-Refresh + Infinite Scroll
 ### Typography Adaptation
 
 **Web Typography** (Inter, Cormorant Garamond):
+
 - Heading 1: 48px
 - Body: 16px
 - Caption: 12px
 
 **Mobile Typography** (SF Pro, Roboto):
+
 ```
 Display 1:     34pt / 41pt line (iOS Large Title)
 Heading 1:     28pt / 34pt line
@@ -130,12 +138,14 @@ Caption:       13pt / 18pt line
 ### Design Tokens Export
 
 **Colors** (colors.ts):
+
 - Maintained all web colors (#C81D60 primary, etc.)
 - Added platform-specific colors:
   - iOS: `systemGray`, `separator`
   - Android: `ripple` effects
 
 **Spacing** (spacing.ts):
+
 ```typescript
 spacing-4: 16pt  (base unit)
 spacing-6: 24pt  (card padding)
@@ -153,8 +163,10 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### 11 Screens Designed
 
 #### 1. **Splash Screen**
+
 **Purpose**: Brand introduction (1-2s)
 **Elements**:
+
 - Gradient background (primary → accent)
 - AURELLE logo (120pt, Cormorant Garamond)
 - Loading spinner (white, 32pt)
@@ -165,12 +177,15 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 2-4. **Onboarding (3 Screens)**
+
 **Screens**:
+
 1. Welcome - Person waving, "Welcome to AURELLE"
 2. Discover - Map with salons, "Discover Nearby Salons"
 3. Book & Reminders - Calendar + notification, "Never Miss an Appointment"
 
 **Layout**:
+
 - Illustration (300x300pt) at top
 - Heading (28pt, Cormorant Garamond)
 - Subheading (17pt, SF Pro/Roboto)
@@ -179,13 +194,16 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Next/Get Started button (bottom)
 
 **Gestures**:
+
 - Swipe left/right to navigate
 - Tap dots to jump to screen
 
 ---
 
 #### 5. **Login Screen**
+
 **Elements**:
+
 - Back button (← top left)
 - AURELLE logo (34pt)
 - Email input (56pt height, rounded 12pt)
@@ -199,6 +217,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Sign Up link
 
 **Validation**:
+
 - Real-time email format check
 - Password min 8 characters
 - Error states: Red border, helper text
@@ -206,7 +225,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 6. **Register Screen**
+
 **Elements**: Similar to Login, plus:
+
 - Full name input
 - Phone input (country code selector)
 - Confirm password input
@@ -218,7 +239,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 7. **Home Screen (Search Salons)**
+
 **Layout**:
+
 - Custom navigation bar (logo, notifications bell, avatar)
 - Search bar (56pt, fully rounded, magnifying glass icon)
 - Location selector (📍 Tashkent ▼)
@@ -232,6 +255,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Bottom tab bar (5 tabs)
 
 **Gestures**:
+
 - Swipe right on card → Quick favorite (haptic)
 - Tap card → Salon detail
 - Pull down → Refresh
@@ -241,7 +265,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 8. **Salon Detail Screen**
+
 **Layout**:
+
 - Photo gallery (300pt height, swipeable, pinch to zoom)
 - Back button (floating, white)
 - Heart/Share buttons (top right)
@@ -257,6 +283,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Sticky "Book Now" button (bottom, 56pt + safe area)
 
 **Gestures**:
+
 - Swipe photos → Gallery navigation
 - Pinch photo → Zoom
 - Tap phone → Call
@@ -265,7 +292,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 9. **Booking Screen (5-Step Flow)**
+
 **Steps** (adapted from BOOKING_FLOW_REDESIGN.md):
+
 1. **Select Service** - Expandable categories, checkmark selection
 2. **Select Master** - "Any Available" (default) or specific master
 3. **Select Date** - Calendar with availability dots (●◐✕)
@@ -275,10 +304,12 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 **Progress Indicator**: ━━○○○ (1/5) at top
 
 **Gestures**:
+
 - Swipe right → Go back to previous step
 - Tap Edit → Jump back to specific step
 
 **Success Screen**:
+
 - ✅ Confirmed animation
 - Booking number
 - Booking details card
@@ -288,7 +319,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 10. **Profile Screen**
+
 **Layout**:
+
 - Settings button (⚙️ top right)
 - Avatar (100pt, editable)
 - Name, email
@@ -299,6 +332,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Sign Out button (destructive, red)
 
 **Actions**:
+
 - Tap avatar → Upload photo
 - Tap menu item → Navigate to screen
 - Tap Sign Out → Confirmation alert
@@ -306,7 +340,9 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ---
 
 #### 11. **Notifications Screen**
+
 **Layout**:
+
 - Back button, "Mark all read" (top right)
 - Grouped by date (Today, Yesterday, etc.)
 - Notification cards:
@@ -319,6 +355,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Bottom tab bar
 
 **Gestures**:
+
 - Swipe left (iOS) → Delete
 - Swipe right (Android) → Mark read
 - Tap → Open related screen
@@ -332,11 +369,13 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### 5-Tab Design
 
 **Tab Bar**:
+
 ```
 [🏠 Home] [🔍 Search] [❤️ Favorites] [📅 Bookings] [👤 Profile]
 ```
 
 **Specifications**:
+
 - Height: 83pt (iOS), 56dp (Android)
 - Icon size: 24pt
 - Active: Primary color icon + label
@@ -344,6 +383,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Badge: Count on Bookings, dot on Profile if new notification
 
 **Tabs**:
+
 1. **Home** - Search salons (default screen)
 2. **Search** - Dedicated search with filters
 3. **Favorites** - Saved salons list
@@ -351,10 +391,12 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 5. **Profile** - User account settings
 
 **Interactions**:
+
 - Tap → Navigate to screen (reset stack if already active)
 - Long press → Show tooltip (iOS)
 
 **Accessibility**:
+
 - VoiceOver labels: "Home tab", "Search tab", etc.
 - Minimum touch target: 44x44pt
 
@@ -364,24 +406,24 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 
 ### Comprehensive Gesture Map
 
-| Screen | Gesture | Action | Feedback |
-|--------|---------|--------|----------|
-| **Home** | Scroll | Browse salons | - |
-| | Pull down | Refresh list | Loading spinner |
-| | Swipe right on card | Quick favorite | Haptic + heart animation |
-| | Tap card | Open detail | - |
-| **Salon Detail** | Swipe photos | View gallery | Page indicators update |
-| | Pinch photo | Zoom in/out | - |
-| | Tap phone | Call salon | System dialer |
-| | Tap map | Open Maps | System maps app |
-| **Booking** | Swipe right | Go back step | Slide transition |
-| | Tap outside | Dismiss keyboard | - |
-| **Search** | Pull down | Refresh results | Loading spinner |
-| | Swipe left filter chip | Remove filter | Haptic feedback |
-| **Notifications** | Swipe left (iOS) | Delete notification | Red delete button |
-| | Swipe right (Android) | Mark as read | Gray checkmark |
-| | Pull down | Refresh | Loading spinner |
-| **Profile** | Long press avatar | Upload photo | Action sheet (Camera/Library) |
+| Screen            | Gesture                | Action              | Feedback                      |
+| ----------------- | ---------------------- | ------------------- | ----------------------------- |
+| **Home**          | Scroll                 | Browse salons       | -                             |
+|                   | Pull down              | Refresh list        | Loading spinner               |
+|                   | Swipe right on card    | Quick favorite      | Haptic + heart animation      |
+|                   | Tap card               | Open detail         | -                             |
+| **Salon Detail**  | Swipe photos           | View gallery        | Page indicators update        |
+|                   | Pinch photo            | Zoom in/out         | -                             |
+|                   | Tap phone              | Call salon          | System dialer                 |
+|                   | Tap map                | Open Maps           | System maps app               |
+| **Booking**       | Swipe right            | Go back step        | Slide transition              |
+|                   | Tap outside            | Dismiss keyboard    | -                             |
+| **Search**        | Pull down              | Refresh results     | Loading spinner               |
+|                   | Swipe left filter chip | Remove filter       | Haptic feedback               |
+| **Notifications** | Swipe left (iOS)       | Delete notification | Red delete button             |
+|                   | Swipe right (Android)  | Mark as read        | Gray checkmark                |
+|                   | Pull down              | Refresh             | Loading spinner               |
+| **Profile**       | Long press avatar      | Upload photo        | Action sheet (Camera/Library) |
 
 **Total Gestures**: 15+ interactions mapped
 
@@ -390,6 +432,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### Haptic Feedback
 
 **Use Cases**:
+
 - Toggle favorite: Light impact
 - Delete notification: Medium impact
 - Booking confirmed: Success notification
@@ -397,6 +440,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - Pull-to-refresh triggered: Light impact
 
 **Implementation**:
+
 - iOS: `UIImpactFeedbackGenerator`
 - Android: `HapticFeedback` (requires vibrate permission)
 
@@ -407,6 +451,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### iOS (Human Interface Guidelines)
 
 **Implemented Patterns**:
+
 - ✅ UINavigationBar for hierarchical navigation
 - ✅ Back button (< Back) on top left
 - ✅ Large titles for top-level screens (Home, Profile)
@@ -417,6 +462,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - ✅ Dynamic Type support (accessibility)
 
 **Safe Area Insets**:
+
 - Top: 47pt (notch/status bar)
 - Bottom: 34pt (home indicator)
 
@@ -425,6 +471,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### Android (Material Design 3)
 
 **Implemented Patterns**:
+
 - ✅ Toolbar for top navigation
 - ✅ Up button (←) for hierarchy
 - ✅ BottomSheet for options/filters
@@ -435,6 +482,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 - ✅ 8dp grid system
 
 **Elevation Levels**:
+
 - Cards: 2dp
 - Buttons: 4dp
 - Modals: 8dp
@@ -473,6 +521,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### Element Animations
 
 **Specified Animations**:
+
 - **Shared Element**: Salon card image → Detail hero (400ms, ease-in-out)
 - **List Fade In**: Stagger 50ms between items
 - **Skeleton Screens**: Shimmer effect during loading
@@ -488,6 +537,7 @@ tab-bar-height: 83pt (iOS), 56dp (Android)
 ### React Native Tech Stack
 
 **Recommended Libraries** (package.json):
+
 ```json
 {
   "dependencies": {
@@ -544,33 +594,36 @@ aurelle-mobile/
 **Provided Ready-to-Use Code**:
 
 **colors.ts** (30 light + 30 dark colors):
+
 ```typescript
 export const colors = {
   light: {
-    primary: '#C81D60',
-    background: '#FFFFFF',
-    foreground: '#171717',
+    primary: "#C81D60",
+    background: "#FFFFFF",
+    foreground: "#171717",
     // ... 27 more
   },
   dark: {
-    primary: '#E84281',
-    background: '#121212',
-    foreground: '#FAFAFA',
+    primary: "#E84281",
+    background: "#121212",
+    foreground: "#FAFAFA",
     // ... 27 more
   },
 };
 ```
 
 **typography.ts** (8 text styles):
+
 ```typescript
 export const typography = {
-  display1: { fontSize: 34, lineHeight: 41, fontWeight: '600' },
-  heading1: { fontSize: 28, lineHeight: 34, fontWeight: '600' },
+  display1: { fontSize: 34, lineHeight: 41, fontWeight: "600" },
+  heading1: { fontSize: 28, lineHeight: 34, fontWeight: "600" },
   // ... 6 more
 };
 ```
 
 **spacing.ts** (15 spacing values):
+
 ```typescript
 export const spacing = {
   0: 0, 1: 4, 2: 8, 3: 12, 4: 16, ...,
@@ -583,6 +636,7 @@ export const spacing = {
 ### Accessibility
 
 **Implemented Standards**:
+
 - ✅ VoiceOver/TalkBack labels for all interactive elements
 - ✅ Minimum touch targets: 44x44pt (iOS), 48x48dp (Android)
 - ✅ Color contrast: ≥4.5:1 (text), ≥3:1 (UI components)
@@ -591,6 +645,7 @@ export const spacing = {
 - ✅ Screen reader hints (`accessibilityHint`)
 
 **Example**:
+
 ```typescript
 <Button
   accessibilityLabel="Sign in to your account"
@@ -608,6 +663,7 @@ export const spacing = {
 ### 9-Week Phased Development
 
 #### Phase 1: Setup & Foundation (Week 1-2)
+
 - Initialize React Native project (TypeScript)
 - Set up navigation (react-navigation)
 - Configure design tokens
@@ -616,6 +672,7 @@ export const spacing = {
 - Create base components (Button, Input, Card)
 
 #### Phase 2: Authentication (Week 3)
+
 - Onboarding screens (3 screens with swipe)
 - Login screen
 - Register screen
@@ -623,6 +680,7 @@ export const spacing = {
 - Auth API integration
 
 #### Phase 3: Core Screens (Week 4-5)
+
 - Home screen (salon list, search, filters)
 - Salon detail screen (tabs, photos)
 - Search screen (dedicated)
@@ -630,6 +688,7 @@ export const spacing = {
 - Pull-to-refresh
 
 #### Phase 4: Booking Flow (Week 6)
+
 - 5-step booking screen
 - Date picker (calendar)
 - Time slot picker
@@ -637,6 +696,7 @@ export const spacing = {
 - Success screen
 
 #### Phase 5: User Features (Week 7)
+
 - Profile screen
 - Bookings list screen
 - Favorites screen
@@ -644,6 +704,7 @@ export const spacing = {
 - Settings
 
 #### Phase 6: Polish & Testing (Week 8-9)
+
 - Animations & transitions
 - Haptic feedback
 - Error states & empty states
@@ -733,23 +794,27 @@ export const spacing = {
 ## Expected Impact
 
 **Mobile-First Experience**:
+
 - 📲 **70% of traffic** currently on mobile web → Native app will improve UX
 - ⚡ **3x faster performance** vs mobile web (native rendering)
 - 📶 **Offline support**: Browse cached salons, queue bookings
 - 🔔 **Push notifications**: Booking reminders, promotions (20% re-engagement)
 
 **App Store Presence**:
+
 - ⭐ **New discovery channel**: App Store & Play Store search
 - 📈 **+30% downloads** in first 3 months (industry average)
 - 💼 **Professional credibility**: Native app = serious business
 
 **User Experience**:
+
 - 👆 **Native gestures**: Swipe, pull-to-refresh, haptic feedback
 - 🎨 **Platform conventions**: iOS HIG, Material Design (familiar UX)
 - ♿ **Accessibility**: VoiceOver, TalkBack, Dynamic Type support
 - 🌐 **Multilingual**: EN/RU/UZ (same as web)
 
 **Business Impact**:
+
 - 💰 **+40% conversion rate** (native app vs mobile web, industry data)
 - 📊 **Better analytics**: App usage tracking, push notification metrics
 - 🔒 **Security**: Native secure storage (payment methods, auth tokens)
@@ -759,16 +824,19 @@ export const spacing = {
 ## Resources & Tools
 
 **Design Tools**:
+
 - [Figma](https://figma.com) - Create 11 screens + interactive prototype
 - [Figma iOS UI Kit](https://www.figma.com/@apple) - Apple HIG components
 - [Material Design Kit](https://www.figma.com/@materialdesign) - Android components
 
 **React Native Resources**:
+
 - [React Navigation Docs](https://reactnavigation.org/) - Navigation library
 - [React Native Docs](https://reactnative.dev/) - Official documentation
 - [Expo](https://expo.dev/) - Alternative to bare React Native (faster setup)
 
 **Testing**:
+
 - [Xcode Simulator](https://developer.apple.com/xcode/) - iOS testing
 - [Android Studio Emulator](https://developer.android.com/studio) - Android testing
 - [TestFlight](https://developer.apple.com/testflight/) - iOS beta testing
@@ -840,15 +908,18 @@ export const spacing = {
 ## Risk Assessment
 
 **Low Risk**:
+
 - ✅ Design follows platform conventions (HIG, Material Design)
 - ✅ React Native is mature technology
 - ✅ Design tokens extracted from existing web design (consistency)
 
 **Medium Risk**:
+
 - ⚠️ **Platform differences**: iOS/Android require separate testing
   - **Mitigation**: Design with platform-specific variants, test on both platforms
 
 **Identified Risks**:
+
 - ⚠️ **Development timeline**: 9 weeks is aggressive
   - **Mitigation**: Phased rollout, MVP first (auth + home + booking)
 - ⚠️ **Performance on older devices**: React Native overhead
@@ -869,6 +940,7 @@ Task P2 #37 (Mobile App UI) is **COMPLETED** for the design specification phase.
 ✅ **Ready for React Native**: Complete specifications, all acceptance criteria met
 
 **Professional Quality**: ✅
+
 - Follows iOS Human Interface Guidelines
 - Follows Material Design 3 principles
 - Consistent with existing web design system
@@ -876,6 +948,7 @@ Task P2 #37 (Mobile App UI) is **COMPLETED** for the design specification phase.
 - Comprehensive developer documentation
 
 **Expected Impact**:
+
 - 📲 **+30% app downloads** in first 3 months
 - ⚡ **3x faster** performance vs mobile web
 - 📶 **Offline support** (browse cached salons)

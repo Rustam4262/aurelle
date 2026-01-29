@@ -30,9 +30,7 @@ export function PushNotificationSettings() {
         </CardHeader>
         <CardContent>
           <Alert>
-            <AlertDescription>
-              {t("push.notSupported")}
-            </AlertDescription>
+            <AlertDescription>{t("push.notSupported")}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -50,16 +48,12 @@ export function PushNotificationSettings() {
           )}
           {t("push.title")}
         </CardTitle>
-        <CardDescription>
-          {t("push.description")}
-        </CardDescription>
+        <CardDescription>{t("push.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {permission === "denied" && (
           <Alert variant="destructive">
-            <AlertDescription>
-              {t("push.permissionDenied")}
-            </AlertDescription>
+            <AlertDescription>{t("push.permissionDenied")}</AlertDescription>
           </Alert>
         )}
 
@@ -68,17 +62,11 @@ export function PushNotificationSettings() {
             <>
               <Alert>
                 <Bell className="h-4 w-4" />
-                <AlertDescription>
-                  {t("push.enabled")}
-                </AlertDescription>
+                <AlertDescription>{t("push.enabled")}</AlertDescription>
               </Alert>
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => unsubscribe()}
-                  disabled={isUnsubscribing}
-                >
+                <Button variant="outline" onClick={() => unsubscribe()} disabled={isUnsubscribing}>
                   <BellOff className="h-4 w-4 mr-2" />
                   {isUnsubscribing ? t("common.loading") : t("push.disable")}
                 </Button>
@@ -97,9 +85,7 @@ export function PushNotificationSettings() {
             <>
               <Alert>
                 <BellOff className="h-4 w-4" />
-                <AlertDescription>
-                  {t("push.disabled")}
-                </AlertDescription>
+                <AlertDescription>{t("push.disabled")}</AlertDescription>
               </Alert>
 
               <Button

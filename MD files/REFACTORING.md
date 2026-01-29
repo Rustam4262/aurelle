@@ -1,6 +1,7 @@
 # Routes Refactoring Summary
 
 ## Цель
+
 Разбить монолитный `routes.ts` (1840 строк) на модульную, масштабируемую структуру без изменения бизнес-логики.
 
 ## Выполнено ✅
@@ -8,6 +9,7 @@
 ### 1. Создана модульная структура routes/
 
 **Структура директории:**
+
 ```
 server/routes/
 ├── index.ts              # Главный роутер, объединяет все модули
@@ -27,6 +29,7 @@ server/routes/
 ### 2. Вынесены helper функции
 
 **server/helpers/ratings.ts:**
+
 - `updateSalonRating(salonId)` - пересчёт рейтинга салона
 - `updateMasterRating(masterId)` - пересчёт рейтинга мастера
 
@@ -37,6 +40,7 @@ server/routes/
 **Было:** 1840 строк с всей бизнес-логикой
 
 **Стало:** 35 строк с инициализацией:
+
 ```typescript
 export async function registerRoutes(httpServer: Server, app: Express) {
   app.use("/api", globalLimiter);
@@ -57,6 +61,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 ## Структура endpoints (без изменений)
 
 ### Public routes
+
 - `GET /api/auth/providers`
 - `GET /api/salons` - список салонов
 - `GET /api/salons/:id` - детали салона
@@ -66,6 +71,7 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 - `POST /api/newsletter` - подписка
 
 ### Authenticated routes
+
 - `GET/POST /api/profile` - user profile
 - `POST /api/bookings` - создать бронирование
 - `GET /api/bookings` - список бронирований
@@ -78,7 +84,8 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 - `PATCH /api/notifications/:id/read` - прочитать
 - `PATCH /api/notifications/read-all` - прочитать все
 
-### Master dashboard (/api/master/*)
+### Master dashboard (/api/master/\*)
+
 - `GET /me` - данные мастера
 - `GET /schedule` - график работы
 - `PUT /schedule` - обновить график
@@ -87,7 +94,8 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 - `GET/POST/DELETE /portfolio` - портфолио
 - `GET /stats` - статистика и аналитика
 
-### Owner dashboard (/api/owner/*)
+### Owner dashboard (/api/owner/\*)
+
 - `GET/POST/PATCH /salons` - управление салонами
 - `GET/POST/DELETE /salons/:id/services` - услуги
 - `GET/POST/DELETE /salons/:id/masters` - мастера
@@ -96,7 +104,8 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 - `GET /bookings` - все бронирования owner'a
 - `PATCH /bookings/:id/status` - изменить статус
 
-### Client dashboard (/api/client/*)
+### Client dashboard (/api/client/\*)
+
 - `GET/PUT /profile` - профиль клиента
 - `GET /bookings` - бронирования с деталями
 - `DELETE /bookings/:id` - отменить бронирование
@@ -109,21 +118,25 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 ## Преимущества рефакторинга
 
 ### ✅ Читаемость
+
 - Каждый модуль отвечает за свою зону ответственности
 - Легко найти нужный endpoint
 - Понятная структура для новых разработчиков
 
 ### ✅ Масштабируемость
+
 - Добавление новых endpoints не раздувает главный файл
 - Модули можно тестировать изолированно
 - Легко переиспользовать логику (helpers)
 
 ### ✅ Сопровождаемость
+
 - Изменения в одной области не затрагивают другие
 - Проще делать code review (модули по 50-500 строк вместо 1840)
 - Уменьшен риск merge conflicts
 
 ### ✅ Безопасность сохранена
+
 - Все security fixes остались на месте:
   - Rate limiting
   - Input validation (Zod)
@@ -135,20 +148,24 @@ export async function registerRoutes(httpServer: Server, app: Express) {
 ## Следующие шаги (опционально)
 
 ### БЛОК 3: Контроллеры и сервисы
+
 - Создать `/controllers` для обработчиков
 - Создать `/services` для бизнес-логики и DB операций
 - Вынести helper функции (assertSalonOwner, assertMasterOwner)
 
 ### БЛОК 4: Database constraints
+
 - Добавить Foreign Keys
 - Добавить UNIQUE constraints (favorites, master_services, working_hours)
 - Добавить CHECK constraints (rating 1-5, price > 0)
 
 ### БЛОК 5: Тесты
+
 - Настроить Vitest + Supertest
 - Написать интеграционные тесты для критичных endpoints
 
 ### БЛОК 6: CI/CD
+
 - GitHub Actions для lint, typecheck, tests
 
 ## Важно

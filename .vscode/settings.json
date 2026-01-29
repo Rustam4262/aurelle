@@ -1,9 +1,6 @@
 {
   "yaml.schemas": {},
-  "yaml.customTags": [
-    "!ENV scalar",
-    "!ENV sequence"
-  ],
+  "yaml.customTags": ["!ENV scalar", "!ENV sequence"],
   "yaml.validate": false,
   "yaml.schemaStore.enable": false,
   "yaml.format.enable": true,

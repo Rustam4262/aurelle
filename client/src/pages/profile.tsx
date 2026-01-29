@@ -139,11 +139,16 @@ export default function ProfilePage() {
     totalBookings: bookings?.length || 0,
     completedBookings: bookings?.filter((b) => b.status === "completed").length || 0,
     cancelledBookings: bookings?.filter((b) => b.status === "cancelled").length || 0,
-    totalSpent: bookings
-      ?.filter((b) => b.status === "completed")
-      .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
+    totalSpent:
+      bookings
+        ?.filter((b) => b.status === "completed")
+        .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
     favoriteServicesCount: favorites?.length || 0,
-    memberSince: user?.createdAt ? (typeof user.createdAt === 'string' ? user.createdAt : user.createdAt.toISOString()) : new Date().toISOString(),
+    memberSince: user?.createdAt
+      ? typeof user.createdAt === "string"
+        ? user.createdAt
+        : user.createdAt.toISOString()
+      : new Date().toISOString(),
   };
 
   // Cancel booking mutation
@@ -355,12 +360,12 @@ export default function ProfilePage() {
               </Avatar>
               <div>
                 <h2 className="font-medium text-foreground text-lg">
-                  {profile?.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || t("marketplace.client.unnamed")}
+                  {profile?.fullName ||
+                    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                    t("marketplace.client.unnamed")}
                 </h2>
                 <p className="text-muted-foreground">{user.email}</p>
-                {profile?.phone && (
-                  <p className="text-sm text-muted-foreground">{profile.phone}</p>
-                )}
+                {profile?.phone && <p className="text-sm text-muted-foreground">{profile.phone}</p>}
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={handleStartEditProfile}>
@@ -376,28 +381,36 @@ export default function ProfilePage() {
                 <Calendar className="h-5 w-5 text-primary" />
                 {stats.totalBookings}
               </div>
-              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.totalBookings")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("marketplace.client.stats.totalBookings")}
+              </p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-2xl font-bold text-green-600">
                 <CheckCircle className="h-5 w-5" />
                 {stats.completedBookings}
               </div>
-              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.completed")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("marketplace.client.stats.completed")}
+              </p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
                 <Wallet className="h-5 w-5 text-primary" />
                 {formatCurrency(stats.totalSpent)}
               </div>
-              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.totalSpent")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("marketplace.client.stats.totalSpent")}
+              </p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
                 <Heart className="h-5 w-5 text-pink-500" />
                 {stats.favoriteServicesCount}
               </div>
-              <p className="text-xs text-muted-foreground">{t("marketplace.client.stats.favorites")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("marketplace.client.stats.favorites")}
+              </p>
             </div>
           </div>
         </Card>
@@ -405,11 +418,19 @@ export default function ProfilePage() {
         {/* Tabs */}
         <Tabs defaultValue="bookings" className="w-full">
           <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1">
-            <TabsTrigger value="bookings" data-testid="tab-bookings" className="flex-1 sm:flex-none">
+            <TabsTrigger
+              value="bookings"
+              data-testid="tab-bookings"
+              className="flex-1 sm:flex-none"
+            >
               <Calendar className="h-4 w-4 mr-2" />
               {t("marketplace.profile.bookings")}
             </TabsTrigger>
-            <TabsTrigger value="favorites" data-testid="tab-favorites" className="flex-1 sm:flex-none">
+            <TabsTrigger
+              value="favorites"
+              data-testid="tab-favorites"
+              className="flex-1 sm:flex-none"
+            >
               <Heart className="h-4 w-4 mr-2" />
               {t("marketplace.profile.favorites")}
             </TabsTrigger>
@@ -471,10 +492,13 @@ export default function ProfilePage() {
                     <div className="flex flex-col items-end gap-2">
                       <Badge
                         variant={
-                          booking.status === "confirmed" ? "default" :
-                          booking.status === "completed" ? "default" :
-                          booking.status === "cancelled" ? "destructive" :
-                          "secondary"
+                          booking.status === "confirmed"
+                            ? "default"
+                            : booking.status === "completed"
+                              ? "default"
+                              : booking.status === "cancelled"
+                                ? "destructive"
+                                : "secondary"
                         }
                         className={booking.status === "completed" ? "bg-green-600" : ""}
                       >
@@ -515,7 +539,10 @@ export default function ProfilePage() {
             {favorites && favorites.length > 0 ? (
               favorites.map((salon) => (
                 <Link key={salon.id} href={`/salon/${salon.id}`}>
-                  <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" data-testid={`card-favorite-${salon.id}`}>
+                  <Card
+                    className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                    data-testid={`card-favorite-${salon.id}`}
+                  >
                     <div className="flex items-center gap-4">
                       <div className="h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
                         {salon.photos && (salon.photos as string[])[0] ? (
@@ -539,7 +566,9 @@ export default function ProfilePage() {
                         {salon.averageRating && Number(salon.averageRating) > 0 && (
                           <div className="flex items-center gap-1 mt-1">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">{Number(salon.averageRating).toFixed(1)}</span>
+                            <span className="text-sm font-medium">
+                              {Number(salon.averageRating).toFixed(1)}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -606,7 +635,9 @@ export default function ProfilePage() {
                         <Clock className="h-3 w-3" />
                         {new Date(review.createdAt).toLocaleDateString()}
                         {canEditReview(review) && (
-                          <span className="text-green-600">• {t("marketplace.client.canEdit")}</span>
+                          <span className="text-green-600">
+                            • {t("marketplace.client.canEdit")}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -637,7 +668,9 @@ export default function ProfilePage() {
               <Card className="p-8 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">{t("marketplace.client.noReviews")}</p>
-                <p className="text-sm text-muted-foreground mt-2">{t("marketplace.client.beFirst")}</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("marketplace.client.beFirst")}
+                </p>
               </Card>
             )}
           </TabsContent>
@@ -698,7 +731,9 @@ export default function ProfilePage() {
               {t("marketplace.common.cancel")}
             </Button>
             <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
-              {updateProfileMutation.isPending ? t("marketplace.common.saving") : t("marketplace.client.saveProfile")}
+              {updateProfileMutation.isPending
+                ? t("marketplace.common.saving")
+                : t("marketplace.client.saveProfile")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -751,14 +786,19 @@ export default function ProfilePage() {
               {t("marketplace.common.cancel")}
             </Button>
             <Button onClick={handleSaveReview} disabled={updateReviewMutation.isPending}>
-              {updateReviewMutation.isPending ? t("marketplace.common.saving") : t("marketplace.client.save")}
+              {updateReviewMutation.isPending
+                ? t("marketplace.common.saving")
+                : t("marketplace.client.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Review Confirmation Dialog */}
-      <Dialog open={deleteReviewDialog.open} onOpenChange={(open) => setDeleteReviewDialog({ open })}>
+      <Dialog
+        open={deleteReviewDialog.open}
+        onOpenChange={(open) => setDeleteReviewDialog({ open })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("marketplace.client.deleteReview")}</DialogTitle>
@@ -770,10 +810,15 @@ export default function ProfilePage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => deleteReviewDialog.reviewId && deleteReviewMutation.mutate(deleteReviewDialog.reviewId)}
+              onClick={() =>
+                deleteReviewDialog.reviewId &&
+                deleteReviewMutation.mutate(deleteReviewDialog.reviewId)
+              }
               disabled={deleteReviewMutation.isPending}
             >
-              {deleteReviewMutation.isPending ? t("marketplace.common.submitting") : t("marketplace.client.confirmDelete")}
+              {deleteReviewMutation.isPending
+                ? t("marketplace.common.submitting")
+                : t("marketplace.client.confirmDelete")}
             </Button>
           </DialogFooter>
         </DialogContent>

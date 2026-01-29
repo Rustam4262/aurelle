@@ -11,6 +11,7 @@
 ### 1. Translations Added to All Locale Files
 
 Successfully added **~200+ translation keys** to all three locale files:
+
 - ✅ [en.json](client/src/locales/en.json)
 - ✅ [ru.json](client/src/locales/ru.json)
 - ✅ [uz.json](client/src/locales/uz.json)
@@ -18,6 +19,7 @@ Successfully added **~200+ translation keys** to all three locale files:
 ### 2. New Translation Sections
 
 #### **Admin Panel - Users Management** (`marketplace.admin.users.*`)
+
 - ✅ Search placeholder
 - ✅ Table headers (User, Contact, Role, Status, Verification, Joined, Actions)
 - ✅ Filters (All Roles, All Statuses, Client, Owner, Master, Admin, Active, Blocked)
@@ -35,6 +37,7 @@ Successfully added **~200+ translation keys** to all three locale files:
 **Total Keys:** ~70 keys
 
 #### **Portfolio Upload** (`marketplace.portfolio.upload.*`)
+
 - ✅ Title and subtitle
 - ✅ Drag & drop text
 - ✅ Choose files button
@@ -52,6 +55,7 @@ Successfully added **~200+ translation keys** to all three locale files:
 **Total Keys:** ~25 keys
 
 #### **Calendar Enhancements** (`marketplace.calendar.*`)
+
 - ✅ Today button
 - ✅ Booking window messages:
   - Past dates disabled
@@ -61,6 +65,7 @@ Successfully added **~200+ translation keys** to all three locale files:
 **Total Keys:** ~4 keys
 
 #### **Error Messages** (`errors.*`)
+
 - ✅ HTTP errors (UNAUTHORIZED, FORBIDDEN, NOT_FOUND, VALIDATION_ERROR)
 - ✅ Network errors (NETWORK_ERROR, SERVER_ERROR, RATE_LIMIT)
 - ✅ Booking errors (BOOKING_CONFLICT, BOOKING_NOT_FOUND)
@@ -74,6 +79,7 @@ Successfully added **~200+ translation keys** to all three locale files:
 **Total Keys:** ~30 keys
 
 #### **Validation Messages** (`validation.*`)
+
 - ✅ Generic validators (required, email, phone, url, minLength, maxLength, min, max, pattern)
 - ✅ Password validators (passwordMismatch, weakPassword, passwordRequired)
 - ✅ Date validators (invalidDate, futureDate, pastDate)
@@ -87,13 +93,13 @@ Successfully added **~200+ translation keys** to all three locale files:
 
 ## 📊 Translation Coverage
 
-| Component | EN | RU | UZ | Status |
-|-----------|----|----|----|----|
-| Admin Users Management | ✅ | ✅ | ✅ | 100% |
-| Portfolio Upload | ✅ | ✅ | ✅ | 100% |
-| Calendar (today button) | ✅ | ✅ | ✅ | 100% |
-| Error Messages | ✅ | ✅ | ✅ | 100% |
-| Validation Messages | ✅ | ✅ | ✅ | 100% |
+| Component               | EN  | RU  | UZ  | Status |
+| ----------------------- | --- | --- | --- | ------ |
+| Admin Users Management  | ✅  | ✅  | ✅  | 100%   |
+| Portfolio Upload        | ✅  | ✅  | ✅  | 100%   |
+| Calendar (today button) | ✅  | ✅  | ✅  | 100%   |
+| Error Messages          | ✅  | ✅  | ✅  | 100%   |
+| Validation Messages     | ✅  | ✅  | ✅  | 100%   |
 
 ---
 
@@ -102,9 +108,11 @@ Successfully added **~200+ translation keys** to all three locale files:
 ### 1. Update Components to Use Translations
 
 #### **Priority 1: Admin Users Page**
+
 File: [client/src/pages/admin/users.tsx](client/src/pages/admin/users.tsx)
 
 Replace hardcoded strings with i18n keys:
+
 ```typescript
 // Example replacements needed:
 "Users" → t("marketplace.admin.users.title")
@@ -116,9 +124,11 @@ Replace hardcoded strings with i18n keys:
 ```
 
 #### **Priority 2: Portfolio Upload Component**
+
 File: [client/src/components/portfolio-upload.tsx](client/src/components/portfolio-upload.tsx)
 
 Replace hardcoded strings:
+
 ```typescript
 "Upload Portfolio Images" → t("marketplace.portfolio.upload.title")
 "Drag & drop images here..." → t("marketplace.portfolio.upload.dragDrop")
@@ -127,27 +137,33 @@ Replace hardcoded strings:
 ```
 
 #### **Priority 3: Booking Calendar**
+
 File: [client/src/components/booking-calendar.tsx](client/src/components/booking-calendar.tsx)
 
 Add new keys:
+
 ```typescript
 // Already has t() calls, just need to add:
 "Today" button → t("marketplace.calendar.today") // ✅ DONE
 ```
 
 #### **Priority 4: Error Handler**
+
 File: [client/src/lib/error-handler.ts](client/src/lib/error-handler.ts)
 
 Refactor to accept `TFunction`:
+
 ```typescript
 // Current: hardcoded Russian messages
 // Target: t("errors.UNAUTHORIZED"), t("errors.NETWORK_ERROR"), etc.
 ```
 
 #### **Priority 5: Validation Utils**
+
 File: [client/src/lib/validation.ts](client/src/lib/validation.ts)
 
 Refactor validators:
+
 ```typescript
 // Current: hardcoded Russian messages
 // Target: t("validation.required"), t("validation.email"), etc.
@@ -173,6 +189,7 @@ Refactor validators:
 ## 📁 Files Modified
 
 ### Locale Files (3 files)
+
 1. [client/src/locales/en.json](client/src/locales/en.json) - Added ~160 keys
 2. [client/src/locales/ru.json](client/src/locales/ru.json) - Added ~160 keys
 3. [client/src/locales/uz.json](client/src/locales/uz.json) - Added ~160 keys
@@ -183,15 +200,15 @@ Refactor validators:
 
 ## 🎯 Completion Estimate
 
-| Task | Status | Time Remaining |
-|------|--------|---------------|
-| ✅ Add translations to locale files | 100% | - |
-| ⏳ Update admin/users.tsx | 0% | ~20 min |
-| ⏳ Update portfolio-upload.tsx | 0% | ~15 min |
-| ⏳ Update booking-calendar.tsx | 100% | - |
-| ⏳ Refactor error-handler.ts | 0% | ~10 min |
-| ⏳ Refactor validation.ts | 0% | ~10 min |
-| ⏳ Test all languages | 0% | ~10 min |
+| Task                                | Status | Time Remaining |
+| ----------------------------------- | ------ | -------------- |
+| ✅ Add translations to locale files | 100%   | -              |
+| ⏳ Update admin/users.tsx           | 0%     | ~20 min        |
+| ⏳ Update portfolio-upload.tsx      | 0%     | ~15 min        |
+| ⏳ Update booking-calendar.tsx      | 100%   | -              |
+| ⏳ Refactor error-handler.ts        | 0%     | ~10 min        |
+| ⏳ Refactor validation.ts           | 0%     | ~10 min        |
+| ⏳ Test all languages               | 0%     | ~10 min        |
 
 **Total Progress:** 60% ✅
 **Estimated Time to Complete:** ~65 minutes
@@ -201,6 +218,7 @@ Refactor validators:
 ## 📝 Translation Key Structure
 
 ### Naming Convention
+
 ```
 marketplace.{section}.{subsection}.{key}
 
@@ -214,6 +232,7 @@ validation.required
 ```
 
 ### Interpolation Variables
+
 ```typescript
 // Count/Numbers
 {{count}}, {{max}}, {{min}}, {{days}}

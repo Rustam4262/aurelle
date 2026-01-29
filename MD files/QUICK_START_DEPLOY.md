@@ -225,6 +225,7 @@ pm2 save
 ```
 
 Проверка статуса:
+
 ```bash
 pm2 status
 pm2 logs aurelle
@@ -235,6 +236,7 @@ pm2 logs aurelle
 ## Шаг 12: Обновление OAuth Redirect URIs (5 минут)
 
 ### Google OAuth:
+
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
 2. Ваш OAuth Client ID → Edit
 3. Authorized redirect URIs → Add:
@@ -243,6 +245,7 @@ pm2 logs aurelle
 4. Save
 
 ### Yandex OAuth:
+
 1. [Яндекс OAuth](https://oauth.yandex.ru/) → Ваше приложение → Редактировать
 2. Callback URI → Add:
    - `https://your-domain.com/api/auth/yandex/callback`
@@ -268,8 +271,9 @@ curl https://your-domain.com/api/auth/providers
 ```
 
 Должен вернуть:
+
 ```json
-{"local":true,"yandex":true,"google":true,"github":false,"phone":false}
+{ "local": true, "yandex": true, "google": true, "github": false, "phone": false }
 ```
 
 ### 13.3 Проверка в браузере
@@ -277,6 +281,7 @@ curl https://your-domain.com/api/auth/providers
 Откройте: `https://your-domain.com`
 
 Протестируйте:
+
 - ✅ Страница загружается
 - ✅ Можно зайти на `/auth`
 - ✅ Вход через Google работает
@@ -288,6 +293,7 @@ curl https://your-domain.com/api/auth/providers
 ## Готово! 🎉
 
 Ваше приложение AURELLE теперь работает на:
+
 - 🌐 **https://your-domain.com**
 
 ---
@@ -295,17 +301,20 @@ curl https://your-domain.com/api/auth/providers
 ## Полезные команды
 
 ### Просмотр логов
+
 ```bash
 pm2 logs aurelle
 pm2 logs aurelle --lines 100
 ```
 
 ### Перезапуск приложения
+
 ```bash
 pm2 restart aurelle
 ```
 
 ### Обновление после изменений в коде
+
 ```bash
 cd /var/www/aurelle
 git pull
@@ -316,11 +325,13 @@ pm2 restart aurelle
 ```
 
 Или используйте скрипт:
+
 ```bash
 ./deploy.sh
 ```
 
 ### Проверка статуса
+
 ```bash
 pm2 status
 systemctl status nginx
@@ -370,6 +381,7 @@ pm2 env aurelle | grep YANDEX
 ## Следующие шаги
 
 1. Настройте автоматический бэкап:
+
    ```bash
    chmod +x backup.sh
    crontab -e
@@ -377,6 +389,7 @@ pm2 env aurelle | grep YANDEX
    ```
 
 2. Настройте мониторинг:
+
    ```bash
    pm2 install pm2-logrotate
    ```

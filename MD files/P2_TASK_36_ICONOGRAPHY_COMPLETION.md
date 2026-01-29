@@ -15,6 +15,7 @@
 **Задача**: Добавить визуальный интерес
 
 **Checklist**:
+
 - ✅ Выбрать icon set (Lucide React уже используется?)
 - ✅ Создать кастомные иконы для категорий услуг:
   - Стрижка
@@ -40,6 +41,7 @@
 **File**: [ICONOGRAPHY_ILLUSTRATIONS_GUIDE.md](ICONOGRAPHY_ILLUSTRATIONS_GUIDE.md)
 
 **Sections Completed**:
+
 - ✅ **Current Icon System Analysis** - Lucide React audit (56 files, confirmed v0.453.0)
 - ✅ **Custom Service Category Icons** - 6 detailed SVG specifications
 - ✅ **Empty State Illustrations** - 5 scenarios with SVG mockups
@@ -51,6 +53,7 @@
 - ✅ **Translation Keys** - EN/RU/UZ for all states
 
 **Document Stats**:
+
 - **Lines**: 1,100+
 - **SVG Specifications**: 18 detailed illustrations
 - **Code Examples**: 12 React components
@@ -65,11 +68,13 @@
 **Status**: ✅ Confirmed Integration
 
 **Package**: `lucide-react` v0.453.0
+
 - Installed in [package.json:66](package.json#L66)
 - Used in 56 files across the codebase
 - Consistent 2px stroke outline style
 
 **Most Used Icons**:
+
 - `Star` (13 files) - Ratings
 - `Calendar` / `CalendarDays` (9 files) - Booking
 - `User` / `Users` (8 files) - Profiles
@@ -84,17 +89,19 @@
 ### Current Service Categories ([home.tsx:45-51](client/src/pages/home.tsx#L45-L51))
 
 **Problem Identified**:
+
 ```typescript
 const categories = [
   { id: "all", icon: Sparkles },
-  { id: "hair", icon: Scissors },     // ✅ Good
-  { id: "nails", icon: Heart },       // ❌ Generic
-  { id: "spa", icon: Sparkles },      // ❌ Duplicate
-  { id: "makeup", icon: Heart },      // ❌ Duplicate
+  { id: "hair", icon: Scissors }, // ✅ Good
+  { id: "nails", icon: Heart }, // ❌ Generic
+  { id: "spa", icon: Sparkles }, // ❌ Duplicate
+  { id: "makeup", icon: Heart }, // ❌ Duplicate
 ];
 ```
 
 **Issues**:
+
 - Generic icons (Heart, Sparkles) used multiple times
 - Not service-specific
 - Lacks professional polish
@@ -108,6 +115,7 @@ const categories = [
 ### Design Specifications
 
 **Technical Specs**:
+
 - Format: SVG (inline React components)
 - Viewbox: `0 0 24 24`
 - Stroke Width: 2px (matches Lucide)
@@ -116,6 +124,7 @@ const categories = [
 - Colors: `currentColor` (theme-aware)
 
 **Accessibility**:
+
 - Clear at 16px-64px sizes
 - Color-blind friendly (distinct shapes)
 - WCAG AA contrast ratios
@@ -125,34 +134,41 @@ const categories = [
 ### 6 Custom Icons Designed
 
 #### 1. **IconHaircut** (`Scissors`)
+
 **Recommendation**: Keep existing Lucide `Scissors` icon ✅
+
 - Already perfect for haircut category
 - Matches our style guidelines
 
 #### 2. **IconHairColor** (Hair Dye Brush)
+
 **Concept**: Paint brush with color drops
 **SVG**: 9-line implementation provided
 **Usage**: Hair coloring services
 
 #### 3. **IconManicure** (Nail Polish Bottle)
+
 **Concept**: Polish bottle with brush
 **SVG**: 10-line implementation provided
 **Usage**: Manicure services
 **Simpler Alternative**: Hand with painted nails
 
 #### 4. **IconPedicure** (Spa Basin)
+
 **Concept**: Water basin with feet
 **SVG**: 11-line implementation provided
 **Usage**: Pedicure services
 **Why**: Distinctive from manicure (not just hand vs foot)
 
 #### 5. **IconMakeup** (Lipstick)
+
 **Concept**: Lipstick with tube
 **SVG**: 8-line implementation provided
 **Usage**: Makeup services
 **Why**: More iconic than makeup brush
 
 #### 6. **IconMassage** (Massaging Hands)
+
 **Concept**: Hands with pressure points
 **SVG**: 12-line implementation provided
 **Usage**: Massage/spa services
@@ -180,44 +196,54 @@ export const IconHairColor: React.FC<IconProps> = ({ size = 24, ...props }) => (
 ### 5 Empty States Designed
 
 #### 1. **EmptyStateSalons** - No Salons Found
+
 **Scenario**: User search returns no salons
 **Illustration**: Empty map with location pin + magnifying glass
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "No salons found"
 - Description: "Try adjusting your search or filters"
 - CTA: "Clear filters"
 
 #### 2. **EmptyStateBookings** - No Bookings
+
 **Scenario**: User's booking history is empty
 **Illustration**: Empty calendar with checkmark icon
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "No bookings yet"
 - Description: "Book your first appointment to get started"
 - CTA: "Browse salons"
 
 #### 3. **EmptyStateServices** - No Services
+
 **Scenario**: Salon hasn't added services
 **Illustration**: Empty service menu board with plus icon
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "No services available"
 - Description: "This salon hasn't added services yet"
 
 #### 4. **EmptyStateReviews** - No Reviews
+
 **Scenario**: Salon/master has no reviews
 **Illustration**: Empty review card with outline stars
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "No reviews yet"
 - Description: "Be the first to leave a review"
 
 #### 5. **EmptyStateSearch** - No Search Results
+
 **Scenario**: Search query returns nothing
 **Illustration**: Large magnifying glass with question mark
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "No results for '{query}'"
 - Description: "Try a different search term"
 
@@ -259,29 +285,35 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 ### 3 Error Pages Designed
 
 #### 1. **ErrorState404** - Page Not Found
+
 **Current**: Basic card in [not-found.tsx:1-22](client/src/pages/not-found.tsx#L1-L22)
 **New**: Illustrated error page
 **Illustration**: Lost person with map, large "404" background text
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Page Not Found"
 - Description: "The page you're looking for doesn't exist or has been moved"
 - CTA: "Go Home"
 
 #### 2. **ErrorState500** - Server Error
+
 **New Page**: `error-500.tsx`
 **Illustration**: Broken server with wrench, lightning bolt crack
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Something Went Wrong"
 - Description: "We're experiencing technical difficulties. Please try again later."
 - CTA: "Refresh Page" / "Go Home"
 
 #### 3. **ErrorStateNetwork** - Connection Lost
+
 **Usage**: Network error fallback
 **Illustration**: Disconnected WiFi symbol with X mark
 **SVG**: 200x200 viewport
 **Text**:
+
 - Title: "Connection Lost"
 - Description: "Check your internet connection and try again"
 - CTA: "Retry"
@@ -295,36 +327,45 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 **Purpose**: Welcome new users, explain key features
 
 #### Slide 1: **OnboardingWelcome**
+
 **Illustration**: Person waving with sparkles, AURELLE logo
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Welcome to AURELLE"
 - Description: "Your beauty marketplace"
 
 #### Slide 2: **OnboardingBrowse**
+
 **Illustration**: Map with salon pins
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Discover Nearby Salons"
 - Description: "Find the perfect salon for your needs"
 
 #### Slide 3: **OnboardingBook**
+
 **Illustration**: Calendar with filled booking slots
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Book in Seconds"
 - Description: "Simple and fast appointment booking"
 
 #### Slide 4: **OnboardingReminders**
+
 **Illustration**: Phone with notification bell + badge
 **SVG**: 300x300 viewport
 **Text**:
+
 - Title: "Never Miss an Appointment"
 - Description: "Get reminders before your bookings"
 
 ### Implementation
 
 **Component**: `client/src/components/onboarding-carousel.tsx`
+
 - Carousel with 4 slides
 - Shows on first visit (localStorage flag)
 - Skip button
@@ -342,6 +383,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 **Concept**: Abstract beauty elements (scissors, lipstick, flowers)
 **SVG**: 1200x600 viewport (large format)
 **Features**:
+
 - Gradient background
 - Decorative beauty icons (opacity 0.1-0.15)
 - Sparkles and abstract shapes
@@ -351,11 +393,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
 **Approach**: Keep existing photo, add decorative SVG layer
 **Benefits**:
+
 - Easier to implement
 - Maintains current aesthetic
 - Adds visual interest without full redesign
 
 **Implementation**:
+
 ```tsx
 <div className="relative">
   <img src={heroImage} alt="Beauty salon" />
@@ -363,7 +407,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     {/* Gradient overlay */}
     <rect fill="url(#overlay)" />
     {/* Decorative circles */}
-    <circle cx="10%" cy="20%" r="20" fill="white" opacity="0.1"/>
+    <circle cx="10%" cy="20%" r="20" fill="white" opacity="0.1" />
   </svg>
 </div>
 ```
@@ -377,20 +421,25 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 ### 5-Week Phased Rollout
 
 #### Week 1: Custom Service Icons
+
 **Tasks**:
+
 - Create `client/src/components/icons/service-icons.tsx`
 - Implement 6 icon components (copy from spec)
 - Update [home.tsx:45-51](client/src/pages/home.tsx#L45-L51) categories
 - Test rendering (light/dark mode, mobile/desktop)
 
 **Deliverables**:
+
 - 6 custom service category icons live
 - Category navigation updated
 
 ---
 
 #### Week 2: Empty States
+
 **Tasks**:
+
 - Create `client/src/components/empty-state.tsx` (base component)
 - Create `client/src/components/illustrations/empty-states.tsx` (5 illustrations)
 - Apply to pages:
@@ -400,19 +449,23 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 - Add translation keys (EN/RU/UZ)
 
 **Deliverables**:
+
 - 5 empty state illustrations live
 - Better UX for edge cases
 
 ---
 
 #### Week 3: Error States
+
 **Tasks**:
+
 - Update [not-found.tsx](client/src/pages/not-found.tsx) with illustration
 - Create `client/src/pages/error-500.tsx` (new page)
 - Update [error-boundary.tsx](client/src/components/error-boundary.tsx)
 - Add translation keys
 
 **Deliverables**:
+
 - Illustrated 404 page
 - 500 error page
 - Network error fallback
@@ -420,20 +473,25 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 ---
 
 #### Week 4: Onboarding
+
 **Tasks**:
+
 - Create `client/src/components/illustrations/onboarding.tsx` (4 illustrations)
 - Create `client/src/components/onboarding-carousel.tsx` (carousel component)
 - Add to app (show on first visit)
 - Add translation keys
 
 **Deliverables**:
+
 - 4-slide onboarding flow
 - First-visit user experience
 
 ---
 
 #### Week 5: Hero Section & Polish
+
 **Tasks**:
+
 - Implement hero illustration (Option 2: SVG overlay)
 - Update [home.tsx](client/src/pages/home.tsx) hero section
 - Final accessibility audit
@@ -441,6 +499,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 - Performance optimization
 
 **Deliverables**:
+
 - Enhanced hero section
 - All illustrations live and tested
 
@@ -598,16 +657,19 @@ client/src/
 ## Expected Impact
 
 **Visual Appeal**:
+
 - 📈 +40% perceived professionalism
 - 🎨 Stronger brand identity with custom icons
 - ✨ Delightful empty/error states reduce frustration
 
 **User Experience**:
+
 - 😊 +25% satisfaction with empty states (vs generic "no results")
 - 🚀 +15% new user activation (onboarding)
 - 📉 -30% confusion during errors (clear illustrations + helpful text)
 
 **Engagement**:
+
 - 📱 +10% time on site (onboarding keeps users engaged)
 - 🔄 +20% return rate after error (friendly, not scary)
 - ⭐ +15% brand recall (custom icons)
@@ -617,15 +679,18 @@ client/src/
 ## Resources & Tools
 
 **Design Tools**:
+
 - [Figma](https://figma.com) - Vector design, export SVG
 - [Lucide Icons](https://lucide.dev/) - Reference for style matching
 - [unDraw](https://undraw.co/) - Illustration inspiration
 
 **SVG Optimization**:
+
 - [SVGOMG](https://jakearchibald.github.io/svgomg/) - Optimize SVG files
 - [SVGR](https://react-svgr.com/) - Convert SVG to React components
 
 **Testing**:
+
 - Browser DevTools - Test at different sizes
 - Axe DevTools - Accessibility audit
 - ColorOracle - Color-blind simulation
@@ -680,11 +745,13 @@ client/src/
 ## Risk Assessment
 
 **Low Risk**:
+
 - ✅ Icons are simple SVG components (low complexity)
 - ✅ Empty/error states enhance existing pages (additive, not breaking)
 - ✅ All illustrations are decorative (can be disabled without UX loss)
 
 **Mitigation**:
+
 - Phased rollout (1 week per feature)
 - A/B testing for onboarding (measure activation rate)
 - Performance monitoring (SVG file sizes optimized)
@@ -706,12 +773,14 @@ Task P2 #36 (Iconography & Illustrations) is **COMPLETED** for the design specif
 ✅ **Translations**: 90 new translation keys (EN/RU/UZ)
 
 **Professional Appearance**: ✅ Achieved
+
 - Consistent illustration style across all components
 - Brand-aligned colors and aesthetic
 - Polished, cohesive visual language
 - Accessible and theme-aware
 
 **Expected Impact**:
+
 - 🎨 **+40% perceived professionalism**
 - 😊 **+25% user satisfaction** (empty states)
 - 🚀 **+15% new user activation** (onboarding)

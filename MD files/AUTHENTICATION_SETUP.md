@@ -42,7 +42,9 @@ AURELLE поддерживает несколько методов автори�
    ```
 
 ### Проверка:
+
 Перезапустите сервер и убедитесь, что в консоли появилось:
+
 ```
 Google OAuth configured successfully
 ```
@@ -72,7 +74,9 @@ Google OAuth configured successfully
    ```
 
 ### Проверка:
+
 Перезапустите сервер и убедитесь, что в консоли появилось:
+
 ```
 Yandex OAuth configured successfully
 ```
@@ -98,7 +102,9 @@ Yandex OAuth configured successfully
    ```
 
 ### Проверка:
+
 Перезапустите сервер и убедитесь, что в консоли появилось:
+
 ```
 GitHub OAuth configured successfully
 ```
@@ -124,10 +130,13 @@ GitHub OAuth configured successfully
    ```
 
 ### Режим разработки:
+
 В режиме `NODE_ENV=development` коды будут выводиться в консоль вместо отправки SMS (для тестирования без трат на SMS).
 
 ### Проверка:
+
 Перезапустите сервер и убедитесь, что в консоли появилось:
+
 ```
 Phone auth (SMS) configured successfully
 ```
@@ -143,6 +152,7 @@ curl http://localhost:5000/api/auth/providers
 ```
 
 Ответ будет содержать статус каждого провайдера:
+
 ```json
 {
   "local": true,
@@ -160,6 +170,7 @@ curl http://localhost:5000/api/auth/providers
 ### 1. Обновите Redirect URIs
 
 Для каждого OAuth провайдера замените `http://localhost:5000` на ваш продакшн домен:
+
 - Google: `https://yourapp.com/api/auth/google/callback`
 - Yandex: `https://yourapp.com/api/auth/yandex/callback`
 - GitHub: `https://yourapp.com/api/auth/github/callback`
@@ -217,6 +228,7 @@ OAuth провайдеры требуют HTTPS для продакшена. У�
 ### Добавление новых провайдеров
 
 Для добавления новых OAuth провайдеров:
+
 1. Установите соответствующую passport стратегию
 2. Создайте файл настройки (например, `server/facebookAuth.ts`)
 3. Добавьте импорт в `server/routes.ts`
@@ -229,6 +241,7 @@ OAuth провайдеры требуют HTTPS для продакшена. У�
 ## Поддержка
 
 Если возникли проблемы с настройкой, проверьте:
+
 - Логи сервера при запуске
 - Консоль браузера при попытке входа
 - Настройки OAuth приложения в консоли провайдера

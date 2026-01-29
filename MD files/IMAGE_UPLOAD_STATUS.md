@@ -5,6 +5,7 @@
 ### Image Upload System Полностью Готов!
 
 **Файлы:**
+
 - [server/uploadRoutes.ts](server/uploadRoutes.ts) - Upload endpoints
 - [server/upload.ts](server/upload.ts) - Multer configuration
 - [server/imageOptimization.ts](server/imageOptimization.ts) - Sharp optimization
@@ -17,6 +18,7 @@
 ### 1. Multiple Upload Endpoints
 
 #### Salon Photos
+
 ```typescript
 POST /api/upload/salon-photo     // Single
 POST /api/upload/salon-photos    // Multiple (max 10)
@@ -28,6 +30,7 @@ format: WebP/JPEG
 ```
 
 #### Master Photos
+
 ```typescript
 POST /api/upload/master-photo
 
@@ -37,6 +40,7 @@ quality: 85%
 ```
 
 #### Portfolio Images
+
 ```typescript
 POST /api/upload/portfolio
 
@@ -46,6 +50,7 @@ quality: 85%
 ```
 
 #### Avatars
+
 ```typescript
 POST /api/upload/avatar
 
@@ -56,18 +61,21 @@ quality: 85%
 ```
 
 ### 2. Image Optimization (Sharp)
+
 - ✅ Automatic resizing
 - ✅ Quality compression
 - ✅ Format conversion (WebP support)
 - ✅ Maintains aspect ratio (except avatars)
 
 ### 3. File Management
+
 - ✅ Organized by type (salons/masters/portfolio/avatars)
 - ✅ Unique filenames (timestamp + random)
 - ✅ Delete endpoint
 - ✅ File validation (mimetype, size)
 
 ### 4. Security
+
 - ✅ Authentication required (isAuthenticated)
 - ✅ Rate limiting (uploadLimiter: 20/15min)
 - ✅ File type whitelist (images only)
@@ -88,6 +96,7 @@ quality: 85%
 ```
 
 ### Initialization
+
 ```typescript
 // server/index.ts:68
 initializeUploadDirectories();
@@ -96,6 +105,7 @@ initializeUploadDirectories();
 ```
 
 ### File URLs
+
 ```
 /uploads/salons/1673456789-abc123.jpg
 /uploads/masters/1673456790-def456.jpg
@@ -108,6 +118,7 @@ initializeUploadDirectories();
 ## 📈 Storage Limits
 
 ### Current Configuration
+
 ```typescript
 // server/upload.ts
 limits: {
@@ -116,10 +127,11 @@ limits: {
 ```
 
 ### Docker Volume
+
 ```yaml
 # docker-compose.yml
 volumes:
-  - ./uploads:/app/server/uploads  # Persist uploads
+  - ./uploads:/app/server/uploads # Persist uploads
 ```
 
 **⚠️ Проблема:** Uploads НЕ персистятся в Docker!
@@ -223,12 +235,14 @@ export const uploadS3 = multer({
 ```
 
 **Преимущества:**
+
 - ✅ Не занимает место на сервере
 - ✅ Automatic backups
 - ✅ CDN integration
 - ✅ Scalable
 
 **Стоимость:**
+
 - First 5GB free
 - $0.023/GB после
 
@@ -239,12 +253,14 @@ npm install @aws-sdk/client-s3  # R2 is S3-compatible
 ```
 
 **Преимущества:**
+
 - ✅ S3-compatible API
 - ✅ Бесплатно 10GB storage
 - ✅ Бесплатный egress (no transfer fees)
 - ✅ Automatic CDN
 
 **Стоимость:**
+
 - $0.015/GB storage (дешевле S3)
 - $0 egress fees (vs $0.09/GB в S3)
 
@@ -255,11 +271,13 @@ npm install backblaze-b2
 ```
 
 **Преимущества:**
+
 - ✅ Самый дешёвый ($0.005/GB)
 - ✅ First 10GB free
 - ✅ S3-compatible API
 
 **Минусы:**
+
 - ⚠️ Медленнее чем S3/R2
 - ⚠️ Нет встроенного CDN
 
@@ -383,6 +401,7 @@ const worker = new Worker("image-optimization", async (job) => {
 ```
 
 **Преимущества:**
+
 - ✅ Fast API response (< 100ms)
 - ✅ Background processing
 - ✅ Retry on failure
@@ -393,12 +412,15 @@ const worker = new Worker("image-optimization", async (job) => {
 ## 🎯 Recommendations
 
 ### For Current Load (< 1000 users):
+
 ✅ **Local filesystem** с Docker volume - достаточно
 
 ### For Medium Load (1000-10,000 users):
+
 ✅ **Cloudflare R2** - лучший баланс цена/производительность
 
 ### For High Load (> 10,000 users):
+
 ✅ **AWS S3** + CloudFront CDN - максимальная производительность
 
 ---
@@ -406,18 +428,21 @@ const worker = new Worker("image-optimization", async (job) => {
 ## 📝 Next Steps
 
 ### Immediate (Required):
+
 1. ✅ Create `/opt/aurelle/uploads` directory
 2. ✅ Add volume mount to docker-compose.yml
 3. ✅ Restart containers
 4. ✅ Test upload via UI
 
 ### Short-term (Optional):
+
 - [ ] Add cleanup cron for orphaned files
 - [ ] Implement usage monitoring
 - [ ] Add image thumbnails generation
 - [ ] Add progress bars for uploads
 
 ### Long-term (When scaling):
+
 - [ ] Migrate to Cloudflare R2 or S3
 - [ ] Add CDN for faster delivery
 - [ ] Implement async optimization queue
@@ -430,12 +455,14 @@ const worker = new Worker("image-optimization", async (job) => {
 **Image Upload System: ✅ Полностью реализован**
 
 ### Что работает:
+
 - ✅ 4 типа uploads (salon/master/portfolio/avatar)
 - ✅ Automatic optimization (Sharp)
 - ✅ Security (auth, rate limiting, validation)
 - ✅ Multiple endpoints
 
 ### Что нужно настроить:
+
 - ⏳ Docker volume для persistence (5 минут)
 - 💡 Cloud storage для масштабирования (опционально)
 

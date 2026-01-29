@@ -108,25 +108,28 @@ export default function AdminUsers() {
   // Dialogs
   const [blockDialog, setBlockDialog] = useState<{ open: boolean; user: User | null }>({
     open: false,
-    user: null
+    user: null,
   });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: User | null }>({
     open: false,
-    user: null
+    user: null,
   });
   const [blockReason, setBlockReason] = useState("");
 
   // Fetch users
   const { data, isLoading, refetch } = useQuery<UsersResponse>({
-    queryKey: ["/api/admin/users", {
-      search,
-      role: roleFilter !== "all" ? roleFilter : undefined,
-      status: statusFilter !== "all" ? statusFilter : undefined,
-      sortBy,
-      sortOrder,
-      page,
-      pageSize,
-    }],
+    queryKey: [
+      "/api/admin/users",
+      {
+        search,
+        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
   });
 
   // Block user mutation
@@ -200,9 +203,7 @@ export default function AdminUsers() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-serif font-semibold text-foreground">
-          User Management
-        </h1>
+        <h1 className="text-3xl font-serif font-semibold text-foreground">User Management</h1>
         <p className="text-muted-foreground mt-2">
           Manage all platform users • {data?.total || 0} total users
         </p>
@@ -262,13 +263,9 @@ export default function AdminUsers() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Loading users...
-            </div>
+            <div className="text-center py-12 text-muted-foreground">Loading users...</div>
           ) : !data?.users || data.users.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              No users found
-            </div>
+            <div className="text-center py-12 text-muted-foreground">No users found</div>
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -350,14 +347,10 @@ export default function AdminUsers() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={ROLE_COLORS[user.role]}>
-                            {user.role}
-                          </Badge>
+                          <Badge className={ROLE_COLORS[user.role]}>{user.role}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[user.status]}>
-                            {user.status}
-                          </Badge>
+                          <Badge className={STATUS_COLORS[user.status]}>{user.status}</Badge>
                           {user.status === "blocked" && user.blockReason && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                               {user.blockReason}
@@ -367,7 +360,10 @@ export default function AdminUsers() {
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {user.isEmailVerified ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-700 border-green-200 text-xs"
+                              >
                                 Email ✓
                               </Badge>
                             ) : (
@@ -375,17 +371,19 @@ export default function AdminUsers() {
                                 Email ✗
                               </Badge>
                             )}
-                            {user.phone && (
-                              user.isPhoneVerified ? (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                            {user.phone &&
+                              (user.isPhoneVerified ? (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-green-50 text-green-700 border-green-200 text-xs"
+                                >
                                   Phone ✓
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-gray-50 text-xs">
                                   Phone ✗
                                 </Badge>
-                              )
-                            )}
+                              ))}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -446,7 +444,8 @@ export default function AdminUsers() {
               {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, data.total)} of {data.total} users
+                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, data.total)}{" "}
+                    of {data.total} users
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -493,7 +492,10 @@ export default function AdminUsers() {
       </Card>
 
       {/* Block User Dialog */}
-      <Dialog open={blockDialog.open} onOpenChange={(open) => !open && setBlockDialog({ open: false, user: null })}>
+      <Dialog
+        open={blockDialog.open}
+        onOpenChange={(open) => !open && setBlockDialog({ open: false, user: null })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Block User</DialogTitle>
@@ -530,12 +532,17 @@ export default function AdminUsers() {
       </Dialog>
 
       {/* Delete User Dialog */}
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, user: null })}>
+      <Dialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => !open && setDeleteDialog({ open: false, user: null })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to permanently delete {deleteDialog.user?.fullName || deleteDialog.user?.email}? This action cannot be undone.
+              Are you sure you want to permanently delete{" "}
+              {deleteDialog.user?.fullName || deleteDialog.user?.email}? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -17,6 +17,7 @@
 На сервере работало **два приложения одновременно**:
 
 ### Старое приложение (Docker):
+
 - **Запущено**: 9 января 2026
 - **Технология**: Docker контейнер
 - **Порт**: 8000
@@ -24,6 +25,7 @@
 - **Статус**: ❌ Остановлено и удалено
 
 ### Новое приложение (PM2):
+
 - **Запущено**: 15 января 2026 (сегодня)
 - **Технология**: PM2 process manager
 - **Порт**: 5000
@@ -35,12 +37,14 @@
 ## 🔧 Что было сделано?
 
 ### 1. Обнаружена проблема
+
 ```bash
 # aurelle.uz указывал на порт 8000 (старое приложение)
 # Новое приложение работало на порту 5000
 ```
 
 ### 2. Обновлена конфигурация Nginx
+
 ```nginx
 # Было:
 proxy_pass http://127.0.0.1:8000;
@@ -50,12 +54,14 @@ proxy_pass http://127.0.0.1:5000;
 ```
 
 ### 3. Перезапущен Nginx
+
 ```bash
 nginx -t
 systemctl reload nginx
 ```
 
 ### 4. Остановлено старое приложение
+
 ```bash
 docker stop aurelle-server
 docker rm aurelle-server
@@ -67,36 +73,38 @@ docker rm aurelle-server
 
 ### Работающие сервисы:
 
-| Сервис | Технология | Порт | Статус |
-|--------|------------|------|--------|
-| **AURELLE App** | PM2 (aurelle-production) | 5000 | ✅ Online |
-| **PostgreSQL** | Системный сервис | 5433 | ✅ Running |
-| **Nginx** | Reverse proxy | 80, 443 | ✅ Running |
+| Сервис          | Технология               | Порт    | Статус     |
+| --------------- | ------------------------ | ------- | ---------- |
+| **AURELLE App** | PM2 (aurelle-production) | 5000    | ✅ Online  |
+| **PostgreSQL**  | Системный сервис         | 5433    | ✅ Running |
+| **Nginx**       | Reverse proxy            | 80, 443 | ✅ Running |
 
 ### Остановленные сервисы:
 
-| Сервис | Технология | Порт | Статус |
-|--------|------------|------|--------|
-| **Old AURELLE** | Docker | 8000 | ❌ Stopped & Removed |
+| Сервис          | Технология | Порт | Статус               |
+| --------------- | ---------- | ---- | -------------------- |
+| **Old AURELLE** | Docker     | 8000 | ❌ Stopped & Removed |
 
 ### Оставшиеся Docker контейнеры:
 
-| Контейнер | Порт | Статус | Примечание |
-|-----------|------|--------|------------|
+| Контейнер            | Порт | Статус       | Примечание                 |
+| -------------------- | ---- | ------------ | -------------------------- |
 | **aurelle-postgres** | 5432 | ✅ Up 6 days | Можно оставить или удалить |
-| **aurelle-redis** | 6379 | ✅ Up 6 days | Можно оставить или удалить |
+| **aurelle-redis**    | 6379 | ✅ Up 6 days | Можно оставить или удалить |
 
 ---
 
 ## 🌐 Проверка доступности
 
 ### HTTPS (основной):
+
 ```bash
 curl -I https://aurelle.uz
 # HTTP/1.1 200 OK
 ```
 
 ### HTTP (редирект на HTTPS):
+
 ```bash
 curl -I http://aurelle.uz
 # HTTP/1.1 301 Moved Permanently
@@ -104,6 +112,7 @@ curl -I http://aurelle.uz
 ```
 
 ### Прямой IP:
+
 ```bash
 curl -I http://89.39.94.194
 # HTTP/1.1 200 OK
@@ -126,6 +135,7 @@ curl -I http://89.39.94.194
 ## 🔐 SSL Сертификаты
 
 ✅ SSL сертификаты Let's Encrypt уже настроены:
+
 - **Сертификат**: /etc/letsencrypt/live/aurelle.uz/fullchain.pem
 - **Ключ**: /etc/letsencrypt/live/aurelle.uz/privkey.pem
 - **Домены**: aurelle.uz, www.aurelle.uz
@@ -136,11 +146,13 @@ curl -I http://89.39.94.194
 ## 🗄️ База данных
 
 ### Старая БД (Docker PostgreSQL):
+
 - **Контейнер**: aurelle-postgres (порт 5432)
 - **Статус**: ✅ Работает
 - **Примечание**: Может использоваться старым приложением
 
 ### Новая БД (Системный PostgreSQL):
+
 - **Сервис**: postgresql@14-main (порт 5433)
 - **База**: aurelle_production
 - **Пользователь**: aurelle_user
@@ -175,18 +187,21 @@ docker volume prune
 ## 📝 Конфигурационные файлы
 
 ### Nginx конфигурация:
+
 ```
 /etc/nginx/sites-available/aurelle.uz
 /etc/nginx/sites-enabled/aurelle.uz (symlink)
 ```
 
 ### Приложение:
+
 ```
 /var/www/aurelle/current
 /var/www/aurelle/current/.env
 ```
 
 ### PM2:
+
 ```
 /root/.pm2/
 /root/.pm2/logs/aurelle-production-out.log
@@ -198,10 +213,12 @@ docker volume prune
 ## 🚀 Текущие URL
 
 ### Для пользователей:
+
 - **Основной**: https://aurelle.uz ✅
 - **С www**: https://www.aurelle.uz → редирект на https://aurelle.uz ✅
 
 ### Для администратора:
+
 - **Прямой HTTP**: http://89.39.94.194 ✅
 - **PM2 логи**: `ssh root@89.39.94.194 "pm2 logs aurelle-production"`
 
@@ -210,12 +227,14 @@ docker volume prune
 ## 🎯 Следующие шаги
 
 ### Обязательно:
+
 1. [x] Синхронизировать aurelle.uz с новым приложением ✅
 2. [ ] Протестировать регистрацию пользователей на https://aurelle.uz
 3. [ ] Создать тестовых пользователей через UI
 4. [ ] Проверить все функции (бронирование, профиль, оплата)
 
 ### Опционально:
+
 5. [ ] Удалить старые Docker контейнеры (если не нужны)
 6. [ ] Настроить backup базы данных
 7. [ ] Настроить мониторинг (Sentry, PM2 Plus)
@@ -226,12 +245,14 @@ docker volume prune
 ## 📊 Сравнение До/После
 
 ### ДО:
+
 ```
 https://aurelle.uz → Nginx (443) → Docker (8000) → Старое приложение
 http://89.39.94.194 → Nginx (80) → PM2 (5000) → Новое приложение
 ```
 
 ### ПОСЛЕ:
+
 ```
 https://aurelle.uz → Nginx (443) → PM2 (5000) → Новое приложение ✅
 http://89.39.94.194 → Nginx (80) → PM2 (5000) → Новое приложение ✅

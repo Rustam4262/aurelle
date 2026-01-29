@@ -8,15 +8,14 @@
 **Причина:** Отсутствие лимита соединений может привести к падению сервера с 2GB/4GB RAM.
 
 **Код для вставки:**
+
 ```typescript
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 
 // Оптимизированный пул для предотвращения OOM
@@ -37,6 +36,7 @@ export const db = drizzle(pool, { schema });
 **Причина:** Ошибки "Invalid API Key" на картах и неработающая почта.
 
 **Добавить/Исправить:**
+
 ```ini
 # Yandex Maps (Получить на developer.tech.yandex.ru)
 VITE_YANDEX_MAPS_API_KEY=ваш_ключ_здесь
@@ -56,6 +56,7 @@ EMAIL_FROM=AURELLE <noreply@aurelle.uz>
 **Причина:** Текущий UI требует ввода URL вручную.
 
 **Пример реализации обработчика загрузки:**
+
 ```tsx
 // Внутри компонента React
 const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

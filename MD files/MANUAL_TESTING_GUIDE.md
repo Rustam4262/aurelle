@@ -12,6 +12,7 @@
 This document provides a comprehensive manual testing plan for AURELLE, covering all critical features across multiple browsers and devices. The goal is to identify and document all critical bugs before production deployment.
 
 **Scope**:
+
 - 11 feature areas with 100+ test cases
 - Cross-browser testing (Chrome, Firefox, Safari, Edge)
 - Cross-device testing (Desktop, Tablet, Mobile)
@@ -37,6 +38,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: None (new user)
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Sign Up" tab
 3. Enter valid data:
@@ -49,6 +51,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Create Account"
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ Success toast appears: "Account created successfully"
 - ✅ User is logged in (avatar visible in nav)
@@ -63,12 +66,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Google account exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Continue with Google" button
 3. Select Google account in popup
 4. Grant permissions
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ User is logged in
 - ✅ User profile created with Google data
@@ -82,12 +87,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Apple ID exists, testing on Apple device
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Continue with Apple" button
 3. Authenticate with Face ID/Touch ID
 4. Choose to share/hide email
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ User is logged in
 - ✅ Email privacy choice respected
@@ -101,11 +108,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: GitHub account exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Continue with GitHub" button
 3. Authorize application
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ User is logged in
 - ✅ GitHub avatar/email imported
@@ -119,11 +128,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Yandex account exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Continue with Yandex" button
 3. Authorize application
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ User is logged in
 - ✅ Yandex profile data imported
@@ -137,11 +148,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Email "test@example.com" already registered
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Try to register with "test@example.com"
 3. Fill all fields, click "Create Account"
 
 **Expected Result**:
+
 - ✅ Error toast appears: "Email already in use"
 - ✅ User stays on registration form
 - ✅ No account created
@@ -155,11 +168,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: None
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Enter password: "123"
 3. Try to submit form
 
 **Expected Result**:
+
 - ✅ Error message: "Password must be at least 8 characters"
 - ✅ Password strength indicator shows "Weak"
 - ✅ Form does not submit
@@ -173,12 +188,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: None
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Enter password: "SecurePass123!"
 3. Enter confirm password: "SecurePass456!"
 4. Try to submit
 
 **Expected Result**:
+
 - ✅ Error message: "Passwords do not match"
 - ✅ Form does not submit
 
@@ -193,12 +210,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User "test@example.com" exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Enter email: "test@example.com"
 3. Enter password: "SecurePass123!"
 4. Click "Sign In"
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ Avatar visible in navigation
 - ✅ Session cookie set
@@ -212,12 +231,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: None
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Enter email: "test@example.com"
 3. Enter password: "WrongPassword"
 4. Click "Sign In"
 
 **Expected Result**:
+
 - ✅ Error toast: "Invalid email or password"
 - ✅ User stays on login form
 - ✅ Password field cleared for security
@@ -231,6 +252,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Enter credentials
 3. Check "Remember Me" checkbox
@@ -239,6 +261,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Reopen browser, navigate to site
 
 **Expected Result**:
+
 - ✅ User is still logged in
 - ✅ Session persists across browser restarts
 
@@ -251,11 +274,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in
 
 **Steps**:
+
 1. Click avatar in navigation
 2. Click "Log Out" in dropdown
 3. Confirm logout in dialog
 
 **Expected Result**:
+
 - ✅ User is redirected to home page
 - ✅ Avatar removed from navigation
 - ✅ "Sign In" button visible
@@ -270,6 +295,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User "test@example.com" exists
 
 **Steps**:
+
 1. Navigate to `/auth`
 2. Click "Forgot Password?"
 3. Enter email: "test@example.com"
@@ -280,6 +306,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 8. Submit
 
 **Expected Result**:
+
 - ✅ Email sent with reset link
 - ✅ Link expires after 1 hour
 - ✅ New password accepted
@@ -296,6 +323,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in
 
 **Steps**:
+
 1. Navigate to `/profile`
 2. Click "Edit Profile"
 3. Change name to "Updated Name"
@@ -303,6 +331,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Save Changes"
 
 **Expected Result**:
+
 - ✅ Success toast: "Profile updated"
 - ✅ Name updated in navigation
 - ✅ Phone number saved
@@ -317,6 +346,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in
 
 **Steps**:
+
 1. Navigate to `/profile`
 2. Click avatar to upload
 3. Select image file (JPG, <5MB)
@@ -324,6 +354,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Upload"
 
 **Expected Result**:
+
 - ✅ Photo uploads successfully
 - ✅ Avatar updates in navigation
 - ✅ Image optimized (WebP format)
@@ -338,6 +369,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User logged in with email/password
 
 **Steps**:
+
 1. Navigate to `/profile`
 2. Click "Change Password"
 3. Enter current password
@@ -346,6 +378,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Click "Update Password"
 
 **Expected Result**:
+
 - ✅ Password updated
 - ✅ Success toast appears
 - ✅ Can login with new password
@@ -360,6 +393,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in
 
 **Steps**:
+
 1. Navigate to `/profile`
 2. Click "Delete Account"
 3. Enter password to confirm
@@ -367,6 +401,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Delete My Account"
 
 **Expected Result**:
+
 - ✅ Confirmation dialog appears
 - ✅ Account deleted
 - ✅ User logged out
@@ -384,6 +419,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in as owner
 
 **Steps**:
+
 1. Navigate to `/owner`
 2. Click "Create New Salon"
 3. Fill form:
@@ -398,6 +434,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Click "Create Salon"
 
 **Expected Result**:
+
 - ✅ Salon created successfully
 - ✅ Redirected to salon management page
 - ✅ Success toast: "Salon created"
@@ -413,6 +450,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon exists, user is owner
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Click "Edit Salon"
 3. Change name to "Updated Salon Name"
@@ -420,6 +458,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Save Changes"
 
 **Expected Result**:
+
 - ✅ Changes saved
 - ✅ Success toast appears
 - ✅ Updated data visible on public salon page
@@ -433,12 +472,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon exists
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Click "Add Photos"
 3. Select 5 images (JPG/PNG, <5MB each)
 4. Click "Upload"
 
 **Expected Result**:
+
 - ✅ All 5 photos uploaded
 - ✅ Images optimized (WebP)
 - ✅ Photos appear in gallery on salon page
@@ -453,6 +494,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon exists
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Click "Working Hours"
 3. Set schedule:
@@ -462,6 +504,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 4. Click "Save Schedule"
 
 **Expected Result**:
+
 - ✅ Schedule saved
 - ✅ Hours visible on salon page
 - ✅ "Open Now" status updates dynamically
@@ -477,6 +520,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon exists, user is owner
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Click "Add Service"
 3. Fill form:
@@ -489,6 +533,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 4. Click "Add Service"
 
 **Expected Result**:
+
 - ✅ Service created
 - ✅ Service appears on salon page
 - ✅ Service available for booking
@@ -502,6 +547,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Service exists
 
 **Steps**:
+
 1. Navigate to service list
 2. Click "Edit" on service
 3. Change price to 30,000 UZS
@@ -509,6 +555,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Save"
 
 **Expected Result**:
+
 - ✅ Service updated
 - ✅ New price/duration visible
 - ✅ Existing bookings unaffected
@@ -522,11 +569,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Service exists, no upcoming bookings
 
 **Steps**:
+
 1. Navigate to service list
 2. Click "Delete" on service
 3. Confirm deletion
 
 **Expected Result**:
+
 - ✅ Service deleted
 - ✅ Service removed from salon page
 - ✅ No longer bookable
@@ -542,6 +591,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon exists, user is owner
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Click "Add Master"
 3. Fill form:
@@ -554,6 +604,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Add Master"
 
 **Expected Result**:
+
 - ✅ Master created
 - ✅ Master appears on salon team page
 - ✅ Master can login with email
@@ -568,12 +619,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Master exists
 
 **Steps**:
+
 1. Navigate to master management
 2. Click "Set Schedule" for master
 3. Set working days/hours
 4. Click "Save"
 
 **Expected Result**:
+
 - ✅ Schedule saved
 - ✅ Master only bookable during set hours
 - ✅ Calendar shows availability
@@ -589,6 +642,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is logged in, salon exists
 
 **Steps**:
+
 1. Navigate to `/salon/:id`
 2. Browse services
 3. Click "Book" on "Women's Haircut"
@@ -600,6 +654,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 9. Click "Confirm Booking"
 
 **Expected Result**:
+
 - ✅ Booking created
 - ✅ Confirmation page appears with booking number
 - ✅ Confirmation email sent
@@ -616,12 +671,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Master exists and available
 
 **Steps**:
+
 1. Start booking flow
 2. Select specific master "Anna Petrova"
 3. Select date/time when Anna is available
 4. Complete booking
 
 **Expected Result**:
+
 - ✅ Booking assigned to Anna
 - ✅ Anna receives notification
 - ✅ Booking shows Anna's name
@@ -635,12 +692,14 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Multiple masters available
 
 **Steps**:
+
 1. Start booking flow
 2. Select "Any Available Master"
 3. Select date/time
 4. Complete booking
 
 **Expected Result**:
+
 - ✅ Booking created
 - ✅ System assigns any available master
 - ✅ Master receives notification
@@ -654,11 +713,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: None
 
 **Steps**:
+
 1. Start booking flow
 2. Try to select yesterday's date
 3. Try to submit
 
 **Expected Result**:
+
 - ✅ Past dates are disabled/grayed out
 - ✅ Cannot select past date
 - ✅ Error message if somehow selected
@@ -672,11 +733,13 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Slot already booked
 
 **Steps**:
+
 1. Start booking flow
 2. Select date/time that's already booked
 3. Try to submit
 
 **Expected Result**:
+
 - ✅ Unavailable slots are disabled
 - ✅ Error message: "This slot is no longer available"
 - ✅ User prompted to select different time
@@ -692,6 +755,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User has upcoming booking
 
 **Steps**:
+
 1. Navigate to `/client`
 2. Go to "My Bookings" tab
 3. Find upcoming booking
@@ -700,6 +764,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Confirm cancellation
 
 **Expected Result**:
+
 - ✅ Booking status changed to "Cancelled"
 - ✅ Master receives cancellation notification
 - ✅ Slot becomes available again
@@ -714,10 +779,12 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Booking is <2 hours away
 
 **Steps**:
+
 1. Navigate to booking
 2. Try to cancel
 
 **Expected Result**:
+
 - ✅ Warning: "Cancellation not allowed <2 hours before appointment"
 - ✅ "Contact Salon" link provided
 - ✅ Booking cannot be cancelled
@@ -733,6 +800,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Booking completed, not yet reviewed
 
 **Steps**:
+
 1. Navigate to `/client`
 2. Go to "Past Bookings"
 3. Click "Leave Review" on completed booking
@@ -743,6 +811,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 8. Click "Submit Review"
 
 **Expected Result**:
+
 - ✅ Review submitted
 - ✅ Success toast appears
 - ✅ Review appears on salon page (after moderation)
@@ -757,10 +826,12 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Booking already reviewed
 
 **Steps**:
+
 1. Navigate to reviewed booking
 2. Try to leave another review
 
 **Expected Result**:
+
 - ✅ "Leave Review" button not visible
 - ✅ "You already reviewed this" message
 - ✅ Link to "Edit Review"
@@ -776,6 +847,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Salon has review, user is owner
 
 **Steps**:
+
 1. Navigate to `/owner/salon/:id`
 2. Go to "Reviews" tab
 3. Click "Respond" on review
@@ -783,6 +855,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 5. Click "Submit Response"
 
 **Expected Result**:
+
 - ✅ Response saved
 - ✅ Response visible below review on salon page
 - ✅ Reviewer receives notification
@@ -798,6 +871,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is admin, target user exists
 
 **Steps**:
+
 1. Navigate to `/admin/users`
 2. Search for user "test@example.com"
 3. Click "Actions" → "Block User"
@@ -806,6 +880,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Confirm
 
 **Expected Result**:
+
 - ✅ User blocked
 - ✅ User cannot login
 - ✅ User's bookings cancelled
@@ -820,6 +895,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: User is admin
 
 **Steps**:
+
 1. Navigate to `/admin/sanctions`
 2. Click "New Sanction"
 3. Select user
@@ -828,6 +904,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 6. Click "Apply Sanction"
 
 **Expected Result**:
+
 - ✅ Sanction recorded
 - ✅ User receives email notification
 - ✅ Sanction visible in user's profile (admin view)
@@ -841,6 +918,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 **Preconditions**: Complaint submitted
 
 **Steps**:
+
 1. Navigate to `/admin/complaints`
 2. Open complaint
 3. Review details
@@ -850,6 +928,7 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 7. Click "Save"
 
 **Expected Result**:
+
 - ✅ Complaint status updated
 - ✅ Complainant receives update email
 - ✅ Moderator notified
@@ -864,14 +943,15 @@ This document provides a comprehensive manual testing plan for AURELLE, covering
 
 Test all critical flows on:
 
-| Browser | Version | Priority | Notes |
-|---------|---------|----------|-------|
-| **Chrome** | Latest (v120+) | P0 | Primary browser (60% users) |
-| **Firefox** | Latest (v121+) | P1 | 15% users |
-| **Safari** | Latest (v17+) | P1 | 20% users (macOS/iOS) |
-| **Edge** | Latest (v120+) | P2 | 5% users |
+| Browser     | Version        | Priority | Notes                       |
+| ----------- | -------------- | -------- | --------------------------- |
+| **Chrome**  | Latest (v120+) | P0       | Primary browser (60% users) |
+| **Firefox** | Latest (v121+) | P1       | 15% users                   |
+| **Safari**  | Latest (v17+)  | P1       | 20% users (macOS/iOS)       |
+| **Edge**    | Latest (v120+) | P2       | 5% users                    |
 
 **Test on each browser**:
+
 - ✅ User registration (email/password)
 - ✅ Login/logout
 - ✅ Booking flow (full 5 steps)
@@ -887,13 +967,14 @@ Test critical flows on:
 
 #### Desktop
 
-| Resolution | Device | Browser | Priority |
-|------------|--------|---------|----------|
-| 1920x1080 | Standard Desktop | Chrome | P0 |
-| 1366x768 | Laptop | Chrome | P0 |
-| 2560x1440 | Large Monitor | Chrome | P2 |
+| Resolution | Device           | Browser | Priority |
+| ---------- | ---------------- | ------- | -------- |
+| 1920x1080  | Standard Desktop | Chrome  | P0       |
+| 1366x768   | Laptop           | Chrome  | P0       |
+| 2560x1440  | Large Monitor    | Chrome  | P2       |
 
 **Test Features**:
+
 - ✅ Navigation (hover states)
 - ✅ Multi-column layouts
 - ✅ Modals and dropdowns
@@ -904,13 +985,14 @@ Test critical flows on:
 
 #### Tablet
 
-| Device | Resolution | Browser | Priority |
-|--------|------------|---------|----------|
-| iPad Pro | 1024x1366 | Safari | P1 |
-| iPad | 768x1024 | Safari | P1 |
-| Samsung Tab | 800x1280 | Chrome | P2 |
+| Device      | Resolution | Browser | Priority |
+| ----------- | ---------- | ------- | -------- |
+| iPad Pro    | 1024x1366  | Safari  | P1       |
+| iPad        | 768x1024   | Safari  | P1       |
+| Samsung Tab | 800x1280   | Chrome  | P2       |
 
 **Test Features**:
+
 - ✅ Touch interactions (tap, swipe)
 - ✅ Responsive layouts (2-column → 1-column)
 - ✅ Virtual keyboard (input fields)
@@ -920,14 +1002,15 @@ Test critical flows on:
 
 #### Mobile
 
-| Device | Resolution | Browser | Priority |
-|--------|------------|---------|----------|
-| iPhone 14 | 390x844 | Safari | P0 |
-| iPhone SE | 375x667 | Safari | P1 |
-| Samsung Galaxy S23 | 360x800 | Chrome | P0 |
-| Google Pixel 7 | 412x915 | Chrome | P1 |
+| Device             | Resolution | Browser | Priority |
+| ------------------ | ---------- | ------- | -------- |
+| iPhone 14          | 390x844    | Safari  | P0       |
+| iPhone SE          | 375x667    | Safari  | P1       |
+| Samsung Galaxy S23 | 360x800    | Chrome  | P0       |
+| Google Pixel 7     | 412x915    | Chrome  | P1       |
 
 **Test Features**:
+
 - ✅ Mobile navigation (hamburger menu)
 - ✅ Touch targets (min 44x44px)
 - ✅ Scrolling performance
@@ -939,15 +1022,15 @@ Test critical flows on:
 
 ### Testing Priority Matrix
 
-| Feature | Desktop | Tablet | Mobile |
-|---------|---------|--------|--------|
-| **Registration** | P0 | P1 | P0 |
-| **Login** | P0 | P1 | P0 |
-| **Booking Flow** | P0 | P1 | P0 |
-| **Payment** | P0 | P1 | P0 |
-| **Admin Panel** | P0 | P2 | P3 |
-| **Owner Dashboard** | P0 | P1 | P2 |
-| **Search/Filters** | P0 | P1 | P0 |
+| Feature             | Desktop | Tablet | Mobile |
+| ------------------- | ------- | ------ | ------ |
+| **Registration**    | P0      | P1     | P0     |
+| **Login**           | P0      | P1     | P0     |
+| **Booking Flow**    | P0      | P1     | P0     |
+| **Payment**         | P0      | P1     | P0     |
+| **Admin Panel**     | P0      | P2     | P3     |
+| **Owner Dashboard** | P0      | P1     | P2     |
+| **Search/Filters**  | P0      | P1     | P0     |
 
 ---
 
@@ -965,12 +1048,14 @@ Test critical flows on:
 **Priority**: P0 / P1 / P2 / P3
 
 **Environment**:
+
 - Browser: Chrome v120
 - OS: Windows 11
 - Device: Desktop (1920x1080)
 - User Role: Client
 
 **Steps to Reproduce**:
+
 1. Navigate to `/salon/123`
 2. Click "Book Now"
 3. Select service "Women's Haircut"
@@ -987,8 +1072,10 @@ Page freezes, no navigation occurs
 
 **Console Errors**:
 ```
+
 TypeError: Cannot read property 'id' of undefined
-    at BookingStep2.tsx:45
+at BookingStep2.tsx:45
+
 ```
 
 **Additional Context**:
@@ -1007,23 +1094,27 @@ Add null check for `service.masters` before rendering
 ### Bug Severity Definitions
 
 **Critical (Blocker)**:
+
 - Prevents core functionality (cannot register, cannot book, payment fails)
 - Data loss or corruption
 - Security vulnerability
 - Site completely broken
 
 **High**:
+
 - Major functionality impaired (cannot cancel booking, cannot upload photos)
 - Significant UX issue affecting many users
 - Workaround exists but difficult
 
 **Medium**:
+
 - Minor functionality impaired (filter doesn't work, sorting broken)
 - UX inconvenience
 - Affects small % of users
 - Easy workaround exists
 
 **Low**:
+
 - Cosmetic issues (wrong color, misalignment)
 - Minor typos
 - Edge case scenarios
@@ -1034,21 +1125,25 @@ Add null check for `service.masters` before rendering
 ### Bug Priority Definitions
 
 **P0** (Fix immediately):
+
 - Blocks release
 - Critical severity
 - Affects all users
 
 **P1** (Fix before release):
+
 - High severity
 - Affects many users
 - Must be fixed for launch
 
 **P2** (Fix soon):
+
 - Medium severity
 - Fix in next sprint
 - Doesn't block release
 
 **P3** (Backlog):
+
 - Low severity
 - Fix when time permits
 - Nice-to-have
@@ -1080,12 +1175,14 @@ Add null check for `service.masters` before rendering
 ### Testing Execution (Day 1-3)
 
 **Day 1: Core Features (Desktop)**
+
 - [ ] User registration (all 5 methods) - 8 test cases
 - [ ] Login/logout - 5 test cases
 - [ ] Profile management - 4 test cases
 - [ ] Booking flow (happy path) - 5 test cases
 
 **Day 2: Owner/Admin Features (Desktop)**
+
 - [ ] Salon creation - 4 test cases
 - [ ] Service creation - 3 test cases
 - [ ] Master creation - 2 test cases
@@ -1095,6 +1192,7 @@ Add null check for `service.masters` before rendering
 - [ ] Admin actions - 3 test cases
 
 **Day 3: Cross-Browser & Mobile**
+
 - [ ] Re-test critical flows on Firefox
 - [ ] Re-test critical flows on Safari
 - [ ] Re-test critical flows on Edge
@@ -1116,15 +1214,16 @@ Add null check for `service.masters` before rendering
 ## Test Metrics
 
 **Track these metrics**:
+
 - **Total Test Cases**: 100+
-- **Test Cases Executed**: [  ]
-- **Test Cases Passed**: [  ]
-- **Test Cases Failed**: [  ]
-- **Bugs Found**: [  ]
-  - Critical (P0): [  ]
-  - High (P1): [  ]
-  - Medium (P2): [  ]
-  - Low (P3): [  ]
+- **Test Cases Executed**: [ ]
+- **Test Cases Passed**: [ ]
+- **Test Cases Failed**: [ ]
+- **Bugs Found**: [ ]
+  - Critical (P0): [ ]
+  - High (P1): [ ]
+  - Medium (P2): [ ]
+  - Low (P3): [ ]
 - **Test Coverage**: [ ]%
 
 ---
@@ -1148,6 +1247,7 @@ Add null check for `service.masters` before rendering
 ### Quality Metrics
 
 **Target**:
+
 - ✅ **0 Critical (P0) bugs** in production
 - ✅ **<5 High (P1) bugs** in production
 - ✅ **Test coverage >80%** of critical flows
@@ -1159,16 +1259,19 @@ Add null check for `service.masters` before rendering
 ## Tools & Resources
 
 **Testing Tools**:
+
 - [BrowserStack](https://browserstack.com/) - Cross-browser testing
 - [Responsively](https://responsively.app/) - Multi-device preview
 - [Loom](https://loom.com/) - Screen recording for bug reports
 - [Postman](https://postman.com/) - API testing
 
 **Bug Tracking**:
+
 - [Jira](https://jira.atlassian.com/) - Enterprise bug tracking
 - [Linear](https://linear.app/) - Modern issue tracker
 
 **Browser DevTools**:
+
 - Chrome DevTools - Inspect, Network, Console
 - Firefox Developer Tools
 - Safari Web Inspector
@@ -1180,6 +1283,7 @@ Add null check for `service.masters` before rendering
 This manual testing plan provides comprehensive coverage of all AURELLE features across multiple browsers and devices. By following this guide, testers will identify and document all critical bugs before production deployment, ensuring a high-quality user experience.
 
 **Next Steps**:
+
 1. Execute test cases (Day 1-3)
 2. Document all bugs in Jira/Linear
 3. Triage bugs with dev team

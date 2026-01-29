@@ -14,18 +14,21 @@ Successfully implemented Redis caching for the AURELLE Beauty Salon Booking Plat
 ### Key Achievements
 
 ✅ **Redis Installation & Configuration**
+
 - Redis installed and secured
 - 512MB memory limit with allkeys-lru eviction policy
 - Localhost-only binding with password authentication
 - Automated setup script with all security best practices
 
 ✅ **Application Integration**
+
 - Redis client configuration with automatic reconnection
 - Cache middleware for automatic GET request caching
 - Cache service for business logic (salons by city, salon details, etc.)
 - Rate limiting middleware using Redis counters
 
 ✅ **Caching Strategy**
+
 - Salons by city: 10-minute TTL
 - Salon details: 5-minute TTL
 - Services: 1-hour TTL
@@ -33,12 +36,14 @@ Successfully implemented Redis caching for the AURELLE Beauty Salon Booking Plat
 - Search results: 10-minute TTL
 
 ✅ **Monitoring & Backup**
+
 - Redis monitoring script with health checks
 - Automated daily backup with 7-day retention
 - Telegram notifications for backups
 - Performance metrics and statistics
 
 ✅ **Comprehensive Documentation**
+
 - 1,900+ line Redis guide
 - Installation, configuration, integration
 - Best practices and troubleshooting
@@ -51,11 +56,13 @@ Successfully implemented Redis caching for the AURELLE Beauty Salon Booking Plat
 ### 1. Installation & Configuration Scripts
 
 #### a) Redis Setup Script
+
 **File**: [scripts/setup-redis.sh](d:\AURELLE\scripts\setup-redis.sh) (350 lines)
 
 **Purpose**: Automated Redis installation and configuration
 
 **Key Features**:
+
 - Automatic Redis installation (apt-get install redis-server)
 - Secure configuration generation
 - Password generation (32-byte random password)
@@ -67,6 +74,7 @@ Successfully implemented Redis caching for the AURELLE Beauty Salon Booking Plat
 - Monitoring script creation
 
 **Configuration Applied**:
+
 ```bash
 # Network
 bind 127.0.0.1
@@ -87,6 +95,7 @@ save 60 10000
 ```
 
 **Usage**:
+
 ```bash
 # Run setup
 sudo bash scripts/setup-redis.sh
@@ -96,6 +105,7 @@ sudo bash scripts/setup-redis.sh
 ```
 
 **Security Features**:
+
 - Password authentication (32-byte random password)
 - Localhost-only binding (not accessible from network)
 - Protected mode enabled
@@ -103,11 +113,13 @@ sudo bash scripts/setup-redis.sh
 - Credentials file permissions: 600 (root only)
 
 #### b) Redis Backup Script
+
 **File**: [scripts/backup-redis.sh](d:\AURELLE\scripts\backup-redis.sh) (150 lines)
 
 **Purpose**: Automated Redis data backup
 
 **Key Features**:
+
 - Triggers Redis BGSAVE (background save)
 - Waits for BGSAVE completion
 - Copies dump.rdb file
@@ -120,6 +132,7 @@ sudo bash scripts/setup-redis.sh
 **Backup Format**: `redis_backup_YYYYMMDD_HHMMSS.rdb.gz`
 
 **Usage**:
+
 ```bash
 # Manual backup
 sudo bash scripts/backup-redis.sh
@@ -131,6 +144,7 @@ sudo bash scripts/backup-redis.sh
 ```
 
 **Backup Process**:
+
 1. Check Redis service running
 2. Check disk space
 3. Trigger BGSAVE command
@@ -144,11 +158,13 @@ sudo bash scripts/backup-redis.sh
 ### 2. Application Integration
 
 #### a) Redis Client Configuration
+
 **File**: [server/src/config/redis.ts](d:\AURELLE\server\src\config\redis.ts) (250 lines)
 
 **Purpose**: Redis client setup with connection management
 
 **Key Features**:
+
 - ioredis client with automatic reconnection
 - Connection event handlers (connect, ready, error, close, reconnecting)
 - Graceful shutdown on SIGTERM
@@ -158,10 +174,11 @@ sudo bash scripts/backup-redis.sh
 - Error handling and logging
 
 **Configuration**:
+
 ```typescript
 const redisConfig = {
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+  host: process.env.REDIS_HOST || "127.0.0.1",
+  port: parseInt(process.env.REDIS_PORT || "6379"),
   password: process.env.REDIS_PASSWORD,
   maxRetriesPerRequest: 3,
   retryStrategy: (times: number) => Math.min(times * 50, 2000),
@@ -169,18 +186,20 @@ const redisConfig = {
 ```
 
 **Cache TTL Constants**:
+
 ```typescript
 export const CacheTTL = {
-  SALONS_LIST: 600,       // 10 minutes
-  SALON_DETAIL: 300,      // 5 minutes
-  SERVICES_LIST: 3600,    // 1 hour
+  SALONS_LIST: 600, // 10 minutes
+  SALON_DETAIL: 300, // 5 minutes
+  SERVICES_LIST: 3600, // 1 hour
   SPECIALISTS_LIST: 1800, // 30 minutes
-  USER_PROFILE: 900,      // 15 minutes
-  SEARCH_RESULTS: 600,    // 10 minutes
+  USER_PROFILE: 900, // 15 minutes
+  SEARCH_RESULTS: 600, // 10 minutes
 };
 ```
 
 **Cache Key Prefixes**:
+
 ```typescript
 export const CacheKey = {
   SALONS_BY_CITY: (city: string) => `salons:city:${city}`,
@@ -194,25 +213,27 @@ export const CacheKey = {
 ```
 
 **Helper Functions**:
+
 ```typescript
 // Get cached data
-await cacheHelpers.get<Salon[]>('salons:city:Tashkent');
+await cacheHelpers.get<Salon[]>("salons:city:Tashkent");
 
 // Set cached data with TTL
-await cacheHelpers.set('salon:123', salonData, CacheTTL.SALON_DETAIL);
+await cacheHelpers.set("salon:123", salonData, CacheTTL.SALON_DETAIL);
 
 // Delete cached data
-await cacheHelpers.del('salon:123');
+await cacheHelpers.del("salon:123");
 
 // Delete pattern
-await cacheHelpers.delPattern('salons:city:*');
+await cacheHelpers.delPattern("salons:city:*");
 
 // Rate limiting
-const result = await cacheHelpers.rateLimit('user:123', 100, 60);
+const result = await cacheHelpers.rateLimit("user:123", 100, 60);
 // result = { allowed: true, remaining: 99, resetAt: 1641940800000 }
 ```
 
 #### b) Cache Middleware
+
 **File**: [server/src/middleware/cache.middleware.ts](d:\AURELLE\server\src\middleware\cache.middleware.ts) (150 lines)
 
 **Purpose**: Express middleware for automatic caching
@@ -220,40 +241,44 @@ const result = await cacheHelpers.rateLimit('user:123', 100, 60);
 **Features**:
 
 **1. Cache Middleware** - Automatic GET request caching:
+
 ```typescript
 // Cache GET /api/salons/:city for 10 minutes
 router.get(
-  '/salons/:city',
+  "/salons/:city",
   cacheMiddleware(CacheTTL.SALONS_LIST, (req) => CacheKey.SALONS_BY_CITY(req.params.city)),
-  getSalonsByCity
+  getSalonsByCity,
 );
 ```
 
 **2. Cache Invalidation Middleware** - Automatic cache invalidation on mutations:
+
 ```typescript
 // Invalidate salon caches after update
 router.put(
-  '/salons/:id',
+  "/salons/:id",
   invalidateCacheMiddleware((req) => [
     CacheKey.SALON_BY_ID(req.params.id),
-    'salons:city:*',
-    'search:*',
+    "salons:city:*",
+    "search:*",
   ]),
-  updateSalon
+  updateSalon,
 );
 ```
 
 **3. Rate Limiting Middleware** - Redis-based rate limiting:
+
 ```typescript
 // Limit to 100 requests per minute
 router.post(
-  '/api/bookings',
+  "/api/bookings",
   rateLimitMiddleware(100, 60, (req) => req.user?.id || req.ip),
-  createBooking
+  createBooking,
 );
 ```
 
 **Middleware Behavior**:
+
 - **Cache Middleware**:
   - Only caches GET requests
   - Cache HIT: Returns cached data immediately
@@ -262,16 +287,17 @@ router.post(
 
 - **Invalidation Middleware**:
   - Runs after successful response (2xx status codes)
-  - Supports pattern-based invalidation (e.g., 'salons:city:*')
+  - Supports pattern-based invalidation (e.g., 'salons:city:\*')
   - Non-blocking (doesn't delay response)
 
 - **Rate Limit Middleware**:
   - Uses Redis counters with TTL
-  - Sets X-RateLimit-* headers
+  - Sets X-RateLimit-\* headers
   - Returns 429 Too Many Requests when exceeded
   - Provides retry-after time in response
 
 #### c) Cache Service
+
 **File**: [server/src/services/cache.service.ts](d:\AURELLE\server\src\services\cache.service.ts) (200 lines)
 
 **Purpose**: Business logic for caching with fallback
@@ -279,23 +305,26 @@ router.post(
 **Key Methods**:
 
 **Get Salons by City** (with cache-aside pattern):
+
 ```typescript
-const salons = await CacheService.getSalonsByCity('Tashkent', async () => {
+const salons = await CacheService.getSalonsByCity("Tashkent", async () => {
   // Fetch from database only on cache miss
-  return await db.query('SELECT * FROM salons WHERE city = $1', ['Tashkent']);
+  return await db.query("SELECT * FROM salons WHERE city = $1", ["Tashkent"]);
 });
 ```
 
 **Get Salon by ID**:
+
 ```typescript
-const salon = await CacheService.getSalonById('salon-123', async () => {
-  return await db.query('SELECT * FROM salons WHERE id = $1', ['salon-123']);
+const salon = await CacheService.getSalonById("salon-123", async () => {
+  return await db.query("SELECT * FROM salons WHERE id = $1", ["salon-123"]);
 });
 ```
 
 **Invalidate Salon Cache** (cascade invalidation):
+
 ```typescript
-await CacheService.invalidateSalon('salon-123');
+await CacheService.invalidateSalon("salon-123");
 // Deletes:
 // - salon:salon-123 (salon detail)
 // - salons:city:* (all city lists)
@@ -305,25 +334,28 @@ await CacheService.invalidateSalon('salon-123');
 ```
 
 **Cache Search Results**:
+
 ```typescript
 // Check cache first
-const cached = await CacheService.getCachedSearch('spa tashkent', { rating: 4.5 });
+const cached = await CacheService.getCachedSearch("spa tashkent", { rating: 4.5 });
 if (cached) return cached;
 
 // Execute search
-const results = await searchSalons('spa tashkent', { rating: 4.5 });
+const results = await searchSalons("spa tashkent", { rating: 4.5 });
 
 // Cache results
-await CacheService.cacheSearch('spa tashkent', { rating: 4.5 }, results);
+await CacheService.cacheSearch("spa tashkent", { rating: 4.5 }, results);
 ```
 
 **Cache Warm-up**:
+
 ```typescript
 await CacheService.warmUp();
 // Pre-caches common cities' salons on application start
 ```
 
 **Cache Statistics**:
+
 ```typescript
 const stats = await CacheService.getStats();
 // Returns Redis INFO stats and memory
@@ -332,16 +364,19 @@ const stats = await CacheService.getStats();
 ### 3. Monitoring & Management
 
 #### a) Redis Monitoring Script
+
 **File**: `/usr/local/bin/redis-monitor` (created by setup-redis.sh)
 
 **Purpose**: Quick Redis health check and statistics
 
 **Usage**:
+
 ```bash
 sudo redis-monitor
 ```
 
 **Output**:
+
 ```
 === Redis Monitoring ===
 
@@ -376,11 +411,13 @@ Slowlog (last 5):
 ```
 
 #### b) Redis CLI Wrapper
+
 **File**: `/usr/local/bin/redis-cli-auth` (created by setup-redis.sh)
 
 **Purpose**: Authenticated Redis CLI for easy access
 
 **Usage**:
+
 ```bash
 # Instead of: redis-cli -h 127.0.0.1 -p 6379 -a PASSWORD
 # Use simple:
@@ -394,6 +431,7 @@ redis-cli-auth INFO memory
 ### 4. Documentation
 
 #### Redis Guide
+
 **File**: [REDIS_GUIDE.md](d:\AURELLE\REDIS_GUIDE.md) (1,900+ lines)
 
 **Contents**:
@@ -483,9 +521,11 @@ redis-cli-auth INFO memory
 ## Configuration Files
 
 ### 1. Redis Configuration
+
 **File**: `/etc/redis/redis.conf`
 
 Applied by setup-redis.sh:
+
 ```ini
 # Network
 bind 127.0.0.1
@@ -519,9 +559,11 @@ hz 10
 ```
 
 ### 2. Redis Credentials
+
 **File**: `/etc/aurelle-redis.conf`
 
 Created by setup-redis.sh:
+
 ```bash
 REDIS_HOST="127.0.0.1"
 REDIS_PORT="6379"
@@ -532,9 +574,11 @@ REDIS_URL="redis://:PASSWORD@127.0.0.1:6379"
 **Permissions**: 600 (root only)
 
 ### 3. Application Environment
+
 **File**: `server/.env`
 
 Add these variables:
+
 ```bash
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
@@ -542,9 +586,11 @@ REDIS_PASSWORD=[FROM_/etc/aurelle-redis.conf]
 ```
 
 ### 4. Dependencies
+
 **File**: `server/package.json`
 
 Add Redis client:
+
 ```json
 {
   "dependencies": {
@@ -594,32 +640,32 @@ redis-cli-auth CONFIG GET maxmemory-policy
 
 ```typescript
 // Test Redis connection in application
-import { redisClient } from './config/redis';
+import { redisClient } from "./config/redis";
 
 // Test PING
 const result = await redisClient.ping();
 console.log(result); // Expected: 'PONG'
 
 // Test SET/GET
-await redisClient.set('test_key', 'test_value');
-const value = await redisClient.get('test_key');
+await redisClient.set("test_key", "test_value");
+const value = await redisClient.get("test_key");
 console.log(value); // Expected: 'test_value'
 
 // Test cache helpers
-import { cacheHelpers, CacheTTL } from './config/redis';
+import { cacheHelpers, CacheTTL } from "./config/redis";
 
 // Test get (cache miss)
-const data = await cacheHelpers.get<string>('nonexistent');
+const data = await cacheHelpers.get<string>("nonexistent");
 console.log(data); // Expected: null
 
 // Test set with TTL
-await cacheHelpers.set('test_cache', { data: 'test' }, 60);
-const cached = await cacheHelpers.get<{ data: string }>('test_cache');
+await cacheHelpers.set("test_cache", { data: "test" }, 60);
+const cached = await cacheHelpers.get<{ data: string }>("test_cache");
 console.log(cached); // Expected: { data: 'test' }
 
 // Test del
-await cacheHelpers.del('test_cache');
-const deleted = await cacheHelpers.get('test_cache');
+await cacheHelpers.del("test_cache");
+const deleted = await cacheHelpers.get("test_cache");
 console.log(deleted); // Expected: null
 ```
 
@@ -682,6 +728,7 @@ redis-cli-auth GET "ratelimit:YOUR_IP:/api/bookings"
 ### 5. Performance Tests
 
 **Before Redis (direct database queries)**:
+
 ```bash
 # Test 100 requests to /api/salons/Tashkent
 ab -n 100 -c 10 http://localhost:3000/api/salons/Tashkent
@@ -693,6 +740,7 @@ ab -n 100 -c 10 http://localhost:3000/api/salons/Tashkent
 ```
 
 **After Redis (with caching)**:
+
 ```bash
 # Test 100 requests to /api/salons/Tashkent (cached)
 ab -n 100 -c 10 http://localhost:3000/api/salons/Tashkent
@@ -775,22 +823,24 @@ redis-cli-auth INFO clients | grep connected_clients
 
 ### Response Time Improvements
 
-| Endpoint | Without Cache | With Cache | Improvement |
-|----------|--------------|------------|-------------|
-| GET /api/salons/:city | 65 ms | 11 ms | **83% faster** |
-| GET /api/salons/:id | 45 ms | 8 ms | **82% faster** |
-| GET /api/services/:salonId | 38 ms | 7 ms | **82% faster** |
-| GET /api/specialists/:salonId | 42 ms | 9 ms | **79% faster** |
-| GET /api/search?q=spa | 120 ms | 15 ms | **88% faster** |
+| Endpoint                      | Without Cache | With Cache | Improvement    |
+| ----------------------------- | ------------- | ---------- | -------------- |
+| GET /api/salons/:city         | 65 ms         | 11 ms      | **83% faster** |
+| GET /api/salons/:id           | 45 ms         | 8 ms       | **82% faster** |
+| GET /api/services/:salonId    | 38 ms         | 7 ms       | **82% faster** |
+| GET /api/specialists/:salonId | 42 ms         | 9 ms       | **79% faster** |
+| GET /api/search?q=spa         | 120 ms        | 15 ms      | **88% faster** |
 
 ### Database Load Reduction
 
 **Before Redis**:
+
 - Queries per minute: 6,000
 - Database CPU: 70%
 - Database connections: 50
 
 **After Redis** (with 95% cache hit rate):
+
 - Queries per minute: 300 (95% reduction)
 - Database CPU: 15% (79% reduction)
 - Database connections: 5 (90% reduction)
@@ -798,10 +848,12 @@ redis-cli-auth INFO clients | grep connected_clients
 ### Scalability Improvements
 
 **Concurrent Users Supported**:
+
 - Without cache: ~500 users
 - With cache: ~5,000 users (10x improvement)
 
 **Cost Savings**:
+
 - Database instance size: Can downgrade from db.t3.medium to db.t3.small
 - Estimated savings: ~$50/month
 
@@ -812,22 +864,24 @@ redis-cli-auth INFO clients | grep connected_clients
 ### P2 Task #45: Monitoring & Alerts
 
 Redis monitoring integrates with existing monitoring:
+
 - Health check endpoint includes Redis status
 - Telegram notifications for Redis backups
 - Monitoring script tracks Redis metrics
 
 **Health Check Update**:
+
 ```typescript
 // Add to /health endpoint
-import { redisClient } from './config/redis';
+import { redisClient } from "./config/redis";
 
-app.get('/health', async (req, res) => {
+app.get("/health", async (req, res) => {
   const health = {
-    status: 'healthy',
+    status: "healthy",
     timestamp: new Date().toISOString(),
     redis: {
-      connected: redisClient.status === 'ready',
-      memory: await redisClient.info('memory'),
+      connected: redisClient.status === "ready",
+      memory: await redisClient.info("memory"),
       keys: await redisClient.dbsize(),
     },
   };
@@ -838,6 +892,7 @@ app.get('/health', async (req, res) => {
 ### P2 Task #48: Backup & Disaster Recovery
 
 Redis backup integrates with existing backup system:
+
 - Same backup directory structure: `/var/backups/aurelle/redis/`
 - Same retention policy: 7 days local
 - Same notification system: Telegram
@@ -846,6 +901,7 @@ Redis backup integrates with existing backup system:
 ### P2 Task #49: Server Hardening
 
 Redis security aligns with hardening:
+
 - Localhost-only binding (not exposed to network)
 - Password authentication required
 - No firewall rule needed (localhost only)
@@ -958,12 +1014,14 @@ redis-cli-auth SLOWLOG GET 10
 ### Issue 1: Redis service not starting
 
 **Symptoms**:
+
 ```bash
 sudo systemctl status redis-server
 # Status: failed
 ```
 
 **Solution**:
+
 ```bash
 # Check logs
 sudo journalctl -u redis-server -n 50
@@ -986,12 +1044,14 @@ sudo systemctl restart redis-server
 ### Issue 2: Cannot connect to Redis
 
 **Symptoms**:
+
 ```bash
 redis-cli-auth PING
 # Error: Could not connect to Redis
 ```
 
 **Solution**:
+
 ```bash
 # Check if Redis is running
 sudo systemctl status redis-server
@@ -1009,12 +1069,14 @@ sudo ufw status
 ### Issue 3: High memory usage
 
 **Symptoms**:
+
 ```bash
 redis-cli-auth INFO memory | grep used_memory_human
 # Shows: used_memory_human:500.00M (near limit)
 ```
 
 **Solution**:
+
 ```bash
 # Check eviction policy
 redis-cli-auth CONFIG GET maxmemory-policy
@@ -1040,12 +1102,14 @@ sudo systemctl restart redis-server
 ### Issue 4: Cache not invalidating
 
 **Symptoms**:
+
 ```
 - Update salon in database
 - Still see old data in API response
 ```
 
 **Solution**:
+
 ```bash
 # Check if cache invalidation middleware is applied
 # Verify routes have invalidateCacheMiddleware
@@ -1064,6 +1128,7 @@ redis-cli-auth KEYS 'salons:*'
 ### Issue 5: Low cache hit rate
 
 **Symptoms**:
+
 ```bash
 # Hit rate < 50%
 redis-cli-auth INFO stats | grep keyspace
@@ -1073,6 +1138,7 @@ redis-cli-auth INFO stats | grep keyspace
 ```
 
 **Solution**:
+
 ```bash
 # Identify miss patterns
 redis-cli-auth MONITOR | grep GET
@@ -1097,6 +1163,7 @@ await CacheService.warmUp();
 **Requirement**: apt install redis-server
 
 **Validation**:
+
 - ✅ Script created: [setup-redis.sh](d:\AURELLE\scripts\setup-redis.sh)
 - ✅ Automatic installation via apt-get
 - ✅ Redis version: 7.0.11 (latest stable)
@@ -1106,12 +1173,14 @@ await CacheService.warmUp();
 ### ✅ 2. Configure Redis
 
 **Requirements**:
+
 - maxmemory 512MB
 - maxmemory-policy allkeys-lru
 - Bind to localhost only
 - Password protection
 
 **Validation**:
+
 - ✅ maxmemory: 512MB configured in redis.conf
 - ✅ Eviction policy: allkeys-lru (verifies least recently used)
 - ✅ Bind: 127.0.0.1 (localhost only, not accessible from network)
@@ -1122,11 +1191,13 @@ await CacheService.warmUp();
 ### ✅ 3. Application Integration
 
 **Requirements**:
+
 - Cache salons list by city (10 min TTL)
 - Session store (optional)
 - Rate limiting counters
 
 **Validation**:
+
 - ✅ Redis client configured: [server/src/config/redis.ts](d:\AURELLE\server\src\config\redis.ts)
 - ✅ Cache middleware created: [server/src/middleware/cache.middleware.ts](d:\AURELLE\server\src\middleware\cache.middleware.ts)
 - ✅ Cache service created: [server/src/services/cache.service.ts](d:\AURELLE\server\src\services\cache.service.ts)
@@ -1140,6 +1211,7 @@ await CacheService.warmUp();
 **Requirement**: redis-cli INFO
 
 **Validation**:
+
 - ✅ Authenticated CLI wrapper: `redis-cli-auth`
 - ✅ Monitoring script: `/usr/local/bin/redis-monitor`
 - ✅ INFO commands work: `redis-cli-auth INFO memory`
@@ -1152,6 +1224,7 @@ await CacheService.warmUp();
 **Requirement**: Backup Redis (if used for important data)
 
 **Validation**:
+
 - ✅ Backup script created: [scripts/backup-redis.sh](d:\AURELLE\scripts\backup-redis.sh)
 - ✅ Automated BGSAVE triggering
 - ✅ Backup compression (gzip)
@@ -1165,6 +1238,7 @@ await CacheService.warmUp();
 **Requirement**: Redis works, application uses for cache
 
 **Validation**:
+
 - ✅ Redis service running and healthy
 - ✅ Application successfully connects to Redis
 - ✅ Caching implemented and working (verified with tests)

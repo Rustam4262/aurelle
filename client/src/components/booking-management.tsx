@@ -67,7 +67,7 @@ interface Booking {
   bookingDate: string;
   startTime: string;
   endTime: string;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+  status: "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show";
   price: number;
   notes?: string;
   modifiedBy?: string;
@@ -119,7 +119,9 @@ export function BookingManagement() {
   const [viewingHistory, setViewingHistory] = useState<Booking | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
-  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState<Booking | null>(null);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState<Booking | null>(
+    null,
+  );
   const [manualBookingDialogOpen, setManualBookingDialogOpen] = useState(false);
 
   // Build query params
@@ -219,7 +221,7 @@ export function BookingManagement() {
             onCheckedChange={(value) => {
               table.toggleAllPageRowsSelected(!!value);
               if (value) {
-                setSelectedBookings(bookings.map(b => b.id));
+                setSelectedBookings(bookings.map((b) => b.id));
               } else {
                 setSelectedBookings([]);
               }
@@ -233,7 +235,7 @@ export function BookingManagement() {
               if (value) {
                 setSelectedBookings([...selectedBookings, row.original.id]);
               } else {
-                setSelectedBookings(selectedBookings.filter(id => id !== row.original.id));
+                setSelectedBookings(selectedBookings.filter((id) => id !== row.original.id));
               }
             }}
           />
@@ -248,7 +250,9 @@ export function BookingManagement() {
           return (
             <div>
               <div className="font-medium">{date.toLocaleDateString()}</div>
-              <div className="text-sm text-muted-foreground">{row.original.startTime} - {row.original.endTime}</div>
+              <div className="text-sm text-muted-foreground">
+                {row.original.startTime} - {row.original.endTime}
+              </div>
             </div>
           );
         },
@@ -274,17 +278,20 @@ export function BookingManagement() {
       {
         accessorKey: "salonName",
         header: t("bookings.salon", "Salon"),
-        cell: ({ row }) => row.original.salonName?.[currentLang] || row.original.salonName?.en || "N/A",
+        cell: ({ row }) =>
+          row.original.salonName?.[currentLang] || row.original.salonName?.en || "N/A",
       },
       {
         accessorKey: "masterName",
         header: t("bookings.master", "Master"),
-        cell: ({ row }) => row.original.masterName?.[currentLang] || row.original.masterName?.en || "N/A",
+        cell: ({ row }) =>
+          row.original.masterName?.[currentLang] || row.original.masterName?.en || "N/A",
       },
       {
         accessorKey: "serviceName",
         header: t("bookings.service", "Service"),
-        cell: ({ row }) => row.original.serviceName?.[currentLang] || row.original.serviceName?.en || "N/A",
+        cell: ({ row }) =>
+          row.original.serviceName?.[currentLang] || row.original.serviceName?.en || "N/A",
       },
       {
         accessorKey: "status",
@@ -333,7 +340,7 @@ export function BookingManagement() {
         ),
       },
     ],
-    [bookings, selectedBookings, currentLang]
+    [bookings, selectedBookings, currentLang],
   );
 
   const table = useReactTable({
@@ -379,7 +386,7 @@ export function BookingManagement() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `bookings_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `bookings_${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -417,11 +424,7 @@ export function BookingManagement() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setManualBookingDialogOpen(true)}
-              >
+              <Button variant="default" size="sm" onClick={() => setManualBookingDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 {t("bookings.manual.title", "Create Manual Booking")}
               </Button>
@@ -455,10 +458,18 @@ export function BookingManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" ">{t("common.all", "All")}</SelectItem>
-                    <SelectItem value="pending">{t("bookings.status.pending", "Pending")}</SelectItem>
-                    <SelectItem value="confirmed">{t("bookings.status.confirmed", "Confirmed")}</SelectItem>
-                    <SelectItem value="completed">{t("bookings.status.completed", "Completed")}</SelectItem>
-                    <SelectItem value="cancelled">{t("bookings.status.cancelled", "Cancelled")}</SelectItem>
+                    <SelectItem value="pending">
+                      {t("bookings.status.pending", "Pending")}
+                    </SelectItem>
+                    <SelectItem value="confirmed">
+                      {t("bookings.status.confirmed", "Confirmed")}
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      {t("bookings.status.completed", "Completed")}
+                    </SelectItem>
+                    <SelectItem value="cancelled">
+                      {t("bookings.status.cancelled", "Cancelled")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -545,10 +556,7 @@ export function BookingManagement() {
                 <span>
                   {selectedBookings.length} {t("bookings.selected", "selected")}
                 </span>
-                <Button
-                  size="sm"
-                  onClick={() => setShowBulkDialog(true)}
-                >
+                <Button size="sm" onClick={() => setShowBulkDialog(true)}>
                   {t("bookings.bulkUpdate", "Bulk Update Status")}
                 </Button>
               </AlertDescription>
@@ -596,7 +604,8 @@ export function BookingManagement() {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
-              {t("bookings.showing", "Showing")} {table.getRowModel().rows.length} {t("bookings.of", "of")} {total}
+              {t("bookings.showing", "Showing")} {table.getRowModel().rows.length}{" "}
+              {t("bookings.of", "of")} {total}
             </div>
             <div className="flex gap-2">
               <Button
@@ -626,7 +635,8 @@ export function BookingManagement() {
           <DialogHeader>
             <DialogTitle>{t("bookings.bulkUpdate", "Bulk Update Status")}</DialogTitle>
             <DialogDescription>
-              {t("bookings.bulkUpdateDescription", "Update status for")} {selectedBookings.length} {t("bookings.bookings", "bookings")}
+              {t("bookings.bulkUpdateDescription", "Update status for")} {selectedBookings.length}{" "}
+              {t("bookings.bookings", "bookings")}
             </DialogDescription>
           </DialogHeader>
 
@@ -638,10 +648,18 @@ export function BookingManagement() {
                   <SelectValue placeholder={t("bookings.selectStatus", "Select status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="confirmed">{t("bookings.status.confirmed", "Confirmed")}</SelectItem>
-                  <SelectItem value="in_progress">{t("bookings.status.in_progress", "In Progress")}</SelectItem>
-                  <SelectItem value="completed">{t("bookings.status.completed", "Completed")}</SelectItem>
-                  <SelectItem value="cancelled">{t("bookings.status.cancelled", "Cancelled")}</SelectItem>
+                  <SelectItem value="confirmed">
+                    {t("bookings.status.confirmed", "Confirmed")}
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    {t("bookings.status.in_progress", "In Progress")}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {t("bookings.status.completed", "Completed")}
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    {t("bookings.status.cancelled", "Cancelled")}
+                  </SelectItem>
                   <SelectItem value="no_show">{t("bookings.status.no_show", "No Show")}</SelectItem>
                 </SelectContent>
               </Select>
@@ -665,7 +683,9 @@ export function BookingManagement() {
               onClick={handleBulkUpdate}
               disabled={!bulkAction || bulkUpdateMutation.isPending}
             >
-              {bulkUpdateMutation.isPending ? t("common.updating", "Updating...") : t("common.update", "Update")}
+              {bulkUpdateMutation.isPending
+                ? t("common.updating", "Updating...")
+                : t("common.update", "Update")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -677,7 +697,8 @@ export function BookingManagement() {
           <DialogHeader>
             <DialogTitle>{t("bookings.modificationHistory", "Modification History")}</DialogTitle>
             <DialogDescription>
-              {viewingHistory?.clientName} - {new Date(viewingHistory?.date || "").toLocaleDateString()}
+              {viewingHistory?.clientName} -{" "}
+              {new Date(viewingHistory?.date || "").toLocaleDateString()}
             </DialogDescription>
           </DialogHeader>
 

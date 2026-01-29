@@ -9,11 +9,13 @@ All feature flags default to **FALSE** (disabled) until explicitly enabled in en
 ## Architecture
 
 ### Backend (`server/featureFlags.ts`)
+
 - Reads feature flags from environment variables
 - Provides middleware to protect endpoints behind feature flags
 - Exposes API endpoint to query flag states
 
 ### Frontend (`client/src/hooks/useFeatureFlag.ts`)
+
 - React hooks to check feature flag status
 - Caches flag state for 5 minutes to reduce API calls
 - Conditionally renders UI based on flags
@@ -21,24 +23,30 @@ All feature flags default to **FALSE** (disabled) until explicitly enabled in en
 ## Available Feature Flags
 
 ### Phase 7: Analytics Enhancements
+
 - `FEAT_ENHANCED_ANALYTICS` - Date range picker, comparison mode, master/service performance analytics
 
 ### Phase 8: Bookings Management
+
 - `FEAT_BOOKING_RESCHEDULE` - Allow owners to reschedule bookings
 - `FEAT_MANUAL_BOOKING` - Create bookings manually from owner dashboard
 
 ### Phase 9: Services & Masters
+
 - `FEAT_BULK_SERVICE_UPDATE` - Bulk edit pricing and duration
 - `FEAT_MASTER_SCHEDULE` - Master-specific schedule overrides
 
 ### Phase 10: Calendar & Working Hours
+
 - `FEAT_ENHANCED_CALENDAR` - Drag-and-drop booking management
 - `FEAT_WORKING_HOURS_BREAKS` - Break time configuration
 
 ### Phase 11: RBAC
+
 - `FEAT_SALON_MANAGER` - Salon manager role with limited permissions
 
 ### Additional Features
+
 - `FEAT_EXPORT_EXCEL` - Export analytics to Excel
 - `FEAT_EXPORT_PDF` - Export reports as PDF
 
@@ -49,13 +57,14 @@ All feature flags default to **FALSE** (disabled) until explicitly enabled in en
 ```typescript
 import { requireFeatureFlag } from "../featureFlags";
 
-router.post("/bookings/:id/reschedule",
+router.post(
+  "/bookings/:id/reschedule",
   isAuthenticated,
   requireFeatureFlag("BOOKING_RESCHEDULE"),
   requirePermission("BOOKINGS", "update"),
   async (req, res) => {
     // Reschedule logic
-  }
+  },
 );
 ```
 
@@ -109,6 +118,7 @@ export function AdvancedBookings() {
 ## Rollout Strategy
 
 ### 1. Initial Deployment (All Flags OFF)
+
 Deploy feature flag infrastructure with all flags disabled. No user impact.
 
 ```bash
@@ -129,6 +139,7 @@ FEAT_ENHANCED_ANALYTICS=true
 ### 3. Monitor Metrics (48 hours)
 
 Before enabling next feature:
+
 - Check error rates in Sentry
 - Review API response times
 - Monitor user complaints/feedback
@@ -139,16 +150,19 @@ Before enabling next feature:
 Enable for production in stages:
 
 **Week 1: Internal Testing (10% rollout)**
+
 - Enable flag on production
 - Test with internal salon accounts
 - Monitor closely
 
 **Week 2: Beta Users (50% rollout)**
+
 - Enable for select beta salon owners
 - Collect feedback
 - Fix any issues
 
 **Week 3: Full Rollout (100%)**
+
 - Enable for all users
 - Continue monitoring
 - Mark feature as stable
@@ -156,6 +170,7 @@ Enable for production in stages:
 ### 5. Feature Flag Cleanup
 
 After feature is stable for 2+ weeks:
+
 - Remove feature flag checks from code
 - Remove flag from environment variables
 - Update documentation
@@ -163,6 +178,7 @@ After feature is stable for 2+ weeks:
 ## Environment Configuration
 
 ### Development
+
 ```bash
 # .env.local
 FEAT_ENHANCED_ANALYTICS=true  # Enable for local testing
@@ -170,12 +186,14 @@ FEAT_BOOKING_RESCHEDULE=true
 ```
 
 ### Staging
+
 ```bash
 # .env on staging server
 FEAT_ENHANCED_ANALYTICS=true  # Test before production
 ```
 
 ### Production
+
 ```bash
 # .env on production server (89.39.94.194)
 FEAT_ENHANCED_ANALYTICS=false  # Keep disabled until ready
@@ -189,6 +207,7 @@ FEAT_BOOKING_RESCHEDULE=false
 Returns current state of all feature flags.
 
 **Response:**
+
 ```json
 {
   "ENHANCED_ANALYTICS": false,
@@ -211,6 +230,7 @@ Returns current state of all feature flags.
 If a feature causes issues:
 
 1. **Immediate disable** (< 1 minute)
+
 ```bash
 # SSH to production server
 ssh user@89.39.94.194
@@ -224,11 +244,13 @@ pm2 restart all
 ```
 
 2. **Verify rollback**
+
 - Check `/api/feature-flags` endpoint
 - Verify UI no longer shows feature
 - Confirm error rates return to normal
 
 3. **Investigate and fix**
+
 - Review error logs in Sentry
 - Fix issue in development
 - Re-test before re-enabling
@@ -246,17 +268,20 @@ pm2 restart all
 ## Troubleshooting
 
 ### Feature flag not updating
+
 - Clear React Query cache: `queryClient.invalidateQueries(["/api/feature-flags"])`
 - Check browser console for errors
 - Verify .env file on server has correct value
 - Ensure PM2 was restarted after .env change
 
 ### Feature flag returns 404
+
 - Check middleware order in routes
 - Verify flag name matches exactly
 - Ensure `requireFeatureFlag` is after auth middleware
 
 ### Frontend not respecting flag
+
 - Check `useFeatureFlag` hook is used correctly
 - Verify React Query is working (check Network tab)
 - Clear browser cache and reload

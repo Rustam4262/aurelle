@@ -5,7 +5,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Search, CheckCircle, XCircle, MapPin } from "lucide-react";
 
@@ -27,8 +34,7 @@ export default function AdminSalons() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: (salonId: string) =>
-      apiRequest("PATCH", `/api/admin/salons/${salonId}/verify`),
+    mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: "Salon verified successfully" });
@@ -37,14 +43,13 @@ export default function AdminSalons() {
       toast({
         title: "Failed to verify salon",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     },
   });
 
   const unverifyMutation = useMutation({
-    mutationFn: (salonId: string) =>
-      apiRequest("PATCH", `/api/admin/salons/${salonId}/unverify`),
+    mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/unverify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: "Salon unverified" });
@@ -53,7 +58,7 @@ export default function AdminSalons() {
       toast({
         title: "Failed to unverify salon",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     },
   });
@@ -100,15 +105,21 @@ export default function AdminSalons() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((salon) => {
-                    const name = typeof salon.name === "object" ? salon.name.en || salon.name.ru : salon.name;
-                    const address = typeof salon.address === "object" ? salon.address.en || salon.address.ru : salon.address;
+                    const name =
+                      typeof salon.name === "object" ? salon.name.en || salon.name.ru : salon.name;
+                    const address =
+                      typeof salon.address === "object"
+                        ? salon.address.en || salon.address.ru
+                        : salon.address;
 
                     return (
                       <TableRow key={salon.id}>
                         <TableCell>
                           <div>
                             <p className="font-medium">{name}</p>
-                            <p className="text-sm text-muted-foreground">ID: {salon.id.slice(0, 8)}...</p>
+                            <p className="text-sm text-muted-foreground">
+                              ID: {salon.id.slice(0, 8)}...
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>

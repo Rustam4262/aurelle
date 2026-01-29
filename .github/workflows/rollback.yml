@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to rollback'
+        description: "Environment to rollback"
         required: true
         type: choice
         options:
@@ -12,12 +12,12 @@ on:
       backup_timestamp:
         description: 'Backup timestamp (YYYYMMDD_HHMMSS) or "latest" for most recent'
         required: false
-        default: 'latest'
+        default: "latest"
       reason:
-        description: 'Reason for rollback'
+        description: "Reason for rollback"
         required: true
       restore_database:
-        description: 'Restore database backup'
+        description: "Restore database backup"
         required: false
         type: boolean
         default: false

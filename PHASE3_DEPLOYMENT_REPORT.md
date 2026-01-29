@@ -11,6 +11,7 @@
 Phase 3 успешно завершена! Добавлены интерактивные графики на Dashboard владельца салона с использованием библиотеки Recharts. Владельцы теперь могут визуально отслеживать тренды выручки и бронирований за последние 30 дней, а также видеть топ-услуги и топ-мастеров в виде наглядных диаграмм.
 
 **Ключевые улучшения:**
+
 - ✅ API возвращает данные временных рядов за последние 30 дней
 - ✅ График трендов выручки (линейный график)
 - ✅ График трендов бронирований (линейный график)
@@ -28,12 +29,14 @@ Phase 3 успешно завершена! Добавлены интеракти
 **Файл:** `server/routes/owner.routes.ts` (lines 1348-1414)
 
 **Добавленная функциональность:**
+
 - Получение бронирований за последние 30 дней
 - Группировка данных по датам
 - Вычисление дневной выручки и количества бронирований
 - Инициализация всех 30 дней с нулевыми значениями (для корректного отображения графиков)
 
 **Новая структура ответа:**
+
 ```typescript
 {
   today: { ... },
@@ -51,16 +54,16 @@ Phase 3 успешно завершена! Добавлены интеракти
 ```
 
 **Алгоритм:**
+
 ```typescript
 // 1. Получить бронирования за последние 30 дней
 const thirtyDaysAgo = new Date();
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-const last30DaysBookings = await db.select().from(bookings)
-  .where(and(
-    inArray(bookings.salonId, salonIds),
-    gte(bookings.bookingDate, thirtyDaysAgo)
-  ));
+const last30DaysBookings = await db
+  .select()
+  .from(bookings)
+  .where(and(inArray(bookings.salonId, salonIds), gte(bookings.bookingDate, thirtyDaysAgo)));
 
 // 2. Инициализировать все 30 дней
 const dailyStats = new Map<string, { revenue: number; bookings: number }>();
@@ -71,12 +74,12 @@ for (let i = 0; i < 30; i++) {
 }
 
 // 3. Заполнить фактическими данными
-last30DaysBookings.forEach(b => {
-  const dateKey = new Date(b.bookingDate).toISOString().split('T')[0];
+last30DaysBookings.forEach((b) => {
+  const dateKey = new Date(b.bookingDate).toISOString().split("T")[0];
   const current = dailyStats.get(dateKey);
   dailyStats.set(dateKey, {
-    revenue: current.revenue + (b.status === 'completed' ? b.priceSnapshot : 0),
-    bookings: current.bookings + 1
+    revenue: current.revenue + (b.status === "completed" ? b.priceSnapshot : 0),
+    bookings: current.bookings + 1,
   });
 });
 ```
@@ -86,6 +89,7 @@ last30DaysBookings.forEach(b => {
 **Файл:** `client/src/components/dashboard-charts.tsx` (NEW - 212 lines)
 
 **Возможности:**
+
 - **Revenue Trend Chart:** Линейный график выручки за 30 дней
 - **Bookings Trend Chart:** Линейный график бронирований за 30 дней
 - **Top Services Chart:** Горизонтальная столбчатая диаграмма топ-5 услуг
@@ -94,6 +98,7 @@ last30DaysBookings.forEach(b => {
 **Технические особенности:**
 
 #### Recharts Configuration:
+
 ```typescript
 <ResponsiveContainer width="100%" height={300}>
   <LineChart data={trends}>
@@ -122,11 +127,13 @@ last30DaysBookings.forEach(b => {
 ```
 
 **Форматирование:**
+
 - **Даты:** Локализованный формат (Jan 15, 15 янв, 15-yan)
 - **Валюта:** UZS с тысячными разделителями
 - **Оси Y:** Сокращенные значения (1250K вместо 1,250,000)
 
 **Цветовая схема:**
+
 - Revenue chart: `hsl(var(--primary))` - основной цвет темы
 - Bookings chart: `hsl(var(--chart-2))` - вторичный цвет
 - Services bars: `hsl(var(--primary))`
@@ -137,12 +144,14 @@ last30DaysBookings.forEach(b => {
 **Файл:** `client/src/components/owner-dashboard-overview.tsx`
 
 **Изменения:**
+
 - Добавлен import DashboardCharts
 - Обновлен интерфейс DashboardOverview с полем `trends`
 - Удалены текстовые списки topServices и topMasters
 - Добавлен компонент графиков после Week Stats секции
 
 **До:**
+
 ```typescript
 {/* Month Stats */}
 <div className="grid gap-6 md:grid-cols-2">
@@ -152,6 +161,7 @@ last30DaysBookings.forEach(b => {
 ```
 
 **После:**
+
 ```typescript
 {/* Charts Section */}
 {overview.trends && overview.trends.length > 0 && (
@@ -169,12 +179,12 @@ last30DaysBookings.forEach(b => {
 
 **Добавленные ключи:**
 
-| Ключ | English | Russian | Uzbek |
-|------|---------|---------|-------|
-| `dashboard.revenueTrend` | Revenue Trend (Last 30 Days) | Тренд доходов (последние 30 дней) | Daromad tendentsiyasi (oxirgi 30 kun) |
-| `dashboard.bookingsTrend` | Bookings Trend (Last 30 Days) | Тренд бронирований (последние 30 дней) | Bronlar tendentsiyasi (oxirgi 30 kun) |
-| `dashboard.topServicesChart` | Top Services by Bookings | Топ услуги по бронированиям | Top xizmatlar (bronlar bo'yicha) |
-| `dashboard.topMastersChart` | Top Masters by Revenue | Топ мастера по доходам | Top ustalar (daromad bo'yicha) |
+| Ключ                         | English                       | Russian                                | Uzbek                                 |
+| ---------------------------- | ----------------------------- | -------------------------------------- | ------------------------------------- |
+| `dashboard.revenueTrend`     | Revenue Trend (Last 30 Days)  | Тренд доходов (последние 30 дней)      | Daromad tendentsiyasi (oxirgi 30 kun) |
+| `dashboard.bookingsTrend`    | Bookings Trend (Last 30 Days) | Тренд бронирований (последние 30 дней) | Bronlar tendentsiyasi (oxirgi 30 kun) |
+| `dashboard.topServicesChart` | Top Services by Bookings      | Топ услуги по бронированиям            | Top xizmatlar (bronlar bo'yicha)      |
+| `dashboard.topMastersChart`  | Top Masters by Revenue        | Топ мастера по доходам                 | Top ustalar (daromad bo'yicha)        |
 
 ### 5. Build Script Fix
 
@@ -183,16 +193,18 @@ last30DaysBookings.forEach(b => {
 **Проблема:** Ошибка компиляции из-за .node файлов Sentry
 
 **Решение:** Добавлен loader для .node файлов
+
 ```typescript
 await esbuild({
   // ... other options
   loader: {
-    '.node': 'copy',
+    ".node": "copy",
   },
 });
 ```
 
 **Результат:**
+
 - Server build успешно завершается
 - .node файлы копируются в dist/ (не bundled)
 - Размер dist/index.cjs: 1.6mb
@@ -205,10 +217,12 @@ await esbuild({
 ### 1. Локальные изменения
 
 **Commits:**
+
 - `622204e6` - Phase 3: Add interactive charts to owner dashboard
 - `0d1008d2` - Fix: Add .node file loader to esbuild config for Sentry compatibility
 
 **Файлы изменены:**
+
 - `server/routes/owner.routes.ts` (+46 lines)
 - `client/src/components/dashboard-charts.tsx` (NEW - 212 lines)
 - `client/src/components/owner-dashboard-overview.tsx` (+8 lines, -62 lines)
@@ -223,6 +237,7 @@ await esbuild({
 **Path:** /var/www/aurelle/current
 
 **Executed:**
+
 ```bash
 # 1. Pull changes
 cd /var/www/aurelle/current
@@ -244,6 +259,7 @@ pm2 restart aurelle-production
 ### 3. Verification
 
 **Application Status:**
+
 ```
 ┌─────┬───────────────────────┬────────┬───────────┬──────────┐
 │ id  │ name                  │ uptime │ status    │ mem      │
@@ -253,6 +269,7 @@ pm2 restart aurelle-production
 ```
 
 **Logs Check:**
+
 - No critical errors
 - Server responding on port 5000
 - Only warning: sanctions table (not used yet)
@@ -264,6 +281,7 @@ pm2 restart aurelle-production
 ### API Performance
 
 **Query Optimization:**
+
 ```sql
 -- Efficient query for last 30 days
 SELECT * FROM bookings
@@ -275,11 +293,13 @@ ORDER BY booking_date DESC;
 ```
 
 **Time Complexity:**
+
 - Database query: O(n) where n = number of bookings in 30 days
 - Grouping: O(n) - single pass through results
 - Sorting: O(30 log 30) = O(1) - constant (only 30 days)
 
 **Expected Performance:**
+
 - Small salon (10 bookings/day): ~0.3ms query time
 - Medium salon (50 bookings/day): ~1.5ms query time
 - Large salon (200 bookings/day): ~6ms query time
@@ -287,22 +307,27 @@ ORDER BY booking_date DESC;
 ### Frontend Bundle Size Impact
 
 **Before Phase 3:**
+
 - owner bundle: 161.28 kB (44.85 kB gzipped)
 
 **After Phase 3:**
+
 - owner bundle: 174.67 kB (49.22 kB gzipped)
 
 **Increase:** +13.39 kB (+4.37 kB gzipped)
+
 - Recharts library impact: ~13kb
 - New component code: ~1kb
 
 ### Recharts Features Used
 
 **Charts:**
+
 - `LineChart` - Trend visualizations
 - `BarChart` - Top items visualizations
 
 **Components:**
+
 - `ResponsiveContainer` - Auto-resize
 - `CartesianGrid` - Grid lines
 - `XAxis`, `YAxis` - Axes
@@ -310,6 +335,7 @@ ORDER BY booking_date DESC;
 - `Line`, `Bar` - Data visualizations
 
 **Customizations:**
+
 - Theme-aware colors (HSL CSS variables)
 - Localized formatters (date, currency)
 - Custom tooltip styling
@@ -322,12 +348,14 @@ ORDER BY booking_date DESC;
 ### Visual Impact
 
 **Before Phase 3:**
+
 - Text-only KPI cards
 - Simple lists for top services/masters
 - No visual trend representation
 - Difficult to spot patterns
 
 **After Phase 3:**
+
 - 4 interactive charts
 - Visual trend identification at a glance
 - Color-coded data series
@@ -338,12 +366,14 @@ ORDER BY booking_date DESC;
 ### Information Density
 
 **Before:**
+
 - Today: 4 metrics
 - Week: 2 metrics with % change
 - Month: 2 lists (text)
 - **Total: ~15 data points visible**
 
 **After:**
+
 - Today: 4 metrics (unchanged)
 - Week: 2 metrics with % change (unchanged)
 - Trends: 60 data points (30 days × 2 metrics)
@@ -379,6 +409,7 @@ ORDER BY booking_date DESC;
 ### Manual Testing Required:
 
 **Dashboard Charts (https://aurelle.uz/owner):**
+
 - [ ] Login as owner: xulkarraziyeva@gmail.com
 - [ ] Navigate to Dashboard tab
 - [ ] Verify Revenue Trend chart displays
@@ -421,18 +452,21 @@ ORDER BY booking_date DESC;
 ## Performance Metrics
 
 ### Build Time:
+
 - **Client Build:** 38.60s
 - **Server Build:** 2.57s
 - **Total:** 41.17s
 - **Increase vs Phase 2:** +1.17s (+2.8%)
 
 ### Bundle Sizes:
+
 - **Client Total:** 486kB (154kB gzipped)
 - **Server Total:** 1.6MB + 2.5MB .node files
 - **Owner Bundle:** 175kB (49kB gzipped)
 - **Recharts Impact:** +13kB raw, +4kB gzipped
 
 ### Runtime:
+
 - **Server Memory:** ~16mb (no change)
 - **Startup Time:** <3 seconds
 - **API Response (overview):** ~50-100ms (depends on data volume)
@@ -470,6 +504,7 @@ ORDER BY booking_date DESC;
 **Priority Features:**
 
 1. **Advanced Booking Table:**
+
    ```typescript
    // Features to implement:
    - Server-side pagination (50 per page)
@@ -485,6 +520,7 @@ ORDER BY booking_date DESC;
    ```
 
 2. **Booking Detail Drawer:**
+
    ```typescript
    // Sliding panel with:
    - Full booking details
@@ -496,6 +532,7 @@ ORDER BY booking_date DESC;
    ```
 
 3. **Bulk Operations:**
+
    ```typescript
    // Checkbox selection with:
    - Select all / deselect all
@@ -513,6 +550,7 @@ ORDER BY booking_date DESC;
    - Add notes
 
 5. **RBAC Integration:**
+
    ```typescript
    // Apply permissions:
    import { requirePermission, OWNER_PERMISSIONS } from '@/lib/rbac';
@@ -524,20 +562,21 @@ ORDER BY booking_date DESC;
    ```
 
 6. **Audit Logging:**
+
    ```typescript
    // Log all changes:
-   import { logAudit } from '@/lib/audit';
+   import { logAudit } from "@/lib/audit";
 
    await logAudit({
      actorId: req.session.ownerId,
-     action: 'booking.cancel',
-     entityType: 'booking',
+     action: "booking.cancel",
+     entityType: "booking",
      entityId: bookingId,
      salonId: booking.salonId,
      details: { reason: cancelReason },
      ip: req.ip,
-     userAgent: req.headers['user-agent'],
-     result: 'success'
+     userAgent: req.headers["user-agent"],
+     result: "success",
    });
    ```
 
@@ -574,6 +613,7 @@ pm2 restart aurelle-production
 ```
 
 **Impact of Rollback:**
+
 - Lose chart visualizations
 - Dashboard reverts to text lists
 - No data loss (database unchanged)
@@ -601,10 +641,12 @@ pm2 restart aurelle-production
 ## Documentation
 
 ### Files Created:
+
 1. `PHASE3_DEPLOYMENT_REPORT.md` - This document
 2. `client/src/components/dashboard-charts.tsx` - Charts component
 
 ### Files Modified:
+
 1. `server/routes/owner.routes.ts` - Added trends data
 2. `client/src/components/owner-dashboard-overview.tsx` - Integrated charts
 3. `client/src/locales/en.json` - English translations
@@ -617,6 +659,7 @@ pm2 restart aurelle-production
 ## Team Notes
 
 ### For Developers:
+
 - ✅ Recharts library already installed (v2.15.2)
 - ✅ Use `ResponsiveContainer` for all charts
 - ✅ Theme colors via HSL CSS variables
@@ -624,6 +667,7 @@ pm2 restart aurelle-production
 - ✅ Format currency with `Intl.NumberFormat`
 
 ### For QA:
+
 - **Test URL:** https://aurelle.uz/owner
 - **Test Account:** xulkarraziyeva@gmail.com / aurelle2026
 - **Focus Areas:**
@@ -634,6 +678,7 @@ pm2 restart aurelle-production
   - Performance (loading time)
 
 ### For Product Owner:
+
 - ✅ Phase 3 deployed successfully
 - ✅ Charts provide visual insights
 - ✅ Dashboard more professional

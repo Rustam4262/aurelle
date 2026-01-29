@@ -23,7 +23,9 @@ export async function setupGitHubAuth(app: Express) {
   const credentials = getGitHubCredentials();
 
   if (!credentials) {
-    console.log("GitHub OAuth not configured - missing or invalid GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET");
+    console.log(
+      "GitHub OAuth not configured - missing or invalid GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET",
+    );
     return;
   }
 
@@ -33,7 +35,7 @@ export async function setupGitHubAuth(app: Express) {
     const hostname = req.hostname;
     const strategyName = `github:${hostname}`;
     if (!registeredStrategies.has(strategyName)) {
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol || 'https';
+      const protocol = req.get("X-Forwarded-Proto") || req.protocol || "https";
       const callbackURL = `${protocol}://${hostname}/api/auth/github/callback`;
 
       const strategy = new GitHubStrategy(
@@ -46,7 +48,7 @@ export async function setupGitHubAuth(app: Express) {
           accessToken: string,
           refreshToken: string,
           profile: any,
-          done: (error: any, user?: any) => void
+          done: (error: any, user?: any) => void,
         ) => {
           try {
             const email = profile.emails?.[0]?.value || null;
@@ -81,7 +83,7 @@ export async function setupGitHubAuth(app: Express) {
           } catch (error) {
             done(error);
           }
-        }
+        },
       );
 
       passport.use(strategyName, strategy);
@@ -92,7 +94,7 @@ export async function setupGitHubAuth(app: Express) {
   app.get("/api/auth/github", (req, res, next) => {
     ensureGitHubStrategy(req);
     passport.authenticate(`github:${req.hostname}`, {
-      scope: ['user:email']
+      scope: ["user:email"],
     })(req, res, next);
   });
 

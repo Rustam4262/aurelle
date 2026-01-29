@@ -14,7 +14,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
 
     // Get user profile
-    const [userProfile] = await db.select()
+    const [userProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, userId));
 
@@ -29,7 +30,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     }
 
     // Check if already in waitlist for this slot
-    const existingEntry = await db.select()
+    const existingEntry = await db
+      .select()
       .from(waitlist)
       .where(
         and(
@@ -37,8 +39,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
           eq(waitlist.salonId, parsed.data.salonId),
           eq(waitlist.serviceId, parsed.data.serviceId),
           eq(waitlist.status, "waiting"),
-          parsed.data.preferredDate ? eq(waitlist.preferredDate, parsed.data.preferredDate) : undefined
-        )
+          parsed.data.preferredDate
+            ? eq(waitlist.preferredDate, parsed.data.preferredDate)
+            : undefined,
+        ),
       );
 
     if (existingEntry.length > 0) {
@@ -49,8 +53,9 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const [entry] = await db.insert(waitlist)
-      .values([{ ...parsed.data as any, expiresAt }])
+    const [entry] = await db
+      .insert(waitlist)
+      .values([{ ...(parsed.data as any), expiresAt }])
       .returning();
 
     console.log("[WAITLIST] New entry:", entry);
@@ -66,7 +71,8 @@ router.get("/my-waitlist", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 
-    const [userProfile] = await db.select()
+    const [userProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, userId));
 
@@ -74,20 +80,21 @@ router.get("/my-waitlist", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const entries = await db.select({
-      id: waitlist.id,
-      salonId: waitlist.salonId,
-      salonName: salons.name,
-      serviceId: waitlist.serviceId,
-      serviceName: services.name,
-      preferredDate: waitlist.preferredDate,
-      preferredTimeStart: waitlist.preferredTimeStart,
-      preferredTimeEnd: waitlist.preferredTimeEnd,
-      status: waitlist.status,
-      notifiedAt: waitlist.notifiedAt,
-      expiresAt: waitlist.expiresAt,
-      createdAt: waitlist.createdAt,
-    })
+    const entries = await db
+      .select({
+        id: waitlist.id,
+        salonId: waitlist.salonId,
+        salonName: salons.name,
+        serviceId: waitlist.serviceId,
+        serviceName: services.name,
+        preferredDate: waitlist.preferredDate,
+        preferredTimeStart: waitlist.preferredTimeStart,
+        preferredTimeEnd: waitlist.preferredTimeEnd,
+        status: waitlist.status,
+        notifiedAt: waitlist.notifiedAt,
+        expiresAt: waitlist.expiresAt,
+        createdAt: waitlist.createdAt,
+      })
       .from(waitlist)
       .leftJoin(salons, eq(waitlist.salonId, salons.id))
       .leftJoin(services, eq(waitlist.serviceId, services.id))
@@ -113,22 +120,23 @@ router.get("/salon/:salonId", isAuthenticated, async (req: any, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const entries = await db.select({
-      id: waitlist.id,
-      clientId: waitlist.clientId,
-      clientName: userProfiles.fullName,
-      clientPhone: userProfiles.phone,
-      serviceId: waitlist.serviceId,
-      serviceName: services.name,
-      masterId: waitlist.masterId,
-      preferredDate: waitlist.preferredDate,
-      preferredTimeStart: waitlist.preferredTimeStart,
-      preferredTimeEnd: waitlist.preferredTimeEnd,
-      status: waitlist.status,
-      notifiedAt: waitlist.notifiedAt,
-      expiresAt: waitlist.expiresAt,
-      createdAt: waitlist.createdAt,
-    })
+    const entries = await db
+      .select({
+        id: waitlist.id,
+        clientId: waitlist.clientId,
+        clientName: userProfiles.fullName,
+        clientPhone: userProfiles.phone,
+        serviceId: waitlist.serviceId,
+        serviceName: services.name,
+        masterId: waitlist.masterId,
+        preferredDate: waitlist.preferredDate,
+        preferredTimeStart: waitlist.preferredTimeStart,
+        preferredTimeEnd: waitlist.preferredTimeEnd,
+        status: waitlist.status,
+        notifiedAt: waitlist.notifiedAt,
+        expiresAt: waitlist.expiresAt,
+        createdAt: waitlist.createdAt,
+      })
       .from(waitlist)
       .leftJoin(userProfiles, eq(waitlist.clientId, userProfiles.id))
       .leftJoin(services, eq(waitlist.serviceId, services.id))
@@ -149,9 +157,7 @@ router.post("/:entryId/notify", isAuthenticated, async (req: any, res) => {
     const { entryId } = req.params;
 
     // Get waitlist entry
-    const [entry] = await db.select()
-      .from(waitlist)
-      .where(eq(waitlist.id, entryId));
+    const [entry] = await db.select().from(waitlist).where(eq(waitlist.id, entryId));
 
     if (!entry) {
       return res.status(404).json({ error: "Waitlist entry not found" });
@@ -168,13 +174,15 @@ router.post("/:entryId/notify", isAuthenticated, async (req: any, res) => {
     }
 
     // Update status to notified
-    const [updated] = await db.update(waitlist)
+    const [updated] = await db
+      .update(waitlist)
       .set({ status: "notified", notifiedAt: new Date() })
       .where(eq(waitlist.id, entryId))
       .returning();
 
     // Get user profile for client
-    const [clientProfile] = await db.select()
+    const [clientProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.id, entry.clientId));
 
@@ -208,7 +216,8 @@ router.delete("/:entryId", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const { entryId } = req.params;
 
-    const [userProfile] = await db.select()
+    const [userProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, userId));
 
@@ -217,13 +226,9 @@ router.delete("/:entryId", isAuthenticated, async (req: any, res) => {
     }
 
     // Delete only if belongs to user
-    const deleted = await db.delete(waitlist)
-      .where(
-        and(
-          eq(waitlist.id, entryId),
-          eq(waitlist.clientId, userProfile.id)
-        )
-      )
+    const deleted = await db
+      .delete(waitlist)
+      .where(and(eq(waitlist.id, entryId), eq(waitlist.clientId, userProfile.id)))
       .returning();
 
     if (deleted.length === 0) {

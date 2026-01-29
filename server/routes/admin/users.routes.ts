@@ -25,8 +25,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           like(users.email, searchTerm),
           like(users.firstName, searchTerm),
           like(users.lastName, searchTerm),
-          like(users.phoneNumber, searchTerm)
-        )
+          like(users.phoneNumber, searchTerm),
+        ),
       ) as any;
     }
 
@@ -45,11 +45,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 // GET /api/admin/users/:id - Get single user
 router.get("/:id", requirePermission("users.read"), async (req, res) => {
   try {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, req.params.id))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, req.params.id)).limit(1);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -81,11 +77,7 @@ router.patch("/:id", requirePermission("users.write"), async (req, res) => {
     if (email !== undefined) updateData.email = email;
     if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
 
-    const [updated] = await db
-      .update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
+    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
 
     await logAuditAction({
       actorUserId: userId,

@@ -40,8 +40,8 @@ export async function expireSanctions() {
         and(
           eq(sanctions.status, "active"),
           isNotNull(sanctions.endsAt),
-          lte(sanctions.endsAt, now)
-        )
+          lte(sanctions.endsAt, now),
+        ),
       )
       .returning();
 
@@ -49,7 +49,7 @@ export async function expireSanctions() {
       console.log(`[Cron] Expired ${expiredSanctions.length} sanctions:`);
       expiredSanctions.forEach((s) => {
         console.log(
-          `  - ${s.targetType}:${s.targetId} (${s.sanctionType}) - expired at ${s.endsAt}`
+          `  - ${s.targetType}:${s.targetId} (${s.sanctionType}) - expired at ${s.endsAt}`,
         );
       });
     }

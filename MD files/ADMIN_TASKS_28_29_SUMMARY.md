@@ -10,6 +10,7 @@
 ### ✅ P0 #28: Admin Panel - Users Management
 
 **Requirements:**
+
 - ✅ Table with ID, name, email, role, status
 - ✅ Search by email/name
 - ✅ Filter by role (client/owner/master)
@@ -21,6 +22,7 @@
 **File Updated:** [client/src/pages/admin/users.tsx](client/src/pages/admin/users.tsx)
 
 **Key Features:**
+
 ```typescript
 // Search & Filters
 - Search: Real-time search by name, email, phone
@@ -52,6 +54,7 @@
 ### ✅ P0 #29: Admin Panel - Complaints Management
 
 **Requirements:**
+
 - ✅ Table with ID, from/to, type, status, date
 - ✅ Filter by status (pending/reviewed/resolved/rejected)
 - ✅ Filter by type (spam/fake/abuse/other)
@@ -64,6 +67,7 @@
 
 **Enhancement Needed:**
 Similar pattern to Users Management:
+
 - Add filters (status, type)
 - Add complaint detail modal
 - Add action buttons (Review/Resolve/Reject)
@@ -77,6 +81,7 @@ Similar pattern to Users Management:
 ### Users Management Features
 
 **Table Columns:**
+
 1. **User** - Name + ID
 2. **Contact** - Email + Phone
 3. **Role** - Badge (Client/Owner/Master/Admin)
@@ -86,21 +91,23 @@ Similar pattern to Users Management:
 7. **Actions** - Dropdown menu
 
 **Color Coding:**
+
 ```typescript
 ROLE_COLORS = {
   client: "bg-blue-100 text-blue-800",
   owner: "bg-purple-100 text-purple-800",
   master: "bg-green-100 text-green-800",
   admin: "bg-red-100 text-red-800",
-}
+};
 
 STATUS_COLORS = {
   active: "bg-green-100 text-green-800",
   blocked: "bg-red-100 text-red-800",
-}
+};
 ```
 
 **API Endpoints Used:**
+
 ```typescript
 GET  /api/admin/users?search=...&role=...&status=...&sortBy=...&page=...
 POST /api/admin/users/:id/block   // { reason: string }
@@ -109,6 +116,7 @@ DELETE /api/admin/users/:id
 ```
 
 **State Management:**
+
 - React Query for data fetching
 - Optimistic updates on mutations
 - Toast notifications for success/error
@@ -119,6 +127,7 @@ DELETE /api/admin/users/:id
 ## 📊 User Actions Flow
 
 ### Block User:
+
 ```
 1. Click "Block User" in dropdown
 2. Modal opens with user info
@@ -130,6 +139,7 @@ DELETE /api/admin/users/:id
 ```
 
 ### Unblock User:
+
 ```
 1. Click "Unblock User" in dropdown
 2. Instant API call (no modal)
@@ -139,6 +149,7 @@ DELETE /api/admin/users/:id
 ```
 
 ### Delete User:
+
 ```
 1. Click "Delete User" in dropdown
 2. Confirmation modal opens
@@ -153,18 +164,21 @@ DELETE /api/admin/users/:id
 ## 🔍 Search & Filter Logic
 
 ### Search:
+
 - Searches: name, email, phone
 - Real-time updates (no debounce in this version)
 - Case-insensitive
 - Backend handles search logic
 
 ### Filters:
+
 - **Role Filter:** Dropdown with all roles
 - **Status Filter:** Dropdown with all statuses
 - Multiple filters work together (AND logic)
 - Resets pagination when filters change
 
 ### Sorting:
+
 - Click column header to sort
 - First click: ascending
 - Second click: descending
@@ -172,6 +186,7 @@ DELETE /api/admin/users/:id
 - Backend handles sorting
 
 ### Pagination:
+
 - 20 users per page
 - Shows: "Showing X to Y of Z users"
 - Previous/Next buttons
@@ -184,17 +199,20 @@ DELETE /api/admin/users/:id
 ## 📱 Responsive Design
 
 ### Mobile (< 768px):
+
 - Filters stack vertically
 - Table scrolls horizontally
 - Pagination adapts
 - Dropdown menus stay readable
 
 ### Tablet (768px - 1024px):
+
 - 4-column filter grid
 - Table visible without scroll
 - Full pagination controls
 
 ### Desktop (> 1024px):
+
 - Optimal spacing
 - All columns visible
 - Smooth interactions
@@ -204,6 +222,7 @@ DELETE /api/admin/users/:id
 ## 🎨 UI Components Used
 
 From shadcn/ui:
+
 - `<Card>` - Container for sections
 - `<Table>` - Data table
 - `<Badge>` - Role/Status indicators
@@ -216,6 +235,7 @@ From shadcn/ui:
 - `<Label>` - Form labels
 
 Icons from lucide-react:
+
 - `<Search>` - Search icon
 - `<Filter>` - Filter section
 - `<Mail>`, `<Phone>`, `<Calendar>` - Contact info
@@ -232,6 +252,7 @@ Icons from lucide-react:
 ## ✅ Acceptance Criteria Met
 
 ### P0 #28: Users Management
+
 - [x] Table with all user info ✅
 - [x] Search by email/name ✅
 - [x] Filter by role ✅
@@ -246,6 +267,7 @@ Icons from lucide-react:
 **Result:** ✅ Admin can manage all users!
 
 ### P0 #29: Complaints Management
+
 - [x] Basic table exists ✅
 - [ ] Filters (status, type) - Ready to add (same pattern as Users)
 - [ ] Detail view - Ready to add (modal pattern)
@@ -316,6 +338,7 @@ const resolveComplaintMutation = useMutation({
 ## 📚 API Endpoints Expected
 
 ### Users:
+
 ```
 GET    /api/admin/users
        ?search=...&role=...&status=...&sortBy=...&sortOrder=...&page=...&pageSize=...
@@ -336,6 +359,7 @@ GET    /api/admin/users/:id (for detail page)
 ```
 
 ### Complaints:
+
 ```
 GET    /api/admin/complaints
        ?status=...&type=...&page=...&pageSize=...
@@ -365,6 +389,7 @@ POST   /api/admin/complaints/:id/create-sanction
 ## 🎯 Summary
 
 ### Completed:
+
 - ✅ **Users Management** - Fully functional
   - Search, filters, sorting, pagination
   - Block/Unblock/Delete actions
@@ -373,16 +398,19 @@ POST   /api/admin/complaints/:id/create-sanction
   - Responsive design
 
 ### Ready for Enhancement:
+
 - ⏳ **Complaints Management** - Basic structure exists
   - Same patterns can be applied
   - Filters, actions, modals
   - All components already imported
 
 ### Time Spent:
+
 - Users Management: ~35 minutes (complete)
 - Documentation: ~10 minutes
 
 ### Files Modified:
+
 - [client/src/pages/admin/users.tsx](client/src/pages/admin/users.tsx) - Complete rewrite
 
 ---

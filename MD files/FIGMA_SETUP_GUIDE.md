@@ -34,6 +34,7 @@
 ## Step 2: Install Fonts
 
 1. **Download Fonts**:
+
    ```
    Inter: https://fonts.google.com/specimen/Inter
    Cormorant Garamond: https://fonts.google.com/specimen/Cormorant+Garamond
@@ -78,6 +79,7 @@ Go to `Design Tokens` page → Create color palette:
 ### Dark Mode Colors
 
 Repeat for dark mode:
+
 - Background: `#121212`
 - Foreground: `#FAFAFA`
 - Primary: `#E84281`
@@ -85,7 +87,7 @@ Repeat for dark mode:
 - Card: `#171717`
 - Muted: `#2E2E2E`
 - Muted Foreground: `#B3B3B3`
-(... etc.)
+  (... etc.)
 
 **Naming Convention**: `Dark/Background`, `Dark/Foreground`, etc.
 
@@ -167,6 +169,7 @@ Create visual spacing reference:
    - 0px, 2px, 4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px, 80px, 96px
 
 2. **Visual Grid**:
+
    ```
    [  ] 0px   (no spacing)
    [▪] 2px    (hairline)
@@ -230,6 +233,7 @@ Create visual spacing reference:
 ### Hover States
 
 For each variant:
+
 - **Hover**: Slightly darker/lighter background (use opacity or darker shade)
 - **Active**: Even more contrast
 - **Disabled**: 50% opacity
@@ -311,12 +315,14 @@ Create 3 nested auto-layout frames:
 ### Badge Variants
 
 **Add Property**: `variant`
+
 - Default (Secondary background)
 - Primary (Primary background)
 - Destructive (Destructive background)
 - Outline (Transparent background, Border)
 
 **Add Property**: `size`
+
 - Small (2px vertical padding)
 - Default (4px vertical padding)
 
@@ -477,16 +483,19 @@ Build in this order for fastest MVP:
 ## Resources
 
 **Figma Learning**:
+
 - [Figma Components](https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma)
 - [Component Variants](https://help.figma.com/hc/en-us/articles/360056440594-Create-and-use-variants)
 - [Auto Layout](https://help.figma.com/hc/en-us/articles/360040451373-Create-dynamic-designs-with-Auto-Layout)
 
 **Design System Examples**:
+
 - [Material Design](https://material.io/design/color/the-color-system.html)
 - [shadcn/ui Figma](https://www.figma.com/@shadcn)
 - [Ant Design](https://www.figma.com/@ant-design)
 
 **Plugins to Install**:
+
 - **Contrast** - Check color contrast
 - **Iconify** - Icon library
 - **Content Reel** - Generate placeholder content
@@ -522,6 +531,7 @@ Version 1.1.0 (Date)
 Following this guide, you'll create a comprehensive, production-ready Figma design system that matches the AURELLE codebase exactly.
 
 **Acceptance Criteria**: ✅
+
 - All 41 components documented
 - Color, typography, spacing tokens defined
 - Dark mode support
@@ -529,6 +539,7 @@ Following this guide, you'll create a comprehensive, production-ready Figma desi
 - Published as Figma library
 
 **Next Steps**:
+
 1. Share library with design team
 2. Create design templates for common pages
 3. Build pattern library for recurring layouts

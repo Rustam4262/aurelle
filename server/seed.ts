@@ -92,7 +92,10 @@ export async function seedDatabase() {
     ];
 
     console.log("📝 Inserting salons...");
-    const insertedSalons = await db.insert(salons).values(testSalons as any).returning();
+    const insertedSalons = await db
+      .insert(salons)
+      .values(testSalons as any)
+      .returning();
     console.log(`✅ Created ${insertedSalons.length} salons`);
 
     // Создаем мастеров
@@ -157,7 +160,10 @@ export async function seedDatabase() {
     ];
 
     console.log("👤 Inserting masters...");
-    const insertedMasters = await db.insert(masters).values(testMasters as any).returning();
+    const insertedMasters = await db
+      .insert(masters)
+      .values(testMasters as any)
+      .returning();
     console.log(`✅ Created ${insertedMasters.length} masters`);
 
     // Создаем услуги
@@ -257,7 +263,10 @@ export async function seedDatabase() {
     ];
 
     console.log("💅 Inserting services...");
-    const insertedServices = await db.insert(services).values(testServices as any).returning();
+    const insertedServices = await db
+      .insert(services)
+      .values(testServices as any)
+      .returning();
     console.log(`✅ Created ${insertedServices.length} services`);
 
     // Создаем расписание для салонов (пн-сб 9:00-20:00, вс выходной)

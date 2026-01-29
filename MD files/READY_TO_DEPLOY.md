@@ -18,6 +18,7 @@
 - ✅ **Phone/SMS** - Готов к настройке Twilio (опционально)
 
 **Используемые credentials**:
+
 - Google Client ID: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com`
 - Google Client Secret: `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`
 - Yandex Client ID: `3b79a753092d49bb977ce1ec5b3017ec`
@@ -34,6 +35,7 @@
 ### 3. Мультиязычность ✅
 
 Полная поддержка трех языков:
+
 - 🇬🇧 English
 - 🇷🇺 Русский
 - 🇺🇿 O'zbek
@@ -83,12 +85,13 @@
 **IP адрес**: 89.39.94.194
 **Домены**: aurelle.uz, www.aurelle.uz
 **SSH логин**: root
-**SSH пароль**: w2@nT*6D
+**SSH пароль**: w2@nT\*6D
 
 **База данных**:
+
 - Имя БД: aurelle
 - Пользователь: aurelle_user
-- Пароль: w2@nT*6D
+- Пароль: w2@nT\*6D
 
 ---
 
@@ -135,6 +138,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 #### 5️⃣ Обновите OAuth Redirect URIs
 
 **Google OAuth**:
+
 1. Откройте https://console.cloud.google.com/
 2. APIs & Services → Credentials
 3. Найдите ваш OAuth Client ID
@@ -143,6 +147,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
    - `https://www.aurelle.uz/api/auth/google/callback`
 
 **Yandex OAuth**:
+
 1. Откройте https://oauth.yandex.ru/
 2. Найдите ваше приложение
 3. Добавьте callback URIs:
@@ -154,6 +159,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 Откройте в браузере: https://aurelle.uz
 
 Проверьте:
+
 - ✅ Сайт загружается
 - ✅ SSL сертификат валидный (зеленый замок)
 - ✅ Авторизация через Email работает
@@ -256,11 +262,13 @@ sudo -u postgres psql -d aurelle
 ### Если что-то не работает:
 
 1. **Проверьте логи**:
+
    ```bash
    pm2 logs aurelle --lines 100
    ```
 
 2. **Проверьте статус**:
+
    ```bash
    pm2 status
    systemctl status nginx
@@ -333,7 +341,7 @@ bash /root/server-setup.sh
 
 **Желаю успешного деплоя! 🚀**
 
-*Если возникнут вопросы или проблемы, обращайтесь за помощью.*
+_Если возникнут вопросы или проблемы, обращайтесь за помощью._
 
 ---
 

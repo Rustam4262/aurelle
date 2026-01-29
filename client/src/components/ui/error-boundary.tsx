@@ -1,8 +1,8 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
-import { Alert, AlertDescription, AlertTitle } from './alert';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "./button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 interface Props {
   children: ReactNode;
@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught error:', error, errorInfo);
+    console.error("ErrorBoundary caught error:", error, errorInfo);
 
     this.setState({
       error,
@@ -71,9 +71,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 <CardTitle>Что-то пошло не так</CardTitle>
               </div>
-              <CardDescription>
-                Произошла ошибка при отображении этого раздела
-              </CardDescription>
+              <CardDescription>Произошла ошибка при отображении этого раздела</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {this.state.error && (
@@ -90,15 +88,12 @@ export class ErrorBoundary extends Component<Props, State> {
                   <RefreshCw className="h-4 w-4" />
                   Попробовать снова
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                >
+                <Button variant="outline" onClick={() => window.location.reload()}>
                   Перезагрузить страницу
                 </Button>
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+              {process.env.NODE_ENV === "development" && this.state.errorInfo && (
                 <details className="text-xs">
                   <summary className="cursor-pointer text-muted-foreground">
                     Stack trace (dev only)
@@ -132,13 +127,8 @@ export function QueryErrorFallback({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Ошибка загрузки данных</AlertTitle>
         <AlertDescription className="mt-2 space-y-2">
-          <p>{error.message || 'Не удалось загрузить данные с сервера'}</p>
-          <Button
-            onClick={resetErrorBoundary}
-            variant="outline"
-            size="sm"
-            className="mt-2"
-          >
+          <p>{error.message || "Не удалось загрузить данные с сервера"}</p>
+          <Button onClick={resetErrorBoundary} variant="outline" size="sm" className="mt-2">
             <RefreshCw className="h-3 w-3 mr-2" />
             Повторить попытку
           </Button>

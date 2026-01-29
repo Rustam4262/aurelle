@@ -91,10 +91,10 @@ export function ImageUpload({
         uploadType === "salons"
           ? "salon-photo"
           : uploadType === "masters"
-          ? "master-photo"
-          : uploadType === "portfolio"
-          ? "portfolio"
-          : "avatar"
+            ? "master-photo"
+            : uploadType === "portfolio"
+              ? "portfolio"
+              : "avatar"
       }`;
 
       const response = await fetch(endpoint, {
@@ -200,12 +200,7 @@ export function ImageUpload({
           </Button>
 
           {previewUrl && !uploading && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              onClick={handleRemove}
-            >
+            <Button type="button" variant="destructive" size="icon" onClick={handleRemove}>
               <X className="h-4 w-4" />
             </Button>
           )}
@@ -215,20 +210,14 @@ export function ImageUpload({
         {uploading && (
           <div className="space-y-1">
             <Progress value={uploadProgress} className="h-2" />
-            <p className="text-xs text-muted-foreground text-center">
-              {uploadProgress}% uploaded
-            </p>
+            <p className="text-xs text-muted-foreground text-center">{uploadProgress}% uploaded</p>
           </div>
         )}
       </div>
 
       {preview && previewUrl && (
         <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
-          <img
-            src={previewUrl}
-            alt="Preview"
-            className="w-full h-full object-cover"
-          />
+          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
         </div>
       )}
 
@@ -381,20 +370,17 @@ export function MultiImageUpload({
       {uploading && uploadProgress > 0 && (
         <div className="space-y-1">
           <Progress value={uploadProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center">
-            Uploading {uploadProgress}%
-          </p>
+          <p className="text-xs text-muted-foreground text-center">Uploading {uploadProgress}%</p>
         </div>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {values.map((url, index) => (
-          <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
-            <img
-              src={url}
-              alt={`Image ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
+          <div
+            key={index}
+            className="relative group aspect-square rounded-lg overflow-hidden border"
+          >
+            <img src={url} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
             <Button
               type="button"
               variant="destructive"

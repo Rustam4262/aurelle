@@ -11,11 +11,13 @@
 ### 1. Авторизация и Регистрация ✅
 
 **Проблема (была):**
+
 - Невозможно зарегистрироваться
 - Невозможно войти в систему
 - Ошибки 400, 429, 500 при регистрации
 
 **Исправления:**
+
 - ✅ Настроена конфигурация express-session с PostgreSQL
 - ✅ Добавлен trust proxy для работы за Nginx
 - ✅ Исправлена валидация паролей (8+ символов)
@@ -23,6 +25,7 @@
 - ✅ Улучшена обработка ошибок на клиенте
 
 **Текущий статус:**
+
 ```
 ✅ Email/Password регистрация - РАБОТАЕТ
 ✅ Email/Password вход - РАБОТАЕТ
@@ -32,6 +35,7 @@
 ```
 
 **Документация:**
+
 - [SESSION_FIX_SUMMARY.md](SESSION_FIX_SUMMARY.md) - Исправление сессий
 - [AUTH_FIX_SUMMARY.md](AUTH_FIX_SUMMARY.md) - Исправление OAuth
 
@@ -42,6 +46,7 @@
 **Статус:** Код готов, требуется API ключ
 
 **Что готово:**
+
 - ✅ Интеграция Yandex Maps реализована
 - ✅ Автоматическое отображение салонов с координатами
 - ✅ Интерактивные маркеры с информацией
@@ -49,11 +54,13 @@
 - ✅ Адаптивный дизайн
 
 **Что нужно:**
+
 - ⏳ Получить API ключ на https://developer.tech.yandex.ru/
 - ⏳ Добавить в docker-compose.yml: `VITE_YANDEX_MAPS_API_KEY`
 - ⏳ Перезапустить контейнеры
 
 **Документация:**
+
 - [GET_YANDEX_MAPS_KEY.md](GET_YANDEX_MAPS_KEY.md) - Как получить ключ
 - [ENABLE_MAPS_ON_SERVER.md](ENABLE_MAPS_ON_SERVER.md) - Активация на сервере
 - [MAPS_FIX_SUMMARY.md](MAPS_FIX_SUMMARY.md) - Полная информация
@@ -63,6 +70,7 @@
 ### 3. База данных ✅
 
 **PostgreSQL 14:**
+
 ```
 ✅ Контейнер запущен: aurelle_postgres_1
 ✅ База данных: aurelle
@@ -72,6 +80,7 @@
 **Таблицы:**
 
 #### users (пользователи)
+
 ```sql
 ✅ id (UUID, автогенерация)
 ✅ email (unique)
@@ -87,6 +96,7 @@
 ```
 
 #### sessions (сессии)
+
 ```sql
 ✅ sid (session ID, primary key)
 ✅ sess (jsonb, session data)
@@ -99,6 +109,7 @@
 ## 🔧 Конфигурация сервера
 
 ### Nginx (Reverse Proxy)
+
 ```
 ✅ Версия: nginx/1.10.3
 ✅ HTTPS: Работает
@@ -107,6 +118,7 @@
 ```
 
 ### Docker Compose
+
 ```yaml
 ✅ postgres:
   - Образ: postgres:14
@@ -123,6 +135,7 @@
 ```
 
 ### Переменные окружения (app)
+
 ```env
 ✅ DATABASE_URL - подключение к PostgreSQL
 ✅ SESSION_SECRET - секрет для сессий
@@ -142,6 +155,7 @@
 ### Работает на https://aurelle.uz:
 
 #### Главная страница `/`
+
 - ✅ Загружается корректно
 - ✅ Отображается hero секция
 - ✅ Показывается список салонов
@@ -149,6 +163,7 @@
 - ✅ Мультиязычность (EN/RU/UZ)
 
 #### Авторизация `/auth`
+
 - ✅ Email/Password регистрация
 - ✅ Email/Password вход
 - ✅ Google OAuth (требует обновления URIs)
@@ -157,12 +172,14 @@
 - ✅ Валидация (пароль 8+ символов)
 
 #### Кабинеты (требуют авторизации)
+
 - ✅ `/client` - Кабинет клиента
 - ✅ `/owner` - Кабинет владельца салона
 - ✅ `/master` - Кабинет мастера
 - ✅ `/profile` - Профиль пользователя
 
 #### Каталог салонов
+
 - ✅ `/salons` - Список всех салонов
 - ✅ `/salon/:id` - Страница салона
 - ✅ Фильтры по категориям
@@ -173,6 +190,7 @@
 ## 📊 Логи и мониторинг
 
 ### Проверка статуса:
+
 ```bash
 # Статус контейнеров
 docker-compose ps
@@ -191,6 +209,7 @@ docker-compose down && docker-compose up -d --build
 ```
 
 ### Текущие логи приложения:
+
 ```
 ✅ Auth system initialized (local auth only)
 ✅ Yandex OAuth configured successfully
@@ -231,6 +250,7 @@ docker-compose exec app npm run db:push
 ## ✅ Чек-лист готовности
 
 ### Критические компоненты:
+
 - [x] Nginx работает и проксирует
 - [x] PostgreSQL база данных запущена
 - [x] App контейнер работает
@@ -243,6 +263,7 @@ docker-compose exec app npm run db:push
 - [x] Website доступен (HTTP 200)
 
 ### Опциональные улучшения:
+
 - [ ] Yandex Maps API ключ
 - [ ] Google OAuth Redirect URIs
 - [ ] Yandex OAuth Redirect URIs
@@ -255,6 +276,7 @@ docker-compose exec app npm run db:push
 ## 📝 Следующие шаги (опционально)
 
 ### 1. Активация Яндекс.Карт (5 минут)
+
 1. Получить API ключ: https://developer.tech.yandex.ru/
 2. Добавить в `docker-compose.yml`
 3. Перезапустить: `docker-compose down && docker-compose up -d --build`
@@ -264,11 +286,13 @@ docker-compose exec app npm run db:push
 ### 2. Обновление OAuth Redirect URIs (5 минут)
 
 **Google:**
+
 1. https://console.cloud.google.com/
 2. APIs & Services → Credentials
 3. Добавить: `https://aurelle.uz/api/auth/google/callback`
 
 **Yandex:**
+
 1. https://oauth.yandex.ru/
 2. Найти приложение
 3. Добавить: `https://aurelle.uz/api/auth/yandex/callback`
@@ -280,6 +304,7 @@ docker-compose exec app npm run db:push
 ## 🎉 Итоговый статус
 
 ### ✅ Полностью работает:
+
 - Email/Password регистрация
 - Email/Password вход
 - Сессии (30 дней)
@@ -289,20 +314,21 @@ docker-compose exec app npm run db:push
 - Адаптивный дизайн
 
 ### ⏳ Требует настройки (опционально):
+
 - Яндекс.Карты (нужен API ключ)
 - Google OAuth (нужно обновить URIs)
 - Yandex OAuth (нужно обновить URIs)
 
 ### 📊 Статистика:
 
-| Параметр | Значение |
-|----------|----------|
-| **Uptime** | Работает стабильно |
-| **Response Time** | ~200ms |
-| **Database** | PostgreSQL 14 |
-| **Sessions Storage** | PostgreSQL |
-| **SSL** | ✅ HTTPS |
-| **Containers** | 2/2 Running |
+| Параметр             | Значение           |
+| -------------------- | ------------------ |
+| **Uptime**           | Работает стабильно |
+| **Response Time**    | ~200ms             |
+| **Database**         | PostgreSQL 14      |
+| **Sessions Storage** | PostgreSQL         |
+| **SSL**              | ✅ HTTPS           |
+| **Containers**       | 2/2 Running        |
 
 ---
 
@@ -317,6 +343,7 @@ docker-compose exec app npm run db:push
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Последние коммиты:**
+
 - `e7fa92cb` - Fix PostgreSQL session store (КРИТИЧНО - исправлена ошибка pool)
 - `8e46b485` - Add comprehensive documentation for session and auth fixes
 - `e173a6ca` - Add express-session configuration with PostgreSQL store
@@ -327,6 +354,7 @@ docker-compose exec app npm run db:push
 - `30440d44` - Implement Yandex Maps integration
 
 **Документация:**
+
 - [README.md](README.md) - Общая информация о проекте
 - [SESSION_FIX_SUMMARY.md](SESSION_FIX_SUMMARY.md) - Исправление сессий
 - [AUTH_FIX_SUMMARY.md](AUTH_FIX_SUMMARY.md) - Исправление авторизации

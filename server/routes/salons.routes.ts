@@ -1,6 +1,17 @@
 import { Router } from "express";
 import { db } from "../db";
-import { salons, masters, services, salonWorkingHours, masterWorkingHours, reviews, bookings, salonSettings, salonBreaks, salonExceptions } from "@shared/schema";
+import {
+  salons,
+  masters,
+  services,
+  salonWorkingHours,
+  masterWorkingHours,
+  reviews,
+  bookings,
+  salonSettings,
+  salonBreaks,
+  salonExceptions,
+} from "@shared/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
 
 const router = Router();
@@ -10,7 +21,7 @@ router.get("/", async (req, res) => {
   try {
     const { city, minLat, maxLat, minLng, maxLng } = req.query;
 
-    let query = db.select().from(salons).where(eq(salons.isActive, true));
+    const query = db.select().from(salons).where(eq(salons.isActive, true));
 
     const result = await query.orderBy(desc(salons.averageRating));
     return res.json(result);
@@ -30,16 +41,24 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Salon not found" });
     }
 
-    const salonMasters = await db.select().from(masters)
+    const salonMasters = await db
+      .select()
+      .from(masters)
       .where(and(eq(masters.salonId, id), eq(masters.isActive, true)));
 
-    const salonServices = await db.select().from(services)
+    const salonServices = await db
+      .select()
+      .from(services)
       .where(and(eq(services.salonId, id), eq(services.isActive, true)));
 
-    const workingHours = await db.select().from(salonWorkingHours)
+    const workingHours = await db
+      .select()
+      .from(salonWorkingHours)
       .where(eq(salonWorkingHours.salonId, id));
 
-    const salonReviews = await db.select().from(reviews)
+    const salonReviews = await db
+      .select()
+      .from(reviews)
       .where(eq(reviews.salonId, id))
       .orderBy(desc(reviews.createdAt))
       .limit(10);
@@ -61,7 +80,9 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/services", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.select().from(services)
+    const result = await db
+      .select()
+      .from(services)
       .where(and(eq(services.salonId, id), eq(services.isActive, true)));
     return res.json(result);
   } catch (error) {
@@ -74,7 +95,9 @@ router.get("/:id/services", async (req, res) => {
 router.get("/:id/masters", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.select().from(masters)
+    const result = await db
+      .select()
+      .from(masters)
       .where(and(eq(masters.salonId, id), eq(masters.isActive, true)));
     return res.json(result);
   } catch (error) {
@@ -87,7 +110,9 @@ router.get("/:id/masters", async (req, res) => {
 router.get("/:id/hours", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.select().from(salonWorkingHours)
+    const result = await db
+      .select()
+      .from(salonWorkingHours)
       .where(eq(salonWorkingHours.salonId, id));
     return res.json(result);
   } catch (error) {
@@ -100,7 +125,9 @@ router.get("/:id/hours", async (req, res) => {
 router.get("/:id/reviews", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.select().from(reviews)
+    const result = await db
+      .select()
+      .from(reviews)
       .where(eq(reviews.salonId, id))
       .orderBy(desc(reviews.createdAt));
     return res.json(result);
@@ -119,7 +146,9 @@ router.get("/masters/:id", async (req, res) => {
       return res.status(404).json({ error: "Master not found" });
     }
 
-    const masterReviews = await db.select().from(reviews)
+    const masterReviews = await db
+      .select()
+      .from(reviews)
       .where(eq(reviews.masterId, id))
       .orderBy(desc(reviews.createdAt))
       .limit(10);
@@ -148,15 +177,16 @@ router.get("/masters/:id/availability", async (req, res) => {
     }
 
     // Get salon settings for buffer time
-    const [settings] = await db.select().from(salonSettings)
+    const [settings] = await db
+      .select()
+      .from(salonSettings)
       .where(eq(salonSettings.salonId, master.salonId));
     const bufferMinutes = settings?.bufferMinutes ?? 10;
 
     // Get service duration if serviceId provided
     let serviceDuration = 60; // Default 1 hour
-    if (serviceId && typeof serviceId === 'string') {
-      const [service] = await db.select().from(services)
-        .where(eq(services.id, serviceId));
+    if (serviceId && typeof serviceId === "string") {
+      const [service] = await db.select().from(services).where(eq(services.id, serviceId));
       if (service) {
         serviceDuration = service.duration;
       }
@@ -165,16 +195,17 @@ router.get("/masters/:id/availability", async (req, res) => {
     // Parse the date
     const bookingDate = new Date(date as string);
     const dayOfWeek = bookingDate.getDay(); // 0=Sunday, 1=Monday, etc.
-    const dateString = bookingDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const dateString = bookingDate.toISOString().split("T")[0]; // YYYY-MM-DD format
 
     // Check for salon exceptions first (holidays, special hours, closures)
-    const [exception] = await db.select()
+    const [exception] = await db
+      .select()
       .from(salonExceptions)
       .where(
         and(
           eq(salonExceptions.salonId, master.salonId),
-          eq(salonExceptions.exceptionDate, dateString)
-        )
+          eq(salonExceptions.exceptionDate, dateString),
+        ),
       );
 
     // If exception exists and salon is closed, return empty slots
@@ -188,31 +219,28 @@ router.get("/masters/:id/availability", async (req, res) => {
         totalSlots: 0,
         availableSlots: 0,
         closed: true,
-        reason: exception.reason || 'Salon closed on this date',
-        exception: true
+        reason: exception.reason || "Salon closed on this date",
+        exception: true,
       });
     }
 
     // Get master-specific working hours for this day
-    const [masterHours] = await db.select()
+    const [masterHours] = await db
+      .select()
       .from(masterWorkingHours)
-      .where(
-        and(
-          eq(masterWorkingHours.masterId, id),
-          eq(masterWorkingHours.dayOfWeek, dayOfWeek)
-        )
-      );
+      .where(and(eq(masterWorkingHours.masterId, id), eq(masterWorkingHours.dayOfWeek, dayOfWeek)));
 
     // If no master-specific hours, fall back to salon working hours
-    let workingHours = masterHours;
+    let workingHours: any = masterHours;
     if (!workingHours) {
-      const [salonHours] = await db.select()
+      const [salonHours] = await db
+        .select()
         .from(salonWorkingHours)
         .where(
           and(
             eq(salonWorkingHours.salonId, master.salonId),
-            eq(salonWorkingHours.dayOfWeek, dayOfWeek)
-          )
+            eq(salonWorkingHours.dayOfWeek, dayOfWeek),
+          ),
         );
       workingHours = salonHours;
     }
@@ -237,38 +265,36 @@ router.get("/masters/:id/availability", async (req, res) => {
         totalSlots: 0,
         availableSlots: 0,
         closed: true,
-        reason: workingHours?.isClosed ? 'Closed on this day' : 'No working hours configured'
+        reason: workingHours?.isClosed ? "Closed on this day" : "No working hours configured",
       });
     }
 
     // Get salon breaks for this day
-    const salonBreaksForDay = await db.select()
+    const salonBreaksForDay = await db
+      .select()
       .from(salonBreaks)
-      .where(
-        and(
-          eq(salonBreaks.salonId, master.salonId),
-          eq(salonBreaks.dayOfWeek, dayOfWeek)
-        )
-      );
+      .where(and(eq(salonBreaks.salonId, master.salonId), eq(salonBreaks.dayOfWeek, dayOfWeek)));
 
     // Get all bookings for this master on this date (excluding cancelled)
-    const existingBookings = await db.select({
-      id: bookings.id,
-      startTime: bookings.startTime,
-      endTime: bookings.endTime,
-      status: bookings.status,
-    }).from(bookings)
+    const existingBookings = await db
+      .select({
+        id: bookings.id,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
+        status: bookings.status,
+      })
+      .from(bookings)
       .where(
         and(
           eq(bookings.masterId, id),
           eq(bookings.bookingDate, bookingDate),
-          ne(bookings.status, "cancelled")
-        )
+          ne(bookings.status, "cancelled"),
+        ),
       );
 
     // Helper function to convert time string to minutes
     const parseTime = (timeStr: string): number => {
-      const [hours, minutes] = timeStr.split(':').map(Number);
+      const [hours, minutes] = timeStr.split(":").map(Number);
       return hours * 60 + minutes;
     };
 
@@ -276,7 +302,7 @@ router.get("/masters/:id/availability", async (req, res) => {
     const formatTime = (minutes: number): string => {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
-      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+      return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
     };
 
     // Generate all possible time slots using actual working hours
@@ -294,7 +320,7 @@ router.get("/masters/:id/availability", async (req, res) => {
         const breakEnd = parseTime(breakPeriod.endTime);
 
         // Check for overlap: (start1 < end2) AND (start2 < end1)
-        const hasOverlap = (slotStartMinutes < breakEnd) && (breakStart < slotEndMinutes);
+        const hasOverlap = slotStartMinutes < breakEnd && breakStart < slotEndMinutes;
         if (hasOverlap) {
           return true;
         }
@@ -303,7 +329,11 @@ router.get("/masters/:id/availability", async (req, res) => {
     };
 
     // Generate slots from open to close time
-    for (let slotStartMinutes = openMinutes; slotStartMinutes < closeMinutes; slotStartMinutes += slotInterval) {
+    for (
+      let slotStartMinutes = openMinutes;
+      slotStartMinutes < closeMinutes;
+      slotStartMinutes += slotInterval
+    ) {
       const slotEndMinutes = slotStartMinutes + serviceDuration;
 
       // Don't create slots that would end after closing time
@@ -318,7 +348,7 @@ router.get("/masters/:id/availability", async (req, res) => {
           startTime: slotStart,
           endTime: slotEnd,
           isAvailable: false,
-          conflictReason: 'break',
+          conflictReason: "break",
         });
         continue;
       }
@@ -338,8 +368,8 @@ router.get("/masters/:id/availability", async (req, res) => {
         const bookingBufferedEnd = bookingEnd + bufferMinutes;
 
         // Check for overlap: (start1 < end2) AND (start2 < end1)
-        const hasOverlap = (slotBufferedStart < bookingBufferedEnd) &&
-                           (bookingBufferedStart < slotBufferedEnd);
+        const hasOverlap =
+          slotBufferedStart < bookingBufferedEnd && bookingBufferedStart < slotBufferedEnd;
 
         if (hasOverlap) {
           isAvailable = false;
@@ -363,24 +393,26 @@ router.get("/masters/:id/availability", async (req, res) => {
       workingHours: {
         openTime: openTime,
         closeTime: closeTime,
-        source: exception && !exception.isClosed ? 'exception' : (masterHours ? 'master' : 'salon')
+        source: exception && !exception.isClosed ? "exception" : masterHours ? "master" : "salon",
       },
-      exception: exception ? {
-        date: exception.exceptionDate,
-        isClosed: exception.isClosed,
-        reason: exception.reason,
-        hasCustomHours: !exception.isClosed && !!exception.openTime && !!exception.closeTime
-      } : null,
-      breaks: salonBreaksForDay.map(b => ({
+      exception: exception
+        ? {
+            date: exception.exceptionDate,
+            isClosed: exception.isClosed,
+            reason: exception.reason,
+            hasCustomHours: !exception.isClosed && !!exception.openTime && !!exception.closeTime,
+          }
+        : null,
+      breaks: salonBreaksForDay.map((b) => ({
         startTime: b.startTime,
         endTime: b.endTime,
-        label: b.label
+        label: b.label,
       })),
       serviceDuration,
       bufferMinutes,
       slots,
       totalSlots: slots.length,
-      availableSlots: slots.filter(s => s.isAvailable).length,
+      availableSlots: slots.filter((s) => s.isAvailable).length,
     });
   } catch (error) {
     console.error("Get master availability error:", error);

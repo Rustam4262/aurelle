@@ -10,7 +10,9 @@ const router = Router();
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    const userNotifications = await db.select().from(notifications)
+    const userNotifications = await db
+      .select()
+      .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt));
     return res.json(userNotifications);
@@ -26,7 +28,8 @@ router.patch("/:id/read", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const { id } = req.params;
 
-    const [updated] = await db.update(notifications)
+    const [updated] = await db
+      .update(notifications)
       .set({ isRead: true })
       .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
       .returning();
@@ -47,9 +50,7 @@ router.patch("/read-all", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 
-    await db.update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.userId, userId));
+    await db.update(notifications).set({ isRead: true }).where(eq(notifications.userId, userId));
 
     return res.json({ success: true });
   } catch (error) {

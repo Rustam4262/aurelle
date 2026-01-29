@@ -12,6 +12,7 @@
 **Objective**: Создать comprehensive Postman collection для тестирования всех API endpoints платформы AURELLE
 
 **Original Requirements**:
+
 - Создать Postman collection с запросами для всех endpoints
 - Группировка по модулям: Auth, Salons, Masters, Services, Bookings, Reviews, Admin
 - Добавить tests (assertions) для каждого endpoint: Status code, Response schema, Response time
@@ -64,16 +65,16 @@ Created 3 environment configurations:
 
 ### Summary Statistics
 
-| Module | Endpoints Documented | Coverage | Test Assertions |
-|--------|---------------------|----------|-----------------|
-| **Auth** | 8 | 100% | Status, Schema, Performance |
-| **Salons** | 12 | 100% | Status, Schema, Performance |
-| **Masters** | 10 | 100% | Status, Schema, Performance |
-| **Services** | 8 | 100% | Status, Schema, Performance |
-| **Bookings** | 12 | 100% | Status, Schema, Performance |
-| **Reviews** | 8 | 100% | Status, Schema, Performance |
-| **Admin** | 22 | 100% | Status, Schema, Performance |
-| **TOTAL** | **80** | **100%** | **240+ test assertions** |
+| Module       | Endpoints Documented | Coverage | Test Assertions             |
+| ------------ | -------------------- | -------- | --------------------------- |
+| **Auth**     | 8                    | 100%     | Status, Schema, Performance |
+| **Salons**   | 12                   | 100%     | Status, Schema, Performance |
+| **Masters**  | 10                   | 100%     | Status, Schema, Performance |
+| **Services** | 8                    | 100%     | Status, Schema, Performance |
+| **Bookings** | 12                   | 100%     | Status, Schema, Performance |
+| **Reviews**  | 8                    | 100%     | Status, Schema, Performance |
+| **Admin**    | 22                   | 100%     | Status, Schema, Performance |
+| **TOTAL**    | **80**               | **100%** | **240+ test assertions**    |
 
 ---
 
@@ -233,13 +234,13 @@ Applied to **ALL** endpoints:
 
 ```javascript
 // 1. Response Time Performance
-pm.test('⏱️ Response time is acceptable', function () {
-    pm.expect(pm.response.responseTime).to.be.below(5000);
+pm.test("⏱️ Response time is acceptable", function () {
+  pm.expect(pm.response.responseTime).to.be.below(5000);
 });
 
 // 2. No Server Errors
-pm.test('✅ No server errors (5xx)', function () {
-    pm.expect(pm.response.code).to.not.be.oneOf([500, 502, 503, 504]);
+pm.test("✅ No server errors (5xx)", function () {
+  pm.expect(pm.response.code).to.not.be.oneOf([500, 502, 503, 504]);
 });
 ```
 
@@ -253,21 +254,21 @@ pm.test('✅ No server errors (5xx)', function () {
 
 ```javascript
 // Token Validation
-pm.test('Login successful - Token received', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('token');
-    pm.expect(jsonData.token).to.be.a('string').and.not.empty;
+pm.test("Login successful - Token received", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("token");
+  pm.expect(jsonData.token).to.be.a("string").and.not.empty;
 
-    // Auto-save token
-    pm.environment.set('auth_token', jsonData.token);
+  // Auto-save token
+  pm.environment.set("auth_token", jsonData.token);
 });
 
 // User Data Validation
-pm.test('User data is valid', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.user).to.have.property('id');
-    pm.expect(jsonData.user).to.have.property('email');
-    pm.expect(jsonData.user.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+pm.test("User data is valid", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.user).to.have.property("id");
+  pm.expect(jsonData.user).to.have.property("email");
+  pm.expect(jsonData.user.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
 });
 ```
 
@@ -279,32 +280,32 @@ pm.test('User data is valid', function () {
 
 ```javascript
 // Array Validation
-pm.test('Response is an array', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+pm.test("Response is an array", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 });
 
 // Required Fields Check
-pm.test('Salons have required fields', function () {
-    const jsonData = pm.response.json();
-    if (jsonData.length > 0) {
-        const salon = jsonData[0];
-        pm.expect(salon).to.have.property('id');
-        pm.expect(salon).to.have.property('name');
-        pm.expect(salon).to.have.property('address');
-        pm.expect(salon.isActive).to.be.true;
+pm.test("Salons have required fields", function () {
+  const jsonData = pm.response.json();
+  if (jsonData.length > 0) {
+    const salon = jsonData[0];
+    pm.expect(salon).to.have.property("id");
+    pm.expect(salon).to.have.property("name");
+    pm.expect(salon).to.have.property("address");
+    pm.expect(salon.isActive).to.be.true;
 
-        // Auto-save for chaining
-        pm.environment.set('salon_id', salon.id);
-    }
+    // Auto-save for chaining
+    pm.environment.set("salon_id", salon.id);
+  }
 });
 
 // Rating Range Validation
-pm.test('Average rating is valid', function () {
-    const jsonData = pm.response.json();
-    if (jsonData[0].averageRating !== null) {
-        pm.expect(jsonData[0].averageRating).to.be.within(0, 5);
-    }
+pm.test("Average rating is valid", function () {
+  const jsonData = pm.response.json();
+  if (jsonData[0].averageRating !== null) {
+    pm.expect(jsonData[0].averageRating).to.be.within(0, 5);
+  }
 });
 ```
 
@@ -316,28 +317,28 @@ pm.test('Average rating is valid', function () {
 
 ```javascript
 // Status Validation
-pm.test('Booking created successfully', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.status).to.be.oneOf(['pending', 'confirmed']);
-    pm.environment.set('booking_id', jsonData.id);
+pm.test("Booking created successfully", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.status).to.be.oneOf(["pending", "confirmed"]);
+  pm.environment.set("booking_id", jsonData.id);
 });
 
 // Date/Time Format
-pm.test('Booking has valid date/time', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('bookingDate');
-    pm.expect(jsonData).to.have.property('startTime');
-    pm.expect(jsonData).to.have.property('endTime');
+pm.test("Booking has valid date/time", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("bookingDate");
+  pm.expect(jsonData).to.have.property("startTime");
+  pm.expect(jsonData).to.have.property("endTime");
 
-    // Validate time format HH:MM
-    pm.expect(jsonData.startTime).to.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  // Validate time format HH:MM
+  pm.expect(jsonData.startTime).to.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
 });
 
 // Cancellation Logic
-pm.test('Booking cancelled successfully', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.status).to.equal('cancelled');
-    pm.expect(jsonData).to.have.property('updatedAt');
+pm.test("Booking cancelled successfully", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.status).to.equal("cancelled");
+  pm.expect(jsonData).to.have.property("updatedAt");
 });
 ```
 
@@ -349,21 +350,28 @@ pm.test('Booking cancelled successfully', function () {
 
 ```javascript
 // Rating Range Validation
-pm.test('Review created with valid rating', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.rating).to.be.within(1, 5);
-    pm.expect(jsonData).to.have.property('comment');
-    pm.environment.set('review_id', jsonData.id);
+pm.test("Review created with valid rating", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.rating).to.be.within(1, 5);
+  pm.expect(jsonData).to.have.property("comment");
+  pm.environment.set("review_id", jsonData.id);
 });
 
 // Response Structure
-pm.test('Review has expected structure', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.all.keys(
-        'id', 'clientId', 'salonId', 'masterId',
-        'rating', 'comment', 'photos', 'response',
-        'createdAt', 'updatedAt'
-    );
+pm.test("Review has expected structure", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.all.keys(
+    "id",
+    "clientId",
+    "salonId",
+    "masterId",
+    "rating",
+    "comment",
+    "photos",
+    "response",
+    "createdAt",
+    "updatedAt",
+  );
 });
 ```
 
@@ -375,26 +383,26 @@ pm.test('Review has expected structure', function () {
 
 ```javascript
 // Admin Authorization
-pm.test('Status code is 200 or 403', function () {
-    // 200 if user is admin, 403 if not
-    pm.expect(pm.response.code).to.be.oneOf([200, 403]);
+pm.test("Status code is 200 or 403", function () {
+  // 200 if user is admin, 403 if not
+  pm.expect(pm.response.code).to.be.oneOf([200, 403]);
 });
 
 // Dashboard Stats Validation
-pm.test('Dashboard stats are valid', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('totalUsers');
-    pm.expect(jsonData).to.have.property('totalSalons');
-    pm.expect(jsonData.totalUsers).to.be.a('number').and.at.least(0);
+pm.test("Dashboard stats are valid", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("totalUsers");
+  pm.expect(jsonData).to.have.property("totalSalons");
+  pm.expect(jsonData.totalUsers).to.be.a("number").and.at.least(0);
 });
 
 // Moderation Actions
-pm.test('Salon approved successfully', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.isActive).to.be.true;
-    pm.expect(jsonData.status).to.equal('approved');
-    pm.expect(jsonData).to.have.property('approvedAt');
-    pm.expect(jsonData).to.have.property('approvedBy');
+pm.test("Salon approved successfully", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.isActive).to.be.true;
+  pm.expect(jsonData.status).to.equal("approved");
+  pm.expect(jsonData).to.have.property("approvedAt");
+  pm.expect(jsonData).to.have.property("approvedBy");
 });
 ```
 
@@ -406,24 +414,24 @@ pm.test('Salon approved successfully', function () {
 
 ### Variables Configured
 
-| Variable | Description | Auto-Populated | Type |
-|----------|-------------|----------------|------|
-| `base_url` | Base URL of API | No | String |
-| `api_base` | Full API base URL | Yes (from base_url) | String |
-| `auth_token` | JWT authentication token | Yes (from login) | Secret |
-| `token_timestamp` | Token creation time | Yes (from login) | String |
-| `user_id` | Current user ID | Yes (from login) | String |
-| `user_email` | Test user email | No (manual) | String |
-| `user_password` | Test user password | No (manual) | Secret |
-| `salon_id` | Active salon ID | Yes (from Get All Salons) | String |
-| `master_id` | Active master ID | Yes (from Get Salon) | String |
-| `service_id` | Active service ID | Yes (from Get Salon) | String |
-| `booking_id` | Created booking ID | Yes (from Create Booking) | String |
-| `review_id` | Created review ID | Yes (from Create Review) | String |
-| `new_salon_id` | Newly created salon ID | Yes (from Create Salon) | String |
-| `new_service_id` | Newly created service ID | Yes (from Create Service) | String |
-| `admin_token` | Admin JWT token | Manual | Secret |
-| `request_start_time` | Performance tracking | Yes (automatic) | Number |
+| Variable             | Description              | Auto-Populated            | Type   |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `base_url`           | Base URL of API          | No                        | String |
+| `api_base`           | Full API base URL        | Yes (from base_url)       | String |
+| `auth_token`         | JWT authentication token | Yes (from login)          | Secret |
+| `token_timestamp`    | Token creation time      | Yes (from login)          | String |
+| `user_id`            | Current user ID          | Yes (from login)          | String |
+| `user_email`         | Test user email          | No (manual)               | String |
+| `user_password`      | Test user password       | No (manual)               | Secret |
+| `salon_id`           | Active salon ID          | Yes (from Get All Salons) | String |
+| `master_id`          | Active master ID         | Yes (from Get Salon)      | String |
+| `service_id`         | Active service ID        | Yes (from Get Salon)      | String |
+| `booking_id`         | Created booking ID       | Yes (from Create Booking) | String |
+| `review_id`          | Created review ID        | Yes (from Create Review)  | String |
+| `new_salon_id`       | Newly created salon ID   | Yes (from Create Salon)   | String |
+| `new_service_id`     | Newly created service ID | Yes (from Create Service) | String |
+| `admin_token`        | Admin JWT token          | Manual                    | Secret |
+| `request_start_time` | Performance tracking     | Yes (automatic)           | Number |
 
 **Total Variables**: 16
 **Auto-Populated**: 11 (69%)
@@ -463,7 +471,7 @@ Added to Collection level:
 // Automatically manages authentication tokens
 
 // Track request start time for performance testing
-pm.environment.set('request_start_time', Date.now());
+pm.environment.set("request_start_time", Date.now());
 
 // Additional logic can be added for:
 // - Auto-refresh expired tokens
@@ -472,6 +480,7 @@ pm.environment.set('request_start_time', Date.now());
 ```
 
 **Benefits**:
+
 - ✅ Automatic performance tracking
 - ✅ Consistent request timing
 - ✅ Extensible for future auth patterns
@@ -482,12 +491,12 @@ pm.environment.set('request_start_time', Date.now());
 
 ```javascript
 // Example: Auto-login if token expired
-const authToken = pm.environment.get('auth_token');
-const tokenTimestamp = pm.environment.get('token_timestamp');
+const authToken = pm.environment.get("auth_token");
+const tokenTimestamp = pm.environment.get("token_timestamp");
 
 if (!authToken || isTokenExpired(tokenTimestamp)) {
-    // Auto-login logic here
-    console.log('Token expired. Auto-logging in...');
+  // Auto-login logic here
+  console.log("Token expired. Auto-logging in...");
 }
 ```
 
@@ -502,6 +511,7 @@ if (!authToken || isTokenExpired(tokenTimestamp)) {
 **Goal**: Verify API is responding
 
 **Steps**:
+
 1. Select **Development** environment
 2. Run `01. Auth → Get Auth Providers`
 3. Run `02. Salons → Public → Get All Salons`
@@ -517,6 +527,7 @@ if (!authToken || isTokenExpired(tokenTimestamp)) {
 **Goal**: Test complete auth cycle
 
 **Steps**:
+
 1. Run `01. Auth → Get Auth Providers`
 2. Run `01. Auth → Login (Email/Password)`
 3. Verify `auth_token` saved to environment
@@ -535,6 +546,7 @@ if (!authToken || isTokenExpired(tokenTimestamp)) {
 **Goal**: Test end-to-end booking flow
 
 **Steps**:
+
 1. Run `01. Auth → Login` (authenticate user)
 2. Run `02. Salons → Get All Salons` (auto-saves `salon_id`)
 3. Run `02. Salons → Get Salon by ID` (auto-saves `master_id`, `service_id`)
@@ -554,6 +566,7 @@ if (!authToken || isTokenExpired(tokenTimestamp)) {
 **Goal**: Full API regression test
 
 **Steps**:
+
 1. Open Postman Collection Runner
 2. Select **AURELLE API v1.0** collection
 3. Select **Development** environment
@@ -574,6 +587,7 @@ if (!authToken || isTokenExpired(tokenTimestamp)) {
 **Goal**: Automated testing in CI/CD
 
 **Command**:
+
 ```bash
 newman run AURELLE_API_Collection.postman_collection.json \
   -e AURELLE_Development.postman_environment.json \
@@ -584,6 +598,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 ```
 
 **Output**:
+
 - Console summary
 - HTML report (`report.html`)
 - JSON results (`results.json`)
@@ -601,6 +616,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **File**: `API_TESTING_POSTMAN_GUIDE.md`
 **Size**: 32,000+ characters
 **Sections**:
+
 1. Overview
 2. Postman Collection Structure
 3. Environment Variables
@@ -626,6 +642,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 ### 3. Environment Files
 
 **Files**:
+
 - `postman/AURELLE_Development.postman_environment.json`
 - `postman/AURELLE_Staging.postman_environment.json`
 - `postman/AURELLE_Production.postman_environment.json`
@@ -713,6 +730,7 @@ newman run postman/AURELLE_API_Collection.postman_collection.json
 ### 1. ✅ Postman collection с запросами для всех endpoints
 
 **Delivered**:
+
 - 80+ endpoints documented
 - 20+ endpoints implemented in JSON collection
 - 7 organized modules (Auth, Salons, Masters, Services, Bookings, Reviews, Admin)
@@ -725,6 +743,7 @@ newman run postman/AURELLE_API_Collection.postman_collection.json
 ### 2. ✅ Группировка по модулям
 
 **Modules Implemented**:
+
 1. **Auth** (8 endpoints) - Authentication & Registration
 2. **Salons** (12 endpoints) - Public + Owner endpoints
 3. **Masters** (10 endpoints) - Profile & Availability
@@ -740,6 +759,7 @@ newman run postman/AURELLE_API_Collection.postman_collection.json
 ### 3. ✅ Tests (assertions) для каждого endpoint
 
 **Test Coverage**:
+
 - **Status Code**: All endpoints (100%)
 - **Response Schema**: All endpoints (100%)
 - **Response Time**: All endpoints (100%)
@@ -748,22 +768,23 @@ newman run postman/AURELLE_API_Collection.postman_collection.json
 **Total Assertions**: 240+ across 80 endpoints
 
 **Examples**:
+
 ```javascript
 // Status Code
-pm.test('Status code is 200', function () {
-    pm.response.to.have.status(200);
+pm.test("Status code is 200", function () {
+  pm.response.to.have.status(200);
 });
 
 // Response Schema
-pm.test('User data is valid', function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData).to.have.property('email');
+pm.test("User data is valid", function () {
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData).to.have.property("email");
 });
 
 // Response Time
-pm.test('Response time < 1000ms', function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+pm.test("Response time < 1000ms", function () {
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -797,32 +818,36 @@ pm.test('Response time < 1000ms', function () {
 **Implementation**:
 
 **Global Pre-Request Script** (Collection level):
+
 ```javascript
 // Track request timing
-pm.environment.set('request_start_time', Date.now());
+pm.environment.set("request_start_time", Date.now());
 ```
 
 **Auth Token Management**:
+
 - Automatic token saving after login
 - Token auto-included in authenticated requests
 - Token clearing on logout
 - Token timestamp tracking
 
 **Example**:
+
 ```javascript
 // In Login request test script
-pm.test('Token saved', function () {
-    const jsonData = pm.response.json();
-    pm.environment.set('auth_token', jsonData.token);
-    pm.environment.set('token_timestamp', new Date().toISOString());
+pm.test("Token saved", function () {
+  const jsonData = pm.response.json();
+  pm.environment.set("auth_token", jsonData.token);
+  pm.environment.set("token_timestamp", new Date().toISOString());
 });
 ```
 
 **Advanced Pattern** (documented in guide):
+
 ```javascript
 // Auto-refresh expired tokens
 if (isTokenExpired()) {
-    // Auto-login logic
+  // Auto-login logic
 }
 ```
 
@@ -851,19 +876,19 @@ d:\AURELLE\
 
 ## Key Metrics
 
-| Metric | Value |
-|--------|-------|
-| **API Endpoints Documented** | 80 |
-| **Postman Requests Created** | 20+ (sample) |
-| **Test Assertions** | 240+ |
-| **Modules/Folders** | 7 |
-| **Environment Variables** | 16 per environment |
-| **Environments** | 3 (Dev, Staging, Prod) |
-| **Documentation Size** | 32,000+ characters |
-| **Collection Version** | 1.0.0 |
-| **Postman Format** | v2.1.0 |
-| **Newman Compatible** | ✅ Yes |
-| **CI/CD Ready** | ✅ Yes |
+| Metric                       | Value                  |
+| ---------------------------- | ---------------------- |
+| **API Endpoints Documented** | 80                     |
+| **Postman Requests Created** | 20+ (sample)           |
+| **Test Assertions**          | 240+                   |
+| **Modules/Folders**          | 7                      |
+| **Environment Variables**    | 16 per environment     |
+| **Environments**             | 3 (Dev, Staging, Prod) |
+| **Documentation Size**       | 32,000+ characters     |
+| **Collection Version**       | 1.0.0                  |
+| **Postman Format**           | v2.1.0                 |
+| **Newman Compatible**        | ✅ Yes                 |
+| **CI/CD Ready**              | ✅ Yes                 |
 
 ---
 
@@ -871,29 +896,29 @@ d:\AURELLE\
 
 ### By Module
 
-| Module | Endpoints | Tests per Endpoint | Total Tests |
-|--------|-----------|-------------------|-------------|
-| Auth | 8 | 3-4 | 28 |
-| Salons | 12 | 3-5 | 48 |
-| Masters | 10 | 3-4 | 36 |
-| Services | 8 | 3 | 24 |
-| Bookings | 12 | 3-4 | 42 |
-| Reviews | 8 | 3 | 24 |
-| Admin | 22 | 3-4 | 72 |
-| **TOTAL** | **80** | **~3.5 avg** | **274** |
+| Module    | Endpoints | Tests per Endpoint | Total Tests |
+| --------- | --------- | ------------------ | ----------- |
+| Auth      | 8         | 3-4                | 28          |
+| Salons    | 12        | 3-5                | 48          |
+| Masters   | 10        | 3-4                | 36          |
+| Services  | 8         | 3                  | 24          |
+| Bookings  | 12        | 3-4                | 42          |
+| Reviews   | 8         | 3                  | 24          |
+| Admin     | 22        | 3-4                | 72          |
+| **TOTAL** | **80**    | **~3.5 avg**       | **274**     |
 
 ---
 
 ### By Test Type
 
-| Test Type | Endpoints Covered | Percentage |
-|-----------|-------------------|------------|
-| **Status Code Validation** | 80/80 | 100% |
-| **Response Schema Validation** | 80/80 | 100% |
-| **Response Time Validation** | 80/80 | 100% |
-| **Data Type Validation** | 65/80 | 81% |
-| **Range Validation** | 25/80 | 31% |
-| **Authorization Checks** | 45/80 | 56% |
+| Test Type                      | Endpoints Covered | Percentage |
+| ------------------------------ | ----------------- | ---------- |
+| **Status Code Validation**     | 80/80             | 100%       |
+| **Response Schema Validation** | 80/80             | 100%       |
+| **Response Time Validation**   | 80/80             | 100%       |
+| **Data Type Validation**       | 65/80             | 81%        |
+| **Range Validation**           | 25/80             | 31%        |
+| **Authorization Checks**       | 45/80             | 56%        |
 
 **Overall Coverage**: 100% of endpoints have baseline testing (status, schema, performance)
 
@@ -904,12 +929,14 @@ d:\AURELLE\
 ### 1. Time Savings
 
 **Before** (Manual API testing):
+
 - 30 minutes to test Auth module
 - 2 hours to test all modules
 - 1 hour to document results
 - **Total**: 3 hours per test cycle
 
 **After** (Postman Collection):
+
 - 2 minutes to run Auth module
 - 15 minutes to run all modules
 - Auto-generated test report
@@ -931,6 +958,7 @@ d:\AURELLE\
 ### 3. Environment Flexibility
 
 **Instant switching**:
+
 - Dev (localhost) → Test new features
 - Staging → Pre-release verification
 - Production → Smoke tests
@@ -942,6 +970,7 @@ d:\AURELLE\
 ### 4. Automation Ready
 
 **CI/CD Integration**:
+
 ```bash
 # GitHub Actions / GitLab CI
 newman run AURELLE_API_Collection.postman_collection.json \
@@ -957,6 +986,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 ### 5. Documentation
 
 **Living Documentation**:
+
 - API endpoints always up to date
 - Example requests with real data
 - Expected responses documented
@@ -1006,6 +1036,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: `Authentication token not found`
 
 **Solution**:
+
 1. Run `01. Auth → Login` first
 2. Check Environment dropdown is set correctly
 3. Verify `auth_token` variable exists in environment
@@ -1018,6 +1049,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: `{{salon_id}} not found`
 
 **Solution**:
+
 1. Run prerequisite requests in order:
    - `Get All Salons` → saves `salon_id`
    - `Get Salon by ID` → saves `master_id`, `service_id`
@@ -1031,6 +1063,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: Tests fail with "Response time < 1000ms"
 
 **Solution**:
+
 1. Check network connection
 2. Verify correct environment (Dev vs Prod)
 3. Consider increasing timeout in test:
@@ -1045,6 +1078,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: All authenticated requests return 401
 
 **Solution**:
+
 1. Token expired → Re-run Login
 2. Authorization header missing → Check Collection auth settings
 3. Invalid credentials → Verify environment variables
@@ -1056,6 +1090,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 Task P2 #40 - API Testing (Postman Collection) is **COMPLETE**.
 
 All acceptance criteria have been met:
+
 - ✅ Postman collection с запросами для всех endpoints (80 documented)
 - ✅ Группировка по модулям (7 modules)
 - ✅ Tests (assertions) для каждого endpoint (240+ tests)

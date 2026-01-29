@@ -19,15 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  GripVertical,
-  Pencil,
-  Copy,
-  Eye,
-  EyeOff,
-  TrendingUp,
-  Calendar,
-} from "lucide-react";
+import { GripVertical, Pencil, Copy, Eye, EyeOff, TrendingUp, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,14 +107,9 @@ function SortableServiceItem({
   onSelect: (serviceId: string, checked: boolean) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: service.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: service.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -171,14 +158,14 @@ function SortableServiceItem({
                   <p className="text-sm text-muted-foreground">{service.salonName}</p>
                 </div>
                 <Badge variant={service.isActive ? "default" : "secondary"}>
-                  {service.isActive ? t("services.active", "Active") : t("services.inactive", "Inactive")}
+                  {service.isActive
+                    ? t("services.active", "Active")
+                    : t("services.inactive", "Inactive")}
                 </Badge>
               </div>
 
               {serviceDesc && (
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                  {serviceDesc}
-                </p>
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{serviceDesc}</p>
               )}
 
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-3">
@@ -187,7 +174,9 @@ function SortableServiceItem({
                   {service.priceMax > service.priceMin && ` - ${formatCurrency(service.priceMax)}`}
                 </span>
                 <span>•</span>
-                <span>{service.duration} {t("services.minutes", "min")}</span>
+                <span>
+                  {service.duration} {t("services.minutes", "min")}
+                </span>
                 <span>•</span>
                 <span className="capitalize">{service.category}</span>
               </div>
@@ -195,13 +184,16 @@ function SortableServiceItem({
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
                   <TrendingUp className="h-4 w-4 text-blue-600" />
-                  <span>{service.bookingCount} {t("services.bookings", "bookings")}</span>
+                  <span>
+                    {service.bookingCount} {t("services.bookings", "bookings")}
+                  </span>
                 </div>
                 {service.lastBookedAt && (
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4 text-green-600" />
                     <span>
-                      {t("services.lastBooked", "Last:")} {new Date(service.lastBookedAt).toLocaleDateString()}
+                      {t("services.lastBooked", "Last:")}{" "}
+                      {new Date(service.lastBookedAt).toLocaleDateString()}
                     </span>
                   </div>
                 )}
@@ -210,30 +202,14 @@ function SortableServiceItem({
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(service)}
-              >
+              <Button variant="outline" size="sm" onClick={() => onEdit(service)}>
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDuplicate(service)}
-              >
+              <Button variant="outline" size="sm" onClick={() => onDuplicate(service)}>
                 <Copy className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onToggleActive(service)}
-              >
-                {service.isActive ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+              <Button variant="outline" size="sm" onClick={() => onToggleActive(service)}>
+                {service.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -309,8 +285,20 @@ export function ServiceManagement() {
 
   // Update service mutation
   const updateServiceMutation = useMutation({
-    mutationFn: async ({ salonId, serviceId, data }: { salonId: string; serviceId: string; data: EditFormData }) => {
-      const res = await apiRequest("PUT", `/api/owner/salons/${salonId}/services/${serviceId}`, data);
+    mutationFn: async ({
+      salonId,
+      serviceId,
+      data,
+    }: {
+      salonId: string;
+      serviceId: string;
+      data: EditFormData;
+    }) => {
+      const res = await apiRequest(
+        "PUT",
+        `/api/owner/salons/${salonId}/services/${serviceId}`,
+        data,
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -355,7 +343,9 @@ export function ServiceManagement() {
   // Toggle service active status mutation (Phase 9)
   const toggleServiceMutation = useMutation({
     mutationFn: async ({ serviceId, isActive }: { serviceId: string; isActive: boolean }) => {
-      const res = await apiRequest("PATCH", `/api/owner/services/${serviceId}/toggle`, { isActive });
+      const res = await apiRequest("PATCH", `/api/owner/services/${serviceId}/toggle`, {
+        isActive,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -374,13 +364,19 @@ export function ServiceManagement() {
   // Bulk toggle services mutation (Phase 9)
   const bulkToggleMutation = useMutation({
     mutationFn: async ({ serviceIds, isActive }: { serviceIds: string[]; isActive: boolean }) => {
-      const res = await apiRequest("POST", "/api/owner/services/bulk-toggle", { serviceIds, isActive });
+      const res = await apiRequest("POST", "/api/owner/services/bulk-toggle", {
+        serviceIds,
+        isActive,
+      });
       return res.json();
     },
     onSuccess: (_, variables) => {
       toast({
         title: t("services.bulkToggleSuccess", "Services updated"),
-        description: t("services.bulkToggleDesc", `${variables.serviceIds.length} services ${variables.isActive ? 'activated' : 'deactivated'}`),
+        description: t(
+          "services.bulkToggleDesc",
+          `${variables.serviceIds.length} services ${variables.isActive ? "activated" : "deactivated"}`,
+        ),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
       setSelectedServices([]);
@@ -397,7 +393,9 @@ export function ServiceManagement() {
   // Assign masters to service mutation (Phase 9)
   const assignMastersMutation = useMutation({
     mutationFn: async ({ serviceId, masterIds }: { serviceId: string; masterIds: string[] }) => {
-      const res = await apiRequest("PATCH", `/api/owner/services/${serviceId}/masters`, { masterIds });
+      const res = await apiRequest("PATCH", `/api/owner/services/${serviceId}/masters`, {
+        masterIds,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -437,7 +435,7 @@ export function ServiceManagement() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -526,7 +524,10 @@ export function ServiceManagement() {
         <CardHeader>
           <CardTitle>{t("services.management", "Service Management")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {t("services.dragToReorder", "Drag services to reorder them. Edit, duplicate, or toggle visibility.")}
+            {t(
+              "services.dragToReorder",
+              "Drag services to reorder them. Edit, duplicate, or toggle visibility.",
+            )}
           </p>
         </CardHeader>
         <CardContent>
@@ -566,11 +567,7 @@ export function ServiceManagement() {
                     <EyeOff className="h-4 w-4 mr-2" />
                     {t("services.deactivateSelected", "Deactivate")}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSelectedServices([])}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedServices([])}>
                     {t("common.cancel", "Cancel")}
                   </Button>
                 </div>
@@ -581,7 +578,10 @@ export function ServiceManagement() {
           {services.length === 0 ? (
             <Alert>
               <AlertDescription>
-                {t("services.noServices", "No services found. Create services in your salon settings.")}
+                {t(
+                  "services.noServices",
+                  "No services found. Create services in your salon settings.",
+                )}
               </AlertDescription>
             </Alert>
           ) : (
@@ -606,7 +606,7 @@ export function ServiceManagement() {
                       if (checked) {
                         setSelectedServices([...selectedServices, serviceId]);
                       } else {
-                        setSelectedServices(selectedServices.filter(id => id !== serviceId));
+                        setSelectedServices(selectedServices.filter((id) => id !== serviceId));
                       }
                     }}
                   />
@@ -618,12 +618,15 @@ export function ServiceManagement() {
       </Card>
 
       {/* Edit Service Dialog */}
-      <Dialog open={!!editingService} onOpenChange={(open) => {
-        if (!open) {
-          setEditingService(null);
-          setAssignedMasters([]);
-        }
-      }}>
+      <Dialog
+        open={!!editingService}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingService(null);
+            setAssignedMasters([]);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("services.editService", "Edit Service")}</DialogTitle>
@@ -709,9 +712,7 @@ export function ServiceManagement() {
                 <Label>{t("services.category", "Category")}</Label>
                 <Select
                   value={editFormData.category}
-                  onValueChange={(value) =>
-                    setEditFormData({ ...editFormData, category: value })
-                  }
+                  onValueChange={(value) => setEditFormData({ ...editFormData, category: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -776,7 +777,10 @@ export function ServiceManagement() {
               <div className="space-y-2">
                 <Label>{t("services.assignedMasters", "Assigned Masters")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  {t("services.assignedMastersDesc", "Select which masters can perform this service")}
+                  {t(
+                    "services.assignedMastersDesc",
+                    "Select which masters can perform this service",
+                  )}
                 </p>
                 <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
                   {salonMasters.length === 0 ? (
@@ -801,7 +805,9 @@ export function ServiceManagement() {
                           htmlFor={`master-${master.id}`}
                           className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          {typeof master.name === 'object' ? master.name.en || master.name.ru || master.name.uz : master.name}
+                          {typeof master.name === "object"
+                            ? master.name.en || master.name.ru || master.name.uz
+                            : master.name}
                         </label>
                       </div>
                     ))
@@ -815,16 +821,10 @@ export function ServiceManagement() {
           )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditingService(null)}
-            >
+            <Button variant="outline" onClick={() => setEditingService(null)}>
               {t("common.cancel", "Cancel")}
             </Button>
-            <Button
-              onClick={handleSaveEdit}
-              disabled={updateServiceMutation.isPending}
-            >
+            <Button onClick={handleSaveEdit} disabled={updateServiceMutation.isPending}>
               {updateServiceMutation.isPending
                 ? t("common.saving", "Saving...")
                 : t("common.save", "Save")}
@@ -834,10 +834,7 @@ export function ServiceManagement() {
       </Dialog>
 
       {/* Duplicate Service Dialog */}
-      <Dialog
-        open={!!duplicatingService}
-        onOpenChange={() => setDuplicatingService(null)}
-      >
+      <Dialog open={!!duplicatingService} onOpenChange={() => setDuplicatingService(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("services.duplicateService", "Duplicate Service")}</DialogTitle>
@@ -868,10 +865,7 @@ export function ServiceManagement() {
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDuplicatingService(null)}
-            >
+            <Button variant="outline" onClick={() => setDuplicatingService(null)}>
               {t("common.cancel", "Cancel")}
             </Button>
           </DialogFooter>

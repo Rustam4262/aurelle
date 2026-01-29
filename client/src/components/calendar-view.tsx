@@ -57,7 +57,10 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
 
   // Get detailed schedule for selected day
   const { data: daySchedule, isLoading: isLoadingSchedule } = useQuery<DayBooking[]>({
-    queryKey: ["/api/calendar/day-schedule", { salonId, masterId, date: format(selectedDate, "yyyy-MM-dd") }],
+    queryKey: [
+      "/api/calendar/day-schedule",
+      { salonId, masterId, date: format(selectedDate, "yyyy-MM-dd") },
+    ],
     queryFn: async (): Promise<DayBooking[]> => {
       const params = new URLSearchParams();
       if (salonId) params.append("salonId", salonId);
@@ -73,7 +76,7 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
   const getDateData = (date: Date): DayData | undefined => {
     if (!calendarData) return undefined;
     const dateStr = format(date, "yyyy-MM-dd");
-    return calendarData.find(d => d.date === dateStr);
+    return calendarData.find((d) => d.date === dateStr);
   };
 
   // Custom day content with booking indicators
@@ -217,9 +220,7 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
                           {booking.startTime} - {booking.endTime}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {booking.serviceName}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{booking.serviceName}</p>
                     </div>
                     <Badge className={getStatusColor(booking.status)}>
                       {getStatusText(booking.status)}
@@ -255,19 +256,27 @@ export function CalendarView({ salonId, masterId }: CalendarViewProps) {
                 <p className="text-sm text-muted-foreground">{t("calendar.total")}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-green-50">
-                <p className="text-2xl font-bold text-green-600">{selectedDayData.confirmedBookings}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {selectedDayData.confirmedBookings}
+                </p>
                 <p className="text-sm text-muted-foreground">{t("booking.confirmed")}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-yellow-50">
-                <p className="text-2xl font-bold text-yellow-600">{selectedDayData.pendingBookings}</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {selectedDayData.pendingBookings}
+                </p>
                 <p className="text-sm text-muted-foreground">{t("booking.pending")}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-blue-50">
-                <p className="text-2xl font-bold text-blue-600">{selectedDayData.completedBookings}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {selectedDayData.completedBookings}
+                </p>
                 <p className="text-sm text-muted-foreground">{t("booking.completed")}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-red-50">
-                <p className="text-2xl font-bold text-red-600">{selectedDayData.cancelledBookings}</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {selectedDayData.cancelledBookings}
+                </p>
                 <p className="text-sm text-muted-foreground">{t("booking.cancelled")}</p>
               </div>
             </div>

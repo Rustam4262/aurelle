@@ -12,6 +12,7 @@
 This document provides a comprehensive iconography and illustration system for AURELLE, enhancing visual appeal and professionalism across the platform. The guide covers custom service category icons, empty/error state illustrations, onboarding graphics, and hero section imagery.
 
 **Goals**:
+
 - Create cohesive visual language
 - Improve user experience through clear iconography
 - Add personality with custom illustrations
@@ -31,6 +32,7 @@ This document provides a comprehensive iconography and illustration system for A
 **Current Usage**: 56 files using Lucide icons
 
 **Most Used Icons**:
+
 - `Star` - Ratings (13 files)
 - `Calendar` / `CalendarDays` - Booking, scheduling (9 files)
 - `User` / `Users` - Profiles, clients (8 files)
@@ -41,6 +43,7 @@ This document provides a comprehensive iconography and illustration system for A
 - `Loader2` - Loading states (3 files)
 
 **Icon Categories in Use**:
+
 ```
 Navigation: ChevronRight, ChevronDown, ChevronLeft, Menu, X
 Actions: Upload, Download, Copy, ExternalLink, RefreshCcw, Edit, Trash2
@@ -85,6 +88,7 @@ const categories = [
 #### Icon Specifications
 
 **Technical Specs**:
+
 - **Format**: SVG (inline React components)
 - **Viewbox**: `0 0 24 24`
 - **Stroke Width**: 2px (consistent with Lucide)
@@ -94,6 +98,7 @@ const categories = [
 - **Colors**: Inherit from `currentColor` (theme-aware)
 
 **Style**:
+
 - Outline icons (not filled)
 - 2px stroke weight
 - Rounded corners
@@ -109,6 +114,7 @@ const categories = [
 **Concept**: Scissors cutting hair strands
 
 **SVG Path Description**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Scissors handles (two circles) -->
@@ -135,6 +141,7 @@ const categories = [
 **Concept**: Hair dye brush or color palette on hair
 
 **SVG Path Description**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Brush handle -->
@@ -175,6 +182,7 @@ const categories = [
 **Concept**: Hand with painted nails
 
 **SVG Path Description**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Hand palm -->
@@ -222,6 +230,7 @@ const categories = [
 **Concept**: Foot with painted toenails
 
 **SVG Path Description**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Foot outline (side view) -->
@@ -264,6 +273,7 @@ const categories = [
 **Concept**: Lipstick or makeup brush
 
 **SVG Path Description (Lipstick)**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Lipstick tube -->
@@ -281,6 +291,7 @@ const categories = [
 ```
 
 **Alternative (Makeup Brush)**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Brush handle -->
@@ -305,6 +316,7 @@ const categories = [
 **Concept**: Hands massaging or lotus flower (spa symbol)
 
 **SVG Path Description (Hands)**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Person's back/shoulders -->
@@ -322,6 +334,7 @@ const categories = [
 ```
 
 **Alternative (Lotus Flower)**:
+
 ```svg
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <!-- Center -->
@@ -519,7 +532,7 @@ import {
   IconPedicure,
   IconMakeup,
   IconMassage,
-  IconSpa
+  IconSpa,
 } from "@/components/icons/service-icons";
 
 const categories = [
@@ -554,6 +567,7 @@ const categories = [
 **Illustration Concept**: Empty storefront or map with location pin
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- Map background -->
@@ -581,6 +595,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: `t("marketplace.empty.noSalons.title")` - "No salons found"
 - Description: `t("marketplace.empty.noSalons.description")` - "Try adjusting your search or filters"
 - CTA: `t("marketplace.empty.noSalons.cta")` - "Clear filters"
@@ -594,6 +609,7 @@ const categories = [
 **Illustration Concept**: Empty calendar with welcoming gesture
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- Calendar -->
@@ -617,6 +633,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: `t("marketplace.empty.noBookings.title")` - "No bookings yet"
 - Description: `t("marketplace.empty.noBookings.description")` - "Book your first appointment to get started"
 - CTA: `t("marketplace.empty.noBookings.cta")` - "Browse salons"
@@ -630,6 +647,7 @@ const categories = [
 **Illustration Concept**: Empty service menu
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- Menu board -->
@@ -652,6 +670,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: `t("marketplace.empty.noServices.title")` - "No services available"
 - Description: `t("marketplace.empty.noServices.description")` - "This salon hasn't added services yet"
 
@@ -662,6 +681,7 @@ const categories = [
 **Scenario**: Salon/Master has no reviews
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- Review card (empty) -->
@@ -684,6 +704,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: `t("marketplace.empty.noReviews.title")` - "No reviews yet"
 - Description: `t("marketplace.empty.noReviews.description")` - "Be the first to leave a review"
 
@@ -694,6 +715,7 @@ const categories = [
 **Scenario**: Search query returns no results
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- Large magnifying glass -->
@@ -710,6 +732,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: `t("marketplace.empty.noSearchResults.title")` - "No results for '{query}'"
 - Description: `t("marketplace.empty.noSearchResults.description")` - "Try a different search term"
 
@@ -732,6 +755,7 @@ const categories = [
 **Illustration Concept**: Lost person with map, or broken compass
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 300 300" fill="none">
   <!-- Large "404" text (decorative) -->
@@ -754,6 +778,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: "Page Not Found"
 - Description: "The page you're looking for doesn't exist or has been moved"
 - CTA: "Go Home" (link to /)
@@ -765,6 +790,7 @@ const categories = [
 **Illustration Concept**: Broken server/wrench, maintenance
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 300 300" fill="none">
   <!-- Server box (broken) -->
@@ -791,6 +817,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: "Something Went Wrong"
 - Description: "We're experiencing technical difficulties. Please try again later."
 - CTA: "Refresh Page" / "Go Home"
@@ -802,6 +829,7 @@ const categories = [
 **Illustration Concept**: Disconnected wifi/plug
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 200 200" fill="none">
   <!-- WiFi symbol (disconnected) -->
@@ -818,6 +846,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: "Connection Lost"
 - Description: "Check your internet connection and try again"
 - CTA: "Retry"
@@ -829,6 +858,7 @@ const categories = [
 ### User Flow
 
 **Onboarding Steps** (for new users):
+
 1. **Welcome** - Introduce AURELLE
 2. **Browse Salons** - Discover nearby salons
 3. **Book Easily** - Simple booking process
@@ -841,6 +871,7 @@ const categories = [
 **Illustration Concept**: Welcoming beauty professional
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 300 300" fill="none">
   <!-- Background gradient circle -->
@@ -871,6 +902,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: "Welcome to AURELLE"
 - Description: "Your beauty marketplace"
 
@@ -897,6 +929,7 @@ const categories = [
 **Illustration Concept**: Phone with notification bell
 
 **SVG Illustration**:
+
 ```svg
 <svg viewBox="0 0 300 300" fill="none">
   <!-- Phone -->
@@ -920,6 +953,7 @@ const categories = [
 ```
 
 **Text**:
+
 - Title: "Never Miss an Appointment"
 - Description: "Get reminders before your bookings"
 
@@ -940,6 +974,7 @@ const categories = [
 **Concept**: Abstract beauty elements (scissors, makeup, flowers, etc.) in elegant composition
 
 **SVG Illustration** (Large format: 1200x600):
+
 ```svg
 <svg viewBox="0 0 1200 600" fill="none">
   <!-- Background gradient -->
@@ -981,11 +1016,13 @@ const categories = [
 ### Option 2: Photo + SVG Overlay
 
 **Keep existing photo**, add decorative SVG overlay with:
+
 - Subtle gradient overlay
 - Floating beauty icons
 - Geometric shapes
 
 **Example Overlay**:
+
 ```typescript
 <div className="relative">
   <img src={heroImage} alt="Beauty salon" className="w-full h-96 object-cover" />
@@ -1016,6 +1053,7 @@ const categories = [
 ### Phase 1: Custom Service Icons (Week 1)
 
 1. **Create icon component file**:
+
    ```bash
    touch client/src/components/icons/service-icons.tsx
    ```
@@ -1037,11 +1075,13 @@ const categories = [
 ### Phase 2: Empty State Components (Week 2)
 
 1. **Create empty state component file**:
+
    ```bash
    touch client/src/components/empty-states.tsx
    ```
 
 2. **Implement base `EmptyState` component**:
+
 ```typescript
 import React from "react";
 import { Button } from "@/components/ui/button";
@@ -1099,6 +1139,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 ### Phase 4: Onboarding (Week 4)
 
 1. **Create onboarding component**:
+
    ```bash
    touch client/src/components/onboarding-carousel.tsx
    ```
@@ -1220,34 +1261,40 @@ Repeat for Russian and Uzbek translations.
 ## Acceptance Criteria
 
 ✅ **Icon Set Complete**
+
 - 6 custom service category icons created
 - Icons match Lucide React style (2px stroke, outline)
 - Icons work at small (16px) and large (64px) sizes
 - Icons integrated in [home.tsx](client/src/pages/home.tsx)
 
 ✅ **Empty States**
+
 - 5 empty state illustrations created
 - EmptyState component implemented
 - Applied to: No salons, No bookings, No services, No reviews, No search results
 - All have helpful text + optional CTA
 
 ✅ **Error States**
+
 - 404 page redesigned with illustration
 - 500 error page created
 - Network error illustration
 - Error boundary updated
 
 ✅ **Onboarding**
+
 - 4 onboarding slides with illustrations
 - Carousel component created
 - Shows on first visit
 
 ✅ **Hero Section**
+
 - Hero illustration OR photo overlay implemented
 - Responsive (mobile/desktop)
 - Maintains brand aesthetic
 
 ✅ **Professional Appearance**
+
 - Consistent illustration style across all components
 - Brand colors used (primary, accent)
 - Smooth, polished animations (optional)
@@ -1258,16 +1305,19 @@ Repeat for Russian and Uzbek translations.
 ## Resources
 
 **Icon Design Tools**:
+
 - [Figma](https://figma.com) - Vector design
 - [Lucide Icons](https://lucide.dev/) - Reference for style matching
 - [Heroicons](https://heroicons.com/) - Inspiration
 
 **Illustration Tools**:
+
 - [unDraw](https://undraw.co/) - Free illustrations (inspiration)
 - [Storyset](https://storyset.com/) - Animated illustrations
 - [Figma Community](https://www.figma.com/community) - Free templates
 
 **SVG Optimization**:
+
 - [SVGOMG](https://jakearchibald.github.io/svgomg/) - Optimize SVG files
 - [SVGR](https://react-svgr.com/) - Convert SVG to React components
 
@@ -1312,6 +1362,7 @@ This iconography and illustration system provides AURELLE with:
 5. **Hero Enhancement**: Professional hero section illustration/overlay
 
 **Expected Impact**:
+
 - 📈 **Improved Visual Appeal**: Professional, cohesive design
 - 😊 **Better UX**: Clear empty/error states reduce confusion
 - 🎨 **Brand Identity**: Custom icons differentiate AURELLE
@@ -1330,6 +1381,7 @@ This iconography and illustration system provides AURELLE with:
 ---
 
 **Next Steps**:
+
 1. Review and approve icon designs
 2. Create icons in Figma (export to React components)
 3. Implement empty state components

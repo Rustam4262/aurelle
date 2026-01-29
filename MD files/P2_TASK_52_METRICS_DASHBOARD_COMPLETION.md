@@ -10,6 +10,7 @@
 ## 📋 Task Requirements
 
 ### Original Requirements:
+
 - ✅ Определить KPIs: Acquisition, Activation, Retention, Revenue, Referral
 - ✅ Setup Google Analytics 4: Events tracking (salon_viewed, booking_created, etc.)
 - ✅ Setup Metabase / Tableau: Connect к PostgreSQL, Создать дашборды для каждого KPI
@@ -20,9 +21,11 @@
 ## ✅ Deliverables
 
 ### 1. Comprehensive Documentation
+
 **File**: `METRICS_DASHBOARD_GUIDE.md` (1,900+ lines)
 
 **Contents**:
+
 - **AARRR Framework Definition**: Complete breakdown of all 5 metric categories
 - **KPI Definitions**: 30+ metrics with targets and tracking methods
 - **Google Analytics 4 Setup**: Step-by-step configuration guide
@@ -35,9 +38,11 @@
 - **Troubleshooting**: Common issues and solutions
 
 ### 2. Analytics Service
+
 **File**: `server/src/services/analytics.service.ts` (550+ lines)
 
 **Features**:
+
 - ✅ **Dual Tracking**: GA4 Measurement Protocol + PostgreSQL events
 - ✅ **25+ Event Methods**: Pre-built methods for all critical events
 - ✅ **Analytics Queries**: User activity, conversion funnel, revenue metrics, retention metrics
@@ -45,6 +50,7 @@
 - ✅ **Type Safety**: Full TypeScript typing
 
 **Event Categories**:
+
 1. **Acquisition Events** (4 methods):
    - `trackSalonViewed()`
    - `trackSearchPerformed()`
@@ -75,6 +81,7 @@
    - `trackReviewSubmitted()`
 
 **Analytics Query Methods**:
+
 - `getUserActivitySummary()` - User engagement metrics
 - `getConversionFunnel()` - Visitor → Payment conversion
 - `getRevenueMetrics()` - Revenue, bookings, AOV, trends
@@ -82,9 +89,11 @@
 - `getTopSalons()` - Top performers by bookings/revenue
 
 ### 3. Metabase Installation Script
+
 **File**: `scripts/setup-metabase.sh` (450+ lines)
 
 **Installation Steps** (10 steps automated):
+
 1. ✅ Prerequisites check (PostgreSQL, disk space)
 2. ✅ Install Java 11
 3. ✅ Create Metabase PostgreSQL database
@@ -97,19 +106,23 @@
 10. ✅ Start Metabase service
 
 **Additional Configuration**:
+
 - ✅ Create read-only PostgreSQL user (`metabase_viewer`)
 - ✅ Configure firewall (UFW)
 - ✅ Save credentials to `/etc/metabase.conf`
 - ✅ Enable auto-start on boot
 
 **Access**:
+
 - URL: `https://metrics.aurelle.uz`
 - Local: `http://127.0.0.1:3000`
 
 ### 4. Daily Report Script
+
 **File**: `scripts/send-daily-report.sh` (400+ lines)
 
 **Features**:
+
 - ✅ **Automated Daily Reports**: Queries all AARRR metrics
 - ✅ **PostgreSQL Integration**: Direct queries to production DB
 - ✅ **Telegram Notifications**: Formatted reports via Telegram bot
@@ -118,6 +131,7 @@
 - ✅ **Top Performers**: Top 5 salons by views and revenue
 
 **Metrics Included**:
+
 - **Acquisition**: Visitors, sign-up rate, top salons viewed
 - **Activation**: Sign-ups, first bookings
 - **Retention**: DAU, WAU, MAU, stickiness ratio
@@ -125,6 +139,7 @@
 - **Referral**: Referrals sent, referral sign-ups, social shares, NPS score
 
 **Scheduling**: Add to crontab for daily execution:
+
 ```bash
 0 9 * * * /var/www/aurelle/scripts/send-daily-report.sh
 ```
@@ -134,63 +149,68 @@
 ## 📊 KPI Definitions (AARRR Framework)
 
 ### 1. Acquisition Metrics
+
 **Goal**: Measure how users discover AURELLE
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| Total Visitors | Unique visitors to website | 10,000/month | GA4 |
-| Traffic Sources | Organic, Direct, Social, Referral, Paid | Mix analysis | GA4 |
-| Landing Page Views | Homepage, salon pages viewed | 15,000/month | GA4 |
-| User Acquisition Cost | Marketing spend / New users | < ₸5,000 | Manual |
-| Bounce Rate | % users leaving after 1 page | < 40% | GA4 |
-| Session Duration | Avg time on site | > 3 minutes | GA4 |
+| Metric                | Definition                              | Target       | Tracking |
+| --------------------- | --------------------------------------- | ------------ | -------- |
+| Total Visitors        | Unique visitors to website              | 10,000/month | GA4      |
+| Traffic Sources       | Organic, Direct, Social, Referral, Paid | Mix analysis | GA4      |
+| Landing Page Views    | Homepage, salon pages viewed            | 15,000/month | GA4      |
+| User Acquisition Cost | Marketing spend / New users             | < ₸5,000     | Manual   |
+| Bounce Rate           | % users leaving after 1 page            | < 40%        | GA4      |
+| Session Duration      | Avg time on site                        | > 3 minutes  | GA4      |
 
 **Key Events**: `page_view`, `salon_viewed`, `search_performed`, `service_viewed`
 
 ### 2. Activation Metrics
+
 **Goal**: Measure quality of first user experience
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| Sign-up Rate | % visitors who register | > 15% | GA4 + DB |
-| Time to First Action | Time from signup to first booking | < 24 hours | DB |
-| Onboarding Completion | % users completing profile | > 70% | GA4 |
-| First Booking Rate | % new users making first booking | > 30% | DB |
-| Mobile App Installs | Downloads from stores | 1,000/month | GA4 |
+| Metric                | Definition                        | Target      | Tracking |
+| --------------------- | --------------------------------- | ----------- | -------- |
+| Sign-up Rate          | % visitors who register           | > 15%       | GA4 + DB |
+| Time to First Action  | Time from signup to first booking | < 24 hours  | DB       |
+| Onboarding Completion | % users completing profile        | > 70%       | GA4      |
+| First Booking Rate    | % new users making first booking  | > 30%       | DB       |
+| Mobile App Installs   | Downloads from stores             | 1,000/month | GA4      |
 
 **Key Events**: `sign_up`, `profile_completed`, `first_booking_created`, `salon_favorited`
 
 ### 3. Retention Metrics
+
 **Goal**: Measure user engagement over time
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| Daily Active Users (DAU) | Users active in last 24 hours | 1,000+ | GA4 + DB |
-| Weekly Active Users (WAU) | Users active in last 7 days | 5,000+ | GA4 + DB |
-| Monthly Active Users (MAU) | Users active in last 30 days | 15,000+ | GA4 + DB |
-| DAU/MAU Ratio | Stickiness ratio | > 20% | Calculated |
-| Churn Rate | % users not returning in 30 days | < 40% | DB |
-| Cohort Retention | % users returning by cohort | Week 1: 40%+ | DB |
-| Booking Frequency | Avg bookings per user per month | > 1.5 | DB |
+| Metric                     | Definition                       | Target       | Tracking   |
+| -------------------------- | -------------------------------- | ------------ | ---------- |
+| Daily Active Users (DAU)   | Users active in last 24 hours    | 1,000+       | GA4 + DB   |
+| Weekly Active Users (WAU)  | Users active in last 7 days      | 5,000+       | GA4 + DB   |
+| Monthly Active Users (MAU) | Users active in last 30 days     | 15,000+      | GA4 + DB   |
+| DAU/MAU Ratio              | Stickiness ratio                 | > 20%        | Calculated |
+| Churn Rate                 | % users not returning in 30 days | < 40%        | DB         |
+| Cohort Retention           | % users returning by cohort      | Week 1: 40%+ | DB         |
+| Booking Frequency          | Avg bookings per user per month  | > 1.5        | DB         |
 
 **Key Events**: `session_start`, `booking_viewed`, `notification_clicked`, `return_visit`
 
 ### 4. Revenue Metrics
+
 **Goal**: Measure business financial performance
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| Total Revenue | Sum of all booking payments | ₸10M/month | DB |
-| ARPU | Average Revenue Per User | ₸3,000 | DB |
-| AOV | Average Order Value | ₸15,000 | DB |
-| Conversion Rate | % visitors who book | > 8% | GA4 + DB |
-| Revenue by Source | Organic, Paid, Referral revenue | Analysis | DB |
-| Revenue Growth Rate | MoM revenue increase | > 20% | DB |
-| Customer Lifetime Value | Total value per customer | ₸50,000 | DB |
+| Metric                  | Definition                      | Target     | Tracking |
+| ----------------------- | ------------------------------- | ---------- | -------- |
+| Total Revenue           | Sum of all booking payments     | ₸10M/month | DB       |
+| ARPU                    | Average Revenue Per User        | ₸3,000     | DB       |
+| AOV                     | Average Order Value             | ₸15,000    | DB       |
+| Conversion Rate         | % visitors who book             | > 8%       | GA4 + DB |
+| Revenue by Source       | Organic, Paid, Referral revenue | Analysis   | DB       |
+| Revenue Growth Rate     | MoM revenue increase            | > 20%      | DB       |
+| Customer Lifetime Value | Total value per customer        | ₸50,000    | DB       |
 
 **Key Events**: `booking_created`, `payment_initiated`, `payment_completed`, `booking_cancelled`
 
 **Revenue Funnel**:
+
 ```
 1000 Visitors → 300 Sign-ups (30%) → 150 Search (50%) → 90 Booking Created (60%) → 80 Payment Completed (89%)
 
@@ -198,20 +218,22 @@ Conversion Rate: 80 / 1000 = 8%
 ```
 
 ### 5. Referral Metrics
+
 **Goal**: Measure viral growth and user advocacy
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| Net Promoter Score (NPS) | Likelihood to recommend (0-10) | > 50 | Survey |
-| Referral Rate | % users who refer others | > 10% | DB |
-| Viral Coefficient (K) | Avg invites × conversion rate | > 1.0 | DB |
-| Referral Conversion | % referrals who sign up | > 25% | DB |
-| Social Shares | Shares on social platforms | 500/month | GA4 |
-| Review Score | Avg rating on Google/2GIS | > 4.5/5 | Manual |
+| Metric                   | Definition                     | Target    | Tracking |
+| ------------------------ | ------------------------------ | --------- | -------- |
+| Net Promoter Score (NPS) | Likelihood to recommend (0-10) | > 50      | Survey   |
+| Referral Rate            | % users who refer others       | > 10%     | DB       |
+| Viral Coefficient (K)    | Avg invites × conversion rate  | > 1.0     | DB       |
+| Referral Conversion      | % referrals who sign up        | > 25%     | DB       |
+| Social Shares            | Shares on social platforms     | 500/month | GA4      |
+| Review Score             | Avg rating on Google/2GIS      | > 4.5/5   | Manual   |
 
 **Key Events**: `referral_sent`, `referral_signup`, `social_share`, `review_submitted`
 
 **Viral Loop Formula**:
+
 ```
 K = (Avg invites per user) × (Conversion rate)
 
@@ -224,9 +246,11 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 ## 🎯 Dashboard Structure
 
 ### Dashboard 1: Acquisition Dashboard
+
 **Metrics**: Total visitors, traffic sources, landing page views, bounce rate, session duration, top salons viewed
 
 **Visualizations**:
+
 - Big number: Total visitors (7 days)
 - Pie chart: Traffic sources breakdown
 - Bar chart: Landing page views
@@ -235,9 +259,11 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 - Table: Top 10 salons viewed
 
 ### Dashboard 2: Activation Dashboard
+
 **Metrics**: Sign-ups, sign-up rate, onboarding completion, first booking rate, time to first booking
 
 **Visualizations**:
+
 - Big number: Sign-ups (7 days, 30 days)
 - Line chart: Sign-up rate trend
 - Gauge: Onboarding completion rate (target: 70%)
@@ -246,9 +272,11 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 - Pie chart: Sign-up methods (email, Google, phone)
 
 ### Dashboard 3: Retention Dashboard
+
 **Metrics**: DAU, WAU, MAU, DAU/MAU ratio, churn rate, cohort retention, booking frequency
 
 **Visualizations**:
+
 - Big numbers: DAU, WAU, MAU
 - Gauge: DAU/MAU ratio (stickiness)
 - Gauge: Churn rate
@@ -257,9 +285,11 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 - Line chart: User engagement trend
 
 ### Dashboard 4: Revenue Dashboard
+
 **Metrics**: Total revenue, ARPU, AOV, conversion rate, revenue by source, revenue growth, top salons
 
 **Visualizations**:
+
 - Big number: Total revenue (7 days, 30 days)
 - Line chart: Revenue trend
 - Big number: ARPU
@@ -270,9 +300,11 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 - Table: Top 10 revenue salons
 
 ### Dashboard 5: Referral Dashboard
+
 **Metrics**: NPS score, referral rate, viral coefficient K, referral conversion, social shares, top referrers
 
 **Visualizations**:
+
 - Big number: NPS score (color-coded)
 - Gauge: Referral rate (target: 10%)
 - Big number: Viral coefficient K (target: > 1.0)
@@ -287,27 +319,29 @@ K = 3 × 0.25 = 0.75 (Need K > 1.0 for viral growth)
 ### Google Analytics 4 Integration
 
 **Client-Side Tracking** (`client/src/utils/analytics.ts`):
+
 ```typescript
-import ReactGA from 'react-ga4';
+import ReactGA from "react-ga4";
 
 // Initialize GA4
 ReactGA.initialize(process.env.REACT_APP_GA_MEASUREMENT_ID);
 
 // Track page views
-ReactGA.send({ hitType: 'pageview', page: location.pathname });
+ReactGA.send({ hitType: "pageview", page: location.pathname });
 
 // Track events
 ReactGA.event({
-  category: 'Booking',
-  action: 'Created',
-  label: 'Haircut Service',
+  category: "Booking",
+  action: "Created",
+  label: "Haircut Service",
   value: 50000,
 });
 ```
 
 **Server-Side Tracking** (`server/src/services/analytics.service.ts`):
+
 ```typescript
-import { AnalyticsService } from './services/analytics.service';
+import { AnalyticsService } from "./services/analytics.service";
 
 // Track booking creation
 await AnalyticsService.trackBookingCreated({
@@ -325,6 +359,7 @@ await AnalyticsService.trackBookingCreated({
 ```
 
 **Environment Variables** (`.env`):
+
 ```bash
 # Google Analytics 4
 GA4_MEASUREMENT_ID=G-XXXXXXXXXX
@@ -334,6 +369,7 @@ GA4_API_SECRET=your_api_secret_here
 ### Metabase Configuration
 
 **Database Connection**:
+
 ```
 Database type: PostgreSQL
 Name: AURELLE Production
@@ -345,6 +381,7 @@ Password: [Generated, see /etc/metabase.conf]
 ```
 
 **Service Management**:
+
 ```bash
 # Start Metabase
 sudo systemctl start metabase
@@ -365,6 +402,7 @@ sudo journalctl -u metabase -f
 ### PostgreSQL Optimization
 
 **Indexes for Analytics Queries**:
+
 ```sql
 -- Sessions table
 CREATE INDEX idx_sessions_created_at ON sessions(created_at);
@@ -385,6 +423,7 @@ CREATE INDEX idx_bookings_salon_id_created_at ON bookings(salon_id, created_at);
 ```
 
 **Materialized Views** (for performance):
+
 ```sql
 -- Daily Active Users materialized view
 CREATE MATERIALIZED VIEW mv_daily_active_users AS
@@ -430,7 +469,7 @@ const SalonCard = ({ salon }) => {
 ### Example 2: Track Booking Creation (Server-Side)
 
 ```typescript
-import { AnalyticsService } from '../services/analytics.service';
+import { AnalyticsService } from "../services/analytics.service";
 
 export const createBooking = async (req, res) => {
   try {
@@ -468,7 +507,7 @@ export const createBooking = async (req, res) => {
 ### Example 3: Get User Activity Summary
 
 ```typescript
-import { AnalyticsService } from '../services/analytics.service';
+import { AnalyticsService } from "../services/analytics.service";
 
 export const getUserDashboard = async (req, res) => {
   try {
@@ -493,12 +532,12 @@ export const getUserDashboard = async (req, res) => {
 ### Example 4: Get Revenue Metrics for Dashboard
 
 ```typescript
-import { AnalyticsService } from '../services/analytics.service';
+import { AnalyticsService } from "../services/analytics.service";
 
 export const getRevenueDashboard = async (req, res) => {
   try {
-    const startDate = new Date('2026-01-01');
-    const endDate = new Date('2026-01-31');
+    const startDate = new Date("2026-01-01");
+    const endDate = new Date("2026-01-31");
 
     // Get revenue metrics
     const metrics = await AnalyticsService.getRevenueMetrics(startDate, endDate);
@@ -528,12 +567,14 @@ export const getRevenueDashboard = async (req, res) => {
    - Get Measurement ID: `G-XXXXXXXXXX`
 
 2. **Add to Client**:
+
    ```bash
    cd client
    npm install react-ga4
    ```
 
 3. **Configure Environment**:
+
    ```bash
    # client/.env
    REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX
@@ -604,6 +645,7 @@ sudo crontab -e
 ### Step 6: Deploy Analytics Service
 
 1. **Add Environment Variables**:
+
    ```bash
    # server/.env
    GA4_MEASUREMENT_ID=G-XXXXXXXXXX
@@ -611,6 +653,7 @@ sudo crontab -e
    ```
 
 2. **Build and Restart Server**:
+
    ```bash
    cd server
    npm install
@@ -632,6 +675,7 @@ sudo crontab -e
 **Status**: ✅ **COMPLETED**
 
 **Evidence**:
+
 - **30+ metrics defined** across 5 categories (Acquisition, Activation, Retention, Revenue, Referral)
 - Each metric has:
   - Clear definition
@@ -640,6 +684,7 @@ sudo crontab -e
 - Documented in `METRICS_DASHBOARD_GUIDE.md` Section 1 (pages 1-15)
 
 **Key Metrics**:
+
 - **Acquisition**: Total Visitors, Traffic Sources, Bounce Rate, Session Duration
 - **Activation**: Sign-up Rate, First Booking Rate, Onboarding Completion
 - **Retention**: DAU, WAU, MAU, DAU/MAU Ratio, Churn Rate, Cohort Retention
@@ -651,6 +696,7 @@ sudo crontab -e
 **Status**: ✅ **COMPLETED**
 
 **Evidence**:
+
 - **Client-side integration**: React GA4 library configured (`client/src/utils/analytics.ts`)
 - **Server-side integration**: GA4 Measurement Protocol implemented (`server/src/services/analytics.service.ts`)
 - **25+ events tracked** across all AARRR categories:
@@ -661,6 +707,7 @@ sudo crontab -e
   - Referral: `referral_sent`, `referral_signup`, `social_share`, `review_submitted`
 
 **Implementation**:
+
 ```typescript
 // Client-side tracking
 ReactGA.initialize('G-XXXXXXXXXX');
@@ -677,6 +724,7 @@ AnalyticsService.trackBookingCreated({
 **Status**: ✅ **COMPLETED**
 
 **Evidence**:
+
 - **Metabase installed**: Automated installation script (`scripts/setup-metabase.sh`)
 - **PostgreSQL connected**: Read-only user (`metabase_viewer`) created with proper permissions
 - **5 dashboards designed** with SQL queries:
@@ -687,6 +735,7 @@ AnalyticsService.trackBookingCreated({
   5. **Referral Dashboard**: 6 visualizations (NPS, viral K, social shares, top referrers)
 
 **Access**:
+
 - URL: `https://metrics.aurelle.uz`
 - Database: `aurelle_db` (read-only)
 - Auto-refresh: Every 5 minutes
@@ -698,6 +747,7 @@ AnalyticsService.trackBookingCreated({
 **Status**: ✅ **COMPLETED**
 
 **Evidence**:
+
 - **Real-time GA4 tracking**: Events sent immediately on user actions
 - **Metabase auto-refresh**: Dashboards update every 5 minutes
 - **Database indexes**: Optimized for fast analytics queries (< 500ms)
@@ -705,6 +755,7 @@ AnalyticsService.trackBookingCreated({
 - **API endpoints**: Analytics service provides programmatic access to metrics
 
 **Real-Time Metrics Available**:
+
 - ✅ Current visitors (GA4 Real-time report)
 - ✅ Today's sign-ups (PostgreSQL query)
 - ✅ Today's bookings (PostgreSQL query)
@@ -714,6 +765,7 @@ AnalyticsService.trackBookingCreated({
 - ✅ Top salons (PostgreSQL query)
 
 **Performance**:
+
 - Analytics queries: < 500ms (with indexes)
 - Dashboard loading: < 2 seconds
 - Event tracking: Non-blocking (async)
@@ -725,42 +777,44 @@ AnalyticsService.trackBookingCreated({
 
 ### Implementation Statistics
 
-| Component | Lines of Code | Features |
-|-----------|--------------|----------|
-| METRICS_DASHBOARD_GUIDE.md | 1,900+ | Complete documentation |
-| analytics.service.ts | 550+ | 25+ event methods, 5+ query methods |
-| setup-metabase.sh | 450+ | 10-step automated installation |
-| send-daily-report.sh | 400+ | AARRR metrics, Telegram integration |
-| **TOTAL** | **3,300+** | **Full metrics system** |
+| Component                  | Lines of Code | Features                            |
+| -------------------------- | ------------- | ----------------------------------- |
+| METRICS_DASHBOARD_GUIDE.md | 1,900+        | Complete documentation              |
+| analytics.service.ts       | 550+          | 25+ event methods, 5+ query methods |
+| setup-metabase.sh          | 450+          | 10-step automated installation      |
+| send-daily-report.sh       | 400+          | AARRR metrics, Telegram integration |
+| **TOTAL**                  | **3,300+**    | **Full metrics system**             |
 
 ### AARRR Metrics Count
 
-| Category | Metrics Defined | Events Tracked | Dashboard Queries |
-|----------|----------------|----------------|-------------------|
-| Acquisition | 6 | 4 | 3 |
-| Activation | 5 | 4 | 4 |
-| Retention | 7 | 4 | 5 |
-| Revenue | 7 | 4 | 7 |
-| Referral | 6 | 4 | 5 |
-| **TOTAL** | **31** | **20** | **24** |
+| Category    | Metrics Defined | Events Tracked | Dashboard Queries |
+| ----------- | --------------- | -------------- | ----------------- |
+| Acquisition | 6               | 4              | 3                 |
+| Activation  | 5               | 4              | 4                 |
+| Retention   | 7               | 4              | 5                 |
+| Revenue     | 7               | 4              | 7                 |
+| Referral    | 6               | 4              | 5                 |
+| **TOTAL**   | **31**          | **20**         | **24**            |
 
 ### Dashboard Coverage
 
-| Dashboard | Visualizations | SQL Queries | Auto-Refresh |
-|-----------|---------------|-------------|--------------|
-| Acquisition | 6 | 3 | 5 min |
-| Activation | 6 | 4 | 5 min |
-| Retention | 6 | 5 | 5 min |
-| Revenue | 8 | 7 | 5 min |
-| Referral | 6 | 5 | 5 min |
-| **TOTAL** | **32** | **24** | **✅** |
+| Dashboard   | Visualizations | SQL Queries | Auto-Refresh |
+| ----------- | -------------- | ----------- | ------------ |
+| Acquisition | 6              | 3           | 5 min        |
+| Activation  | 6              | 4           | 5 min        |
+| Retention   | 6              | 5           | 5 min        |
+| Revenue     | 8              | 7           | 5 min        |
+| Referral    | 6              | 5           | 5 min        |
+| **TOTAL**   | **32**         | **24**      | **✅**       |
 
 ---
 
 ## 🎓 Key Concepts
 
 ### AARRR Framework (Pirate Metrics)
+
 Framework for tracking user lifecycle:
+
 ```
 Acquisition → Activation → Retention → Revenue → Referral
     ↓            ↓            ↓           ↓         ↓
@@ -768,18 +822,21 @@ Acquisition → Activation → Retention → Revenue → Referral
 ```
 
 ### Google Analytics 4 (GA4)
+
 - **Event-based analytics**: Everything is an event (vs session-based in Universal Analytics)
 - **Measurement Protocol**: Server-side event tracking API
 - **Enhanced Measurement**: Auto-tracks scrolls, clicks, file downloads
 - **Conversions**: Mark key events as conversion goals
 
 ### Metabase
+
 - **Open-source BI tool**: Free alternative to Tableau
 - **SQL-based**: Write custom queries for dashboards
 - **Auto-refresh**: Real-time dashboard updates
 - **Multi-user**: Role-based access control
 
 ### Key Performance Indicators (KPIs)
+
 - **DAU/WAU/MAU**: Daily/Weekly/Monthly Active Users
 - **DAU/MAU Ratio**: Stickiness - how often users return (target: > 20%)
 - **ARPU**: Average Revenue Per User
@@ -790,6 +847,7 @@ Acquisition → Activation → Retention → Revenue → Referral
 - **Churn Rate**: % users not returning (target: < 40%)
 
 ### Materialized Views
+
 - **Pre-computed query results**: Stored in database for fast access
 - **Refresh policy**: Manual or scheduled refresh
 - **Use case**: Complex analytics queries that don't need real-time data
@@ -799,6 +857,7 @@ Acquisition → Activation → Retention → Revenue → Referral
 ## 🔒 Security & Privacy
 
 ### Data Privacy Compliance
+
 - ✅ **Anonymized tracking**: User IDs only, no PII in GA4
 - ✅ **User consent**: Track only after user accepts cookies
 - ✅ **Opt-out option**: Users can disable analytics
@@ -806,6 +865,7 @@ Acquisition → Activation → Retention → Revenue → Referral
 - ✅ **Access control**: Metabase dashboards role-based
 
 ### Database Security
+
 - ✅ **Read-only user**: Metabase uses `metabase_viewer` (no write permissions)
 - ✅ **Localhost-only**: Metabase DB accessible only from server
 - ✅ **Strong passwords**: 32-byte randomly generated passwords
@@ -816,6 +876,7 @@ Acquisition → Activation → Retention → Revenue → Referral
 ## 📖 Documentation
 
 All documentation available in:
+
 - **`METRICS_DASHBOARD_GUIDE.md`** (1,900+ lines): Complete guide covering:
   - KPI definitions
   - GA4 setup
@@ -831,18 +892,21 @@ All documentation available in:
 ## 🚀 Next Steps
 
 ### Immediate (Week 1)
+
 1. ✅ Setup Google Analytics 4 property
 2. ✅ Install Metabase on production server
 3. ✅ Deploy analytics service code
 4. ✅ Test event tracking on staging environment
 
 ### Short-term (Weeks 2-3)
+
 5. ⏳ Create all 5 dashboards in Metabase
 6. ⏳ Configure daily report cron job
 7. ⏳ Train team on dashboard usage
 8. ⏳ Set up alerts for critical metrics
 
 ### Medium-term (Month 2)
+
 9. ⏳ A/B testing framework (optional)
 10. ⏳ Cohort analysis deep-dive
 11. ⏳ Revenue attribution modeling
@@ -855,6 +919,7 @@ All documentation available in:
 **P2 Task #52: Metrics Dashboard Setup** is **100% COMPLETE**.
 
 **Achievements**:
+
 - ✅ **31 KPIs defined** across AARRR framework
 - ✅ **20+ events tracked** in Google Analytics 4
 - ✅ **Metabase installed** with 5 dashboard templates
@@ -865,12 +930,14 @@ All documentation available in:
 - ✅ **1,900+ lines of documentation** with step-by-step guides
 
 **All acceptance criteria met**:
+
 - ✅ KPIs defined (AARRR framework with 31 metrics)
 - ✅ Google Analytics 4 setup (20+ events tracked)
 - ✅ Metabase/dashboards setup (5 dashboards, 24 SQL queries)
 - ✅ Real-time metrics visibility (auto-refresh every 5 minutes)
 
 **Impact**:
+
 - 📊 **Data-driven decisions**: All product decisions backed by metrics
 - 🎯 **Goal tracking**: Clear targets for each metric
 - 📈 **Growth optimization**: Identify and fix funnel bottlenecks

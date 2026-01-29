@@ -10,7 +10,7 @@ export interface AuditLogParams {
   details?: Record<string, any>;
   ip?: string;
   userAgent?: string;
-  result: 'success' | 'failure';
+  result: "success" | "failure";
   error?: string;
 }
 
@@ -48,7 +48,7 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
     await db.insert(auditLogs).values(auditLog);
   } catch (error) {
     // Don't throw - audit logging should not break main flow
-    console.error('[AuditLog] Failed to log audit event:', error, params);
+    console.error("[AuditLog] Failed to log audit event:", error, params);
   }
 }
 

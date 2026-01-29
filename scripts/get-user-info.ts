@@ -29,18 +29,22 @@ async function getUserInfo(emailPattern: string) {
       console.log(`${index + 1}. User Information:`);
       console.log(`   📧 Email: ${user.email}`);
       console.log(`   🆔 ID: ${user.id}`);
-      console.log(`   👤 Name: ${user.firstName || 'N/A'} ${user.lastName || 'N/A'}`);
-      console.log(`   📞 Phone: ${user.phone || 'N/A'}`);
-      console.log(`   🏙️  City: ${user.city || 'N/A'}`);
-      console.log(`   👔 Role: ${user.role || 'N/A'}`);
-      console.log(`   🔐 Has Password: ${user.passwordHash ? 'Yes (local auth)' : 'No (OAuth only)'}`);
+      console.log(`   👤 Name: ${user.firstName || "N/A"} ${user.lastName || "N/A"}`);
+      console.log(`   📞 Phone: ${user.phone || "N/A"}`);
+      console.log(`   🏙️  City: ${user.city || "N/A"}`);
+      console.log(`   👔 Role: ${user.role || "N/A"}`);
+      console.log(
+        `   🔐 Has Password: ${user.passwordHash ? "Yes (local auth)" : "No (OAuth only)"}`,
+      );
       console.log(`   📅 Created: ${user.createdAt}`);
       console.log(`   🔄 Updated: ${user.updatedAt}`);
-      console.log('');
+      console.log("");
     });
 
     console.log(`\n⚠️  NOTE: Passwords are hashed and cannot be retrieved`);
-    console.log(`To reset a password, use: tsx scripts/reset-user-password.ts <email> <new-password>`);
+    console.log(
+      `To reset a password, use: tsx scripts/reset-user-password.ts <email> <new-password>`,
+    );
 
     process.exit(0);
   } catch (error) {

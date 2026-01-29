@@ -7,12 +7,14 @@
 Добавлены 5 методов авторизации:
 
 #### ✅ Local Auth (Email + Password)
+
 - Файлы: `server/localAuth.ts`, `server/auth/`
 - Регистрация и вход через email/password
 - Хеширование паролей с bcrypt
 - **Статус**: Работает из коробки
 
 #### ✅ Google OAuth
+
 - Файл: `server/googleAuth.ts`
 - OAuth 2.0 интеграция с Google
 - **Credentials настроены**:
@@ -21,6 +23,7 @@
 - **Статус**: Готов к использованию (требуется обновить Redirect URI для продакшена)
 
 #### ✅ Yandex OAuth
+
 - Файл: `server/yandexAuth.ts`
 - OAuth интеграция с Яндекс ID
 - **Credentials настроены**:
@@ -29,11 +32,13 @@
 - **Статус**: Готов к использованию (требуется обновить Redirect URI для продакшена)
 
 #### ✅ GitHub OAuth
+
 - Файл: `server/githubAuth.ts`
 - OAuth интеграция с GitHub
 - **Статус**: Требует настройки credentials
 
 #### ✅ Phone Auth (SMS)
+
 - Файл: `server/phoneAuth.ts`
 - Авторизация через SMS-код (Twilio Verify)
 - Development mode: коды выводятся в консоль
@@ -46,6 +51,7 @@
 **Файл**: `client/src/pages/auth.tsx`
 
 Добавлены:
+
 - 3 вкладки: Social Login, Email, Phone
 - Кнопки для всех OAuth провайдеров
 - Форма авторизации через телефон с двухэтапной проверкой
@@ -59,12 +65,14 @@
 **Файлы**: `client/src/locales/{en,ru,uz}.json`
 
 Добавлены переводы для:
+
 - Кнопки входа через Google, Yandex, GitHub
 - Форма авторизации через телефон
 - Сообщения об отправке/проверке SMS-кода
 - Все новые UI элементы
 
 **Поддерживаемые языки**:
+
 - 🇬🇧 English
 - 🇷🇺 Русский
 - 🇺🇿 O'zbek
@@ -74,6 +82,7 @@
 ### 4. Backend изменения
 
 #### Новые файлы:
+
 - `server/googleAuth.ts` - Google OAuth
 - `server/githubAuth.ts` - GitHub OAuth
 - `server/phoneAuth.ts` - Phone + SMS авторизация
@@ -81,12 +90,14 @@
 - `server/auth/storage.ts` - Работа с БД пользователей
 
 #### Обновленные файлы:
+
 - `server/routes.ts` - Подключены все провайдеры
 - `server/routes/auth.routes.ts` - Endpoint `/api/auth/providers`
 - `server/static.ts` - Исправлен путь к build
 - `shared/models/auth.ts` - Добавлено поле `phoneNumber`
 
 #### Удалено:
+
 - `server/replit_integrations/` - Все следы Replit удалены
 - `.replit`, `replit.md` - Конфигурационные файлы Replit
 
@@ -95,6 +106,7 @@
 ### 5. Установленные пакеты
 
 Добавлены зависимости:
+
 ```json
 {
   "passport-google-oauth20": "^2.0.0",
@@ -112,6 +124,7 @@
 Создана полная документация:
 
 #### 📘 README.md
+
 - Обзор проекта
 - Технологический стек
 - Быстрый старт
@@ -119,6 +132,7 @@
 - Структура проекта
 
 #### 📗 DEPLOYMENT.md (детальная инструкция)
+
 - Требования к серверу
 - Пошаговая установка всех зависимостей
 - Настройка PostgreSQL, Nginx, PM2
@@ -127,18 +141,21 @@
 - Troubleshooting
 
 #### 📕 QUICK_START_DEPLOY.md (быстрый старт)
+
 - Краткая инструкция деплоя за 30-40 минут
 - 13 простых шагов
 - Все команды готовы к копированию
 - Проверка работоспособности
 
 #### 📙 AUTHENTICATION_SETUP.md
+
 - Настройка всех 5 методов авторизации
 - Получение OAuth credentials
 - Настройка Twilio для SMS
 - Troubleshooting
 
 #### 📒 OAUTH_SETUP_PRODUCTION.md
+
 - Обновление Redirect URIs для продакшена
 - Ваши текущие credentials
 - Пошаговые инструкции для каждого провайдера
@@ -146,6 +163,7 @@
 - Контрольный список
 
 #### ✅ DEPLOYMENT_CHECKLIST.md
+
 - Полный чек-лист из 100+ пунктов
 - Разбит по этапам: подготовка, сервер, БД, OAuth, тестирование
 - Можно распечатать и отмечать галочками
@@ -155,10 +173,13 @@
 ### 7. Скрипты автоматизации
 
 #### 📜 deploy.sh
+
 Автоматический деплой обновлений:
+
 ```bash
 ./deploy.sh
 ```
+
 - Git pull
 - npm install
 - npm build
@@ -166,23 +187,30 @@
 - pm2 restart
 
 #### 📜 backup.sh
+
 Автоматический бэкап БД:
+
 ```bash
 ./backup.sh
 ```
+
 - Создает SQL dump
 - Сжимает gzip
 - Удаляет старые бэкапы (>7 дней)
 
 #### 📜 ecosystem.config.cjs
+
 PM2 конфигурация:
+
 - Кластерный режим
 - Auto-restart
 - Логирование
 - Environment variables
 
 #### 📜 nginx.conf
+
 Готовая конфигурация Nginx:
+
 - HTTP → HTTPS редирект
 - SSL оптимизация
 - Gzip compression
@@ -195,17 +223,20 @@ PM2 конфигурация:
 ### 8. Environment файлы
 
 #### .env (локальная разработка)
+
 - Database connection
 - OAuth credentials настроены для Google и Yandex
 - Development mode
 - Порт 5000
 
 #### .env.example (шаблон для dev)
+
 - Примеры всех переменных
 - Комментарии на русском
 - Безопасные дефолтные значения
 
 #### .env.production.example (шаблон для prod)
+
 - Все необходимые переменные
 - Инструкции по генерации секретов
 - Ссылки на документацию
@@ -215,6 +246,7 @@ PM2 конфигурация:
 ### 9. Безопасность
 
 #### Обновлен .gitignore:
+
 ```
 .env
 .env.local
@@ -226,6 +258,7 @@ backups/
 ```
 
 #### Реализовано:
+
 - ✅ CSRF защита
 - ✅ Rate limiting
 - ✅ Helmet security headers
@@ -241,6 +274,7 @@ backups/
 ### ✅ Готово к деплою:
 
 **Backend**:
+
 - ✅ Все методы авторизации реализованы
 - ✅ API endpoints работают
 - ✅ База данных настроена
@@ -248,12 +282,14 @@ backups/
 - ✅ Файловые загрузки работают
 
 **Frontend**:
+
 - ✅ UI для всех методов авторизации
 - ✅ Мультиязычность (EN/RU/UZ)
 - ✅ Адаптивный дизайн
 - ✅ Все страницы функциональны
 
 **Документация**:
+
 - ✅ 7 MD файлов с инструкциями
 - ✅ Готовые скрипты деплоя
 - ✅ Конфигурации для Nginx, PM2
@@ -264,7 +300,9 @@ backups/
 ## 🔧 Что нужно сделать перед продакшн деплоем
 
 ### 1. OAuth Redirect URIs
+
 После деплоя на сервер обновить в:
+
 - [ ] Google Cloud Console → Authorized redirect URIs
 - [ ] Яндекс OAuth → Callback URI
 - [ ] GitHub (если используете) → Authorization callback URL
@@ -272,20 +310,24 @@ backups/
 **Формат**: `https://ваш-домен.com/api/auth/{provider}/callback`
 
 ### 2. Environment Variables
+
 - [ ] Сгенерировать новый `SESSION_SECRET` (64+ символа)
 - [ ] Обновить `DATABASE_URL` с production credentials
 - [ ] Установить `NODE_ENV=production`
 
 ### 3. База данных
+
 - [ ] Создать production БД PostgreSQL
 - [ ] Выполнить `npm run db:push` на сервере
 - [ ] (Опционально) Загрузить данные
 
 ### 4. SSL сертификат
+
 - [ ] Получить Let's Encrypt сертификат через Certbot
 - [ ] Настроить автообновление
 
 ### 5. GitHub/Twilio (опционально)
+
 - [ ] Получить GitHub OAuth credentials (если нужно)
 - [ ] Настроить Twilio Verify (если нужно phone auth)
 
@@ -359,6 +401,7 @@ backups/
 ## 📞 Контакты и поддержка
 
 **Документация**:
+
 - [README.md](./README.md) - Обзор проекта
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Полная инструкция деплоя
 - [QUICK_START_DEPLOY.md](./QUICK_START_DEPLOY.md) - Быстрый старт
@@ -367,6 +410,7 @@ backups/
 - [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Чек-лист деплоя
 
 **Поддержка**:
+
 - GitHub Issues
 - Email
 - Telegram

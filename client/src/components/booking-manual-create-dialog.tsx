@@ -33,7 +33,11 @@ interface ManualBookingDialogProps {
   salons: Array<{ id: string; name: string | { en: string; ru: string; uz: string } }>;
 }
 
-export function BookingManualCreateDialog({ open, onOpenChange, salons }: ManualBookingDialogProps) {
+export function BookingManualCreateDialog({
+  open,
+  onOpenChange,
+  salons,
+}: ManualBookingDialogProps) {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -49,7 +53,14 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
   const [notes, setNotes] = useState("");
 
   // Fetch services for selected salon
-  const { data: services = [] } = useQuery<Array<{ id: string; name: string | { en: string; ru: string; uz: string }; duration: number; price: number }>>({
+  const { data: services = [] } = useQuery<
+    Array<{
+      id: string;
+      name: string | { en: string; ru: string; uz: string };
+      duration: number;
+      price: number;
+    }>
+  >({
     queryKey: [`/api/salons/${salonId}/services`],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/salons/${salonId}/services`);
@@ -59,7 +70,9 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
   });
 
   // Fetch masters for selected salon
-  const { data: masters = [] } = useQuery<Array<{ id: string; fullName: string; specialties?: string[] }>>({
+  const { data: masters = [] } = useQuery<
+    Array<{ id: string; fullName: string; specialties?: string[] }>
+  >({
     queryKey: [`/api/salons/${salonId}/masters`],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/salons/${salonId}/masters`);
@@ -107,7 +120,15 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
 
   const handleSubmit = () => {
     // Validation
-    if (!salonId || !serviceId || !clientName || !clientPhone || !bookingDate || !startTime || !endTime) {
+    if (
+      !salonId ||
+      !serviceId ||
+      !clientName ||
+      !clientPhone ||
+      !bookingDate ||
+      !startTime ||
+      !endTime
+    ) {
       toast({
         title: t("common.error", "Error"),
         description: t("bookings.manual.missingFields", "Please fill in all required fields"),
@@ -176,12 +197,17 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
         <div className="space-y-4 py-4">
           {/* Salon Selection */}
           <div className="space-y-2">
-            <Label htmlFor="salonId">{t("bookings.manual.salon", "Salon")} <span className="text-red-500">*</span></Label>
-            <Select value={salonId} onValueChange={(value) => {
-              setSalonId(value);
-              setServiceId("");
-              setMasterId("");
-            }}>
+            <Label htmlFor="salonId">
+              {t("bookings.manual.salon", "Salon")} <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={salonId}
+              onValueChange={(value) => {
+                setSalonId(value);
+                setServiceId("");
+                setMasterId("");
+              }}
+            >
               <SelectTrigger id="salonId">
                 <SelectValue placeholder={t("bookings.manual.selectSalon", "Select a salon")} />
               </SelectTrigger>
@@ -197,7 +223,9 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
 
           {/* Service Selection */}
           <div className="space-y-2">
-            <Label htmlFor="serviceId">{t("bookings.manual.service", "Service")} <span className="text-red-500">*</span></Label>
+            <Label htmlFor="serviceId">
+              {t("bookings.manual.service", "Service")} <span className="text-red-500">*</span>
+            </Label>
             <Select value={serviceId} onValueChange={setServiceId} disabled={!salonId}>
               <SelectTrigger id="serviceId">
                 <SelectValue placeholder={t("bookings.manual.selectService", "Select a service")} />
@@ -215,7 +243,8 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
           {/* Master Selection (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="masterId">
-              {t("bookings.manual.master", "Master")} <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
+              {t("bookings.manual.master", "Master")}{" "}
+              <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
             </Label>
             <Select value={masterId} onValueChange={setMasterId} disabled={!salonId}>
               <SelectTrigger id="masterId">
@@ -236,7 +265,10 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
 
           {/* Client Name */}
           <div className="space-y-2">
-            <Label htmlFor="clientName">{t("bookings.manual.clientName", "Client Name")} <span className="text-red-500">*</span></Label>
+            <Label htmlFor="clientName">
+              {t("bookings.manual.clientName", "Client Name")}{" "}
+              <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="clientName"
               placeholder={t("bookings.manual.clientNamePlaceholder", "Enter client name")}
@@ -247,7 +279,10 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
 
           {/* Client Phone */}
           <div className="space-y-2">
-            <Label htmlFor="clientPhone">{t("bookings.manual.clientPhone", "Client Phone")} <span className="text-red-500">*</span></Label>
+            <Label htmlFor="clientPhone">
+              {t("bookings.manual.clientPhone", "Client Phone")}{" "}
+              <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="clientPhone"
               type="tel"
@@ -259,15 +294,16 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
 
           {/* Booking Date */}
           <div className="space-y-2">
-            <Label>{t("bookings.manual.date", "Date")} <span className="text-red-500">*</span></Label>
+            <Label>
+              {t("bookings.manual.date", "Date")} <span className="text-red-500">*</span>
+            </Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {bookingDate ? format(bookingDate, "PPP") : t("bookings.manual.pickDate", "Pick a date")}
+                  {bookingDate
+                    ? format(bookingDate, "PPP")
+                    : t("bookings.manual.pickDate", "Pick a date")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -285,7 +321,10 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">{t("bookings.manual.startTime", "Start Time")} <span className="text-red-500">*</span></Label>
+              <Label htmlFor="startTime">
+                {t("bookings.manual.startTime", "Start Time")}{" "}
+                <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="startTime"
                 type="time"
@@ -294,7 +333,9 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">{t("bookings.manual.endTime", "End Time")} <span className="text-red-500">*</span></Label>
+              <Label htmlFor="endTime">
+                {t("bookings.manual.endTime", "End Time")} <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="endTime"
                 type="time"
@@ -307,7 +348,8 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">
-              {t("bookings.manual.notes", "Notes")} <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
+              {t("bookings.manual.notes", "Notes")}{" "}
+              <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
             </Label>
             <Textarea
               id="notes"
@@ -327,10 +369,7 @@ export function BookingManualCreateDialog({ open, onOpenChange, salons }: Manual
           >
             {t("common.cancel", "Cancel")}
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={createBookingMutation.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={createBookingMutation.isPending}>
             {createBookingMutation.isPending
               ? t("bookings.manual.creating", "Creating...")
               : t("bookings.manual.create", "Create Booking")}

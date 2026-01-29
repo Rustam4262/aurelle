@@ -3,6 +3,7 @@
 ## ✅ Что уже готово
 
 ### 1. Email система полностью реализована
+
 - ✅ **Nodemailer** установлен и настроен
 - ✅ **3 красивых HTML шаблона** с multi-language support (EN, RU, UZ):
   - Подтверждение бронирования (`sendBookingConfirmation`)
@@ -12,6 +13,7 @@
 - ✅ **Graceful degradation** - приложение работает даже если SMTP не настроен
 
 ### 2. Файлы
+
 - [server/email/index.ts](server/email/index.ts) - email сервис и шаблоны
 - [server/index.ts:71](server/index.ts#L71) - инициализация при старте
 - [server/routes/client.routes.ts:323](server/routes/client.routes.ts#L323) - отправка при бронировании
@@ -23,6 +25,7 @@
 ### Вариант 1: Gmail (БЕСПЛАТНО, рекомендуется для старта)
 
 #### Шаг 1: Создать App Password
+
 ```
 1. Открыть: https://myaccount.google.com/security
 2. Включить двухфакторную аутентификацию (если не включена)
@@ -34,6 +37,7 @@
 ```
 
 #### Шаг 2: Добавить в .env
+
 ```bash
 ssh root@89.39.94.194
 nano /opt/aurelle/.env
@@ -51,18 +55,21 @@ APP_URL=https://aurelle.uz
 ```
 
 #### Шаг 3: Перезапустить приложение
+
 ```bash
 cd /opt/aurelle
 docker compose restart server
 ```
 
 #### Шаг 4: Проверить логи
+
 ```bash
 docker logs aurelle-server | grep -i email
 # Ожидаем: ✅ Email system initialized
 ```
 
 **Лимиты Gmail:**
+
 - 500 писем в день
 - 100 писем в час
 - **Для старта достаточно, потом переключиться на SendGrid/Mailgun**
@@ -72,6 +79,7 @@ docker logs aurelle-server | grep -i email
 ### Вариант 2: SendGrid (БЕСПЛАТНО 100 писем/день, затем платно)
 
 #### Шаг 1: Создать аккаунт
+
 ```
 1. Перейти: https://signup.sendgrid.com/
 2. Зарегистрироваться (нужна карта даже для free tier)
@@ -79,6 +87,7 @@ docker logs aurelle-server | grep -i email
 ```
 
 #### Шаг 2: Создать API Key
+
 ```
 1. Dashboard → Settings → API Keys
 2. Create API Key
@@ -88,6 +97,7 @@ docker logs aurelle-server | grep -i email
 ```
 
 #### Шаг 3: Verify sender identity
+
 ```
 1. Dashboard → Settings → Sender Authentication
 2. Verify a Single Sender
@@ -97,6 +107,7 @@ docker logs aurelle-server | grep -i email
 ```
 
 #### Шаг 4: Добавить в .env
+
 ```bash
 ssh root@89.39.94.194
 nano /opt/aurelle/.env
@@ -112,11 +123,13 @@ APP_URL=https://aurelle.uz
 ```
 
 #### Шаг 5: Перезапустить
+
 ```bash
 cd /opt/aurelle && docker compose restart server
 ```
 
 **Лимиты SendGrid:**
+
 - Free: 100 писем/день
 - Essentials ($19.95/мес): 50,000 писем/месяц
 - Pro ($89.95/мес): 100,000 писем/месяц
@@ -126,6 +139,7 @@ cd /opt/aurelle && docker compose restart server
 ### Вариант 3: Mailgun (БЕСПЛАТНО 5,000 писем/месяц первые 3 месяца)
 
 #### Шаг 1: Создать аккаунт
+
 ```
 1. Перейти: https://signup.mailgun.com/
 2. Зарегистрироваться (нужна карта)
@@ -133,6 +147,7 @@ cd /opt/aurelle && docker compose restart server
 ```
 
 #### Шаг 2: Получить SMTP credentials
+
 ```
 1. Dashboard → Sending → Domain settings
 2. Выбрать sandbox домен (mg.yoursubdomain.mailgun.org)
@@ -144,6 +159,7 @@ cd /opt/aurelle && docker compose restart server
 ```
 
 #### Шаг 3: Добавить authorized recipients (для sandbox)
+
 ```
 1. Sending → Domain settings → Authorized Recipients
 2. Добавить тестовые email адреса (максимум 5 для sandbox)
@@ -151,6 +167,7 @@ cd /opt/aurelle && docker compose restart server
 ```
 
 #### Шаг 4: Добавить в .env
+
 ```bash
 ssh root@89.39.94.194
 nano /opt/aurelle/.env
@@ -166,6 +183,7 @@ APP_URL=https://aurelle.uz
 ```
 
 #### Шаг 5 (опционально): Настроить свой домен
+
 ```
 Для production лучше использовать aurelle.uz:
 1. Dashboard → Sending → Domains → Add New Domain
@@ -176,6 +194,7 @@ APP_URL=https://aurelle.uz
 ```
 
 **Лимиты Mailgun:**
+
 - Trial: 5,000 писем/месяц (3 месяца)
 - Foundation ($35/мес): 50,000 писем/месяц
 - Growth ($80/мес): 100,000 писем/месяц
@@ -202,6 +221,7 @@ curl -X POST https://api.aurelle.uz/api/bookings \
 ```
 
 **Или через UI:**
+
 1. Открыть https://aurelle.uz
 2. Зарегистрироваться/войти
 3. Выбрать салон и услугу
@@ -283,7 +303,7 @@ router.post("/send-reminders", requireInternalKey, async (req, res) => {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    const tomorrowDate = tomorrow.toISOString().split("T")[0];
 
     // Find all bookings for tomorrow that haven't been reminded
     const upcomingBookings = await db
@@ -305,7 +325,7 @@ router.post("/send-reminders", requireInternalKey, async (req, res) => {
           eq(bookings.status, "confirmed"),
           // Add reminderSent field to schema if not exists
           // eq(bookings.reminderSent, false)
-        )
+        ),
       );
 
     let sent = 0;
@@ -320,7 +340,9 @@ router.post("/send-reminders", requireInternalKey, async (req, res) => {
       try {
         // Calculate hours until appointment
         const appointmentTime = new Date(`${booking.date}T${booking.startTime}`);
-        const hoursUntil = Math.round((appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+        const hoursUntil = Math.round(
+          (appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60),
+        );
 
         await sendBookingReminder(
           user.email,
@@ -333,7 +355,7 @@ router.post("/send-reminders", requireInternalKey, async (req, res) => {
             time: booking.startTime,
             hoursUntil,
           },
-          user.preferredLanguage || "ru"
+          user.preferredLanguage || "ru",
         );
 
         // TODO: Mark as sent in DB
@@ -352,7 +374,7 @@ router.post("/send-reminders", requireInternalKey, async (req, res) => {
       success: true,
       sent,
       failed,
-      total: upcomingBookings.length
+      total: upcomingBookings.length,
     });
   } catch (error) {
     console.error("Send reminders error:", error);
@@ -447,6 +469,7 @@ EMAIL_FROM=AURELLE <mailgun@mg.aurelle.uz>
 ### 3. Проверяйте SPAM папку
 
 Первые письма могут попадать в SPAM. Для улучшения deliverability:
+
 - Verify sender domain (SPF, DKIM, DMARC)
 - Используйте SendGrid/Mailgun вместо Gmail
 - Не отправляйте слишком много писем сразу
@@ -454,6 +477,7 @@ EMAIL_FROM=AURELLE <mailgun@mg.aurelle.uz>
 ### 4. Rate Limiting
 
 Код уже учитывает rate limits провайдеров. Если нужно отправить много писем:
+
 - Используйте очередь (Bull/BullMQ с Redis)
 - Батчинг по 10-50 писем
 - Delay между батчами
@@ -519,6 +543,7 @@ Gmail больше НЕ поддерживает "less secure apps". Испол�
 ## 📝 Следующие шаги
 
 После настройки email:
+
 1. ✅ Протестировать booking confirmation
 2. ✅ Протестировать booking cancellation
 3. ⏳ Создать internal API endpoint для reminders

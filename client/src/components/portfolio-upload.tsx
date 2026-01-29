@@ -7,8 +7,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Upload, X, Loader2, CheckCircle2, Image as ImageIcon, Plus, FileImage } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Upload,
+  X,
+  Loader2,
+  CheckCircle2,
+  Image as ImageIcon,
+  Plus,
+  FileImage,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -45,58 +59,63 @@ export function PortfolioUpload({
   const { toast } = useToast();
 
   // Handle file selection
-  const handleFiles = useCallback((files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files || files.length === 0) return;
 
-    const fileArray = Array.from(files);
+      const fileArray = Array.from(files);
 
-    // Check max images limit
-    if (images.length + fileArray.length > maxImages) {
-      toast({
-        title: t("marketplace.portfolio.upload.errors.tooMany"),
-        description: t("marketplace.portfolio.upload.errors.tooManyDesc", { max: maxImages }),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate and create previews
-    const validImages: PortfolioImage[] = [];
-
-    fileArray.forEach((file) => {
-      // Check file type
-      if (!file.type.startsWith("image/")) {
+      // Check max images limit
+      if (images.length + fileArray.length > maxImages) {
         toast({
-          title: t("marketplace.portfolio.upload.errors.invalidType"),
-          description: t("marketplace.portfolio.upload.errors.invalidTypeDesc", { name: file.name }),
+          title: t("marketplace.portfolio.upload.errors.tooMany"),
+          description: t("marketplace.portfolio.upload.errors.tooManyDesc", { max: maxImages }),
           variant: "destructive",
         });
         return;
       }
 
-      // Check file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: t("marketplace.portfolio.upload.errors.tooLarge"),
-          description: t("marketplace.portfolio.upload.errors.tooLargeDesc", { name: file.name }),
-          variant: "destructive",
+      // Validate and create previews
+      const validImages: PortfolioImage[] = [];
+
+      fileArray.forEach((file) => {
+        // Check file type
+        if (!file.type.startsWith("image/")) {
+          toast({
+            title: t("marketplace.portfolio.upload.errors.invalidType"),
+            description: t("marketplace.portfolio.upload.errors.invalidTypeDesc", {
+              name: file.name,
+            }),
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: t("marketplace.portfolio.upload.errors.tooLarge"),
+            description: t("marketplace.portfolio.upload.errors.tooLargeDesc", { name: file.name }),
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Create preview
+        const preview = URL.createObjectURL(file);
+        validImages.push({
+          id: `${Date.now()}-${Math.random()}`,
+          file,
+          preview,
+          uploaded: false,
+          uploadProgress: 0,
         });
-        return;
-      }
-
-      // Create preview
-      const preview = URL.createObjectURL(file);
-      validImages.push({
-        id: `${Date.now()}-${Math.random()}`,
-        file,
-        preview,
-        uploaded: false,
-        uploadProgress: 0,
       });
-    });
 
-    setImages((prev) => [...prev, ...validImages]);
-  }, [images.length, maxImages, toast]);
+      setImages((prev) => [...prev, ...validImages]);
+    },
+    [images.length, maxImages, toast],
+  );
 
   // Handle drag & drop
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -110,15 +129,18 @@ export function PortfolioUpload({
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    if (e.dataTransfer.files) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, [handleFiles]);
+      if (e.dataTransfer.files) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [handleFiles],
+  );
 
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,8 +176,8 @@ export function PortfolioUpload({
               description: editingImage.description,
               category: editingImage.category,
             }
-          : img
-      )
+          : img,
+      ),
     );
     setEditingImage(null);
   };
@@ -183,9 +205,7 @@ export function PortfolioUpload({
 
         // Update progress
         setImages((prev) =>
-          prev.map((img) =>
-            img.id === image.id ? { ...img, uploadProgress: 0 } : img
-          )
+          prev.map((img) => (img.id === image.id ? { ...img, uploadProgress: 0 } : img)),
         );
 
         // Simulate progress during upload
@@ -196,7 +216,7 @@ export function PortfolioUpload({
                 return { ...img, uploadProgress: img.uploadProgress! + 10 };
               }
               return img;
-            })
+            }),
           );
         }, 200);
 
@@ -225,16 +245,16 @@ export function PortfolioUpload({
         // Mark as uploaded
         setImages((prev) =>
           prev.map((img) =>
-            img.id === image.id
-              ? { ...img, uploaded: true, uploadProgress: 100 }
-              : img
-          )
+            img.id === image.id ? { ...img, uploaded: true, uploadProgress: 100 } : img,
+          ),
         );
       }
 
       toast({
         title: t("marketplace.portfolio.upload.success.title"),
-        description: t("marketplace.portfolio.upload.success.description", { count: images.length }),
+        description: t("marketplace.portfolio.upload.success.description", {
+          count: images.length,
+        }),
       });
 
       if (onUploadSuccess) {
@@ -269,7 +289,7 @@ export function PortfolioUpload({
           "relative border-2 border-dashed rounded-lg p-8 transition-colors",
           dragActive
             ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-muted-foreground/50"
+            : "border-muted-foreground/25 hover:border-muted-foreground/50",
         )}
       >
         <input
@@ -299,7 +319,10 @@ export function PortfolioUpload({
             {t("marketplace.portfolio.upload.chooseFiles")}
           </Button>
           <p className="text-xs text-muted-foreground mt-4">
-            {t("marketplace.portfolio.upload.limitations", { count: images.length, max: maxImages })}
+            {t("marketplace.portfolio.upload.limitations", {
+              count: images.length,
+              max: maxImages,
+            })}
           </p>
         </div>
       </div>
@@ -398,9 +421,7 @@ export function PortfolioUpload({
                 {(image.title || image.description || image.category) && (
                   <div className="p-2 border-t">
                     {image.title && (
-                      <p className="text-xs font-medium line-clamp-1">
-                        {image.title}
-                      </p>
+                      <p className="text-xs font-medium line-clamp-1">{image.title}</p>
                     )}
                     {image.category && (
                       <Badge variant="secondary" className="text-xs mt-1">
@@ -419,9 +440,7 @@ export function PortfolioUpload({
       {images.length === 0 && (
         <Card className="p-8 text-center border-dashed">
           <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground opacity-50 mb-3" />
-          <p className="text-muted-foreground">
-            {t("marketplace.portfolio.upload.emptyState")}
-          </p>
+          <p className="text-muted-foreground">{t("marketplace.portfolio.upload.emptyState")}</p>
         </Card>
       )}
 
@@ -449,16 +468,16 @@ export function PortfolioUpload({
                 <Input
                   id="title"
                   value={editingImage.title || ""}
-                  onChange={(e) =>
-                    setEditingImage({ ...editingImage, title: e.target.value })
-                  }
+                  onChange={(e) => setEditingImage({ ...editingImage, title: e.target.value })}
                   placeholder={t("marketplace.portfolio.upload.titlePlaceholder")}
                 />
               </div>
 
               {/* Description */}
               <div>
-                <Label htmlFor="description">{t("marketplace.portfolio.upload.descriptionLabel")}</Label>
+                <Label htmlFor="description">
+                  {t("marketplace.portfolio.upload.descriptionLabel")}
+                </Label>
                 <Textarea
                   id="description"
                   value={editingImage.description || ""}
@@ -476,9 +495,7 @@ export function PortfolioUpload({
                 <Input
                   id="category"
                   value={editingImage.category || ""}
-                  onChange={(e) =>
-                    setEditingImage({ ...editingImage, category: e.target.value })
-                  }
+                  onChange={(e) => setEditingImage({ ...editingImage, category: e.target.value })}
                   placeholder={t("marketplace.portfolio.upload.categoryPlaceholder")}
                 />
               </div>

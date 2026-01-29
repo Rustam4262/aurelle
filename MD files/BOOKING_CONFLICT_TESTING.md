@@ -21,16 +21,15 @@ const existingBookings = await db
 
 // 2. Для каждого booking проверить overlap
 for (const booking of existingBookings) {
-  const existingStart = parseTime(booking.startTime);  // "10:00" → 600 minutes
-  const existingEnd = parseTime(booking.endTime);      // "11:00" → 660 minutes
+  const existingStart = parseTime(booking.startTime); // "10:00" → 600 minutes
+  const existingEnd = parseTime(booking.endTime); // "11:00" → 660 minutes
 
   // 3. Добавить buffer (10 минут между bookings)
-  const existingBufferedStart = existingStart - bufferMinutes;  // 590
-  const existingBufferedEnd = existingEnd + bufferMinutes;      // 670
+  const existingBufferedStart = existingStart - bufferMinutes; // 590
+  const existingBufferedEnd = existingEnd + bufferMinutes; // 670
 
   // 4. Проверить overlap: (start1 < end2) AND (start2 < end1)
-  const hasOverlap = (bufferedStart < existingBufferedEnd) &&
-                     (existingBufferedStart < bufferedEnd);
+  const hasOverlap = bufferedStart < existingBufferedEnd && existingBufferedStart < bufferedEnd;
 
   if (hasOverlap) {
     return { available: false, reason: "Time slot overlaps with existing booking" };
@@ -39,6 +38,7 @@ for (const booking of existingBookings) {
 ```
 
 ### Buffer Time
+
 - **10 минут** между bookings
 - Предотвращает плотное расписание
 - Даёт время на уборку/подготовку
@@ -327,6 +327,7 @@ WHERE b."masterId" = 'your-master-id'
 **Solution:** All times assume salon's local timezone
 
 **Test:**
+
 ```bash
 # Client in UTC+5
 # Send: startTime: "10:00"
@@ -341,6 +342,7 @@ WHERE b."masterId" = 'your-master-id'
 **Current State:** Проверяется `status = 'confirmed'`
 
 **Test:**
+
 ```sql
 -- Only confirmed bookings checked
 WHERE status = 'confirmed'
@@ -353,6 +355,7 @@ WHERE status = 'confirmed'
 **Current State:** Check includes `masterId` + `date`
 
 **Test:**
+
 ```bash
 # Booking 1: Master A, Salon X, 10:00-11:00
 # Booking 2: Master A, Salon Y, 10:00-11:00
@@ -377,6 +380,7 @@ WHERE "masterId" = '...'
 ```
 
 ### Optimization Applied:
+
 - ✅ Composite index on (masterId, date, status)
 - ✅ Status filter first (reduces rows)
 - ✅ In-memory overlap check (fast)
@@ -386,6 +390,7 @@ WHERE "masterId" = '...'
 ## 🎯 Test Checklist
 
 ### Functional Tests
+
 - [ ] Test 1: Direct overlap → REJECT
 - [ ] Test 2: Before overlap → REJECT
 - [ ] Test 3: Encompassing → REJECT
@@ -398,12 +403,14 @@ WHERE "masterId" = '...'
 - [ ] Test 10: Cancelled booking → ALLOW
 
 ### Edge Cases
+
 - [ ] Concurrent requests (race condition)
 - [ ] Same master multiple salons
 - [ ] Cancelled bookings don't block
 - [ ] Buffer time respected
 
 ### Performance
+
 - [ ] Query uses index
 - [ ] Response time < 100ms
 - [ ] No N+1 queries
@@ -453,12 +460,14 @@ router.post("/bookings", async (req: any, res) => {
 **Booking conflict detection: ✅ РАБОТАЕТ ОТЛИЧНО**
 
 ### Что реализовано:
+
 - ✅ Overlap detection (с buffer time)
 - ✅ Master availability check
 - ✅ Status filtering (cancelled не блокируют)
 - ✅ Performance optimized (composite index)
 
 ### Что можно улучшить (опционально):
+
 - 💡 Database-level constraints (для 100% защиты от race conditions)
 - 💡 Pessimistic locking
 - 💡 Idempotency keys

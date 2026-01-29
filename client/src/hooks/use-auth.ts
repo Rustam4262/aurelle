@@ -42,7 +42,11 @@ async function logout(): Promise<void> {
 
 export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }) {
   const queryClient = useQueryClient();
-  const { data: user, isLoading, error } = useQuery<User | null>({
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,

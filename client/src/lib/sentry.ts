@@ -27,7 +27,9 @@ export function initializeSentry() {
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE || "development",
 
     // Release version for tracking
-    release: import.meta.env.VITE_SENTRY_RELEASE || `aurelle-frontend@${import.meta.env.VITE_APP_VERSION || "1.0.0"}`,
+    release:
+      import.meta.env.VITE_SENTRY_RELEASE ||
+      `aurelle-frontend@${import.meta.env.VITE_APP_VERSION || "1.0.0"}`,
 
     // Integrations
     integrations: [
@@ -138,7 +140,9 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = "i
 /**
  * Set user context
  */
-export function setUser(user: { id: string; email?: string; username?: string; role?: string } | null) {
+export function setUser(
+  user: { id: string; email?: string; username?: string; role?: string } | null,
+) {
   if (user) {
     Sentry.setUser({
       id: user.id,

@@ -1,7 +1,7 @@
-import React, { ReactNode } from 'react';
-import { LucideIcon } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent } from './card';
+import React, { ReactNode } from "react";
+import { LucideIcon } from "lucide-react";
+import { Button } from "./button";
+import { Card, CardContent } from "./card";
 
 export interface EmptyStateProps {
   icon: LucideIcon;
@@ -10,7 +10,7 @@ export interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
-    variant?: 'default' | 'outline' | 'secondary';
+    variant?: "default" | "outline" | "secondary";
   };
   secondaryAction?: {
     label: string;
@@ -38,26 +38,18 @@ export function EmptyState({
 
         <h3 className="text-lg font-semibold mb-2">{title}</h3>
 
-        <p className="text-sm text-muted-foreground mb-6 max-w-md">
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground mb-6 max-w-md">{description}</p>
 
         {children}
 
         {action && (
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              onClick={action.onClick}
-              variant={action.variant || 'default'}
-            >
+            <Button onClick={action.onClick} variant={action.variant || "default"}>
               {action.label}
             </Button>
 
             {secondaryAction && (
-              <Button
-                onClick={secondaryAction.onClick}
-                variant="outline"
-              >
+              <Button onClick={secondaryAction.onClick} variant="outline">
                 {secondaryAction.label}
               </Button>
             )}
@@ -70,15 +62,15 @@ export function EmptyState({
 
 // Specialized empty states for common scenarios
 export function NoDataEmptyState({
-  title = 'Нет данных',
-  description = 'Данные пока не загружены или недоступны',
+  title = "Нет данных",
+  description = "Данные пока не загружены или недоступны",
   onRetry,
 }: {
   title?: string;
   description?: string;
   onRetry?: () => void;
 }) {
-  const Icon = require('lucide-react').Database;
+  const Icon = require("lucide-react").Database;
 
   return (
     <EmptyState
@@ -88,9 +80,9 @@ export function NoDataEmptyState({
       action={
         onRetry
           ? {
-              label: 'Обновить',
+              label: "Обновить",
               onClick: onRetry,
-              variant: 'outline',
+              variant: "outline",
             }
           : undefined
       }
@@ -99,15 +91,15 @@ export function NoDataEmptyState({
 }
 
 export function NoResultsEmptyState({
-  title = 'Ничего не найдено',
-  description = 'Попробуйте изменить фильтры или поисковый запрос',
+  title = "Ничего не найдено",
+  description = "Попробуйте изменить фильтры или поисковый запрос",
   onClearFilters,
 }: {
   title?: string;
   description?: string;
   onClearFilters?: () => void;
 }) {
-  const Icon = require('lucide-react').Search;
+  const Icon = require("lucide-react").Search;
 
   return (
     <EmptyState
@@ -117,9 +109,9 @@ export function NoResultsEmptyState({
       action={
         onClearFilters
           ? {
-              label: 'Очистить фильтры',
+              label: "Очистить фильтры",
               onClick: onClearFilters,
-              variant: 'outline',
+              variant: "outline",
             }
           : undefined
       }

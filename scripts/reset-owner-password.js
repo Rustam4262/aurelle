@@ -13,7 +13,9 @@ const newPassword = process.argv[3];
 
 if (!email || !newPassword) {
   console.error("Usage: node scripts/reset-owner-password.js <email> <new-password>");
-  console.error("Example: node scripts/reset-owner-password.js xulkarraziyeva@gmail.com aurelle2026");
+  console.error(
+    "Example: node scripts/reset-owner-password.js xulkarraziyeva@gmail.com aurelle2026",
+  );
   process.exit(1);
 }
 
@@ -38,10 +40,7 @@ async function resetPassword() {
     console.log(`Password hashed successfully`);
 
     // Update password
-    await db
-      .update(users)
-      .set({ password: hashedPassword })
-      .where(eq(users.email, email));
+    await db.update(users).set({ password: hashedPassword }).where(eq(users.email, email));
 
     console.log(`✅ Password updated successfully for ${email}`);
     console.log(`New password: ${newPassword}`);

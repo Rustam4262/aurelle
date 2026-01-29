@@ -3,6 +3,7 @@
 ## ✅ Что создано
 
 ### Новая система error handling
+
 - ✅ **Centralized error handler middleware**
 - ✅ **Custom error classes** (8 типов)
 - ✅ **Structured error responses**
@@ -16,51 +17,60 @@
 ## 📊 Error Classes
 
 ### 1. AppError (base class)
+
 ```typescript
 throw new AppError(statusCode, message, code, details);
 ```
 
 ### 2. BadRequestError (400)
+
 ```typescript
 throw new BadRequestError("Invalid input", { field: "email" });
 ```
 
 ### 3. UnauthorizedError (401)
+
 ```typescript
 throw new UnauthorizedError("Please log in");
 ```
 
 ### 4. ForbiddenError (403)
+
 ```typescript
 throw new ForbiddenError("You don't have permission");
 ```
 
 ### 5. NotFoundError (404)
+
 ```typescript
-throw new NotFoundError("Salon");  // "Salon not found"
+throw new NotFoundError("Salon"); // "Salon not found"
 ```
 
 ### 6. ConflictError (409)
+
 ```typescript
 throw new ConflictError("Booking slot already taken", {
   date: "2026-01-15",
-  time: "10:00"
+  time: "10:00",
 });
 ```
 
 ### 7. ValidationError (422)
+
 ```typescript
 throw new ValidationError("Invalid data", {
-  errors: ["Email is required"]
+  errors: ["Email is required"],
 });
 ```
 
 ### 8. TooManyRequestsError (429)
+
 ```typescript
 throw new TooManyRequestsError();
 ```
 
 ### 9. InternalServerError (500)
+
 ```typescript
 throw new InternalServerError("Database connection failed");
 ```
@@ -89,13 +99,14 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 // After all routes
-app.use(notFoundHandler);  // 404 handler
-app.use(errorHandler);     // Error handler
+app.use(notFoundHandler); // 404 handler
+app.use(errorHandler); // Error handler
 ```
 
 ### Шаг 2: Обновить routes
 
 #### Было (старый способ):
+
 ```typescript
 router.get("/salons/:id", async (req, res) => {
   try {
@@ -112,6 +123,7 @@ router.get("/salons/:id", async (req, res) => {
 ```
 
 #### Стало (новый способ):
+
 ```typescript
 import { asyncHandler, NotFoundError } from "../middleware/errorHandler";
 
@@ -125,6 +137,7 @@ router.get("/salons/:id", asyncHandler(async (req, res) => {
 ```
 
 **Преимущества:**
+
 - ✅ Меньше кода
 - ✅ Consistent error format
 - ✅ Автоматический catch
@@ -137,6 +150,7 @@ router.get("/salons/:id", asyncHandler(async (req, res) => {
 ### Example 1: Booking Creation
 
 #### Было:
+
 ```typescript
 router.post("/bookings", async (req: any, res) => {
   try {
@@ -160,6 +174,7 @@ router.post("/bookings", async (req: any, res) => {
 ```
 
 #### Стало:
+
 ```typescript
 import { asyncHandler, ConflictError } from "../middleware/errorHandler";
 
@@ -184,6 +199,7 @@ router.post("/bookings", asyncHandler(async (req: any, res) => {
 ### Example 2: Authentication
 
 #### Было:
+
 ```typescript
 router.post("/auth/login", async (req, res) => {
   try {
@@ -206,6 +222,7 @@ router.post("/auth/login", async (req, res) => {
 ```
 
 #### Стало:
+
 ```typescript
 import {
   asyncHandler,
@@ -232,6 +249,7 @@ router.post("/auth/login", asyncHandler(async (req, res) => {
 ### Example 3: Permission Check
 
 #### Было:
+
 ```typescript
 router.delete("/salons/:id", async (req: any, res) => {
   try {
@@ -253,6 +271,7 @@ router.delete("/salons/:id", async (req: any, res) => {
 ```
 
 #### Стало:
+
 ```typescript
 import {
   asyncHandler,
@@ -298,6 +317,7 @@ router.delete("/salons/:id", asyncHandler(async (req: any, res) => {
 ```
 
 ### Development includes stack trace:
+
 ```json
 {
   "error": {
@@ -355,21 +375,25 @@ curl -X POST https://aurelle.uz/api/bookings \
 ## 🎯 Migration Plan
 
 ### Phase 1: Core routes (High priority)
+
 - [ ] server/routes/bookings.routes.ts
 - [ ] server/routes/salons.routes.ts
 - [ ] server/routes/auth.routes.ts
 - [ ] server/routes/masters.routes.ts
 
 ### Phase 2: Secondary routes
+
 - [ ] server/routes/services.routes.ts
 - [ ] server/routes/reviews.routes.ts
 - [ ] server/routes/favorites.routes.ts
 - [ ] server/routes/notifications.routes.ts
 
 ### Phase 3: Admin routes
-- [ ] server/routes/admin/*.routes.ts
+
+- [ ] server/routes/admin/\*.routes.ts
 
 ### Phase 4: Utility routes
+
 - [ ] server/routes/calendar.routes.ts
 - [ ] server/routes/portfolio.routes.ts
 - [ ] server/routes/waitlist.routes.ts
@@ -379,6 +403,7 @@ curl -X POST https://aurelle.uz/api/bookings \
 ## 📈 Benefits
 
 ### Before (inconsistent):
+
 ```typescript
 // Different error formats across routes
 res.status(404).json({ error: "Not found" });
@@ -388,6 +413,7 @@ res.sendStatus(404);
 ```
 
 ### After (consistent):
+
 ```typescript
 // Same format everywhere
 throw new NotFoundError("Salon");
@@ -404,6 +430,7 @@ throw new NotFoundError("Salon");
 ```
 
 ### Metrics:
+
 - ✅ 331 error handling points → можно унифицировать
 - ✅ Сократит код на ~30%
 - ✅ Улучшит debugging
@@ -429,6 +456,7 @@ throw new NotFoundError("Salon");
 **Problem:** Error not reaching errorHandler
 
 **Solution:** Убедиться что используется `asyncHandler`:
+
 ```typescript
 // ❌ Wrong
 router.get("/test", async (req, res) => { ... });
@@ -442,6 +470,7 @@ router.get("/test", asyncHandler(async (req, res) => { ... }));
 **Problem:** Stack traces exposed in production
 
 **Solution:** Проверить NODE_ENV:
+
 ```bash
 docker exec aurelle-server sh -c 'echo $NODE_ENV'
 # Should be: production
@@ -452,6 +481,7 @@ docker exec aurelle-server sh -c 'echo $NODE_ENV'
 **Problem:** `details` field missing
 
 **Solution:** Pass details when throwing:
+
 ```typescript
 throw new ConflictError("Slot taken", { date, time });
 ```

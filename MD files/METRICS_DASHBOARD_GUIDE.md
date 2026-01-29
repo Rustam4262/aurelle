@@ -5,6 +5,7 @@
 This guide provides comprehensive documentation for setting up and using the AURELLE metrics dashboard system. We use the **AARRR framework** (Acquisition, Activation, Retention, Revenue, Referral) to track key performance indicators in real-time.
 
 **Tech Stack:**
+
 - **Google Analytics 4 (GA4)**: Event tracking and user behavior analytics
 - **Metabase**: Open-source BI tool for custom dashboards
 - **PostgreSQL**: Database analytics queries
@@ -50,16 +51,17 @@ Acquisition → Activation → Retention → Revenue → Referral
 
 **Goal:** Measure how users discover AURELLE
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| **Total Visitors** | Unique visitors to website | 10,000/month | GA4 |
-| **Traffic Sources** | Organic, Direct, Social, Referral, Paid | Mix analysis | GA4 |
-| **Landing Page Views** | Homepage, salon pages viewed | 15,000/month | GA4 |
-| **User Acquisition Cost (UAC)** | Marketing spend / New users | < ₸5,000 | Manual calc |
-| **Bounce Rate** | % users leaving after 1 page | < 40% | GA4 |
-| **Session Duration** | Avg time on site | > 3 minutes | GA4 |
+| Metric                          | Definition                              | Target       | Tracking    |
+| ------------------------------- | --------------------------------------- | ------------ | ----------- |
+| **Total Visitors**              | Unique visitors to website              | 10,000/month | GA4         |
+| **Traffic Sources**             | Organic, Direct, Social, Referral, Paid | Mix analysis | GA4         |
+| **Landing Page Views**          | Homepage, salon pages viewed            | 15,000/month | GA4         |
+| **User Acquisition Cost (UAC)** | Marketing spend / New users             | < ₸5,000     | Manual calc |
+| **Bounce Rate**                 | % users leaving after 1 page            | < 40%        | GA4         |
+| **Session Duration**            | Avg time on site                        | > 3 minutes  | GA4         |
 
 **Key Events:**
+
 - `page_view` - User views any page
 - `salon_viewed` - User views salon detail page
 - `search_performed` - User searches for salons
@@ -69,15 +71,16 @@ Acquisition → Activation → Retention → Revenue → Referral
 
 **Goal:** Measure quality of first user experience
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| **Sign-up Rate** | % visitors who register | > 15% | GA4 + DB |
-| **Time to First Action** | Time from signup to first booking | < 24 hours | DB query |
-| **Onboarding Completion** | % users completing profile | > 70% | GA4 |
-| **First Booking Rate** | % new users making first booking | > 30% | DB query |
-| **Mobile App Installs** | Downloads from App Store/Play Store | 1,000/month | GA4 |
+| Metric                    | Definition                          | Target      | Tracking |
+| ------------------------- | ----------------------------------- | ----------- | -------- |
+| **Sign-up Rate**          | % visitors who register             | > 15%       | GA4 + DB |
+| **Time to First Action**  | Time from signup to first booking   | < 24 hours  | DB query |
+| **Onboarding Completion** | % users completing profile          | > 70%       | GA4      |
+| **First Booking Rate**    | % new users making first booking    | > 30%       | DB query |
+| **Mobile App Installs**   | Downloads from App Store/Play Store | 1,000/month | GA4      |
 
 **Key Events:**
+
 - `sign_up` - User creates account
 - `profile_completed` - User fills profile
 - `first_booking_created` - User makes first booking
@@ -88,23 +91,25 @@ Acquisition → Activation → Retention → Revenue → Referral
 
 **Goal:** Measure user engagement over time
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| **Daily Active Users (DAU)** | Users active in last 24 hours | 1,000+ | GA4 + DB |
-| **Weekly Active Users (WAU)** | Users active in last 7 days | 5,000+ | GA4 + DB |
-| **Monthly Active Users (MAU)** | Users active in last 30 days | 15,000+ | GA4 + DB |
-| **DAU/MAU Ratio** | Stickiness ratio | > 20% | Calculated |
-| **Churn Rate** | % users not returning in 30 days | < 40% | DB query |
-| **Cohort Retention** | % users returning by cohort | Week 1: 40%+ | DB query |
-| **Booking Frequency** | Avg bookings per user per month | > 1.5 | DB query |
+| Metric                         | Definition                       | Target       | Tracking   |
+| ------------------------------ | -------------------------------- | ------------ | ---------- |
+| **Daily Active Users (DAU)**   | Users active in last 24 hours    | 1,000+       | GA4 + DB   |
+| **Weekly Active Users (WAU)**  | Users active in last 7 days      | 5,000+       | GA4 + DB   |
+| **Monthly Active Users (MAU)** | Users active in last 30 days     | 15,000+      | GA4 + DB   |
+| **DAU/MAU Ratio**              | Stickiness ratio                 | > 20%        | Calculated |
+| **Churn Rate**                 | % users not returning in 30 days | < 40%        | DB query   |
+| **Cohort Retention**           | % users returning by cohort      | Week 1: 40%+ | DB query   |
+| **Booking Frequency**          | Avg bookings per user per month  | > 1.5        | DB query   |
 
 **Key Events:**
+
 - `session_start` - User opens app/website
 - `booking_viewed` - User checks booking details
 - `notification_clicked` - User engages with push/email
 - `return_visit` - User returns after 7+ days
 
 **Cohort Retention Table:**
+
 ```
 Cohort     | Week 0 | Week 1 | Week 2 | Week 3 | Week 4
 -----------|--------|--------|--------|--------|--------
@@ -117,19 +122,20 @@ Mar 2026   | 100%   | 55%    | 45%    | 40%    | 38%
 
 **Goal:** Measure business financial performance
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| **Total Revenue** | Sum of all booking payments | ₸10M/month | DB query |
-| **Average Revenue Per User (ARPU)** | Total revenue / Total users | ₸3,000 | DB query |
-| **Average Order Value (AOV)** | Avg booking amount | ₸15,000 | DB query |
-| **Conversion Rate** | % visitors who book | > 8% | GA4 + DB |
-| **Revenue by Source** | Organic, Paid, Referral revenue | Analysis | DB query |
-| **Revenue Growth Rate** | MoM revenue increase | > 20% | DB query |
-| **Customer Lifetime Value (CLV)** | Total value per customer | ₸50,000 | DB query |
-| **Salon Revenue** | Revenue per salon | Analysis | DB query |
-| **Commission Revenue** | Platform commission earned | Analysis | DB query |
+| Metric                              | Definition                      | Target     | Tracking |
+| ----------------------------------- | ------------------------------- | ---------- | -------- |
+| **Total Revenue**                   | Sum of all booking payments     | ₸10M/month | DB query |
+| **Average Revenue Per User (ARPU)** | Total revenue / Total users     | ₸3,000     | DB query |
+| **Average Order Value (AOV)**       | Avg booking amount              | ₸15,000    | DB query |
+| **Conversion Rate**                 | % visitors who book             | > 8%       | GA4 + DB |
+| **Revenue by Source**               | Organic, Paid, Referral revenue | Analysis   | DB query |
+| **Revenue Growth Rate**             | MoM revenue increase            | > 20%      | DB query |
+| **Customer Lifetime Value (CLV)**   | Total value per customer        | ₸50,000    | DB query |
+| **Salon Revenue**                   | Revenue per salon               | Analysis   | DB query |
+| **Commission Revenue**              | Platform commission earned      | Analysis   | DB query |
 
 **Key Events:**
+
 - `booking_created` - User creates booking
 - `payment_initiated` - User starts payment
 - `payment_completed` - Payment successful
@@ -137,6 +143,7 @@ Mar 2026   | 100%   | 55%    | 45%    | 40%    | 38%
 - `refund_issued` - Payment refunded
 
 **Revenue Funnel:**
+
 ```
 1000 Visitors → 300 Sign-ups (30%) → 150 Search (50%) → 90 Booking Created (60%) → 80 Payment Completed (89%)
 
@@ -147,16 +154,17 @@ Conversion Rate: 80 / 1000 = 8%
 
 **Goal:** Measure viral growth and user advocacy
 
-| Metric | Definition | Target | Tracking |
-|--------|-----------|--------|----------|
-| **Net Promoter Score (NPS)** | Likelihood to recommend (0-10) | > 50 | Survey |
-| **Referral Rate** | % users who refer others | > 10% | DB query |
-| **Viral Coefficient (K)** | Avg invites sent × conversion rate | > 1.0 | DB query |
-| **Referral Conversion** | % referrals who sign up | > 25% | DB query |
-| **Social Shares** | Shares on Instagram, Facebook, etc. | 500/month | GA4 |
-| **Review Score** | Avg rating on Google/2GIS | > 4.5/5 | Manual |
+| Metric                       | Definition                          | Target    | Tracking |
+| ---------------------------- | ----------------------------------- | --------- | -------- |
+| **Net Promoter Score (NPS)** | Likelihood to recommend (0-10)      | > 50      | Survey   |
+| **Referral Rate**            | % users who refer others            | > 10%     | DB query |
+| **Viral Coefficient (K)**    | Avg invites sent × conversion rate  | > 1.0     | DB query |
+| **Referral Conversion**      | % referrals who sign up             | > 25%     | DB query |
+| **Social Shares**            | Shares on Instagram, Facebook, etc. | 500/month | GA4      |
+| **Review Score**             | Avg rating on Google/2GIS           | > 4.5/5   | Manual   |
 
 **Key Events:**
+
 - `referral_sent` - User sends referral link
 - `referral_signup` - New user from referral
 - `social_share` - User shares on social media
@@ -164,6 +172,7 @@ Conversion Rate: 80 / 1000 = 8%
 - `invite_opened` - Referral link clicked
 
 **Viral Loop:**
+
 ```
 100 Users → 30 Send Invites (30%) → 90 Total Invites (3 each) → 23 Sign-ups (25%) = K = 0.23
 
@@ -218,14 +227,14 @@ npm install react-ga4
 **Configuration: `client/src/utils/analytics.ts`**
 
 ```typescript
-import ReactGA from 'react-ga4';
+import ReactGA from "react-ga4";
 
-const MEASUREMENT_ID = process.env.REACT_APP_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX';
+const MEASUREMENT_ID = process.env.REACT_APP_GA_MEASUREMENT_ID || "G-XXXXXXXXXX";
 
 export const initGA = () => {
   ReactGA.initialize(MEASUREMENT_ID, {
     gaOptions: {
-      cookieFlags: 'SameSite=None;Secure',
+      cookieFlags: "SameSite=None;Secure",
     },
     gtagOptions: {
       send_page_view: false, // We'll send manually
@@ -235,7 +244,7 @@ export const initGA = () => {
 
 // Track page views
 export const trackPageView = (path: string) => {
-  ReactGA.send({ hitType: 'pageview', page: path });
+  ReactGA.send({ hitType: "pageview", page: path });
 };
 
 // Track events
@@ -336,6 +345,7 @@ All events follow this naming convention:
 ```
 
 Examples:
+
 - `salon_viewed` - User views salon
 - `booking_created` - User creates booking
 - `payment_completed` - Payment successful
@@ -346,10 +356,10 @@ All events include these properties:
 
 ```typescript
 interface BaseEventProperties {
-  user_id?: string;           // Logged-in user ID
-  session_id: string;         // Session identifier
-  timestamp: string;          // ISO 8601 timestamp
-  platform: 'web' | 'ios' | 'android';
+  user_id?: string; // Logged-in user ID
+  session_id: string; // Session identifier
+  timestamp: string; // ISO 8601 timestamp
+  platform: "web" | "ios" | "android";
   screen_resolution?: string;
   user_agent?: string;
 }
@@ -361,31 +371,31 @@ interface BaseEventProperties {
 
 ```typescript
 // Page view
-trackPageView('/salons/tashkent');
+trackPageView("/salons/tashkent");
 
 // Salon viewed
-trackCustomEvent('salon_viewed', {
-  salon_id: '123',
-  salon_name: 'Beauty Lounge',
-  city: 'Tashkent',
-  category: 'Hair Salon',
+trackCustomEvent("salon_viewed", {
+  salon_id: "123",
+  salon_name: "Beauty Lounge",
+  city: "Tashkent",
+  category: "Hair Salon",
 });
 
 // Search performed
-trackCustomEvent('search_performed', {
-  query: 'hair salon',
+trackCustomEvent("search_performed", {
+  query: "hair salon",
   filters: {
-    city: 'Tashkent',
-    service: 'Haircut',
+    city: "Tashkent",
+    service: "Haircut",
   },
   results_count: 15,
 });
 
 // Service viewed
-trackCustomEvent('service_viewed', {
-  salon_id: '123',
-  service_id: '456',
-  service_name: 'Haircut',
+trackCustomEvent("service_viewed", {
+  salon_id: "123",
+  service_id: "456",
+  service_name: "Haircut",
   price: 50000,
 });
 ```
@@ -394,31 +404,31 @@ trackCustomEvent('service_viewed', {
 
 ```typescript
 // Sign up
-trackCustomEvent('sign_up', {
-  method: 'email', // 'email', 'google', 'phone'
-  user_type: 'client', // 'client', 'specialist', 'salon_owner'
+trackCustomEvent("sign_up", {
+  method: "email", // 'email', 'google', 'phone'
+  user_type: "client", // 'client', 'specialist', 'salon_owner'
 });
 
 // Profile completed
-trackCustomEvent('profile_completed', {
-  user_id: '789',
+trackCustomEvent("profile_completed", {
+  user_id: "789",
   completion_percentage: 100,
   time_to_complete: 120, // seconds
 });
 
 // First booking created
-trackCustomEvent('first_booking_created', {
-  user_id: '789',
-  salon_id: '123',
-  service_id: '456',
-  booking_id: 'BK001',
+trackCustomEvent("first_booking_created", {
+  user_id: "789",
+  salon_id: "123",
+  service_id: "456",
+  booking_id: "BK001",
   time_to_first_booking: 3600, // seconds since signup
 });
 
 // Salon favorited
-trackCustomEvent('salon_favorited', {
-  user_id: '789',
-  salon_id: '123',
+trackCustomEvent("salon_favorited", {
+  user_id: "789",
+  salon_id: "123",
 });
 ```
 
@@ -426,28 +436,28 @@ trackCustomEvent('salon_favorited', {
 
 ```typescript
 // Session start
-trackCustomEvent('session_start', {
-  user_id: '789',
+trackCustomEvent("session_start", {
+  user_id: "789",
   days_since_last_visit: 3,
 });
 
 // Booking viewed
-trackCustomEvent('booking_viewed', {
-  user_id: '789',
-  booking_id: 'BK001',
-  booking_status: 'confirmed',
+trackCustomEvent("booking_viewed", {
+  user_id: "789",
+  booking_id: "BK001",
+  booking_status: "confirmed",
 });
 
 // Notification clicked
-trackCustomEvent('notification_clicked', {
-  user_id: '789',
-  notification_type: 'booking_reminder',
-  notification_id: 'N123',
+trackCustomEvent("notification_clicked", {
+  user_id: "789",
+  notification_type: "booking_reminder",
+  notification_id: "N123",
 });
 
 // Return visit
-trackCustomEvent('return_visit', {
-  user_id: '789',
+trackCustomEvent("return_visit", {
+  user_id: "789",
   days_since_signup: 14,
   days_since_last_visit: 7,
 });
@@ -457,38 +467,38 @@ trackCustomEvent('return_visit', {
 
 ```typescript
 // Booking created
-trackCustomEvent('booking_created', {
-  booking_id: 'BK001',
-  user_id: '789',
-  salon_id: '123',
-  service_id: '456',
-  service_name: 'Haircut',
+trackCustomEvent("booking_created", {
+  booking_id: "BK001",
+  user_id: "789",
+  salon_id: "123",
+  service_id: "456",
+  service_name: "Haircut",
   price: 50000,
-  booking_date: '2026-01-15',
-  booking_time: '14:00',
+  booking_date: "2026-01-15",
+  booking_time: "14:00",
 });
 
 // Payment initiated
-trackCustomEvent('payment_initiated', {
-  booking_id: 'BK001',
-  payment_method: 'card', // 'card', 'cash', 'payme'
+trackCustomEvent("payment_initiated", {
+  booking_id: "BK001",
+  payment_method: "card", // 'card', 'cash', 'payme'
   amount: 50000,
 });
 
 // Payment completed
-trackCustomEvent('payment_completed', {
-  booking_id: 'BK001',
-  transaction_id: 'TXN123',
-  payment_method: 'card',
+trackCustomEvent("payment_completed", {
+  booking_id: "BK001",
+  transaction_id: "TXN123",
+  payment_method: "card",
   amount: 50000,
-  currency: 'UZS',
+  currency: "UZS",
 });
 
 // Booking cancelled
-trackCustomEvent('booking_cancelled', {
-  booking_id: 'BK001',
-  user_id: '789',
-  cancellation_reason: 'schedule_conflict',
+trackCustomEvent("booking_cancelled", {
+  booking_id: "BK001",
+  user_id: "789",
+  cancellation_reason: "schedule_conflict",
   days_before_booking: 2,
 });
 ```
@@ -497,32 +507,32 @@ trackCustomEvent('booking_cancelled', {
 
 ```typescript
 // Referral sent
-trackCustomEvent('referral_sent', {
-  user_id: '789',
-  referral_code: 'REF789',
-  method: 'whatsapp', // 'whatsapp', 'telegram', 'email', 'copy_link'
+trackCustomEvent("referral_sent", {
+  user_id: "789",
+  referral_code: "REF789",
+  method: "whatsapp", // 'whatsapp', 'telegram', 'email', 'copy_link'
 });
 
 // Referral signup
-trackCustomEvent('referral_signup', {
-  new_user_id: '999',
-  referrer_id: '789',
-  referral_code: 'REF789',
+trackCustomEvent("referral_signup", {
+  new_user_id: "999",
+  referrer_id: "789",
+  referral_code: "REF789",
 });
 
 // Social share
-trackCustomEvent('social_share', {
-  user_id: '789',
-  platform: 'instagram', // 'instagram', 'facebook', 'telegram'
-  content_type: 'salon', // 'salon', 'booking', 'review'
-  content_id: '123',
+trackCustomEvent("social_share", {
+  user_id: "789",
+  platform: "instagram", // 'instagram', 'facebook', 'telegram'
+  content_type: "salon", // 'salon', 'booking', 'review'
+  content_id: "123",
 });
 
 // Review submitted
-trackCustomEvent('review_submitted', {
-  user_id: '789',
-  salon_id: '123',
-  booking_id: 'BK001',
+trackCustomEvent("review_submitted", {
+  user_id: "789",
+  salon_id: "123",
+  booking_id: "BK001",
   rating: 5,
   has_comment: true,
 });
@@ -637,6 +647,7 @@ const SearchBar = () => {
 I'll create a comprehensive installation script: `scripts/setup-metabase.sh`
 
 This script will:
+
 - Install Java 11
 - Download Metabase JAR
 - Configure systemd service
@@ -692,6 +703,7 @@ I'll create 5 main dashboards, one for each AARRR metric category.
 #### Dashboard 1: Acquisition Dashboard
 
 **Metrics:**
+
 - Total visitors (last 7 days, 30 days)
 - Traffic sources breakdown (pie chart)
 - Landing page views (bar chart)
@@ -734,6 +746,7 @@ LIMIT 10;
 #### Dashboard 2: Activation Dashboard
 
 **Metrics:**
+
 - Sign-ups (last 7 days, 30 days)
 - Sign-up rate trend (line chart)
 - Onboarding completion rate (gauge)
@@ -787,6 +800,7 @@ WHERE u.created_at >= NOW() - INTERVAL '30 days';
 #### Dashboard 3: Retention Dashboard
 
 **Metrics:**
+
 - DAU, WAU, MAU (big numbers)
 - DAU/MAU ratio (gauge)
 - Churn rate (gauge)
@@ -882,6 +896,7 @@ ORDER BY cohort_week DESC, activity_week;
 #### Dashboard 4: Revenue Dashboard
 
 **Metrics:**
+
 - Total revenue (last 7 days, 30 days)
 - Revenue trend (line chart)
 - ARPU (big number)
@@ -997,6 +1012,7 @@ LIMIT 10;
 #### Dashboard 5: Referral Dashboard
 
 **Metrics:**
+
 - NPS score (big number with color)
 - Referral rate (gauge)
 - Viral coefficient K (big number)
@@ -1102,6 +1118,7 @@ LIMIT 10;
 1. Click **New** → **Question**
 2. Select **Native query**
 3. Paste SQL:
+
 ```sql
 SELECT
   DATE(created_at) as date,
@@ -1112,6 +1129,7 @@ WHERE status = 'completed'
 GROUP BY DATE(created_at)
 ORDER BY date
 ```
+
 4. Click **Visualize**
 5. Change visualization to **Line chart**
 6. X-axis: `date`, Y-axis: `daily_revenue`
@@ -1214,6 +1232,7 @@ Create automated daily reports sent to stakeholders.
 I'll create a script: `scripts/send-daily-report.sh`
 
 This will:
+
 - Query key metrics from PostgreSQL
 - Format as readable message
 - Send via Telegram Bot API
@@ -1221,6 +1240,7 @@ This will:
 ### 7.2 Weekly Summary Reports
 
 More detailed weekly reports with:
+
 - Week-over-week comparisons
 - Top performers (salons, specialists)
 - Anomaly detection
@@ -1233,13 +1253,13 @@ More detailed weekly reports with:
 
 Set up alerts for critical metrics:
 
-| Metric | Condition | Alert |
-|--------|-----------|-------|
-| DAU | < 500 | Critical |
-| Conversion Rate | < 5% | Warning |
-| Churn Rate | > 50% | Critical |
-| Revenue | Day-over-day drop > 30% | Critical |
-| NPS | < 30 | Warning |
+| Metric          | Condition               | Alert    |
+| --------------- | ----------------------- | -------- |
+| DAU             | < 500                   | Critical |
+| Conversion Rate | < 5%                    | Warning  |
+| Churn Rate      | > 50%                   | Critical |
+| Revenue         | Day-over-day drop > 30% | Critical |
+| NPS             | < 30                    | Warning  |
 
 ### 8.2 Grafana Integration (Optional)
 
@@ -1267,12 +1287,14 @@ Access: `http://localhost:3000` (default: admin/admin)
 ### 9.1 Data Privacy
 
 ✅ **DO:**
+
 - Anonymize user data in analytics
 - Use user IDs, not names/emails in GA4
 - Comply with GDPR/local data protection laws
 - Allow users to opt-out of tracking
 
 ❌ **DON'T:**
+
 - Send PII (Personally Identifiable Information) to GA4
 - Track sensitive data (payment details, passwords)
 - Share analytics access publicly
@@ -1280,12 +1302,14 @@ Access: `http://localhost:3000` (default: admin/admin)
 ### 9.2 Event Tracking Guidelines
 
 ✅ **DO:**
+
 - Use consistent naming conventions
 - Include context properties (salon_id, service_id)
 - Track both success and failure events
 - Document all events in a tracking plan
 
 ❌ **DON'T:**
+
 - Track too many events (focus on critical ones)
 - Send duplicate events
 - Track before user consent
@@ -1293,12 +1317,14 @@ Access: `http://localhost:3000` (default: admin/admin)
 ### 9.3 Dashboard Design
 
 ✅ **DO:**
+
 - Use clear, descriptive titles
 - Show trends over time (not just current values)
 - Include comparisons (week-over-week, month-over-month)
 - Use appropriate visualizations (line for trends, pie for proportions)
 
 ❌ **DON'T:**
+
 - Overcrowd dashboards (max 6-8 cards)
 - Use 3D charts (confusing)
 - Show vanity metrics without context
@@ -1306,12 +1332,14 @@ Access: `http://localhost:3000` (default: admin/admin)
 ### 9.4 Performance
 
 ✅ **DO:**
+
 - Use materialized views for complex queries
 - Add indexes on frequently queried columns
 - Refresh materialized views during off-peak hours
 - Cache dashboard data (refresh every 5-10 minutes)
 
 ❌ **DON'T:**
+
 - Run complex queries on production DB during peak hours
 - Store historical data indefinitely (archive after 2 years)
 - Query individual events (aggregate first)
@@ -1325,6 +1353,7 @@ Access: `http://localhost:3000` (default: admin/admin)
 **Problem: Events not appearing in GA4**
 
 Solutions:
+
 1. Check **Measurement ID** is correct
 2. Open browser DevTools → Network → Filter `google-analytics` → Check requests
 3. Use **GA4 DebugView**: Add `?_dbg=1` to URL
@@ -1333,6 +1362,7 @@ Solutions:
 **Problem: Low data quality**
 
 Solutions:
+
 1. Enable **Google Signals** (Admin → Data Settings)
 2. Disable **Data Sampling** (use unsampled reports)
 3. Set up **Server-Side Tracking** for critical events
@@ -1342,6 +1372,7 @@ Solutions:
 **Problem: Slow query performance**
 
 Solutions:
+
 1. Check indexes: `EXPLAIN ANALYZE SELECT ...`
 2. Use materialized views for complex queries
 3. Reduce date range (30 days instead of 90 days)
@@ -1350,16 +1381,20 @@ Solutions:
 **Problem: Metabase service crashes**
 
 Solutions:
+
 1. Check logs: `sudo journalctl -u metabase -n 100`
 2. Increase Java heap size: Edit `/etc/systemd/system/metabase.service`
+
 ```bash
 Environment="JAVA_OPTS=-Xmx4g"
 ```
+
 3. Restart service: `sudo systemctl restart metabase`
 
 **Problem: Can't connect to PostgreSQL**
 
 Solutions:
+
 1. Check PostgreSQL is running: `sudo systemctl status postgresql`
 2. Check credentials: `cat /etc/aurelle-db.conf`
 3. Test connection: `psql -h localhost -U aurelle_user -d aurelle_db`
@@ -1370,6 +1405,7 @@ Solutions:
 **Problem: "No data" on dashboard**
 
 Solutions:
+
 1. Check date filter (expand date range)
 2. Check database connection
 3. Check SQL query syntax
@@ -1378,6 +1414,7 @@ Solutions:
 **Problem: Incorrect numbers**
 
 Solutions:
+
 1. Check for duplicate events (deduplicate with `DISTINCT`)
 2. Verify date timezone matches server timezone
 3. Check for test data (filter out test accounts)
@@ -1448,30 +1485,35 @@ ORDER BY revenue DESC;
 ## Appendix B: Event Tracking Checklist
 
 ### Acquisition Events
+
 - [ ] `page_view` - All pages
 - [ ] `salon_viewed` - Salon detail pages
 - [ ] `search_performed` - Search functionality
 - [ ] `service_viewed` - Service pages
 
 ### Activation Events
+
 - [ ] `sign_up` - Registration
 - [ ] `profile_completed` - Profile completion
 - [ ] `first_booking_created` - First booking
 - [ ] `salon_favorited` - Add to favorites
 
 ### Retention Events
+
 - [ ] `session_start` - App/website opens
 - [ ] `booking_viewed` - View booking details
 - [ ] `notification_clicked` - Notification engagement
 - [ ] `return_visit` - User returns after 7+ days
 
 ### Revenue Events
+
 - [ ] `booking_created` - Booking creation
 - [ ] `payment_initiated` - Payment start
 - [ ] `payment_completed` - Payment success
 - [ ] `booking_cancelled` - Cancellation
 
 ### Referral Events
+
 - [ ] `referral_sent` - Referral link shared
 - [ ] `referral_signup` - New user from referral
 - [ ] `social_share` - Social media share
@@ -1483,12 +1525,12 @@ ORDER BY revenue DESC;
 
 ### User Roles
 
-| Role | Access | Dashboards |
-|------|--------|------------|
-| **Admin** | Full access | All 5 dashboards |
-| **Manager** | View + Edit | All 5 dashboards |
-| **Salon Owner** | View only | Revenue dashboard (their salon) |
-| **Viewer** | View only | Public dashboards |
+| Role            | Access      | Dashboards                      |
+| --------------- | ----------- | ------------------------------- |
+| **Admin**       | Full access | All 5 dashboards                |
+| **Manager**     | View + Edit | All 5 dashboards                |
+| **Salon Owner** | View only   | Revenue dashboard (their salon) |
+| **Viewer**      | View only   | Public dashboards               |
 
 ### Credentials
 

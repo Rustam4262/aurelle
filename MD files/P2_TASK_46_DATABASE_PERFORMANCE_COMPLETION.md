@@ -12,6 +12,7 @@
 Successfully implemented comprehensive database performance tuning for AURELLE platform. The optimization includes PostgreSQL configuration tuning, query monitoring with pg_stat_statements, 60+ performance indexes, automated VACUUM maintenance, and optional PgBouncer connection pooling.
 
 **Key Achievements:**
+
 - ✅ Automated PostgreSQL configuration tuning based on system resources
 - ✅ Query performance monitoring with pg_stat_statements
 - ✅ 60+ strategic indexes added for critical query paths
@@ -29,6 +30,7 @@ Successfully implemented comprehensive database performance tuning for AURELLE p
 **File:** `scripts/tune-postgres.sh`
 
 **Features:**
+
 - Automatic system resource detection (RAM, CPU cores)
 - Calculates optimal settings based on PostgreSQL best practices
 - Creates `/etc/postgresql/14/main/conf.d/aurelle-tuning.conf`
@@ -37,26 +39,28 @@ Successfully implemented comprehensive database performance tuning for AURELLE p
 
 **Key Settings Applied:**
 
-| Parameter | Value | Purpose |
-|-----------|-------|---------|
-| `shared_buffers` | 25% of RAM | Data caching in memory |
-| `effective_cache_size` | 60% of RAM | Query planner cache estimate |
-| `maintenance_work_mem` | RAM / 16 (max 2GB) | VACUUM, CREATE INDEX operations |
-| `work_mem` | RAM / 200 | Query operations (sorts, joins) |
-| `max_wal_size` | 4GB | Reduce checkpoint frequency |
-| `checkpoint_completion_target` | 0.9 | Spread checkpoints over time |
-| `random_page_cost` | 1.1 | Optimized for SSD |
-| `default_statistics_target` | 100 | Better query planning |
-| `max_worker_processes` | CPU cores | Parallel query support |
-| `max_parallel_workers` | CPU cores | Parallel execution |
+| Parameter                      | Value              | Purpose                         |
+| ------------------------------ | ------------------ | ------------------------------- |
+| `shared_buffers`               | 25% of RAM         | Data caching in memory          |
+| `effective_cache_size`         | 60% of RAM         | Query planner cache estimate    |
+| `maintenance_work_mem`         | RAM / 16 (max 2GB) | VACUUM, CREATE INDEX operations |
+| `work_mem`                     | RAM / 200          | Query operations (sorts, joins) |
+| `max_wal_size`                 | 4GB                | Reduce checkpoint frequency     |
+| `checkpoint_completion_target` | 0.9                | Spread checkpoints over time    |
+| `random_page_cost`             | 1.1                | Optimized for SSD               |
+| `default_statistics_target`    | 100                | Better query planning           |
+| `max_worker_processes`         | CPU cores          | Parallel query support          |
+| `max_parallel_workers`         | CPU cores          | Parallel execution              |
 
 **Additional Optimizations:**
+
 - WAL (Write-Ahead Logging) tuning for better write performance
 - Autovacuum configuration for automatic maintenance
 - Logging configuration for slow query tracking
 - Connection pooling parameters
 
 **Usage:**
+
 ```bash
 bash scripts/tune-postgres.sh
 ```
@@ -66,6 +70,7 @@ bash scripts/tune-postgres.sh
 **File:** `scripts/setup-pg-stat-statements.sh`
 
 **What It Does:**
+
 - Installs pg_stat_statements extension
 - Creates helper views for easy analysis:
   - `slow_queries` - Queries by average execution time
@@ -74,6 +79,7 @@ bash scripts/tune-postgres.sh
 - Provides usage examples and query templates
 
 **Key Metrics Tracked:**
+
 - Average execution time (mean_exec_time)
 - Total execution time (total_exec_time)
 - Number of calls (calls)
@@ -82,6 +88,7 @@ bash scripts/tune-postgres.sh
 - Percentage of total database time
 
 **Example Queries:**
+
 ```sql
 -- View slowest queries
 SELECT * FROM slow_queries LIMIT 10;
@@ -97,6 +104,7 @@ SELECT pg_stat_statements_reset();
 ```
 
 **Usage:**
+
 ```bash
 bash scripts/setup-pg-stat-statements.sh
 ```
@@ -106,6 +114,7 @@ bash scripts/setup-pg-stat-statements.sh
 **File:** `scripts/analyze-slow-queries.sh`
 
 **Comprehensive Analysis:**
+
 1. **Slowest Queries** - By average execution time (> threshold)
 2. **Most Time-Consuming Queries** - By total execution time
 3. **Most Frequently Called Queries** - By call count
@@ -120,12 +129,14 @@ bash scripts/setup-pg-stat-statements.sh
 **Output:** Detailed report saved to `/var/log/aurelle-monitoring/slow_queries_TIMESTAMP.txt`
 
 **Recommendations Provided:**
+
 - Identifies queries exceeding threshold (default: 50ms)
 - Alerts on low cache hit ratios (< 99%)
 - Suggests index additions for high seq scan tables
 - Provides actionable optimization steps
 
 **Usage:**
+
 ```bash
 # Run analysis (default threshold: 50ms)
 bash scripts/analyze-slow-queries.sh
@@ -305,6 +316,7 @@ ANALYZE bookings, salons, masters, services, reviews, notifications, ...
 ```
 
 **Usage:**
+
 ```bash
 sudo -u postgres psql -d aurelle -f db/add-performance-indexes.sql
 ```
@@ -314,19 +326,21 @@ sudo -u postgres psql -d aurelle -f db/add-performance-indexes.sql
 **File:** `scripts/setup-vacuum-automation.sh`
 
 **What It Creates:**
+
 1. **vacuum-database.sh** - Daily VACUUM ANALYZE
 2. **vacuum-full-database.sh** - Weekly deep clean
 3. **reindex-database.sh** - Monthly index rebuild
 
 **Automated Schedule:**
 
-| Task | Frequency | Time | Purpose |
-|------|-----------|------|---------|
-| VACUUM ANALYZE | Daily | 2:00 AM | Remove dead tuples, update statistics |
-| VACUUM FULL | Weekly (Sunday) | 3:00 AM | Reclaim disk space (locks tables) |
-| REINDEX | Monthly (1st) | 4:00 AM | Rebuild indexes, eliminate bloat |
+| Task           | Frequency       | Time    | Purpose                               |
+| -------------- | --------------- | ------- | ------------------------------------- |
+| VACUUM ANALYZE | Daily           | 2:00 AM | Remove dead tuples, update statistics |
+| VACUUM FULL    | Weekly (Sunday) | 3:00 AM | Reclaim disk space (locks tables)     |
+| REINDEX        | Monthly (1st)   | 4:00 AM | Rebuild indexes, eliminate bloat      |
 
 **Cron Jobs Installed:**
+
 ```cron
 # Daily VACUUM ANALYZE
 0 2 * * * /path/to/vacuum-database.sh >> /var/log/aurelle-monitoring/vacuum.log 2>&1
@@ -339,6 +353,7 @@ sudo -u postgres psql -d aurelle -f db/add-performance-indexes.sql
 ```
 
 **Manual Operations:**
+
 ```bash
 # Run VACUUM ANALYZE manually
 bash scripts/vacuum-database.sh
@@ -360,6 +375,7 @@ ORDER BY n_dead_tup DESC;
 ```
 
 **Usage:**
+
 ```bash
 bash scripts/setup-vacuum-automation.sh
 ```
@@ -367,10 +383,12 @@ bash scripts/setup-vacuum-automation.sh
 ### 6. PgBouncer Connection Pooling (Optional)
 
 **Files:**
+
 - `configs/pgbouncer.ini` - Configuration file
 - `scripts/setup-pgbouncer.sh` - Setup script
 
 **Benefits:**
+
 - **Reduces Connection Overhead:** Reuses database connections
 - **Scales Better:** 200 client connections → 25 server connections
 - **Faster Response:** Instant connection from pool
@@ -409,16 +427,19 @@ stats_period = 60
 **Application Integration:**
 
 Before:
+
 ```bash
 DATABASE_URL=postgresql://user:pass@localhost:5432/aurelle
 ```
 
 After:
+
 ```bash
 DATABASE_URL=postgresql://user:pass@localhost:6432/aurelle
 ```
 
 **Monitoring Commands:**
+
 ```bash
 # View pool statistics
 psql -h 127.0.0.1 -p 6432 -U postgres pgbouncer -c "SHOW POOLS;"
@@ -431,6 +452,7 @@ psql -h 127.0.0.1 -p 6432 -U postgres pgbouncer -c "SHOW SERVERS;"
 ```
 
 **Usage:**
+
 ```bash
 bash scripts/setup-pgbouncer.sh
 ```
@@ -635,23 +657,23 @@ psql -h localhost -p 6432 -U postgres pgbouncer -c "SHOW POOLS;"
 
 ### Before Optimization (Baseline)
 
-| Metric | Value |
-|--------|-------|
-| Average Query Time | ~150-300ms |
-| Cache Hit Ratio | ~85-90% |
+| Metric               | Value            |
+| -------------------- | ---------------- |
+| Average Query Time   | ~150-300ms       |
+| Cache Hit Ratio      | ~85-90%          |
 | Database Connections | 50-80 concurrent |
-| Dead Tuples | 15-25% |
-| Index Usage | ~70% |
+| Dead Tuples          | 15-25%           |
+| Index Usage          | ~70%             |
 
 ### After Optimization (Target)
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Average Query Time | < 50ms | ✅ Achievable with indexes |
-| Cache Hit Ratio | > 99% | ✅ With tuned shared_buffers |
-| Database Connections | < 30 (with PgBouncer) | ✅ Pool size: 25 |
-| Dead Tuples | < 10% | ✅ With automated VACUUM |
-| Index Usage | > 90% | ✅ With 60+ strategic indexes |
+| Metric               | Target                | Status                        |
+| -------------------- | --------------------- | ----------------------------- |
+| Average Query Time   | < 50ms                | ✅ Achievable with indexes    |
+| Cache Hit Ratio      | > 99%                 | ✅ With tuned shared_buffers  |
+| Database Connections | < 30 (with PgBouncer) | ✅ Pool size: 25              |
+| Dead Tuples          | < 10%                 | ✅ With automated VACUUM      |
+| Index Usage          | > 90%                 | ✅ With 60+ strategic indexes |
 
 ### Key Performance Improvements
 
@@ -744,11 +766,13 @@ The infrastructure monitoring system (P2 Task #45) includes database health chec
 **Monitoring Script:** `scripts/monitor-database.sh`
 **Frequency:** Every 5 minutes
 **Checks:**
+
 - Database connection status
 - Connection count
 - Slow query detection (> 1 second)
 
 **Telegram Alerts:**
+
 - 🔴 **Critical:** Database connection failures
 - 🟡 **Warning:** High connection count (> 80)
 - 🟡 **Warning:** Slow queries detected
@@ -881,16 +905,16 @@ psql -h 127.0.0.1 -p 6432 -U postgres -d aurelle
 
 ## Acceptance Criteria
 
-| Criteria | Status |
-|----------|--------|
-| ✅ PostgreSQL configuration optimized | COMPLETED |
-| ✅ pg_stat_statements extension enabled | COMPLETED |
-| ✅ Missing indexes added | COMPLETED (60+ indexes) |
-| ✅ VACUUM automation setup | COMPLETED (daily, weekly, monthly) |
-| ✅ Connection pooling configured (optional) | COMPLETED (PgBouncer) |
-| ✅ Query performance < 50ms (target) | ACHIEVABLE |
-| ✅ Comprehensive documentation | COMPLETED |
-| ✅ Monitoring and alerts integrated | COMPLETED |
+| Criteria                                    | Status                             |
+| ------------------------------------------- | ---------------------------------- |
+| ✅ PostgreSQL configuration optimized       | COMPLETED                          |
+| ✅ pg_stat_statements extension enabled     | COMPLETED                          |
+| ✅ Missing indexes added                    | COMPLETED (60+ indexes)            |
+| ✅ VACUUM automation setup                  | COMPLETED (daily, weekly, monthly) |
+| ✅ Connection pooling configured (optional) | COMPLETED (PgBouncer)              |
+| ✅ Query performance < 50ms (target)        | ACHIEVABLE                         |
+| ✅ Comprehensive documentation              | COMPLETED                          |
+| ✅ Monitoring and alerts integrated         | COMPLETED                          |
 
 ---
 

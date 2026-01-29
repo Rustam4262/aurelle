@@ -7,9 +7,11 @@
 ## 🚀 START HERE (Начните отсюда!)
 
 ### 1️⃣ [READY_TO_DEPLOY.md](./READY_TO_DEPLOY.md)
+
 **⭐ ГЛАВНЫЙ ФАЙЛ - НАЧНИТЕ С НЕГО!**
 
 Содержит:
+
 - ✅ Полную сводку готовности проекта
 - ✅ Что было сделано
 - ✅ Данные сервера и credentials
@@ -23,9 +25,11 @@
 ## 📖 Quick Start Guides (Быстрый старт)
 
 ### 2️⃣ [DEPLOY_QUICK_START.md](./DEPLOY_QUICK_START.md)
+
 **Быстрое руководство по деплою**
 
 Содержит:
+
 - 🚀 Вариант 1: Автоматический деплой (РЕКОМЕНДУЕТСЯ)
   - Загрузка файлов на сервер
   - Запуск автоматической установки
@@ -38,9 +42,11 @@
 **Когда использовать**: После прочтения READY_TO_DEPLOY.md, если хотите быстро развернуть проект.
 
 ### 3️⃣ [DEPLOYMENT_FILES_SUMMARY.txt](./DEPLOYMENT_FILES_SUMMARY.txt)
+
 **Текстовая сводка всех файлов деплоя**
 
 Содержит:
+
 - 📋 Краткий чек-лист действий
 - 📁 Список всех файлов для деплоя
 - 🔐 Все credentials в одном месте
@@ -54,9 +60,11 @@
 ## 📘 Detailed Guides (Детальные руководства)
 
 ### 4️⃣ [DEPLOY_TO_SERVER.md](./DEPLOY_TO_SERVER.md)
+
 **15 шагов ручного деплоя на сервер**
 
 Содержит:
+
 - 🖥️ Данные сервера (IP, логин, пароль)
 - 📋 Шаг 1: Подключение к серверу
 - 🧹 Шаг 2: Полная очистка сервера
@@ -80,9 +88,11 @@
 **Когда использовать**: Если автоматический скрипт не сработал или вы хотите понять каждый шаг детально.
 
 ### 5️⃣ [DEPLOYMENT.md](./DEPLOYMENT.md)
+
 **Полное руководство по развертыванию (самое детальное)**
 
 Содержит:
+
 - 📋 Системные требования
 - 🔧 Пошаговая установка всех зависимостей
 - 🗄️ Настройка PostgreSQL
@@ -101,9 +111,11 @@
 ## ✅ Checklists (Чек-листы)
 
 ### 6️⃣ [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+
 **Полный чек-лист деплоя (100+ пунктов)**
 
 Разделы:
+
 - [ ] 🎯 Подготовка (локально)
 - [ ] 🖥️ Сервер - базовая настройка
 - [ ] 🗄️ База данных
@@ -126,9 +138,11 @@
 ## 🔑 Authentication & OAuth
 
 ### 7️⃣ [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md)
+
 **Настройка всех методов авторизации**
 
 Содержит:
+
 - ✅ Email/Password авторизация
 - ✅ Google OAuth (получение credentials)
 - ✅ Yandex OAuth (получение credentials)
@@ -141,9 +155,11 @@
 **Когда использовать**: Если нужно получить новые OAuth credentials или понять, как работает каждый метод авторизации.
 
 ### 8️⃣ [OAUTH_SETUP_PRODUCTION.md](./OAUTH_SETUP_PRODUCTION.md)
+
 **Обновление OAuth Redirect URIs для production**
 
 Содержит:
+
 - 🎯 Ваши текущие credentials
 - 📝 Пошаговые инструкции для Google
 - 📝 Пошаговые инструкции для Yandex
@@ -158,9 +174,11 @@
 ## 📊 Summary & Overview
 
 ### 9️⃣ [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md)
+
 **Полная сводка по подготовке к деплою**
 
 Содержит:
+
 - ✅ Что было сделано (детальный список)
   - Множественные методы авторизации
   - Обновленная UI
@@ -179,9 +197,11 @@
 **Когда использовать**: Для понимания всех изменений, которые были сделаны в проекте для подготовки к деплою.
 
 ### 🔟 [README.md](./README.md)
+
 **Обзор проекта AURELLE**
 
 Содержит:
+
 - 📖 Описание проекта
 - 🚀 Технологический стек
 - ⚡ Быстрый старт для разработки
@@ -198,9 +218,11 @@
 ## 🔧 Automation Scripts (Скрипты)
 
 ### 1️⃣1️⃣ server-setup.sh
+
 **Автоматический скрипт установки на сервер**
 
 Что делает:
+
 - 🧹 Очищает старую установку
 - 📦 Устанавливает Node.js, PostgreSQL, Nginx, PM2, Certbot, Git
 - 🗄️ Настраивает PostgreSQL (создает БД и пользователя)
@@ -214,6 +236,7 @@
 - 🔥 Настраивает UFW firewall
 
 **Как использовать**:
+
 ```bash
 # Загрузить на сервер:
 scp server-setup.sh root@89.39.94.194:/root/
@@ -224,9 +247,11 @@ bash /root/server-setup.sh
 ```
 
 ### 1️⃣2️⃣ deploy.sh
+
 **Скрипт автоматического обновления приложения**
 
 Что делает:
+
 - 🔄 Git pull
 - 📚 npm install
 - 🔨 npm run build
@@ -234,21 +259,25 @@ bash /root/server-setup.sh
 - 🚀 pm2 restart aurelle
 
 **Как использовать**:
+
 ```bash
 cd /var/www/aurelle
 ./deploy.sh
 ```
 
 ### 1️⃣3️⃣ backup.sh
+
 **Скрипт автоматического бэкапа БД**
 
 Что делает:
+
 - 💾 Создает SQL dump базы данных
 - 🗜️ Сжимает gzip
 - 🗂️ Сохраняет в /var/backups/aurelle/
 - 🧹 Удаляет бэкапы старше 7 дней
 
 **Как использовать**:
+
 ```bash
 cd /var/www/aurelle
 ./backup.sh
@@ -262,9 +291,11 @@ cd /var/www/aurelle
 ## ⚙️ Configuration Files (Конфигурации)
 
 ### 1️⃣4️⃣ ecosystem.config.cjs
+
 **PM2 конфигурация для production**
 
 Содержит:
+
 - 📝 Имя приложения
 - 📂 Путь к скрипту
 - 🔢 Кластерный режим (instances)
@@ -273,15 +304,18 @@ cd /var/www/aurelle
 - ⚙️ Environment variables
 
 **Как использовать**:
+
 ```bash
 pm2 start ecosystem.config.cjs
 pm2 save
 ```
 
 ### 1️⃣5️⃣ nginx.conf
+
 **Готовая конфигурация Nginx**
 
 Содержит:
+
 - 🌐 Server blocks для HTTP и HTTPS
 - 🔐 SSL настройки
 - 🔄 Reverse proxy к Node.js (порт 5000)
@@ -293,18 +327,22 @@ pm2 save
 **Как использовать**: Копируется автоматически через server-setup.sh
 
 ### 1️⃣6️⃣ .env.example
+
 **Шаблон .env для development**
 
 Содержит:
+
 - 🗄️ DATABASE_URL (пример)
 - 🔑 SESSION_SECRET (пример)
 - ⚙️ NODE_ENV, PORT
 - 🔐 OAuth credentials (пустые места для заполнения)
 
 ### 1️⃣7️⃣ .env.production.example
+
 **Шаблон .env для production**
 
 Содержит:
+
 - 🗄️ DATABASE_URL для production
 - 🔑 Инструкции по генерации SESSION_SECRET
 - ⚙️ NODE_ENV=production
@@ -315,15 +353,18 @@ pm2 save
 ## 📦 Deployment Package
 
 ### 1️⃣8️⃣ aurelle-deploy.tar.gz
+
 **Архив проекта для развертывания**
 
 Содержит:
+
 - ✅ Весь исходный код проекта
 - ✅ package.json и package-lock.json
 - ✅ Конфигурационные файлы
 - ✅ Скрипты автоматизации (deploy.sh, backup.sh)
 
 Исключено (не в архиве):
+
 - ❌ node_modules (будет установлено на сервере)
 - ❌ dist (будет собрано на сервере)
 - ❌ .git (не нужно на сервере)
@@ -339,22 +380,27 @@ pm2 save
 Для успешного деплоя рекомендуем следующий порядок:
 
 ### Перед деплоем:
+
 1. [READY_TO_DEPLOY.md](./READY_TO_DEPLOY.md) - Общий обзор
 2. [DEPLOYMENT_FILES_SUMMARY.txt](./DEPLOYMENT_FILES_SUMMARY.txt) - Сводка файлов
 3. [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Распечатать
 
 ### Во время деплоя:
+
 4. [DEPLOY_QUICK_START.md](./DEPLOY_QUICK_START.md) - Следовать инструкциям
 
 ### Если возникли проблемы:
+
 5. [DEPLOY_TO_SERVER.md](./DEPLOY_TO_SERVER.md) - Ручной деплой
 6. [DEPLOYMENT.md](./DEPLOYMENT.md) - Детальная информация
 
 ### После деплоя:
+
 7. [OAUTH_SETUP_PRODUCTION.md](./OAUTH_SETUP_PRODUCTION.md) - Обновить OAuth URIs
 8. [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) - При необходимости настройки
 
 ### Для справки:
+
 9. [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md) - Что было сделано
 10. [README.md](./README.md) - Информация о проекте
 

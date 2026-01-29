@@ -15,19 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 function Logo({ className }: { className?: string }) {
-  return (
-    <img
-      src="/images/logo.jpg"
-      alt="AURELLE"
-      className={className}
-    />
-  );
+  return <img src="/images/logo.jpg" alt="AURELLE" className={className} />;
 }
 
 function YandexIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.272 19.636h-2.182V9.454l-2.363 4.636H8.363l-2.363-4.636v10.182H3.818V4.363h2.182l3.636 7.273 3.636-7.273h2.182v15.273h-1.182z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.272 19.636h-2.182V9.454l-2.363 4.636H8.363l-2.363-4.636v10.182H3.818V4.363h2.182l3.636 7.273 3.636-7.273h2.182v15.273h-1.182z" />
     </svg>
   );
 }
@@ -68,7 +62,7 @@ export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
+
   const [step, setStep] = useState<"role" | "details">("role");
   const [selectedRole, setSelectedRole] = useState<"client" | "owner">("client");
   const [formData, setFormData] = useState({
@@ -76,7 +70,7 @@ export default function AuthPage() {
     phone: "",
     city: "",
   });
-  
+
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [emailAuthData, setEmailAuthData] = useState({
     email: "",
@@ -360,51 +354,47 @@ export default function AuthPage() {
                 <p className="text-center text-sm text-muted-foreground mb-4">
                   {t("marketplace.auth.selectRole")}
                 </p>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setSelectedRole("client")}
                     className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center gap-3 hover-elevate ${
-                      selectedRole === "client"
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
+                      selectedRole === "client" ? "border-primary bg-primary/5" : "border-border"
                     }`}
                     data-testid="button-role-client"
                   >
-                    <User className={`h-10 w-10 ${selectedRole === "client" ? "text-primary" : "text-muted-foreground"}`} />
+                    <User
+                      className={`h-10 w-10 ${selectedRole === "client" ? "text-primary" : "text-muted-foreground"}`}
+                    />
                     <span className="font-medium">{t("marketplace.auth.roleClient")}</span>
                     <span className="text-xs text-muted-foreground text-center">
                       {t("marketplace.auth.roleClientDesc")}
                     </span>
-                    {selectedRole === "client" && (
-                      <Check className="h-5 w-5 text-primary" />
-                    )}
+                    {selectedRole === "client" && <Check className="h-5 w-5 text-primary" />}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedRole("owner")}
                     className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center gap-3 hover-elevate ${
-                      selectedRole === "owner"
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
+                      selectedRole === "owner" ? "border-primary bg-primary/5" : "border-border"
                     }`}
                     data-testid="button-role-owner"
                   >
-                    <Store className={`h-10 w-10 ${selectedRole === "owner" ? "text-primary" : "text-muted-foreground"}`} />
+                    <Store
+                      className={`h-10 w-10 ${selectedRole === "owner" ? "text-primary" : "text-muted-foreground"}`}
+                    />
                     <span className="font-medium">{t("marketplace.auth.roleOwner")}</span>
                     <span className="text-xs text-muted-foreground text-center">
                       {t("marketplace.auth.roleOwnerDesc")}
                     </span>
-                    {selectedRole === "owner" && (
-                      <Check className="h-5 w-5 text-primary" />
-                    )}
+                    {selectedRole === "owner" && <Check className="h-5 w-5 text-primary" />}
                   </button>
                 </div>
 
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   size="lg"
                   onClick={() => setStep("details")}
                   data-testid="button-continue-role"
@@ -425,7 +415,9 @@ export default function AuthPage() {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {selectedRole === "client" ? t("marketplace.auth.roleClient") : t("marketplace.auth.roleOwner")}
+                    {selectedRole === "client"
+                      ? t("marketplace.auth.roleClient")
+                      : t("marketplace.auth.roleOwner")}
                   </span>
                 </div>
 
@@ -470,15 +462,15 @@ export default function AuthPage() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   size="lg"
                   disabled={saveProfileMutation.isPending}
                   data-testid="button-complete-registration"
                 >
-                  {saveProfileMutation.isPending 
-                    ? t("marketplace.auth.saving") 
+                  {saveProfileMutation.isPending
+                    ? t("marketplace.auth.saving")
                     : t("marketplace.auth.completeRegistration")}
                 </Button>
               </form>
@@ -509,9 +501,7 @@ export default function AuthPage() {
             <h1 className="font-serif text-2xl text-foreground mb-2">
               {t("marketplace.auth.title")}
             </h1>
-            <p className="text-muted-foreground">
-              {t("marketplace.auth.subtitle")}
-            </p>
+            <p className="text-muted-foreground">{t("marketplace.auth.subtitle")}</p>
           </div>
 
           <div className="space-y-6">
@@ -519,12 +509,16 @@ export default function AuthPage() {
               <div className="text-center p-4 rounded-lg bg-muted/50">
                 <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-sm font-medium">{t("marketplace.auth.forClients")}</p>
-                <p className="text-xs text-muted-foreground">{t("marketplace.auth.forClientsDesc")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("marketplace.auth.forClientsDesc")}
+                </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted/50">
                 <Store className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-sm font-medium">{t("marketplace.auth.forOwners")}</p>
-                <p className="text-xs text-muted-foreground">{t("marketplace.auth.forOwnersDesc")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("marketplace.auth.forOwnersDesc")}
+                </p>
               </div>
             </div>
 
@@ -613,7 +607,9 @@ export default function AuthPage() {
                         type="email"
                         placeholder="email@example.com"
                         value={emailAuthData.email}
-                        onChange={(e) => setEmailAuthData({ ...emailAuthData, email: e.target.value })}
+                        onChange={(e) =>
+                          setEmailAuthData({ ...emailAuthData, email: e.target.value })
+                        }
                         required
                         data-testid="input-email"
                       />
@@ -635,27 +631,31 @@ export default function AuthPage() {
                         type="password"
                         placeholder="********"
                         value={emailAuthData.password}
-                        onChange={(e) => setEmailAuthData({ ...emailAuthData, password: e.target.value })}
+                        onChange={(e) =>
+                          setEmailAuthData({ ...emailAuthData, password: e.target.value })
+                        }
                         required
                         minLength={8}
                         data-testid="input-password"
                       />
                       {authMode === "register" && (
-                        <p className="text-xs text-muted-foreground">
-                          Минимум 8 символов
-                        </p>
+                        <p className="text-xs text-muted-foreground">Минимум 8 символов</p>
                       )}
                     </div>
 
                     {authMode === "register" && (
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">{t("marketplace.auth.confirmPassword")}</Label>
+                        <Label htmlFor="confirmPassword">
+                          {t("marketplace.auth.confirmPassword")}
+                        </Label>
                         <Input
                           id="confirmPassword"
                           type="password"
                           placeholder="********"
                           value={emailAuthData.confirmPassword}
-                          onChange={(e) => setEmailAuthData({ ...emailAuthData, confirmPassword: e.target.value })}
+                          onChange={(e) =>
+                            setEmailAuthData({ ...emailAuthData, confirmPassword: e.target.value })
+                          }
                           required
                           minLength={8}
                           data-testid="input-confirm-password"
@@ -674,8 +674,8 @@ export default function AuthPage() {
                       {loginMutation.isPending || registerMutation.isPending
                         ? t("marketplace.auth.processing")
                         : authMode === "login"
-                        ? t("marketplace.auth.signIn")
-                        : t("marketplace.auth.createAccount")}
+                          ? t("marketplace.auth.signIn")
+                          : t("marketplace.auth.createAccount")}
                     </Button>
                   </form>
                 </div>
@@ -693,7 +693,9 @@ export default function AuthPage() {
                             type="tel"
                             placeholder="+998901234567"
                             value={phoneAuthData.phoneNumber}
-                            onChange={(e) => setPhoneAuthData({ ...phoneAuthData, phoneNumber: e.target.value })}
+                            onChange={(e) =>
+                              setPhoneAuthData({ ...phoneAuthData, phoneNumber: e.target.value })
+                            }
                             required
                             pattern="^\+\d{10,15}$"
                             data-testid="input-phone-number"
@@ -725,7 +727,9 @@ export default function AuthPage() {
                             type="text"
                             placeholder="123456"
                             value={phoneAuthData.code}
-                            onChange={(e) => setPhoneAuthData({ ...phoneAuthData, code: e.target.value })}
+                            onChange={(e) =>
+                              setPhoneAuthData({ ...phoneAuthData, code: e.target.value })
+                            }
                             required
                             pattern="\d{6}"
                             maxLength={6}

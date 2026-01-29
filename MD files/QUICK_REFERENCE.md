@@ -1,11 +1,13 @@
 # 🚀 AURELLE - Быстрая справка
 
 ## 🌐 URL приложения
+
 **https://aurelle.uz** ✅
 
 ---
 
 ## 🔑 Доступ к серверу
+
 ```bash
 ssh root@89.39.94.194
 # Пароль: w2@nT*6D
@@ -18,6 +20,7 @@ ssh root@89.39.94.194
 ### Обновите OAuth Redirect URIs
 
 **Google**: https://console.cloud.google.com/
+
 ```
 Добавьте в Authorized redirect URIs:
 https://aurelle.uz/api/auth/google/callback
@@ -25,6 +28,7 @@ https://www.aurelle.uz/api/auth/google/callback
 ```
 
 **Yandex**: https://oauth.yandex.ru/
+
 ```
 Добавьте в Callback URI:
 https://aurelle.uz/api/auth/yandex/callback

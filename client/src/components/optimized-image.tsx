@@ -16,13 +16,7 @@ const DEFAULT_FALLBACKS = {
   avatar: "/assets/stock_images/happy_woman_client_b_a10a2f35.jpg",
 };
 
-export function OptimizedImage({
-  src,
-  alt,
-  fallback,
-  className,
-  ...props
-}: OptimizedImageProps) {
+export function OptimizedImage({ src, alt, fallback, className, ...props }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -48,9 +42,7 @@ export function OptimizedImage({
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      {loading && (
-        <div className="absolute inset-0 bg-muted animate-pulse" />
-      )}
+      {loading && <div className="absolute inset-0 bg-muted animate-pulse" />}
       <img
         {...props}
         src={imageSrc}
@@ -60,7 +52,7 @@ export function OptimizedImage({
         className={cn(
           "w-full h-full object-cover transition-opacity duration-300",
           loading ? "opacity-0" : "opacity-100",
-          className
+          className,
         )}
         onLoad={() => setLoading(false)}
         onError={() => {
@@ -104,11 +96,7 @@ export function ImageGallery({
             className="relative aspect-square cursor-pointer overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
             onClick={() => setSelectedImage(image)}
           >
-            <OptimizedImage
-              src={image}
-              alt={`${alt} ${index + 1}`}
-              className="w-full h-full"
-            />
+            <OptimizedImage src={image} alt={`${alt} ${index + 1}`} className="w-full h-full" />
             {hasMore && index === maxDisplay - 1 && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold">
                 +{images.length - maxDisplay}
@@ -125,11 +113,7 @@ export function ImageGallery({
           onClick={() => setSelectedImage(null)}
         >
           <div className="relative max-w-4xl max-h-full">
-            <img
-              src={selectedImage}
-              alt={alt}
-              className="max-w-full max-h-[90vh] object-contain"
-            />
+            <img src={selectedImage} alt={alt} className="max-w-full max-h-[90vh] object-contain" />
             <button
               className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
               onClick={() => setSelectedImage(null)}

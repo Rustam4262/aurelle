@@ -16,7 +16,7 @@ export const authLimiter = rateLimit({
 // Лимиты для регистрации (еще строже)
 export const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 час
-  max: 3, // Максимум 3 регистрации
+  max: 1000, // Высокий лимит для разработки
   message: {
     error: "Too many accounts created. Please try again in 1 hour.",
   },

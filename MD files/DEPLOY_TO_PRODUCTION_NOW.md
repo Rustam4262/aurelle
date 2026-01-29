@@ -13,6 +13,7 @@
 Перейдите: https://github.com/Rustam4262/aurelle/settings/secrets/actions
 
 Добавьте:
+
 ```
 PRODUCTION_SSH_HOST=89.39.94.194
 PRODUCTION_SSH_USER=root
@@ -32,6 +33,7 @@ git push origin main
 ```
 
 Или вручную:
+
 1. Перейдите: https://github.com/Rustam4262/aurelle/actions/workflows/deploy-production.yml
 2. Нажмите **"Run workflow"**
 3. Выберите **main**
@@ -40,6 +42,7 @@ git push origin main
 #### Шаг 3: Подтвердите деплой
 
 После сборки:
+
 1. Откройте workflow run
 2. Нажмите **"Review deployments"**
 3. **Approve and deploy**
@@ -181,6 +184,7 @@ psql -h localhost -U aurelle_user -d aurelle_production < scripts/setup-database
 ```
 
 Тестовые пользователи (пароль: `password123`):
+
 - admin@aurelle.uz
 - salon1@aurelle.uz
 - specialist1@aurelle.uz

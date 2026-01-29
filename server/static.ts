@@ -21,23 +21,23 @@ export function serveStatic(app: Express) {
   // Serve static files (assets only, excluding HTML)
   app.use((req, res, next) => {
     // Skip HTML files - we'll handle them below with cache busting
-    if (req.path.endsWith('.html') || req.path === '/' || !req.path.includes('.')) {
+    if (req.path.endsWith(".html") || req.path === "/" || !req.path.includes(".")) {
       return next();
     }
     // Serve other static files with long cache
-    express.static(distPath, { maxAge: '1y' })(req, res, next);
+    express.static(distPath, { maxAge: "1y" })(req, res, next);
   });
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     // Set no-cache headers for HTML
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     // Read index.html and inject cache-busting timestamp
     const htmlPath = path.resolve(distPath, "index.html");
-    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const html = fs.readFileSync(htmlPath, "utf-8");
     const timestamp = Date.now();
 
     // Add timestamp to all script and CSS tags
@@ -45,7 +45,7 @@ export function serveStatic(app: Express) {
       .replace(/src="\/assets\/([^"]+\.js)"/g, 'src="/assets/$1?v=' + timestamp + '"')
       .replace(/href="\/assets\/([^"]+\.css)"/g, 'href="/assets/$1?v=' + timestamp + '"');
 
-    console.log('[Cache-busting] Serving HTML with timestamp:', timestamp);
+    console.log("[Cache-busting] Serving HTML with timestamp:", timestamp);
     res.send(modifiedHtml);
   });
 }

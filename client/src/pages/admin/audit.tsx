@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { FileText } from "lucide-react";
 import { format } from "date-fns";
 
@@ -27,9 +34,7 @@ export default function AdminAudit() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-serif font-semibold">Audit Logs</h1>
-        <p className="text-muted-foreground mt-2">
-          Complete history of all admin actions
-        </p>
+        <p className="text-muted-foreground mt-2">Complete history of all admin actions</p>
       </div>
 
       <Card>

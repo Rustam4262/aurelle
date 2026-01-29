@@ -132,11 +132,7 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
       return res.status(400).json({ error: "Invalid decision" });
     }
 
-    const [oldComplaint] = await db
-      .select()
-      .from(complaints)
-      .where(eq(complaints.id, id))
-      .limit(1);
+    const [oldComplaint] = await db.select().from(complaints).where(eq(complaints.id, id)).limit(1);
 
     if (!oldComplaint) {
       return res.status(404).json({ error: "Complaint not found" });
@@ -216,11 +212,7 @@ router.patch("/:id/reject", requirePermission("complaints.resolve"), async (req,
     const { resolutionComment } = req.body;
     const userId = getUserId(req);
 
-    const [oldComplaint] = await db
-      .select()
-      .from(complaints)
-      .where(eq(complaints.id, id))
-      .limit(1);
+    const [oldComplaint] = await db.select().from(complaints).where(eq(complaints.id, id)).limit(1);
 
     if (!oldComplaint) {
       return res.status(404).json({ error: "Complaint not found" });

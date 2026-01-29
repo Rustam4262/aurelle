@@ -5,7 +5,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, parseISO, startOfDay, isAfter, isBefore, addDays, isSameDay as isSameDayFns } from "date-fns";
+import {
+  format,
+  parseISO,
+  startOfDay,
+  isAfter,
+  isBefore,
+  addDays,
+  isSameDay as isSameDayFns,
+} from "date-fns";
 import { Clock, User, Store, Scissors, CalendarDays } from "lucide-react";
 import type { Booking, Service, Master, Salon } from "@shared/schema";
 
@@ -35,7 +43,10 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
-function getLocalizedText(obj: { en?: string; ru?: string; uz?: string } | null | undefined, lang: string): string {
+function getLocalizedText(
+  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
+  lang: string,
+): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -45,7 +56,7 @@ function generateTimeSlots(start: string, end: string): string[] {
   const slots: string[] = [];
   const [startHour] = start.split(":").map(Number);
   const [endHour] = end.split(":").map(Number);
-  
+
   for (let hour = startHour; hour < endHour; hour++) {
     slots.push(`${hour.toString().padStart(2, "0")}:00`);
     slots.push(`${hour.toString().padStart(2, "0")}:30`);
@@ -55,13 +66,15 @@ function generateTimeSlots(start: string, end: string): string[] {
 
 function isTimeSlotBooked(slot: string, bookings: EnrichedBooking[]): EnrichedBooking | null {
   const slotMinutes = parseInt(slot.split(":")[0]) * 60 + parseInt(slot.split(":")[1]);
-  
+
   for (const booking of bookings) {
     if (booking.status === "cancelled") continue;
-    
-    const startMinutes = parseInt(booking.startTime.split(":")[0]) * 60 + parseInt(booking.startTime.split(":")[1]);
-    const endMinutes = parseInt(booking.endTime.split(":")[0]) * 60 + parseInt(booking.endTime.split(":")[1]);
-    
+
+    const startMinutes =
+      parseInt(booking.startTime.split(":")[0]) * 60 + parseInt(booking.startTime.split(":")[1]);
+    const endMinutes =
+      parseInt(booking.endTime.split(":")[0]) * 60 + parseInt(booking.endTime.split(":")[1]);
+
     if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
       return booking;
     }
@@ -196,10 +209,14 @@ export function BookingCalendar({
           {(disablePastDates || maxAdvanceBookingDays) && (
             <p className="text-xs text-muted-foreground">
               {disablePastDates && maxAdvanceBookingDays
-                ? t("marketplace.calendar.bookingWindow.maxDaysAdvance", { days: maxAdvanceBookingDays })
+                ? t("marketplace.calendar.bookingWindow.maxDaysAdvance", {
+                    days: maxAdvanceBookingDays,
+                  })
                 : disablePastDates
-                ? t("marketplace.calendar.bookingWindow.pastDatesDisabled")
-                : t("marketplace.calendar.bookingWindow.maxDaysAdvance", { days: maxAdvanceBookingDays })}
+                  ? t("marketplace.calendar.bookingWindow.pastDatesDisabled")
+                  : t("marketplace.calendar.bookingWindow.maxDaysAdvance", {
+                      days: maxAdvanceBookingDays,
+                    })}
             </p>
           )}
         </div>
@@ -218,12 +235,20 @@ export function BookingCalendar({
               <Badge variant="outline">
                 {activeBookings.length} {t("marketplace.calendar.bookings")}
               </Badge>
-              <Badge variant="outline" className={activeBookings.length > 0 ? "bg-green-100 dark:bg-green-900" : ""}>
-                {timeSlots.length - activeBookings.reduce((acc, b) => {
-                  const startMinutes = parseInt(b.startTime.split(":")[0]) * 60 + parseInt(b.startTime.split(":")[1]);
-                  const endMinutes = parseInt(b.endTime.split(":")[0]) * 60 + parseInt(b.endTime.split(":")[1]);
-                  return acc + Math.ceil((endMinutes - startMinutes) / 30);
-                }, 0)} {t("marketplace.calendar.freeSlots")}
+              <Badge
+                variant="outline"
+                className={activeBookings.length > 0 ? "bg-green-100 dark:bg-green-900" : ""}
+              >
+                {timeSlots.length -
+                  activeBookings.reduce((acc, b) => {
+                    const startMinutes =
+                      parseInt(b.startTime.split(":")[0]) * 60 +
+                      parseInt(b.startTime.split(":")[1]);
+                    const endMinutes =
+                      parseInt(b.endTime.split(":")[0]) * 60 + parseInt(b.endTime.split(":")[1]);
+                    return acc + Math.ceil((endMinutes - startMinutes) / 30);
+                  }, 0)}{" "}
+                {t("marketplace.calendar.freeSlots")}
               </Badge>
               {selectedDate && isSameDayFns(selectedDate, today) && (
                 <Badge className="bg-accent text-accent-foreground">
@@ -245,49 +270,49 @@ export function BookingCalendar({
                         isFree
                           ? "bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50"
                           : booking?.status === "cancelled"
-                          ? "bg-muted/30"
-                          : "bg-muted"
+                            ? "bg-muted/30"
+                            : "bg-muted"
                       }`}
                       data-testid={`timeslot-${slot}`}
                     >
-                      <span className="text-sm font-mono w-12 text-muted-foreground">
-                        {slot}
-                      </span>
+                      <span className="text-sm font-mono w-12 text-muted-foreground">{slot}</span>
                       {isFree ? (
                         <span className="text-sm text-green-600 dark:text-green-400 font-medium">
                           {t("marketplace.calendar.free")}
                         </span>
-                      ) : booking && (
-                        <div className="flex-1 flex items-center justify-between gap-2 flex-wrap">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className={STATUS_COLORS[booking.status || "pending"]}>
-                              {t(`marketplace.bookings.status.${booking.status || "pending"}`)}
-                            </Badge>
-                            {showSalon && booking.salon && (
-                              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                <Store className="h-3 w-3" />
-                                {getLocalizedText(booking.salon.name as any, currentLang)}
-                              </span>
-                            )}
-                            {showMaster && booking.master && (
-                              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                <Scissors className="h-3 w-3" />
-                                {booking.master.name}
-                              </span>
-                            )}
-                            {showClient && (
-                              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {booking.clientName || `#${booking.clientId.slice(-6)}`}
+                      ) : (
+                        booking && (
+                          <div className="flex-1 flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={STATUS_COLORS[booking.status || "pending"]}>
+                                {t(`marketplace.bookings.status.${booking.status || "pending"}`)}
+                              </Badge>
+                              {showSalon && booking.salon && (
+                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Store className="h-3 w-3" />
+                                  {getLocalizedText(booking.salon.name as any, currentLang)}
+                                </span>
+                              )}
+                              {showMaster && booking.master && (
+                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Scissors className="h-3 w-3" />
+                                  {booking.master.name}
+                                </span>
+                              )}
+                              {showClient && (
+                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {booking.clientName || `#${booking.clientId.slice(-6)}`}
+                                </span>
+                              )}
+                            </div>
+                            {booking.service && (
+                              <span className="text-xs text-muted-foreground">
+                                {getLocalizedText(booking.service.name as any, currentLang)}
                               </span>
                             )}
                           </div>
-                          {booking.service && (
-                            <span className="text-xs text-muted-foreground">
-                              {getLocalizedText(booking.service.name as any, currentLang)}
-                            </span>
-                          )}
-                        </div>
+                        )
                       )}
                     </div>
                   );

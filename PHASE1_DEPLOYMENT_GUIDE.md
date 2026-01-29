@@ -79,6 +79,7 @@ npx drizzle-kit push --config=drizzle.config.ts
 ```
 
 **Expected Changes:**
+
 - Add `services.booking_count`, `services.last_booked_at`, `services.display_order`
 - Add `bookings.modified_by`, `bookings.modification_history`
 - Create `master_statistics` table
@@ -127,6 +128,7 @@ curl http://localhost:5000/api/owner/dashboard/overview
 **URL:** https://aurelle.uz/owner
 
 **Test Scenarios:**
+
 - ✅ Login as owner
 - ✅ Verify Dashboard tab is default/first tab
 - ✅ Check KPI cards: Revenue, Bookings, Completion Rate, New Clients
@@ -142,6 +144,7 @@ curl http://localhost:5000/api/owner/dashboard/overview
 **Tab:** Services
 
 **Test Scenarios:**
+
 - ✅ View all services across salons
 - ✅ Edit service (name, description, price, duration) in EN/RU/UZ
 - ✅ Drag-and-drop to reorder services
@@ -154,6 +157,7 @@ curl http://localhost:5000/api/owner/dashboard/overview
 **Tab:** Masters
 
 **Test Scenarios:**
+
 - ✅ View all masters with performance stats
 - ✅ Edit master profile (name, bio, specialization, phone) in EN/RU/UZ
 - ✅ Set working hours for each day of week
@@ -167,6 +171,7 @@ curl http://localhost:5000/api/owner/dashboard/overview
 **Tab:** Bookings
 
 **Test Scenarios:**
+
 - ✅ View bookings table with all columns
 - ✅ Filter by status (pending, confirmed, completed, cancelled)
 - ✅ Filter by salon
@@ -261,6 +266,7 @@ curl -H "Cookie: connect.sid=YOUR_SESSION" \
 **Status:** There are pre-existing TypeScript errors in `analytics-dashboard.tsx`, `server/upload.ts`, etc. These are NOT related to Phase 1 changes.
 
 **Solution:**
+
 - Phase 1 code is TypeScript-compliant
 - If build fails, check that dependencies are installed: `npm install @dnd-kit/core @dnd-kit/sortable @tanstack/react-table`
 
@@ -269,6 +275,7 @@ curl -H "Cookie: connect.sid=YOUR_SESSION" \
 **Error:** "Cannot find package 'drizzle-kit'"
 
 **Solution:**
+
 ```bash
 npm install drizzle-kit --save-dev
 npx drizzle-kit push
@@ -279,6 +286,7 @@ npx drizzle-kit push
 **Error:** "Cannot find module '@dnd-kit/core'"
 
 **Solution:**
+
 ```bash
 npm ci --production
 # or
@@ -288,6 +296,7 @@ npm install @dnd-kit/core @dnd-kit/sortable @tanstack/react-table
 ### Issue: PM2 App Not Starting
 
 **Solution:**
+
 ```bash
 # Check logs
 pm2 logs aurelle-production --lines 100
@@ -303,12 +312,14 @@ pm2 start dist/index.cjs --name aurelle-production -i max
 ### Issue: Dashboard Shows No Data
 
 **Possible Causes:**
+
 1. Database migration not applied
 2. No bookings/services/masters in database
 3. User is not logged in as owner
 4. API endpoints returning errors
 
 **Debug Steps:**
+
 ```bash
 # Check database tables exist
 psql -U aurelle_user -d aurelle_production -c "\dt"
@@ -326,17 +337,20 @@ curl -v https://aurelle.uz/api/owner/dashboard/overview
 ## 📊 Performance Expectations
 
 ### Database Queries
+
 - Dashboard overview: ~200-500ms (depends on data volume)
 - Services list: ~100-300ms
 - Masters list: ~150-400ms (includes booking aggregations)
 - Bookings table: ~200-600ms (with filters and pagination)
 
 ### Auto-Refresh
+
 - Dashboard overview: Every 60 seconds
 - Recent activity: Every 30 seconds
 - Alerts: Every 30 seconds
 
 ### Indexes Added
+
 - `services.booking_count` - for popularity sorting
 - `services.display_order` - for drag-drop ordering
 - `services.last_booked_at` - for recency filters
@@ -365,10 +379,12 @@ Before marking deployment as complete:
 ## 📁 Files Changed (9 files, 3341+ lines added)
 
 ### Backend
+
 - `server/routes/owner.routes.ts` - Added 15 new API endpoints (662 lines)
 - `shared/schema.ts` - Updated schema with new tables and fields (60 lines)
 
 ### Frontend
+
 - `client/src/components/owner-dashboard-overview.tsx` - 370 lines (NEW)
 - `client/src/components/service-management.tsx` - 700 lines (NEW)
 - `client/src/components/master-management.tsx` - 610 lines (NEW)
@@ -376,6 +392,7 @@ Before marking deployment as complete:
 - `client/src/pages/owner.tsx` - Integrated 7-tab layout (50 lines modified)
 
 ### Configuration
+
 - `package.json` - Added dependencies: @dnd-kit, @tanstack/react-table
 - `package-lock.json` - Dependency lock file updated
 
@@ -386,23 +403,27 @@ Before marking deployment as complete:
 After Phase 1 is verified in production, the remaining 14 tasks can be implemented:
 
 **Phase 2** (Priority 1):
+
 - Financial Analytics Dashboard
 - Review & Rating Management
 - Data Export System
 - Advanced Search & Filtering
 
 **Phase 3** (Priority 1):
+
 - Client CRM System
 - Interactive Calendar View
 - Salon Settings Management
 - Mobile App Optimization
 
 **Phase 4** (Priority 2):
+
 - Real-time Notifications
 - Third-party Integrations
 - Multi-salon Dashboard
 
 **Phase 5** (Priority 2):
+
 - Loyalty Program
 - AI-powered Recommendations
 - A/B Testing Framework
@@ -420,6 +441,7 @@ If deployment issues occur:
 5. Check browser console for frontend errors
 
 **Emergency Rollback:**
+
 ```bash
 # Via GitHub Actions
 gh workflow run rollback.yml -f environment=production -f backup=latest

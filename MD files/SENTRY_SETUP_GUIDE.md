@@ -22,6 +22,7 @@ Sentry provides real-time error tracking and performance monitoring for both fro
 ### Features Implemented
 
 ✅ **Frontend (React) Monitoring**:
+
 - Automatic error capture
 - Performance monitoring
 - Session replay
@@ -29,17 +30,20 @@ Sentry provides real-time error tracking and performance monitoring for both fro
 - Source maps for readable stack traces
 
 ✅ **Backend (Node.js) Monitoring**:
+
 - Express middleware integration
 - Request tracing
 - Performance profiling
 - User context tracking
 
 ✅ **Release Tracking**:
+
 - Version-based error tracking
 - Deployment notifications
 - Source map uploads
 
 ✅ **Advanced Features**:
+
 - Environment separation (production, staging, development)
 - Custom error filtering
 - User context tracking
@@ -72,11 +76,13 @@ Create **two projects** (or one project with multiple environments):
 #### Option 1: Single Project (Recommended)
 
 **Project Name**: `aurelle`
+
 - **Platform**: JavaScript
 - **Environments**: production, staging, development
 - Both frontend and backend use same DSN
 
 **Benefits**:
+
 - Unified error view
 - Single dashboard
 - Easier management
@@ -84,11 +90,13 @@ Create **two projects** (or one project with multiple environments):
 #### Option 2: Separate Projects
 
 **Frontend Project**:
+
 - **Name**: `aurelle-frontend`
 - **Platform**: React
 - **Alert Name**: AURELLE Frontend
 
 **Backend Project**:
+
 - **Name**: `aurelle-backend`
 - **Platform**: Node.js - Express
 - **Alert Name**: AURELLE Backend
@@ -100,6 +108,7 @@ Create **two projects** (or one project with multiple environments):
 3. Copy DSN: `https://abc123...@o123.ingest.sentry.io/456`
 
 **DSN Format**:
+
 ```
 https://[public_key]@[organization].ingest.sentry.io/[project_id]
 ```
@@ -221,14 +230,13 @@ addBreadcrumb({
 import { showFeedbackDialog } from "@/lib/sentry";
 
 // Show feedback dialog after error
-<button onClick={showFeedbackDialog}>
-  Report Issue
-</button>
+<button onClick={showFeedbackDialog}>Report Issue</button>;
 ```
 
 ### Performance Monitoring
 
 Automatically tracks:
+
 - Page load time
 - Navigation between routes
 - API request duration
@@ -391,7 +399,7 @@ sentryVitePlugin({
     assets: ["dist/public/**"],
     filesToDeleteAfterUpload: ["dist/public/**/*.map"], // Delete source maps after upload
   },
-})
+});
 ```
 
 ### Backend Source Maps
@@ -424,12 +432,14 @@ SENTRY_RELEASE=aurelle@1.0.0
 After build with source maps enabled:
 
 1. Check build directory:
+
    ```bash
    ls -la dist/public/assets/*.map
    # Should show .map files before upload
    ```
 
 2. After upload, maps are deleted:
+
    ```bash
    ls -la dist/public/assets/*.map
    # Should be empty
@@ -446,6 +456,7 @@ After build with source maps enabled:
 ### What is a Release?
 
 A release is a version of your code deployed to an environment. Sentry uses releases to:
+
 - Track which errors occur in which version
 - Show when errors were introduced
 - Link commits to errors
@@ -463,11 +474,13 @@ aurelle@git-abc123f
 ### Setting Releases
 
 **Frontend**:
+
 ```bash
 VITE_SENTRY_RELEASE=aurelle@1.0.0
 ```
 
 **Backend**:
+
 ```bash
 SENTRY_RELEASE=aurelle@1.0.0
 ```
@@ -540,6 +553,7 @@ Configure alerts for critical errors:
 3. Configure conditions:
 
 **Example 1: Critical Errors**
+
 ```
 When an event is captured
   AND event.level equals error
@@ -551,6 +565,7 @@ Then send a notification via:
 ```
 
 **Example 2: High Error Volume**
+
 ```
 When number of events
   is greater than 100
@@ -563,6 +578,7 @@ Then send a notification via:
 ```
 
 **Example 3: New Issue**
+
 ```
 When a new issue is created
   AND event.tags.environment equals production
@@ -576,6 +592,7 @@ Then send a notification via:
 Monitor performance metrics:
 
 **Example: High Error Rate**
+
 ```
 When error rate
   is above 5%
@@ -674,7 +691,7 @@ function BrokenComponent() {
 // Wrap in error boundary
 <SentryErrorBoundary fallback={<ErrorPage />}>
   <BrokenComponent />
-</SentryErrorBoundary>
+</SentryErrorBoundary>;
 ```
 
 **3. Test Performance Monitoring**
@@ -894,18 +911,22 @@ Monitor release adoption:
 ### Issue: No errors appearing in Sentry
 
 **Check**:
+
 1. Is DSN configured?
+
    ```bash
    echo $SENTRY_DSN
    echo $VITE_SENTRY_DSN
    ```
 
 2. Is environment production?
+
    ```bash
    echo $NODE_ENV
    ```
 
 3. Check console for Sentry initialization:
+
    ```
    ✅ Sentry initialized for backend error monitoring
    ```
@@ -919,12 +940,15 @@ Monitor release adoption:
 ### Issue: Source maps not working
 
 **Check**:
+
 1. Are source maps generated?
+
    ```bash
    ls dist/public/assets/*.map
    ```
 
 2. Is auth token configured?
+
    ```bash
    echo $SENTRY_AUTH_TOKEN
    ```
@@ -940,12 +964,15 @@ Monitor release adoption:
 ### Issue: Too many events (quota exceeded)
 
 **Solutions**:
+
 1. Lower sample rate:
+
    ```typescript
    tracesSampleRate: 0.1, // 10% instead of 20%
    ```
 
 2. Filter errors:
+
    ```typescript
    ignoreErrors: [
      "NetworkError",
@@ -959,6 +986,7 @@ Monitor release adoption:
 ### Issue: Alerts not triggering
 
 **Check**:
+
 1. Alert rules are enabled
 2. Notification settings are correct
 3. Slack integration is authorized
@@ -967,7 +995,9 @@ Monitor release adoption:
 ### Issue: Performance transactions not appearing
 
 **Check**:
+
 1. Is performance monitoring enabled?
+
    ```typescript
    tracesSampleRate: 1.0, // Should be > 0
    ```
@@ -982,6 +1012,7 @@ Monitor release adoption:
 ### Issue: User context not attached
 
 **Check**:
+
 1. Is `setUser()` called after login?
 2. Is `trackUserMiddleware()` added to Express?
 3. Is user object in correct format?

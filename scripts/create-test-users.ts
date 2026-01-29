@@ -3,93 +3,93 @@
  * Run with: npx tsx scripts/create-test-users.ts
  */
 
-import { db } from '../server/db';
-import { users, salons, specialists, services } from '../server/db/schema';
-import { hashPassword } from '../server/auth';
-import { eq } from 'drizzle-orm';
+import { db } from "../server/db";
+import { users, salons, specialists, services } from "../server/db/schema";
+import { hashPassword } from "../server/auth";
+import { eq } from "drizzle-orm";
 
-const TEST_PASSWORD = 'password123'; // Simple password for testing
+const TEST_PASSWORD = "password123"; // Simple password for testing
 
 interface TestUser {
   email: string;
   password: string;
   name: string;
-  role: 'client' | 'specialist' | 'salon_owner' | 'admin';
+  role: "client" | "specialist" | "salon_owner" | "admin";
   phone?: string;
 }
 
 const testUsers: TestUser[] = [
   // Admin user
   {
-    email: 'admin@aurelle.uz',
+    email: "admin@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Admin User',
-    role: 'admin',
-    phone: '+998901234567',
+    name: "Admin User",
+    role: "admin",
+    phone: "+998901234567",
   },
   // Salon owners
   {
-    email: 'salon1@aurelle.uz',
+    email: "salon1@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Beauty Lounge Owner',
-    role: 'salon_owner',
-    phone: '+998901234568',
+    name: "Beauty Lounge Owner",
+    role: "salon_owner",
+    phone: "+998901234568",
   },
   {
-    email: 'salon2@aurelle.uz',
+    email: "salon2@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Elegant Salon Owner',
-    role: 'salon_owner',
-    phone: '+998901234569',
+    name: "Elegant Salon Owner",
+    role: "salon_owner",
+    phone: "+998901234569",
   },
   // Specialists
   {
-    email: 'specialist1@aurelle.uz',
+    email: "specialist1@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Maria Ivanova',
-    role: 'specialist',
-    phone: '+998901234570',
+    name: "Maria Ivanova",
+    role: "specialist",
+    phone: "+998901234570",
   },
   {
-    email: 'specialist2@aurelle.uz',
+    email: "specialist2@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Anna Petrova',
-    role: 'specialist',
-    phone: '+998901234571',
+    name: "Anna Petrova",
+    role: "specialist",
+    phone: "+998901234571",
   },
   {
-    email: 'specialist3@aurelle.uz',
+    email: "specialist3@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Elena Sidorova',
-    role: 'specialist',
-    phone: '+998901234572',
+    name: "Elena Sidorova",
+    role: "specialist",
+    phone: "+998901234572",
   },
   // Regular clients
   {
-    email: 'client1@aurelle.uz',
+    email: "client1@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'John Doe',
-    role: 'client',
-    phone: '+998901234573',
+    name: "John Doe",
+    role: "client",
+    phone: "+998901234573",
   },
   {
-    email: 'client2@aurelle.uz',
+    email: "client2@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Jane Smith',
-    role: 'client',
-    phone: '+998901234574',
+    name: "Jane Smith",
+    role: "client",
+    phone: "+998901234574",
   },
   {
-    email: 'client3@aurelle.uz',
+    email: "client3@aurelle.uz",
     password: TEST_PASSWORD,
-    name: 'Alice Johnson',
-    role: 'client',
-    phone: '+998901234575',
+    name: "Alice Johnson",
+    role: "client",
+    phone: "+998901234575",
   },
 ];
 
 async function createTestUsers() {
-  console.log('🚀 Creating test users for AURELLE platform...\n');
+  console.log("🚀 Creating test users for AURELLE platform...\n");
 
   try {
     // Hash the password once (same for all test users)
@@ -125,29 +125,29 @@ async function createTestUsers() {
         console.log(`✅ Created user: ${testUser.email} (${testUser.role})`);
 
         // Create salon for salon owners
-        if (testUser.role === 'salon_owner') {
+        if (testUser.role === "salon_owner") {
           const salonName =
-            testUser.email === 'salon1@aurelle.uz'
-              ? 'Beauty Lounge Tashkent'
-              : 'Elegant Salon Tashkent';
+            testUser.email === "salon1@aurelle.uz"
+              ? "Beauty Lounge Tashkent"
+              : "Elegant Salon Tashkent";
 
           const [newSalon] = await db
             .insert(salons)
             .values({
               name: salonName,
               ownerId: newUser.id,
-              city: 'Tashkent',
-              address: 'Test Address, Tashkent',
+              city: "Tashkent",
+              address: "Test Address, Tashkent",
               description: `This is a test salon created for development purposes.`,
               phone: testUser.phone,
               workingHours: {
-                monday: { open: '09:00', close: '20:00' },
-                tuesday: { open: '09:00', close: '20:00' },
-                wednesday: { open: '09:00', close: '20:00' },
-                thursday: { open: '09:00', close: '20:00' },
-                friday: { open: '09:00', close: '20:00' },
-                saturday: { open: '10:00', close: '18:00' },
-                sunday: { open: '10:00', close: '18:00' },
+                monday: { open: "09:00", close: "20:00" },
+                tuesday: { open: "09:00", close: "20:00" },
+                wednesday: { open: "09:00", close: "20:00" },
+                thursday: { open: "09:00", close: "20:00" },
+                friday: { open: "09:00", close: "20:00" },
+                saturday: { open: "10:00", close: "18:00" },
+                sunday: { open: "10:00", close: "18:00" },
               },
               rating: 4.5,
               reviewsCount: 0,
@@ -161,40 +161,40 @@ async function createTestUsers() {
           // Create sample services for the salon
           const sampleServices = [
             {
-              name: 'Women Haircut',
+              name: "Women Haircut",
               price: 150000,
               duration: 60,
-              category: 'Hair',
+              category: "Hair",
             },
             {
-              name: 'Men Haircut',
+              name: "Men Haircut",
               price: 80000,
               duration: 30,
-              category: 'Hair',
+              category: "Hair",
             },
             {
-              name: 'Hair Coloring',
+              name: "Hair Coloring",
               price: 300000,
               duration: 120,
-              category: 'Hair',
+              category: "Hair",
             },
             {
-              name: 'Manicure',
+              name: "Manicure",
               price: 100000,
               duration: 45,
-              category: 'Nails',
+              category: "Nails",
             },
             {
-              name: 'Pedicure',
+              name: "Pedicure",
               price: 120000,
               duration: 60,
-              category: 'Nails',
+              category: "Nails",
             },
             {
-              name: 'Facial Treatment',
+              name: "Facial Treatment",
               price: 200000,
               duration: 90,
-              category: 'Skincare',
+              category: "Skincare",
             },
           ];
 
@@ -215,7 +215,7 @@ async function createTestUsers() {
         }
 
         // Create specialist profile for specialists
-        if (testUser.role === 'specialist') {
+        if (testUser.role === "specialist") {
           // Assign to first salon
           const firstSalon = await db.query.salons.findFirst();
 
@@ -223,7 +223,7 @@ async function createTestUsers() {
             await db.insert(specialists).values({
               userId: newUser.id,
               salonId: firstSalon.id,
-              specialization: 'Hair Stylist',
+              specialization: "Hair Stylist",
               bio: `Experienced ${testUser.name} with 5+ years in the beauty industry.`,
               rating: 4.7,
               reviewsCount: 0,
@@ -231,9 +231,7 @@ async function createTestUsers() {
               updatedAt: new Date(),
             });
 
-            console.log(
-              `   ✅ Created specialist profile (assigned to ${firstSalon.name})`
-            );
+            console.log(`   ✅ Created specialist profile (assigned to ${firstSalon.name})`);
           }
         }
       } catch (error) {
@@ -241,32 +239,32 @@ async function createTestUsers() {
       }
     }
 
-    console.log('\n✅ Test users creation completed!\n');
-    console.log('='.repeat(60));
-    console.log('📋 TEST USER CREDENTIALS');
-    console.log('='.repeat(60));
-    console.log('\n🔐 Default password for ALL users: password123\n');
-    console.log('ADMIN ACCOUNT:');
-    console.log('  Email: admin@aurelle.uz');
-    console.log('  Role:  Admin\n');
-    console.log('SALON OWNER ACCOUNTS:');
-    console.log('  Email: salon1@aurelle.uz');
-    console.log('  Email: salon2@aurelle.uz');
-    console.log('  Role:  Salon Owner\n');
-    console.log('SPECIALIST ACCOUNTS:');
-    console.log('  Email: specialist1@aurelle.uz');
-    console.log('  Email: specialist2@aurelle.uz');
-    console.log('  Email: specialist3@aurelle.uz');
-    console.log('  Role:  Specialist\n');
-    console.log('CLIENT ACCOUNTS:');
-    console.log('  Email: client1@aurelle.uz');
-    console.log('  Email: client2@aurelle.uz');
-    console.log('  Email: client3@aurelle.uz');
-    console.log('  Role:  Client\n');
-    console.log('='.repeat(60));
-    console.log('\n🌐 Access the platform at: http://localhost:5000\n');
+    console.log("\n✅ Test users creation completed!\n");
+    console.log("=".repeat(60));
+    console.log("📋 TEST USER CREDENTIALS");
+    console.log("=".repeat(60));
+    console.log("\n🔐 Default password for ALL users: password123\n");
+    console.log("ADMIN ACCOUNT:");
+    console.log("  Email: admin@aurelle.uz");
+    console.log("  Role:  Admin\n");
+    console.log("SALON OWNER ACCOUNTS:");
+    console.log("  Email: salon1@aurelle.uz");
+    console.log("  Email: salon2@aurelle.uz");
+    console.log("  Role:  Salon Owner\n");
+    console.log("SPECIALIST ACCOUNTS:");
+    console.log("  Email: specialist1@aurelle.uz");
+    console.log("  Email: specialist2@aurelle.uz");
+    console.log("  Email: specialist3@aurelle.uz");
+    console.log("  Role:  Specialist\n");
+    console.log("CLIENT ACCOUNTS:");
+    console.log("  Email: client1@aurelle.uz");
+    console.log("  Email: client2@aurelle.uz");
+    console.log("  Email: client3@aurelle.uz");
+    console.log("  Role:  Client\n");
+    console.log("=".repeat(60));
+    console.log("\n🌐 Access the platform at: http://localhost:5000\n");
   } catch (error) {
-    console.error('❌ Fatal error:', error);
+    console.error("❌ Fatal error:", error);
     process.exit(1);
   }
 }
@@ -274,10 +272,10 @@ async function createTestUsers() {
 // Run the script
 createTestUsers()
   .then(() => {
-    console.log('✅ Script completed successfully');
+    console.log("✅ Script completed successfully");
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Script failed:', error);
+    console.error("❌ Script failed:", error);
     process.exit(1);
   });

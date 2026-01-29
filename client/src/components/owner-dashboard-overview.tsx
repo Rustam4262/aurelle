@@ -1,6 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { TrendingUp, TrendingDown, Users, DollarSign, Calendar, AlertCircle, Store, Scissors, UserPlus } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  DollarSign,
+  Calendar,
+  AlertCircle,
+  Store,
+  Scissors,
+  UserPlus,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -40,7 +50,7 @@ interface DashboardOverview {
 
 interface DashboardAlert {
   type: string;
-  severity: 'info' | 'warning' | 'error';
+  severity: "info" | "warning" | "error";
   count?: number;
   message: string;
   action: string;
@@ -60,14 +70,21 @@ export function OwnerDashboardOverview() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const { data: overview, isLoading: overviewLoading, error: overviewError, refetch } = useQuery<DashboardOverview>({
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    error: overviewError,
+    refetch,
+  } = useQuery<DashboardOverview>({
     queryKey: ["/api/owner/dashboard/overview"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/owner/dashboard/overview");
       return res.json();
     },
     enabled: isAuthenticated,
-    refetchInterval: 60000, // Auto-refresh every 60 seconds
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60000,
     retry: false,
   });
 
@@ -78,7 +95,9 @@ export function OwnerDashboardOverview() {
       return res.json();
     },
     enabled: isAuthenticated,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 15000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
     retry: false,
   });
 
@@ -89,43 +108,45 @@ export function OwnerDashboardOverview() {
       return res.json();
     },
     enabled: isAuthenticated,
-    retry: false,
+    staleTime: 15000,
+    refetchOnWindowFocus: true,
     refetchInterval: 30000,
+    retry: false,
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('uz-UZ', {
-      style: 'currency',
-      currency: 'UZS',
+    return new Intl.NumberFormat("uz-UZ", {
+      style: "currency",
+      currency: "UZS",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatPercentage = (value: number) => {
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+    return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
   };
 
   const handleAlertAction = (alert: DashboardAlert) => {
     switch (alert.action) {
-      case 'GO_BOOKINGS':
-        setLocation('/owner?tab=bookings');
+      case "GO_BOOKINGS":
+        setLocation("/owner?tab=bookings");
         break;
-      case 'GO_SERVICES':
-        setLocation('/owner?tab=services');
+      case "GO_SERVICES":
+        setLocation("/owner?tab=services");
         break;
-      case 'GO_MASTERS':
-        setLocation('/owner?tab=masters');
+      case "GO_MASTERS":
+        setLocation("/owner?tab=masters");
         break;
-      case 'PUBLISH_SALON':
-        setLocation('/owner?tab=salons');
+      case "PUBLISH_SALON":
+        setLocation("/owner?tab=salons");
         break;
       default:
         break;
     }
   };
 
-  const getAlertVariant = (severity: string): 'default' | 'destructive' => {
-    return severity === 'error' ? 'destructive' : 'default';
+  const getAlertVariant = (severity: string): "default" | "destructive" => {
+    return severity === "error" ? "destructive" : "default";
   };
 
   if (overviewLoading) {
@@ -137,22 +158,26 @@ export function OwnerDashboardOverview() {
   }
 
   // Check if no salons (empty state)
-  const hasNoData = overview &&
+  const hasNoData =
+    overview &&
     overview.today.revenue === 0 &&
     overview.today.bookings === 0 &&
     overview.month.bookings === 0 &&
     overview.month.topServices.length === 0 &&
     overview.month.topMasters.length === 0;
 
-  if (hasNoData && alerts.some(a => a.type === 'no_services' || a.type === 'no_masters')) {
+  if (hasNoData && alerts.some((a) => a.type === "no_services" || a.type === "no_masters")) {
     return (
       <EmptyState
         icon={Store}
-        title={t('dashboard.noSalonsYet', 'Welcome to Your Dashboard!')}
-        description={t('dashboard.noSalonsDescription', 'Start by creating your first salon, then add services and masters to begin accepting bookings.')}
+        title={t("dashboard.noSalonsYet", "Welcome to Your Dashboard!")}
+        description={t(
+          "dashboard.noSalonsDescription",
+          "Start by creating your first salon, then add services and masters to begin accepting bookings.",
+        )}
         action={{
-          label: t('dashboard.createFirstSalon', 'Create First Salon'),
-          onClick: () => setLocation('/owner?tab=salons'),
+          label: t("dashboard.createFirstSalon", "Create First Salon"),
+          onClick: () => setLocation("/owner?tab=salons"),
         }}
       />
     );
@@ -160,22 +185,23 @@ export function OwnerDashboardOverview() {
 
   if (overviewError) {
     // Log error for debugging
-    console.error('Dashboard overview load error:', {
+    console.error("Dashboard overview load error:", {
       error: overviewError,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
-    const errorMessage = overviewError instanceof Error
-      ? overviewError.message
-      : t('dashboard.loadError', 'Failed to load dashboard data. Please try again.');
+    const errorMessage =
+      overviewError instanceof Error
+        ? overviewError.message
+        : t("dashboard.loadError", "Failed to load dashboard data. Please try again.");
 
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{t('dashboard.errorTitle', 'Failed to Load')}</AlertTitle>
+        <AlertTitle>{t("dashboard.errorTitle", "Failed to Load")}</AlertTitle>
         <AlertDescription className="mt-2 space-y-2">
           <p>{errorMessage}</p>
-          {process.env.NODE_ENV === 'development' && (
+          {process.env.NODE_ENV === "development" && (
             <details className="text-xs">
               <summary className="cursor-pointer">Debug info</summary>
               <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto">
@@ -183,13 +209,8 @@ export function OwnerDashboardOverview() {
               </pre>
             </details>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => refetch()}
-          >
-            {t('common.retry', 'Retry')}
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
+            {t("common.retry", "Retry")}
           </Button>
         </AlertDescription>
       </Alert>
@@ -209,10 +230,12 @@ export function OwnerDashboardOverview() {
             <Alert key={index} variant={getAlertVariant(alert.severity)}>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle className="mb-1">
-                {alert.type === 'pending_bookings' && t('dashboard.alert.pendingBookings', 'Pending Bookings')}
-                {alert.type === 'no_services' && t('dashboard.alert.noServices', 'No Services')}
-                {alert.type === 'no_masters' && t('dashboard.alert.noMasters', 'No Masters')}
-                {alert.type === 'salon_not_published' && t('dashboard.alert.notPublished', 'Salon Not Published')}
+                {alert.type === "pending_bookings" &&
+                  t("dashboard.alert.pendingBookings", "Pending Bookings")}
+                {alert.type === "no_services" && t("dashboard.alert.noServices", "No Services")}
+                {alert.type === "no_masters" && t("dashboard.alert.noMasters", "No Masters")}
+                {alert.type === "salon_not_published" &&
+                  t("dashboard.alert.notPublished", "Salon Not Published")}
               </AlertTitle>
               <AlertDescription className="flex items-center justify-between">
                 <span>{alert.message}</span>
@@ -222,10 +245,10 @@ export function OwnerDashboardOverview() {
                   className="ml-4"
                   onClick={() => handleAlertAction(alert)}
                 >
-                  {alert.action === 'GO_BOOKINGS' && t('common.viewBookings', 'View Bookings')}
-                  {alert.action === 'GO_SERVICES' && t('common.addServices', 'Add Services')}
-                  {alert.action === 'GO_MASTERS' && t('common.addMasters', 'Add Masters')}
-                  {alert.action === 'PUBLISH_SALON' && t('common.publish', 'Publish')}
+                  {alert.action === "GO_BOOKINGS" && t("common.viewBookings", "View Bookings")}
+                  {alert.action === "GO_SERVICES" && t("common.addServices", "Add Services")}
+                  {alert.action === "GO_MASTERS" && t("common.addMasters", "Add Masters")}
+                  {alert.action === "PUBLISH_SALON" && t("common.publish", "Publish")}
                 </Button>
               </AlertDescription>
             </Alert>
@@ -235,65 +258,57 @@ export function OwnerDashboardOverview() {
 
       {/* Today's KPIs */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">{t('dashboard.today', 'Today')}</h3>
+        <h3 className="text-lg font-semibold mb-3">{t("dashboard.today", "Today")}</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.revenue', 'Revenue')}
+                {t("dashboard.revenue", "Revenue")}
               </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(overview.today.revenue)}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.today', 'Today')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.today", "Today")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.bookings', 'Bookings')}
+                {t("dashboard.bookings", "Bookings")}
               </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{overview.today.bookings}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.today', 'Today')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.today", "Today")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.completionRate', 'Completion Rate')}
+                {t("dashboard.completionRate", "Completion Rate")}
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{overview.today.completionRate}%</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.today', 'Today')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.today", "Today")}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.newClients', 'New Clients')}
+                {t("dashboard.newClients", "New Clients")}
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{overview.today.newClients}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.today', 'Today')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("dashboard.today", "Today")}</p>
             </CardContent>
           </Card>
         </div>
@@ -301,12 +316,12 @@ export function OwnerDashboardOverview() {
 
       {/* Week Trends */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">{t('dashboard.thisWeek', 'This Week')}</h3>
+        <h3 className="text-lg font-semibold mb-3">{t("dashboard.thisWeek", "This Week")}</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.weeklyRevenue', 'Weekly Revenue')}
+                {t("dashboard.weeklyRevenue", "Weekly Revenue")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -317,11 +332,13 @@ export function OwnerDashboardOverview() {
                 ) : (
                   <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
                 )}
-                <span className={overview.week.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={overview.week.revenueChange >= 0 ? "text-green-600" : "text-red-600"}
+                >
                   {formatPercentage(overview.week.revenueChange)}
                 </span>
                 <span className="ml-1 text-muted-foreground">
-                  {t('dashboard.vsLastWeek', 'vs last week')}
+                  {t("dashboard.vsLastWeek", "vs last week")}
                 </span>
               </div>
             </CardContent>
@@ -330,7 +347,7 @@ export function OwnerDashboardOverview() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                {t('dashboard.weeklyBookings', 'Weekly Bookings')}
+                {t("dashboard.weeklyBookings", "Weekly Bookings")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -341,11 +358,13 @@ export function OwnerDashboardOverview() {
                 ) : (
                   <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
                 )}
-                <span className={overview.week.bookingsChange >= 0 ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={overview.week.bookingsChange >= 0 ? "text-green-600" : "text-red-600"}
+                >
                   {formatPercentage(overview.week.bookingsChange)}
                 </span>
                 <span className="ml-1 text-muted-foreground">
-                  {t('dashboard.vsLastWeek', 'vs last week')}
+                  {t("dashboard.vsLastWeek", "vs last week")}
                 </span>
               </div>
             </CardContent>
@@ -365,12 +384,12 @@ export function OwnerDashboardOverview() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('dashboard.recentActivity', 'Recent Activity')}</CardTitle>
+          <CardTitle>{t("dashboard.recentActivity", "Recent Activity")}</CardTitle>
         </CardHeader>
         <CardContent>
           {activity.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {t('dashboard.noActivity', 'No recent activity')}
+              {t("dashboard.noActivity", "No recent activity")}
             </p>
           ) : (
             <div className="space-y-3">

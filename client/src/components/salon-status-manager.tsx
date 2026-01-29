@@ -14,14 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Eye,
-  ExternalLink,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, AlertTriangle, Eye, ExternalLink } from "lucide-react";
 import type { Salon } from "@shared/schema";
 
 interface SalonStatusManagerProps {
@@ -30,17 +23,21 @@ interface SalonStatusManagerProps {
 
 type SalonStatus = "draft" | "active" | "paused";
 
-const STATUS_INFO: Record<SalonStatus, {
-  label: string;
-  icon: React.ElementType;
-  color: "default" | "success" | "warning" | "destructive";
-  description: string;
-}> = {
+const STATUS_INFO: Record<
+  SalonStatus,
+  {
+    label: string;
+    icon: React.ElementType;
+    color: "default" | "success" | "warning" | "destructive";
+    description: string;
+  }
+> = {
   draft: {
     label: "Draft",
     icon: Clock,
     color: "default",
-    description: "Salon is not visible to clients. Add at least 1 service and 1 master to activate.",
+    description:
+      "Salon is not visible to clients. Add at least 1 service and 1 master to activate.",
   },
   active: {
     label: "Active",
@@ -60,7 +57,7 @@ export function SalonStatusManager({ salon }: SalonStatusManagerProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<SalonStatus>(
-    (salon.status as SalonStatus) || "draft"
+    (salon.status as SalonStatus) || "draft",
   );
 
   const updateStatusMutation = useMutation({
@@ -119,9 +116,7 @@ export function SalonStatusManager({ salon }: SalonStatusManagerProps) {
           <StatusIcon className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-medium text-foreground">{t("salonStatus.title")}</h3>
         </div>
-        <Badge variant={statusConfig.color as any}>
-          {t(`salonStatus.${currentStatus}`)}
-        </Badge>
+        <Badge variant={statusConfig.color as any}>{t(`salonStatus.${currentStatus}`)}</Badge>
       </div>
 
       <div className="space-y-4">

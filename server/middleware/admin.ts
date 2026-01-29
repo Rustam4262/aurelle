@@ -20,11 +20,7 @@ declare global {
  * Middleware: Verify user is an active admin
  * Must be used after authentication middleware
  */
-export async function requireAdmin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   try {
     // Check if user is authenticated via session
     const sessionUser = (req.session as any)?.passport?.user;
@@ -51,8 +47,8 @@ export async function requireAdmin(
         and(
           eq(adminUsers.userId, userId),
           eq(adminUsers.isActive, true),
-          eq(adminRoles.isActive, true)
-        )
+          eq(adminRoles.isActive, true),
+        ),
       )
       .limit(1);
 
@@ -170,11 +166,7 @@ export async function logAuditAction(data: {
  * Middleware: Check if user/salon/master is sanctioned
  * Blocks requests if active sanction exists
  */
-export async function checkSanctions(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function checkSanctions(req: Request, res: Response, next: NextFunction) {
   try {
     // Check if user is authenticated via session
     const sessionUser = (req.session as any)?.passport?.user;
@@ -196,17 +188,11 @@ export async function checkSanctions(
           eq(sanctions.status, "active"),
           or(
             // Permanent block
-            and(
-              eq(sanctions.sanctionType, "perm_block"),
-              isNull(sanctions.endsAt)
-            ),
+            and(eq(sanctions.sanctionType, "perm_block"), isNull(sanctions.endsAt)),
             // Temporary block not yet expired
-            and(
-              eq(sanctions.sanctionType, "temp_block"),
-              gte(sanctions.endsAt, now)
-            )
-          )
-        )
+            and(eq(sanctions.sanctionType, "temp_block"), gte(sanctions.endsAt, now)),
+          ),
+        ),
       )
       .limit(1);
 
@@ -234,10 +220,7 @@ export async function checkSanctions(
 /**
  * Helper: Check if specific feature is restricted
  */
-export async function checkFeatureRestriction(
-  userId: string,
-  feature: string
-): Promise<boolean> {
+export async function checkFeatureRestriction(userId: string, feature: string): Promise<boolean> {
   try {
     const now = new Date();
 
@@ -250,8 +233,8 @@ export async function checkFeatureRestriction(
           eq(sanctions.targetId, userId),
           eq(sanctions.status, "active"),
           eq(sanctions.sanctionType, "feature_restrict"),
-          or(isNull(sanctions.endsAt), gte(sanctions.endsAt, now))
-        )
+          or(isNull(sanctions.endsAt), gte(sanctions.endsAt, now)),
+        ),
       );
 
     // Check if any sanction restricts this feature

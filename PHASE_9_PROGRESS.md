@@ -10,6 +10,7 @@
 ## ✅ Completed Features
 
 ### 1. Backend APIs (100% Complete)
+
 - ✅ GET /api/owner/services/:id/masters
 - ✅ PATCH /api/owner/services/:id/masters
 - ✅ PATCH /api/owner/services/:id/toggle
@@ -17,6 +18,7 @@
 - ✅ All endpoints with RBAC and audit logging
 
 ### 2. Frontend - Bulk Toggle (100% Complete)
+
 - ✅ Updated toggle to use new PATCH endpoint (faster, optimized)
 - ✅ Added checkbox selection to service cards
 - ✅ Added bulk actions bar (Activate/Deactivate/Cancel)
@@ -25,6 +27,7 @@
 - ✅ Auto-clears selection after bulk action
 
 **UI Features**:
+
 ```
 [ ] Service 1   ← Checkbox for selection
 [ ] Service 2
@@ -39,7 +42,9 @@ Bulk Actions Bar appears when > 0 selected:
 ---
 
 ### 3. Master Assignment UI (100% Complete)
+
 Add to service edit dialog:
+
 - ✅ Fetch assigned masters on dialog open
 - ✅ Fetch salon masters dynamically
 - ✅ Show master list with checkboxes
@@ -50,7 +55,9 @@ Add to service edit dialog:
 - ✅ Handle salons with no masters
 
 ### 4. i18n Translations (100% Complete)
+
 All translation keys added in EN/RU/UZ:
+
 - ✅ `services.selected` - "selected" / "выбрано" / "tanlangan"
 - ✅ `services.activateSelected` - "Activate" / "Активировать" / "Faollashtirish"
 - ✅ `services.deactivateSelected` - "Deactivate" / "Деактивировать" / "O'chirish"
@@ -66,6 +73,7 @@ All translation keys added in EN/RU/UZ:
 - ✅ All service CRUD related keys
 
 ### 5. Testing (Pending User Validation)
+
 - [ ] Test single toggle
 - [ ] Test bulk select (multiple services)
 - [ ] Test bulk activate
@@ -80,9 +88,11 @@ All translation keys added in EN/RU/UZ:
 ## 📊 Files Modified
 
 **Backend**:
+
 - `server/routes/owner.routes.ts` (+209 lines)
 
 **Frontend**:
+
 - `client/src/components/service-management.tsx` (+101 lines total from Phase 9)
 - `client/src/locales/en.json` (+32 service keys)
 - `client/src/locales/ru.json` (+32 service keys)
@@ -95,6 +105,7 @@ All translation keys added in EN/RU/UZ:
 ## 🎯 Next Steps
 
 ### Completed Phase 9 Tasks
+
 1. ✅ **Backend APIs** - All 4 endpoints deployed
 2. ✅ **Bulk Toggle UI** - Checkboxes + bulk actions bar
 3. ✅ **Master Assignment UI** - Dialog with master checkboxes
@@ -102,13 +113,16 @@ All translation keys added in EN/RU/UZ:
 5. ✅ **Deployment** - Production (commit 7ade8922)
 
 ### Remaining (Phase 9)
+
 1. **Testing** (User validation required)
    - Test all toggle operations
    - Test master assignment flow
    - Verify all 3 languages
 
 ### Next Phase (Phase 10 - from plan)
+
 According to implementation plan:
+
 - Calendar & Working Hours enhancements
 - Break times for salons
 - Exceptions/holidays
@@ -120,16 +134,20 @@ According to implementation plan:
 ## 🔧 Code Highlights
 
 ### Bulk Toggle Mutation
+
 ```typescript
 const bulkToggleMutation = useMutation({
   mutationFn: async ({ serviceIds, isActive }: { serviceIds: string[]; isActive: boolean }) => {
-    const res = await apiRequest("POST", "/api/owner/services/bulk-toggle", { serviceIds, isActive });
+    const res = await apiRequest("POST", "/api/owner/services/bulk-toggle", {
+      serviceIds,
+      isActive,
+    });
     return res.json();
   },
   onSuccess: (_, variables) => {
     toast({
       title: t("services.bulkToggleSuccess", "Services updated"),
-      description: `${variables.serviceIds.length} services ${variables.isActive ? 'activated' : 'deactivated'}`,
+      description: `${variables.serviceIds.length} services ${variables.isActive ? "activated" : "deactivated"}`,
     });
     queryClient.invalidateQueries(["/api/owner/services/stats"]);
     setSelectedServices([]);
@@ -138,6 +156,7 @@ const bulkToggleMutation = useMutation({
 ```
 
 ### Selection Logic
+
 ```typescript
 <Checkbox
   checked={selectedServices.includes(service.id)}
@@ -152,6 +171,7 @@ const bulkToggleMutation = useMutation({
 ```
 
 ### Master Assignment UI
+
 ```typescript
 // Fetch masters for salon
 const { data: salonMasters = [] } = useQuery({
@@ -178,11 +198,13 @@ assignMastersMutation.mutate({
 ## ✅ Success Metrics
 
 **Performance**:
+
 - Toggle response time: <100ms (vs old PUT ~300ms)
 - Bulk toggle: <500ms for 10 services
 - UI responsiveness: Instant feedback
 
 **UX**:
+
 - Single click to toggle visibility
 - Multi-select for bulk operations
 - Clear visual feedback (selected count)

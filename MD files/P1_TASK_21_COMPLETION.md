@@ -12,6 +12,7 @@
 **Requirement:** Сделать календарь удобнее
 
 ### Deliverables:
+
 - ✅ Добавить индикацию занятых/свободных слотов:
   - Свободно: зеленый
   - Занято: серый + disabled
@@ -33,6 +34,7 @@
 **File:** [client/src/components/booking-calendar.tsx](client/src/components/booking-calendar.tsx)
 
 **New Features Added:**
+
 - ✅ "Today" button for quick navigation
 - ✅ Past dates blocking (configurable)
 - ✅ Maximum advance booking days limit
@@ -43,6 +45,7 @@
 - ✅ Booking window information
 
 **New Props:**
+
 ```typescript
 interface BookingCalendarProps {
   bookings: EnrichedBooking[];
@@ -52,8 +55,8 @@ interface BookingCalendarProps {
   showMaster?: boolean;
   showSalon?: boolean;
   isLoading?: boolean;
-  maxAdvanceBookingDays?: number;  // NEW: Default 90 days
-  disablePastDates?: boolean;      // NEW: Default true
+  maxAdvanceBookingDays?: number; // NEW: Default 90 days
+  disablePastDates?: boolean; // NEW: Default true
 }
 ```
 
@@ -64,6 +67,7 @@ interface BookingCalendarProps {
 **File:** [client/src/components/time-slot-picker.tsx](client/src/components/time-slot-picker.tsx)
 
 **Already Implemented Features:**
+
 - ✅ Real-time availability checking
 - ✅ Visual indicators (available/booked/pending)
 - ✅ Icons for each slot status
@@ -79,6 +83,7 @@ interface BookingCalendarProps {
 ### Color System
 
 #### Time Slot Colors:
+
 ```typescript
 // Free slots
 bg-green-50 dark:bg-green-950/30
@@ -99,6 +104,7 @@ bg-accent text-accent-foreground font-bold
 ```
 
 #### Status Badge Colors:
+
 ```typescript
 const STATUS_COLORS = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900",
@@ -127,6 +133,7 @@ const STATUS_COLORS = {
 ```
 
 **Benefits:**
+
 - Quick navigation to current date
 - Clear visual indicator with icon
 - Always accessible in calendar header
@@ -148,12 +155,13 @@ const isDateDisabled = (date: Date) => {
 ```
 
 **Calendar Integration:**
+
 ```tsx
 <Calendar
   mode="single"
   selected={selectedDate}
   onSelect={setSelectedDate}
-  disabled={isDateDisabled}  // ← Date validation
+  disabled={isDateDisabled} // ← Date validation
   modifiers={{
     booked: datesWithBookings,
     today: [today],
@@ -162,6 +170,7 @@ const isDateDisabled = (date: Date) => {
 ```
 
 **Benefits:**
+
 - Prevents booking in the past
 - Visual indication (grayed out dates)
 - Better UX (clear booking window)
@@ -172,14 +181,13 @@ const isDateDisabled = (date: Date) => {
 
 ```typescript
 const today = startOfDay(new Date());
-const maxDate = maxAdvanceBookingDays
-  ? addDays(today, maxAdvanceBookingDays)
-  : undefined;
+const maxDate = maxAdvanceBookingDays ? addDays(today, maxAdvanceBookingDays) : undefined;
 ```
 
 **Default:** 90 days in advance
 
 **Configurable per salon:**
+
 ```tsx
 <BookingCalendar
   bookings={bookings}
@@ -189,6 +197,7 @@ const maxDate = maxAdvanceBookingDays
 ```
 
 **Benefits:**
+
 - Respects salon settings
 - Prevents overbooking far in advance
 - Clear user guidance
@@ -198,6 +207,7 @@ const maxDate = maxAdvanceBookingDays
 ### 4. Enhanced Visual Indicators
 
 #### Calendar Legend:
+
 ```tsx
 <div className="flex items-center gap-4">
   <div className="flex items-center gap-2">
@@ -216,6 +226,7 @@ const maxDate = maxAdvanceBookingDays
 ```
 
 #### Booking Window Info:
+
 ```tsx
 <p className="text-xs text-muted-foreground">
   {t("marketplace.calendar.bookingWindow", { days: 90 })}
@@ -228,15 +239,15 @@ const maxDate = maxAdvanceBookingDays
 ### 5. Slot Availability Indicators
 
 #### Free Slots (Green):
+
 ```tsx
 <div className="bg-green-50 dark:bg-green-950/30 hover:bg-green-100">
-  <span className="text-green-600 dark:text-green-400 font-medium">
-    Free
-  </span>
+  <span className="text-green-600 dark:text-green-400 font-medium">Free</span>
 </div>
 ```
 
 #### Booked Slots (Gray with Status):
+
 ```tsx
 <div className="bg-muted">
   <Badge className={STATUS_COLORS[booking.status]}>
@@ -248,6 +259,7 @@ const maxDate = maxAdvanceBookingDays
 ```
 
 #### Summary Badges:
+
 ```tsx
 <Badge variant="outline">
   {activeBookings.length} bookings
@@ -276,11 +288,13 @@ interface TimeSlot {
 ```
 
 **Visual Indicators:**
+
 - ✅ Green checkmark: Available
 - ❌ Red X: Booked
 - ⚠️ Orange alert: Pending
 
 **Features:**
+
 - Real-time availability API
 - Service duration consideration
 - Buffer time between bookings
@@ -304,6 +318,7 @@ interface TimeSlot {
 ```
 
 ### Touch-Friendly:
+
 - Large touch targets (buttons min 44px)
 - Clear visual feedback on hover/tap
 - Scrollable time slots list
@@ -323,7 +338,7 @@ import { BookingCalendar } from "@/components/booking-calendar";
   workingHoursStart="09:00"
   workingHoursEnd="20:00"
   showClient={true}
-/>
+/>;
 ```
 
 ### With New Features:
@@ -353,7 +368,7 @@ const maxDays = salon.bookingSettings?.maxAdvanceBookingDays || 60;
   disablePastDates={true}
   showClient={true}
   showMaster={true}
-/>
+/>;
 ```
 
 ---
@@ -390,6 +405,7 @@ return enabled; // ✅ Can select
 ## 📊 Before vs After
 
 ### Before:
+
 - ❌ No "Today" button (manual scrolling)
 - ❌ Past dates selectable (confusing)
 - ❌ No max advance booking limit
@@ -398,6 +414,7 @@ return enabled; // ✅ Can select
 - ❌ No booking window info
 
 ### After:
+
 - ✅ "Today" button (quick access)
 - ✅ Past dates disabled (clear UX)
 - ✅ Max advance days enforced
@@ -443,6 +460,7 @@ return enabled; // ✅ Can select
 ## 🎨 Best Practices Implemented
 
 ### UX Design:
+
 - ✅ Clear visual hierarchy
 - ✅ Color-coded status system
 - ✅ Consistent iconography
@@ -451,12 +469,14 @@ return enabled; // ✅ Can select
 - ✅ Responsive feedback
 
 ### Performance:
+
 - ✅ useMemo for expensive calculations
 - ✅ Efficient date filtering
 - ✅ Optimized re-renders
 - ✅ Lazy slot generation
 
 ### Accessibility:
+
 - ✅ Semantic HTML
 - ✅ ARIA labels on dates
 - ✅ Keyboard navigation
@@ -464,6 +484,7 @@ return enabled; // ✅ Can select
 - ✅ High contrast colors
 
 ### Code Quality:
+
 - ✅ TypeScript typed
 - ✅ Configurable defaults
 - ✅ Clear prop names
@@ -480,11 +501,11 @@ return enabled; // ✅ Can select
 // In salon schema
 interface SalonSettings {
   maxAdvanceBookingDays: number; // Default 90
-  bufferMinutes: number;         // Default 15
-  allowPastBookings: boolean;    // Default false
+  bufferMinutes: number; // Default 15
+  allowPastBookings: boolean; // Default false
   workingHours: {
-    start: string;  // "09:00"
-    end: string;    // "20:00"
+    start: string; // "09:00"
+    end: string; // "20:00"
   };
 }
 ```
@@ -535,6 +556,7 @@ Add these to localization files:
 ```
 
 **Russian:**
+
 ```json
 {
   "marketplace.calendar.today": "Сегодня",
@@ -549,6 +571,7 @@ Add these to localization files:
 ## 🎯 Summary
 
 ### Выполнено:
+
 - ✅ **P1 #21** полностью завершена
 - ✅ **"Today" button** добавлена
 - ✅ **Past dates blocking** реализовано
@@ -558,12 +581,14 @@ Add these to localization files:
 - ✅ **Master availability** уже в TimeSlotPicker
 
 ### Код:
+
 - **Обновлено файлов:** 1 (booking-calendar.tsx)
 - **Новые props:** 2 (maxAdvanceBookingDays, disablePastDates)
 - **Новые функции:** 2 (handleTodayClick, isDateDisabled)
 - **Visual improvements:** 5+ (colors, hover, badges, legend, info)
 
 ### Качество:
+
 - ✅ TypeScript типизация
 - ✅ Backward compatible
 - ✅ Configurable defaults
@@ -578,6 +603,7 @@ Add these to localization files:
 **Статус:** ✅ **ГОТОВО К PRODUCTION**
 
 P1 #21 полностью завершена. Календарь теперь имеет:
+
 - Intuitive slot availability indicators
 - Quick "Today" navigation
 - Smart date restrictions

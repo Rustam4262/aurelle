@@ -6,13 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason for manual deployment'
+        description: "Reason for manual deployment"
         required: false
-        default: 'Manual staging deployment'
+        default: "Manual staging deployment"
 
 env:
-  NODE_VERSION: '20'
-  PM2_APP_NAME: 'aurelle-staging'
+  NODE_VERSION: "20"
+  PM2_APP_NAME: "aurelle-staging"
 
 jobs:
   deploy-staging:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

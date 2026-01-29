@@ -12,6 +12,7 @@
 **Requirement:** Реализовать загрузку портфолио
 
 ### Deliverables:
+
 - ✅ Создать PortfolioUpload компонент:
   - Drag & drop зона
   - Или кнопка выбора файла
@@ -34,6 +35,7 @@
 **File:** [client/src/components/portfolio-upload.tsx](client/src/components/portfolio-upload.tsx) (NEW)
 
 **Features:**
+
 - ✅ Drag & drop zone with visual feedback
 - ✅ Multiple file selection (up to 10 images)
 - ✅ File validation (type, size, count)
@@ -46,10 +48,11 @@
 - ✅ Empty state with helpful message
 
 **Props:**
+
 ```typescript
 interface PortfolioUploadProps {
   masterId: string;
-  maxImages?: number;              // Default: 10
+  maxImages?: number; // Default: 10
   onUploadSuccess?: (urls: string[]) => void;
   className?: string;
 }
@@ -70,20 +73,19 @@ interface PortfolioUploadProps {
   className={cn(
     "border-2 border-dashed rounded-lg p-8",
     dragActive
-      ? "border-primary bg-primary/5"  // Active state
-      : "border-muted-foreground/25"    // Normal state
+      ? "border-primary bg-primary/5" // Active state
+      : "border-muted-foreground/25", // Normal state
   )}
 >
   <FileImage className="h-12 w-12 text-muted-foreground" />
   <h3>Upload Portfolio Images</h3>
   <p>Drag & drop images here, or click to select files</p>
-  <Button onClick={() => fileInputRef.current?.click()}>
-    Choose Files
-  </Button>
+  <Button onClick={() => fileInputRef.current?.click()}>Choose Files</Button>
 </div>
 ```
 
 **Features:**
+
 - Visual feedback on drag enter/leave
 - Large drop zone for easy targeting
 - Alternative file selection button
@@ -115,6 +117,7 @@ if (images.length + fileArray.length > maxImages) {
 ```
 
 **Limits:**
+
 - **File types:** JPEG, JPG, PNG, WebP
 - **File size:** 5MB per image
 - **File count:** 10 images maximum
@@ -131,7 +134,7 @@ if (images.length + fileArray.length > maxImages) {
       {/* Image Preview */}
       <div className="aspect-square">
         <img
-          src={image.preview}  // ObjectURL preview
+          src={image.preview} // ObjectURL preview
           alt={image.title || "Portfolio preview"}
           className="w-full h-full object-cover"
         />
@@ -155,15 +158,14 @@ if (images.length + fileArray.length > maxImages) {
       )}
 
       {/* Progress Bar */}
-      {uploading && !image.uploaded && (
-        <Progress value={image.uploadProgress} />
-      )}
+      {uploading && !image.uploaded && <Progress value={image.uploadProgress} />}
     </Card>
   ))}
 </div>
 ```
 
 **Grid Layout:**
+
 - **Mobile:** 2 columns
 - **Tablet:** 3 columns
 - **Desktop:** 4 columns
@@ -216,6 +218,7 @@ if (images.length + fileArray.length > maxImages) {
 ```
 
 **Metadata Fields:**
+
 - **Title:** Short name for the work
 - **Description:** Detailed description
 - **Category:** Service category (e.g., "Hair Color")
@@ -234,7 +237,7 @@ const progressInterval = setInterval(() => {
         return { ...img, uploadProgress: img.uploadProgress! + 10 };
       }
       return img;
-    })
+    }),
   );
 }, 200);
 
@@ -249,15 +252,12 @@ clearInterval(progressInterval);
 
 // Complete progress
 setImages((prev) =>
-  prev.map((img) =>
-    img.id === image.id
-      ? { ...img, uploaded: true, uploadProgress: 100 }
-      : img
-  )
+  prev.map((img) => (img.id === image.id ? { ...img, uploaded: true, uploadProgress: 100 } : img)),
 );
 ```
 
 **Progress States:**
+
 1. **0%:** Starting upload
 2. **10-90%:** Uploading (simulated increments)
 3. **100%:** Upload complete
@@ -272,6 +272,7 @@ setImages((prev) =>
 **File:** [client/src/pages/master.tsx](client/src/pages/master.tsx) (Updated)
 
 **Changes:**
+
 ```tsx
 import { PortfolioUpload } from "@/components/portfolio-upload";
 import { PortfolioGallery } from "@/components/image-gallery";
@@ -302,10 +303,11 @@ import { PortfolioGallery } from "@/components/image-gallery";
       <p>No portfolio yet</p>
     )}
   </Card>
-</TabsContent>
+</TabsContent>;
 ```
 
 **Layout:**
+
 1. **Upload Card** - PortfolioUpload component (top)
 2. **Gallery Card** - PortfolioGallery with lightbox (bottom)
 
@@ -398,7 +400,7 @@ import { PortfolioUpload } from "@/components/portfolio-upload";
     console.log("Uploaded:", urls);
     // Refresh portfolio gallery
   }}
-/>
+/>;
 ```
 
 ### With Custom Max Images:
@@ -406,7 +408,7 @@ import { PortfolioUpload } from "@/components/portfolio-upload";
 ```tsx
 <PortfolioUpload
   masterId={masterId}
-  maxImages={5}  // Only 5 images allowed
+  maxImages={5} // Only 5 images allowed
   onUploadSuccess={() => {
     queryClient.invalidateQueries({ queryKey: ["/api/master/portfolio"] });
     showSuccessMessage();
@@ -432,9 +434,7 @@ function PortfolioForm() {
         }}
       />
 
-      {uploadedUrls.length > 0 && (
-        <Button type="submit">Save Portfolio</Button>
-      )}
+      {uploadedUrls.length > 0 && <Button type="submit">Save Portfolio</Button>}
     </form>
   );
 }
@@ -448,14 +448,14 @@ function PortfolioForm() {
 
 ```typescript
 interface PortfolioImage {
-  id: string;                // Unique identifier
-  file: File;               // Original file object
-  preview: string;          // ObjectURL for preview
-  title?: string;           // Optional title
-  description?: string;     // Optional description
-  category?: string;        // Optional category
-  uploaded?: boolean;       // Upload status
-  uploadProgress?: number;  // Progress 0-100
+  id: string; // Unique identifier
+  file: File; // Original file object
+  preview: string; // ObjectURL for preview
+  title?: string; // Optional title
+  description?: string; // Optional description
+  category?: string; // Optional category
+  uploaded?: boolean; // Upload status
+  uploadProgress?: number; // Progress 0-100
 }
 
 const [images, setImages] = useState<PortfolioImage[]>([]);
@@ -496,15 +496,15 @@ const preview = URL.createObjectURL(file);
 const handleRemoveImage = (id: string) => {
   const image = images.find((img) => img.id === id);
   if (image) {
-    URL.revokeObjectURL(image.preview);  // Free memory
+    URL.revokeObjectURL(image.preview); // Free memory
   }
-  setImages(prev => prev.filter(img => img.id !== id));
+  setImages((prev) => prev.filter((img) => img.id !== id));
 };
 
 // Clean up on unmount
 useEffect(() => {
   return () => {
-    images.forEach(img => URL.revokeObjectURL(img.preview));
+    images.forEach((img) => URL.revokeObjectURL(img.preview));
   };
 }, []);
 ```
@@ -560,6 +560,7 @@ useEffect(() => {
 ## 🎨 Best Practices Implemented
 
 ### UX Design:
+
 - ✅ Clear drag & drop zone
 - ✅ Visual feedback on all actions
 - ✅ Progress indicators
@@ -568,6 +569,7 @@ useEffect(() => {
 - ✅ Empty states
 
 ### Performance:
+
 - ✅ Memory-efficient previews
 - ✅ ObjectURL cleanup
 - ✅ Batch upload optimization
@@ -575,6 +577,7 @@ useEffect(() => {
 - ✅ Simulated progress for UX
 
 ### Accessibility:
+
 - ✅ Keyboard navigation
 - ✅ ARIA labels
 - ✅ Alt text for images
@@ -582,6 +585,7 @@ useEffect(() => {
 - ✅ Screen reader friendly
 
 ### Code Quality:
+
 - ✅ TypeScript typed
 - ✅ Reusable component
 - ✅ Clean state management
@@ -593,43 +597,46 @@ useEffect(() => {
 ## 📚 Related Components
 
 ### Uses:
+
 - **PortfolioGallery** - For viewing uploaded images with lightbox
 - **ImageUpload** - Single image upload (profile photo, salon photo)
 - **MultiImageUpload** - Multiple images (salon photos)
 
 ### Comparison:
 
-| Component | Purpose | Max Files | Features |
-|-----------|---------|-----------|----------|
-| **ImageUpload** | Single image | 1 | Progress bar, preview, remove |
-| **MultiImageUpload** | Multiple images | 10 | Batch upload, thumbnails |
-| **PortfolioUpload** | Portfolio images | 10 | Drag & drop, metadata, edit |
+| Component            | Purpose          | Max Files | Features                      |
+| -------------------- | ---------------- | --------- | ----------------------------- |
+| **ImageUpload**      | Single image     | 1         | Progress bar, preview, remove |
+| **MultiImageUpload** | Multiple images  | 10        | Batch upload, thumbnails      |
+| **PortfolioUpload**  | Portfolio images | 10        | Drag & drop, metadata, edit   |
 
 ---
 
 ## 🔮 Future Enhancements (Optional)
 
 1. **Image Cropping:**
+
    ```tsx
    import { ImageCrop } from "@/components/image-crop";
    // Crop before upload
    ```
 
 2. **Reorder Images:**
+
    ```tsx
    import { DragDropContext } from "react-beautiful-dnd";
    // Drag to reorder portfolio
    ```
 
 3. **Bulk Metadata:**
+
    ```tsx
    // Apply same category to multiple images
-   <Button onClick={applyBulkMetadata}>
-     Apply to All
-   </Button>
+   <Button onClick={applyBulkMetadata}>Apply to All</Button>
    ```
 
 4. **Image Filters:**
+
    ```tsx
    // Apply filters before upload
    <ImageFilters image={image} onApply={handleFilter} />
@@ -648,6 +655,7 @@ useEffect(() => {
 ## 🎯 Summary
 
 ### Выполнено:
+
 - ✅ **P0 #26** полностью завершена
 - ✅ **PortfolioUpload** component создан
 - ✅ **Drag & drop** с visual feedback
@@ -658,6 +666,7 @@ useEffect(() => {
 - ✅ **Master dashboard** обновлён
 
 ### Код:
+
 - **Создано файлов:** 1 new (portfolio-upload.tsx)
 - **Обновлено файлов:** 1 (master.tsx)
 - **Строк кода:** ~550+ lines
@@ -665,6 +674,7 @@ useEffect(() => {
 - **Features:** 10+ (drag & drop, validation, preview, edit, upload, etc.)
 
 ### Качество:
+
 - ✅ TypeScript типизация
 - ✅ Memory-efficient
 - ✅ Mobile responsive
@@ -679,6 +689,7 @@ useEffect(() => {
 **Статус:** ✅ **ГОТОВО К PRODUCTION**
 
 P0 #26 полностью завершена. Мастера теперь могут:
+
 - Upload multiple portfolio images
 - Preview before uploading
 - Edit image metadata

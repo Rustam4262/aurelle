@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AlertCircle, Clock, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 
@@ -78,15 +85,15 @@ export default function AdminComplaints() {
                       </p>
                     </TableCell>
                     <TableCell>
-                      <Badge className={STATUS_COLORS[complaint.status]}>
-                        {complaint.status}
-                      </Badge>
+                      <Badge className={STATUS_COLORS[complaint.status]}>{complaint.status}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(complaint.createdAt), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

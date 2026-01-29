@@ -34,8 +34,8 @@ async function runMigrations() {
       // Split by semicolons but keep statements together
       const statements = migrationSQL
         .split(";")
-        .map(s => s.trim())
-        .filter(s => s.length > 0 && !s.startsWith("--"));
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && !s.startsWith("--"));
 
       for (const statement of statements) {
         try {

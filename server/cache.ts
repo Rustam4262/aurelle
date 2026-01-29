@@ -1,5 +1,5 @@
 // Redis caching with graceful degradation
-import type { RedisClientType } from 'redis';
+import type { RedisClientType } from "redis";
 
 let redisClient: RedisClientType | null = null;
 let isRedisAvailable = false;
@@ -15,24 +15,24 @@ export async function initRedis() {
       return;
     }
 
-    const { createClient } = await import('redis');
+    const { createClient } = await import("redis");
     redisClient = createClient({ url: redisUrl });
 
-    redisClient.on('error', (err) => {
-      console.error('[REDIS] Error:', err);
+    redisClient.on("error", (err) => {
+      console.error("[REDIS] Error:", err);
       isRedisAvailable = false;
     });
 
-    redisClient.on('connect', () => {
-      console.log('[REDIS] ✅ Connected successfully');
+    redisClient.on("connect", () => {
+      console.log("[REDIS] ✅ Connected successfully");
       isRedisAvailable = true;
     });
 
     await redisClient.connect();
     isRedisAvailable = true;
   } catch (error) {
-    console.error('[REDIS] Failed to initialize:', error);
-    console.log('[REDIS] Continuing without caching');
+    console.error("[REDIS] Failed to initialize:", error);
+    console.log("[REDIS] Continuing without caching");
     redisClient = null;
     isRedisAvailable = false;
   }
@@ -124,7 +124,7 @@ export function cacheMiddleware(keyPrefix: string, ttl: number = 300) {
 
       next();
     } catch (error) {
-      console.error('[REDIS] Middleware error:', error);
+      console.error("[REDIS] Middleware error:", error);
       next();
     }
   };

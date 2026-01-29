@@ -3,7 +3,7 @@
 **Сервер**: 89.39.94.194
 **Домен**: aurelle.uz, www.aurelle.uz
 **Логин**: root
-**Пароль**: w2@nT*6D
+**Пароль**: w2@nT\*6D
 
 ---
 
@@ -46,6 +46,7 @@ bash /root/server-setup.sh
 ```
 
 Скрипт автоматически выполнит:
+
 - ✅ Очистку старых файлов
 - ✅ Установку Node.js, PostgreSQL, Nginx, PM2
 - ✅ Создание базы данных
@@ -71,6 +72,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 ### Шаг 4: Обновите OAuth Redirect URIs
 
 #### Google OAuth:
+
 1. Откройте https://console.cloud.google.com/
 2. Перейдите в **APIs & Services** → **Credentials**
 3. Найдите OAuth 2.0 Client ID: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com`
@@ -81,6 +83,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 6. Сохраните
 
 #### Yandex OAuth:
+
 1. Откройте https://oauth.yandex.ru/
 2. Найдите ваше приложение (Client ID: `3b79a753092d49bb977ce1ec5b3017ec`)
 3. Нажмите **Редактировать**
@@ -92,10 +95,12 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 ### Шаг 5: Проверьте работу
 
 Откройте в браузере:
+
 - https://aurelle.uz
 - https://www.aurelle.uz
 
 Проверьте авторизацию:
+
 - ✅ Email/Password
 - ✅ Google OAuth
 - ✅ Yandex OAuth
@@ -292,6 +297,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz --verbose
 ## Контакты и документация
 
 **Полная документация**:
+
 - [README.md](./README.md) - Обзор проекта
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Детальная инструкция деплоя
 - [DEPLOY_TO_SERVER.md](./DEPLOY_TO_SERVER.md) - Пошаговое руководство
@@ -300,6 +306,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz --verbose
 - [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md) - Сводка по проекту
 
 **Важные файлы**:
+
 - `server-setup.sh` - Автоматический скрипт установки
 - `deploy.sh` - Скрипт обновления приложения
 - `backup.sh` - Скрипт бэкапа БД
@@ -328,6 +335,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz --verbose
 **Удачного деплоя! 🚀**
 
 Если возникнут проблемы, проверьте логи:
+
 ```bash
 pm2 logs aurelle --lines 100
 ```

@@ -7,7 +7,7 @@ export class AppError extends Error {
     public statusCode: number,
     public message: string,
     public code?: string,
-    public details?: any
+    public details?: any,
   ) {
     super(message);
     this.name = "AppError";
@@ -80,11 +80,12 @@ export function errorHandler(
   err: Error | AppError,
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   // Default to 500 if not an AppError
   const statusCode = err instanceof AppError ? err.statusCode : 500;
-  const code = err instanceof AppError ? (err.code || "INTERNAL_SERVER_ERROR") : "INTERNAL_SERVER_ERROR";
+  const code =
+    err instanceof AppError ? err.code || "INTERNAL_SERVER_ERROR" : "INTERNAL_SERVER_ERROR";
   const message = err.message || "Internal Server Error";
   const details = err instanceof AppError ? err.details : undefined;
 
@@ -137,7 +138,7 @@ export function errorHandler(
 
 // Async handler wrapper to catch promise rejections
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>,
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);

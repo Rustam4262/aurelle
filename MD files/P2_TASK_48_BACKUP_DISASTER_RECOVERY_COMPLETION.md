@@ -14,24 +14,28 @@ Successfully implemented a comprehensive backup and disaster recovery system for
 ### Key Achievements
 
 ✅ **Automated Backup System**
+
 - Database backups: PostgreSQL pg_dump with custom format + gzip compression
 - Files backups: tar + gzip for uploads, configs, and SSL certificates
 - Scheduled daily at 3 AM via cron jobs
 - Retention: 7 days local, 90 days cloud
 
 ✅ **Cloud Redundancy**
+
 - Backblaze B2 integration with rclone
 - Automated upload after each backup
 - Bucket: `aurelle-backups`
 - Organized structure: `/database/` and `/files/`
 
 ✅ **Restore Capabilities**
+
 - Database restore with pre-restore backup and automatic rollback
 - Files restore with full/selective/preview modes
 - Automated weekly testing (Sunday 4 AM)
 - Telegram notifications for all operations
 
 ✅ **Disaster Recovery Documentation**
+
 - Comprehensive Disaster Recovery Plan (1,800+ lines)
 - 6 disaster scenarios with step-by-step recovery procedures
 - RTO/RPO objectives defined
@@ -44,11 +48,13 @@ Successfully implemented a comprehensive backup and disaster recovery system for
 ### 1. Backup Scripts
 
 #### a) Database Backup Script
+
 **File**: `scripts/backup-db.sh` (170 lines)
 
 **Purpose**: Creates compressed PostgreSQL database backups
 
 **Key Features**:
+
 - Uses `pg_dump` with custom format (`-Fc`) for better compression and flexibility
 - Gzip compression for storage efficiency
 - Disk space check before backup (requires 2GB free)
@@ -60,6 +66,7 @@ Successfully implemented a comprehensive backup and disaster recovery system for
 **Backup Format**: `aurelle_db_YYYYMMDD_HHMMSS.sql.gz`
 
 **Usage**:
+
 ```bash
 # Manual backup
 sudo bash scripts/backup-db.sh
@@ -69,6 +76,7 @@ DB_NAME=aurelle DB_USER=postgres bash scripts/backup-db.sh
 ```
 
 **Example Output**:
+
 ```
 === Database Backup Started ===
 [2026-01-11 03:00:01] Checking disk space...
@@ -84,11 +92,13 @@ DB_NAME=aurelle DB_USER=postgres bash scripts/backup-db.sh
 ```
 
 #### b) Files Backup Script
+
 **File**: `scripts/backup-files.sh` (180 lines)
 
 **Purpose**: Creates compressed archive of application files
 
 **Key Features**:
+
 - Backs up multiple sources:
   - `uploads/` directory (user-uploaded images)
   - `.env` file (environment variables)
@@ -104,6 +114,7 @@ DB_NAME=aurelle DB_USER=postgres bash scripts/backup-db.sh
 **Backup Format**: `aurelle_files_YYYYMMDD_HHMMSS.tar.gz`
 
 **Usage**:
+
 ```bash
 # Manual backup
 sudo bash scripts/backup-files.sh
@@ -113,6 +124,7 @@ PROJECT_ROOT=/var/www/aurelle bash scripts/backup-files.sh
 ```
 
 **Backup Contents**:
+
 ```
 aurelle_files_20260111_030030.tar.gz
 ├── var/www/aurelle/uploads/
@@ -129,11 +141,13 @@ aurelle_files_20260111_030030.tar.gz
 ### 2. Cloud Storage Integration
 
 #### a) Backblaze B2 Setup Script
+
 **File**: `scripts/setup-backblaze-b2.sh` (200 lines)
 
 **Purpose**: Interactive setup wizard for Backblaze B2 cloud storage
 
 **Key Features**:
+
 - Installs rclone (official cloud sync tool)
 - Interactive configuration wizard
 - Connection testing
@@ -142,6 +156,7 @@ aurelle_files_20260111_030030.tar.gz
 - Test upload/download verification
 
 **Setup Process**:
+
 1. Checks/installs rclone
 2. Guides user through Backblaze B2 account setup
 3. Runs `rclone config` for B2 credentials
@@ -151,6 +166,7 @@ aurelle_files_20260111_030030.tar.gz
 7. Performs test upload
 
 **Configuration File Created**: `/etc/aurelle-backup.conf`
+
 ```bash
 # AURELLE Backup Configuration
 B2_REMOTE="b2"
@@ -168,6 +184,7 @@ TELEGRAM_SCRIPT="/var/www/aurelle/scripts/telegram-send.sh"
 ```
 
 **Usage**:
+
 ```bash
 # Run setup (requires root)
 sudo bash scripts/setup-backblaze-b2.sh
@@ -177,17 +194,20 @@ sudo bash scripts/setup-backblaze-b2.sh
 ```
 
 **Backblaze B2 Requirements**:
+
 - Account: https://www.backblaze.com/b2/sign-up.html
 - Free tier: 10GB storage + 1GB daily download
 - Application key created at: https://secure.backblaze.com/app_keys.htm
 - Bucket created at: https://secure.backblaze.com/b2_buckets.htm
 
 #### b) Cloud Upload Script
+
 **File**: `scripts/upload-to-cloud.sh` (150 lines)
 
 **Purpose**: Uploads backups to Backblaze B2 with retention management
 
 **Key Features**:
+
 - Uploads latest backups or specified files
 - Organizes by type: `/database/` and `/files/`
 - Upload verification (checks file exists on B2)
@@ -198,6 +218,7 @@ sudo bash scripts/setup-backblaze-b2.sh
 - Telegram notifications
 
 **Usage**:
+
 ```bash
 # Upload latest backups (created in last 24h)
 sudo bash scripts/upload-to-cloud.sh
@@ -207,6 +228,7 @@ sudo bash scripts/upload-to-cloud.sh /path/to/backup1.gz /path/to/backup2.tar.gz
 ```
 
 **Upload Process**:
+
 1. Loads configuration from `/etc/aurelle-backup.conf`
 2. Finds latest backups (or uses specified files)
 3. Uploads each file to appropriate B2 directory
@@ -216,6 +238,7 @@ sudo bash scripts/upload-to-cloud.sh /path/to/backup1.gz /path/to/backup2.tar.gz
 7. Sends Telegram notification
 
 **Example Output**:
+
 ```
 === Cloud Upload Started ===
 [2026-01-11 03:01:00] ✓ Rclone remote 'b2' found
@@ -237,11 +260,13 @@ Transferred: 124M / 124M, 100%, 4.2 MB/s, ETA 0s
 ### 3. Restore Scripts
 
 #### a) Database Restore Script
+
 **File**: `scripts/restore-db.sh` (250 lines)
 
 **Purpose**: Safely restores PostgreSQL database from backup
 
 **Key Features**:
+
 - Interactive backup selection (lists available backups)
 - Backup integrity verification before restore
 - **Safety feature**: Creates pre-restore backup of current database
@@ -255,6 +280,7 @@ Transferred: 124M / 124M, 100%, 4.2 MB/s, ETA 0s
 - Detailed logging and Telegram notifications
 
 **Usage**:
+
 ```bash
 # Interactive mode (shows list of backups)
 sudo bash scripts/restore-db.sh
@@ -264,6 +290,7 @@ sudo bash scripts/restore-db.sh /var/backups/aurelle/database/aurelle_db_2026011
 ```
 
 **Restore Process**:
+
 1. Lists available backups (sorted by date)
 2. User selects backup or provides path
 3. Verifies backup integrity with `gzip -t`
@@ -282,6 +309,7 @@ sudo bash scripts/restore-db.sh /var/backups/aurelle/database/aurelle_db_2026011
 16. Sends Telegram notification
 
 **Safety Features**:
+
 ```bash
 # Pre-restore backup
 PRE_RESTORE_BACKUP="/tmp/aurelle_pre_restore_20260111_120000.sql.gz"
@@ -297,6 +325,7 @@ fi
 ```
 
 **Example Output**:
+
 ```
 === Database Restore Started ===
 
@@ -358,11 +387,13 @@ Next steps:
 ```
 
 #### b) Files Restore Script
+
 **File**: `scripts/restore-files.sh` (220 lines)
 
 **Purpose**: Restores files from backup with selective options
 
 **Key Features**:
+
 - Three restore modes:
   1. **Full restore**: Restores all files from backup
   2. **Selective restore**: Choose specific patterns (uploads only, configs only, etc.)
@@ -373,6 +404,7 @@ Next steps:
 - Detailed logging and notifications
 
 **Usage**:
+
 ```bash
 # Interactive mode
 sudo bash scripts/restore-files.sh
@@ -388,12 +420,14 @@ sudo bash scripts/restore-files.sh /var/backups/aurelle/files/aurelle_files_2026
 ```
 
 **Selective Restore Patterns**:
+
 1. **uploads**: `*/uploads/*` - User-uploaded files (avatars, photos, portfolio)
 2. **env**: `*/.env*` - Environment configuration files
 3. **nginx**: `*/nginx/*` - Nginx web server configuration
 4. **ssl**: `*/letsencrypt/*` - SSL certificates
 
 **Restore Process**:
+
 1. Lists available backups or accepts file path
 2. Verifies backup integrity with `tar -tzf`
 3. Offers restore mode: full / selective / preview
@@ -408,6 +442,7 @@ sudo bash scripts/restore-files.sh /var/backups/aurelle/files/aurelle_files_2026
 12. Sends Telegram notification
 
 **Example Output (Selective Restore)**:
+
 ```
 === Files Restore Started ===
 
@@ -462,11 +497,13 @@ Size: 98M
 ### 4. Restore Testing
 
 #### Automated Restore Test Script
+
 **File**: `scripts/restore-test.sh` (150 lines)
 
 **Purpose**: Automated weekly validation that backups can be restored
 
 **Key Features**:
+
 - Runs automatically every Sunday at 4 AM (via cron)
 - Creates temporary test database
 - Restores latest database backup to test database
@@ -478,6 +515,7 @@ Size: 98M
 - Sends Telegram notification with results
 
 **Test Process**:
+
 1. Finds latest database backup
 2. Creates test database: `aurelle_restore_test`
 3. Restores backup to test database
@@ -497,6 +535,7 @@ Size: 98M
 13. Sends Telegram notification
 
 **Usage**:
+
 ```bash
 # Manual test run
 sudo bash scripts/restore-test.sh
@@ -506,6 +545,7 @@ sudo bash scripts/restore-test.sh
 ```
 
 **Example Output**:
+
 ```
 === Restore Test Started ===
 [2026-01-11 04:00:00] Finding latest backups...
@@ -567,6 +607,7 @@ Duration: 37s
 ```
 
 **Telegram Notification**:
+
 ```
 🧪 Weekly Restore Test: SUCCESS
 
@@ -590,11 +631,13 @@ Test Date: 2026-01-11 04:00
 ### 5. Backup Automation
 
 #### Automated Backup Setup Script
+
 **File**: `scripts/setup-backup-automation.sh` (200 lines)
 
 **Purpose**: Configures automated backups with cron jobs
 
 **Key Features**:
+
 - Creates log directories
 - Creates backup directories
 - Makes all scripts executable
@@ -608,6 +651,7 @@ Test Date: 2026-01-11 04:00
 - Comprehensive usage documentation
 
 **Setup Process**:
+
 1. Verifies root/sudo access
 2. Creates `/var/log/aurelle-backups/`
 3. Creates `/var/backups/aurelle/database/` and `/var/backups/aurelle/files/`
@@ -620,12 +664,14 @@ Test Date: 2026-01-11 04:00
 10. Displays manual operation commands
 
 **Usage**:
+
 ```bash
 # Run setup (requires root)
 sudo bash scripts/setup-backup-automation.sh
 ```
 
 **Cron Schedule Installed**:
+
 ```cron
 # AURELLE Backup Automation
 # Auto-generated on 2026-01-11
@@ -641,6 +687,7 @@ sudo bash scripts/setup-backup-automation.sh
 ```
 
 **Combined Backup Script**: `/usr/local/bin/aurelle-backup-all`
+
 ```bash
 #!/bin/bash
 # Runs database backup, files backup, then uploads to cloud
@@ -669,6 +716,7 @@ log "=== Combined Backup Completed ==="
 ```
 
 **Manual Operations**:
+
 ```bash
 # Run backup manually
 sudo /usr/local/bin/aurelle-backup-all
@@ -716,24 +764,27 @@ crontab -l | grep aurelle
 **Contents**:
 
 #### 6.1 Overview
+
 - Document purpose and scope
 - Last updated date
 - Contact information
 - Document ownership
 
 #### 6.2 Recovery Objectives
+
 Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for each disaster scenario:
 
-| Disaster Type | RTO | RPO | Impact |
-|---------------|-----|-----|--------|
-| Database Corruption | 30-60 min | 24h | High - Service disruption |
-| Server Failure | 2-4h | 24h | Critical - Complete outage |
-| Ransomware Attack | 4-8h | 24h | Critical - Data compromise |
-| Accidental Deletion | 15-30 min | 24h | Medium - Partial data loss |
-| Cloud Storage Outage | 1-2h | 24h | Low - Local backups available |
-| Complete Infrastructure Loss | 8-24h | 24h | Critical - Full rebuild |
+| Disaster Type                | RTO       | RPO | Impact                        |
+| ---------------------------- | --------- | --- | ----------------------------- |
+| Database Corruption          | 30-60 min | 24h | High - Service disruption     |
+| Server Failure               | 2-4h      | 24h | Critical - Complete outage    |
+| Ransomware Attack            | 4-8h      | 24h | Critical - Data compromise    |
+| Accidental Deletion          | 15-30 min | 24h | Medium - Partial data loss    |
+| Cloud Storage Outage         | 1-2h      | 24h | Low - Local backups available |
+| Complete Infrastructure Loss | 8-24h     | 24h | Critical - Full rebuild       |
 
 #### 6.3 Backup Strategy
+
 - **Schedule**: Daily at 3 AM (UTC+5 Tashkent time)
 - **Local Retention**: 7 days
 - **Cloud Retention**: 90 days (Backblaze B2)
@@ -749,6 +800,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 #### 6.4 Disaster Scenarios and Recovery Procedures
 
 **Scenario 1: Database Corruption**
+
 - **Symptoms**: Data integrity errors, failed transactions, application crashes
 - **Impact**: Service disruption, booking system unavailable
 - **Recovery Procedure** (24 steps):
@@ -766,6 +818,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 - **RPO**: 24 hours (last daily backup)
 
 **Scenario 2: Server Failure / Hardware Issue**
+
 - **Symptoms**: Server unresponsive, hardware failure, OS crash
 - **Impact**: Complete service outage
 - **Recovery Procedure** (35 steps):
@@ -787,6 +840,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 - **RPO**: 24 hours
 
 **Scenario 3: Ransomware / Malware Attack**
+
 - **Symptoms**: Encrypted files, ransom note, unusual system behavior
 - **Impact**: Data compromise, potential data loss
 - **Recovery Procedure** (40 steps):
@@ -807,6 +861,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 - **RPO**: 24 hours
 
 **Scenario 4: Accidental Data Deletion**
+
 - **Symptoms**: Missing bookings, deleted user data, removed files
 - **Impact**: Partial data loss
 - **Recovery Procedure** (20 steps):
@@ -823,6 +878,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 - **RPO**: 24 hours
 
 **Scenario 5: Cloud Storage Outage (Backblaze B2)**
+
 - **Symptoms**: Unable to upload backups, B2 API errors
 - **Impact**: Loss of cloud redundancy (local backups still available)
 - **Recovery Procedure** (15 steps):
@@ -837,6 +893,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 - **RPO**: 24 hours
 
 **Scenario 6: Complete Infrastructure Loss**
+
 - **Symptoms**: Data center failure, provider bankruptcy, catastrophic event
 - **Impact**: Complete service outage, need full rebuild
 - **Recovery Procedure** (50 steps):
@@ -864,6 +921,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
 **Specific Data Recovery** (selective restore)
 
 #### 6.6 Testing and Validation
+
 - **Automated Testing**: Weekly (Sunday 4 AM)
   - Database restore test
   - Files extraction test
@@ -881,6 +939,7 @@ Defined RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for eac
   - Update documentation
 
 #### 6.7 Backup Locations
+
 ```
 Local Backups:
 ├─ /var/backups/aurelle/database/
@@ -905,6 +964,7 @@ b2:aurelle-backups/
 ```
 
 #### 6.8 Emergency Contacts
+
 - **On-Call Developer**: [Contact details]
 - **System Administrator**: [Contact details]
 - **Database Administrator**: [Contact details]
@@ -912,12 +972,14 @@ b2:aurelle-backups/
 - **Backblaze B2 Support**: support@backblaze.com
 
 #### 6.9 Escalation Procedures
+
 - Level 1: On-call developer (0-15 min)
 - Level 2: System administrator (15-30 min)
 - Level 3: Management team (30-60 min)
 - Level 4: External consultants (1-2 hours)
 
 #### 6.10 Post-Recovery Actions
+
 1. Verify all services operational
 2. Check data integrity
 3. Review application logs
@@ -930,6 +992,7 @@ b2:aurelle-backups/
 10. Implement preventive measures
 
 #### 6.11 Maintenance and Updates
+
 - Review plan quarterly
 - Update after infrastructure changes
 - Test procedures annually
@@ -941,6 +1004,7 @@ b2:aurelle-backups/
 ## Configuration Files
 
 ### 1. Backup Configuration
+
 **File**: `/etc/aurelle-backup.conf`
 
 ```bash
@@ -968,6 +1032,7 @@ TELEGRAM_SCRIPT="/var/www/aurelle/scripts/telegram-send.sh"
 ```
 
 ### 2. Cron Jobs
+
 **File**: `/etc/cron.d/aurelle-backups` (or user crontab)
 
 ```cron
@@ -985,6 +1050,7 @@ TELEGRAM_SCRIPT="/var/www/aurelle/scripts/telegram-send.sh"
 ```
 
 ### 3. Directory Structure
+
 ```
 /var/
 ├─ backups/aurelle/           # Local backups
@@ -1019,6 +1085,7 @@ TELEGRAM_SCRIPT="/var/www/aurelle/scripts/telegram-send.sh"
 ### 1. Backup Testing
 
 #### Database Backup Test
+
 ```bash
 # Create test backup
 sudo bash scripts/backup-db.sh
@@ -1040,6 +1107,7 @@ gunzip < /var/backups/aurelle/database/aurelle_db_20260111_030001.sql.gz | head 
 ```
 
 #### Files Backup Test
+
 ```bash
 # Create test backup
 sudo bash scripts/backup-files.sh
@@ -1060,6 +1128,7 @@ du -h /var/backups/aurelle/files/aurelle_files_20260111_030030.tar.gz
 ```
 
 #### Cloud Upload Test
+
 ```bash
 # Upload backups to B2
 sudo bash scripts/upload-to-cloud.sh
@@ -1079,6 +1148,7 @@ rclone size b2:aurelle-backups/
 ### 2. Restore Testing
 
 #### Database Restore Test (Non-destructive)
+
 ```bash
 # Run automated restore test
 sudo bash scripts/restore-test.sh
@@ -1093,6 +1163,7 @@ tail -50 /var/log/aurelle-backups/restore-test.log
 ```
 
 #### Manual Database Restore Test (Staging)
+
 ```bash
 # Create test database
 sudo -u postgres createdb aurelle_restore_test
@@ -1121,6 +1192,7 @@ sudo -u postgres dropdb aurelle_restore_test
 ```
 
 #### Files Restore Test (Preview)
+
 ```bash
 # Preview backup contents
 sudo bash scripts/restore-files.sh /var/backups/aurelle/files/aurelle_files_20260111_030030.tar.gz preview
@@ -1145,6 +1217,7 @@ rm -rf "$TEMP_DIR"
 ### 3. Disaster Recovery Drill
 
 #### Complete System Recovery Test (Quarterly)
+
 ```bash
 # 1. Provision new staging server
 # 2. Install dependencies
@@ -1195,6 +1268,7 @@ All backup and restore operations send Telegram notifications via the monitoring
 **Notification Types**:
 
 1. **Backup Success** (Daily 3 AM)
+
 ```
 ✅ Backup Successful
 
@@ -1205,6 +1279,7 @@ Cloud Upload: SUCCESS
 ```
 
 2. **Backup Failure** (If error occurs)
+
 ```
 ❌ Backup Failed
 
@@ -1215,6 +1290,7 @@ Action Required: Free up disk space
 ```
 
 3. **Cloud Upload Success**
+
 ```
 ☁️ Cloud Upload Successful
 
@@ -1230,6 +1306,7 @@ Files:
 ```
 
 4. **Restore Test Success** (Weekly Sunday 4 AM)
+
 ```
 🧪 Weekly Restore Test: SUCCESS
 
@@ -1250,6 +1327,7 @@ Duration: 37s
 ```
 
 5. **Restore Test Failure** (If test fails)
+
 ```
 ⚠️ Weekly Restore Test: FAILED
 
@@ -1261,6 +1339,7 @@ Action Required: Investigate backup integrity
 ```
 
 6. **Manual Restore Success**
+
 ```
 ✅ Database Restore Successful
 
@@ -1273,6 +1352,7 @@ Records: Bookings=1523, Users=847, Salons=142
 ```
 
 7. **Manual Restore Failure with Rollback**
+
 ```
 ⚠️ Database Restore Failed, Rollback Successful
 
@@ -1291,6 +1371,7 @@ Backup system integrates with health monitoring endpoints (P2 Task #45):
 **Health Check Endpoint**: `GET /health`
 
 Includes backup status:
+
 ```json
 {
   "status": "healthy",
@@ -1344,6 +1425,7 @@ fi
 ### Daily Operations
 
 #### View Backup Status
+
 ```bash
 # List local backups
 ls -lh /var/backups/aurelle/database/
@@ -1358,6 +1440,7 @@ rclone size b2:aurelle-backups/
 ```
 
 #### View Backup Logs
+
 ```bash
 # Combined backup log
 tail -f /var/log/aurelle-backups/combined.log
@@ -1382,6 +1465,7 @@ tail -f /var/log/aurelle-backups/cron.log
 ```
 
 #### Manual Backup
+
 ```bash
 # Full backup (database + files + cloud)
 sudo /usr/local/bin/aurelle-backup-all
@@ -1399,6 +1483,7 @@ sudo bash /var/www/aurelle/scripts/upload-to-cloud.sh
 ### Restore Operations
 
 #### Database Restore
+
 ```bash
 # Interactive (shows backup list)
 sudo bash scripts/restore-db.sh
@@ -1415,6 +1500,7 @@ sudo bash scripts/restore-db.sh /tmp/aurelle_db_20260111_030001.sql.gz
 ```
 
 #### Files Restore
+
 ```bash
 # Interactive (shows backup list)
 sudo bash scripts/restore-files.sh
@@ -1434,6 +1520,7 @@ sudo bash scripts/restore-files.sh /tmp/aurelle_files_20260111_030030.tar.gz
 ```
 
 #### Test Restore
+
 ```bash
 # Manual test run
 sudo bash scripts/restore-test.sh
@@ -1445,6 +1532,7 @@ tail -100 /var/log/aurelle-backups/restore-test.log
 ### Maintenance
 
 #### Check Cron Jobs
+
 ```bash
 # View installed cron jobs
 crontab -l | grep aurelle
@@ -1456,6 +1544,7 @@ crontab -l | grep aurelle
 ```
 
 #### Update Configuration
+
 ```bash
 # Edit backup configuration
 sudo nano /etc/aurelle-backup.conf
@@ -1470,6 +1559,7 @@ sudo bash scripts/backup-db.sh
 ```
 
 #### Cleanup Old Logs
+
 ```bash
 # Manual log cleanup (logs older than 90 days)
 find /var/log/aurelle-backups -name "*.log" -mtime +90 -delete
@@ -1479,6 +1569,7 @@ find /var/log/aurelle-backups -name "*.log" -mtime +30 -exec gzip {} \;
 ```
 
 #### Reconfigure Backblaze B2
+
 ```bash
 # Reconfigure rclone remote
 rclone config
@@ -1502,6 +1593,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: pg_dump + gzip, daily at 3 AM, retention 7 days local / 90 days cloud
 
 **Validation**:
+
 - ✅ Script created: [backup-db.sh](d:\AURELLE\scripts\backup-db.sh)
 - ✅ Uses `pg_dump -Fc` (custom format) with gzip compression
 - ✅ Scheduled via cron: `0 3 * * *` (daily 3 AM)
@@ -1514,6 +1606,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: tar + gzip for uploads/ folder
 
 **Validation**:
+
 - ✅ Script created: [backup-files.sh](d:\AURELLE\scripts\backup-files.sh)
 - ✅ Uses tar + gzip compression
 - ✅ Backs up uploads/ directory
@@ -1526,6 +1619,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: Create bucket "aurelle-backups", install rclone, configure auto-upload
 
 **Validation**:
+
 - ✅ Setup script created: [setup-backblaze-b2.sh](d:\AURELLE\scripts\setup-backblaze-b2.sh)
 - ✅ Installs rclone automatically
 - ✅ Interactive configuration wizard
@@ -1539,6 +1633,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: Script restore-test.sh, automated test every Sunday, Telegram notification
 
 **Validation**:
+
 - ✅ Script created: [restore-test.sh](d:\AURELLE\scripts\restore-test.sh)
 - ✅ Scheduled via cron: `0 4 * * 0` (Sunday 4 AM)
 - ✅ Tests database restore (to test database)
@@ -1551,6 +1646,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: Document "Disaster Recovery Plan"
 
 **Validation**:
+
 - ✅ Document created: [DISASTER_RECOVERY_PLAN.md](d:\AURELLE\DISASTER_RECOVERY_PLAN.md)
 - ✅ 1,800+ lines comprehensive documentation
 - ✅ Covers 6 disaster scenarios
@@ -1565,6 +1661,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Requirement**: Can restore DB and files from backup
 
 **Validation**:
+
 - ✅ Database restore script: [restore-db.sh](d:\AURELLE\scripts\restore-db.sh)
   - Interactive backup selection
   - Pre-restore backup (safety)
@@ -1584,11 +1681,13 @@ sudo bash scripts/upload-to-cloud.sh
 ### 1. Backup Security
 
 **Encryption**:
+
 - Local backups: Stored on server with OS-level permissions (700)
 - Cloud backups: Backblaze B2 uses encryption at rest (AES-256)
 - In-transit: rclone uses HTTPS for B2 uploads
 
 **Access Control**:
+
 ```bash
 # Backup directories
 /var/backups/aurelle/          # drwx------ (700) root:root
@@ -1601,6 +1700,7 @@ sudo bash scripts/upload-to-cloud.sh
 ```
 
 **Credentials**:
+
 - Backblaze B2 credentials stored in rclone config: `~/.config/rclone/rclone.conf`
 - Database credentials: From environment variables or PM2 config
 - All scripts require root/sudo access
@@ -1608,15 +1708,18 @@ sudo bash scripts/upload-to-cloud.sh
 ### 2. Restore Security
 
 **Pre-restore Backup**:
+
 - Always creates backup before restore
 - Stored in `/tmp/` with timestamp
 - Allows rollback if restore fails
 
 **Confirmation Required**:
+
 - User must type "yes" to confirm destructive operations
 - Displays clear warnings about data loss
 
 **Audit Trail**:
+
 - All operations logged with timestamps
 - Telegram notifications for all activities
 - PM2 restart logged
@@ -1624,12 +1727,14 @@ sudo bash scripts/upload-to-cloud.sh
 ### 3. Cloud Security
 
 **Backblaze B2**:
+
 - Application keys with restricted permissions
 - Bucket: Private (not public)
 - Lifecycle rules: 90-day retention (configurable)
 - Version history available (B2 feature)
 
 **rclone**:
+
 - Encrypted configuration file
 - HTTPS-only uploads
 - Integrity verification after upload
@@ -1641,18 +1746,21 @@ sudo bash scripts/upload-to-cloud.sh
 ### Backup Performance
 
 **Database Backup**:
+
 - Size: ~58M (compressed)
 - Duration: ~14 seconds
 - Compression ratio: ~4:1 (232M → 58M)
 - I/O: Sequential writes, minimal impact
 
 **Files Backup**:
+
 - Size: ~124M (compressed)
 - Duration: ~15 seconds
 - Files: ~1,247 files
 - Compression ratio: ~3:1 (372M → 124M)
 
 **Cloud Upload**:
+
 - Speed: ~4-5 MB/s (depends on connection)
 - Database upload: ~14 seconds
 - Files upload: ~30 seconds
@@ -1663,15 +1771,18 @@ sudo bash scripts/upload-to-cloud.sh
 ### Restore Performance
 
 **Database Restore**:
+
 - Duration: ~15 seconds (58M backup)
 - Includes: Drop, create, restore, verify
 - Downtime: ~30-60 seconds (including pre-restore backup)
 
 **Files Restore**:
+
 - Duration: ~15 seconds (124M backup, 1,247 files)
 - Selective restore: ~5-10 seconds (uploads only)
 
 **Complete System Restore**:
+
 - From scratch: ~2-4 hours
 - From cloud backups: ~8-24 hours (includes server provisioning)
 
@@ -1684,6 +1795,7 @@ sudo bash scripts/upload-to-cloud.sh
 **Current Usage**: 8.4 GB (after 7 days of backups)
 
 **Projected Monthly Cost**:
+
 ```
 Storage: 8.4 GB × 30 days = ~250 GB average
 Cost: 250 GB × $0.005/GB = $1.25/month
@@ -1704,11 +1816,13 @@ Total: ~$1.30/month
 ### Infrastructure Costs
 
 **Server Storage**:
+
 - Local backups: ~1-2 GB (7 days retention)
 - Log files: ~500 MB (90 days retention)
 - Total: ~2.5 GB additional storage needed
 
 **Bandwidth**:
+
 - Daily upload to B2: ~180 MB
 - Monthly: ~5.4 GB upload
 - Minimal impact on bandwidth costs
@@ -1722,12 +1836,14 @@ Total: ~$1.30/month
 #### 1. Backup Fails - Insufficient Disk Space
 
 **Symptoms**:
+
 ```
 ERROR: Insufficient disk space
 Available: 1.2GB, Required: 2GB minimum
 ```
 
 **Solution**:
+
 ```bash
 # Check disk usage
 df -h
@@ -1751,12 +1867,14 @@ pm2 flush
 #### 2. Cloud Upload Fails - rclone Connection Error
 
 **Symptoms**:
+
 ```
 ERROR: Rclone remote 'b2' not configured
 ERROR: Failed to connect to Backblaze B2
 ```
 
 **Solution**:
+
 ```bash
 # Check rclone remotes
 rclone listremotes
@@ -1780,11 +1898,13 @@ sudo bash scripts/setup-backblaze-b2.sh
 #### 3. Restore Fails - Backup Corrupted
 
 **Symptoms**:
+
 ```
 ERROR: Backup file is corrupted (gzip test failed)
 ```
 
 **Solution**:
+
 ```bash
 # Try previous backup
 sudo bash scripts/restore-db.sh
@@ -1802,6 +1922,7 @@ gzip -t /var/backups/aurelle/database/*.sql.gz
 #### 4. Cron Jobs Not Running
 
 **Symptoms**:
+
 ```
 # No recent backups
 ls -lt /var/backups/aurelle/database/ | head -1
@@ -1813,6 +1934,7 @@ tail /var/log/aurelle-backups/cron.log
 ```
 
 **Solution**:
+
 ```bash
 # Check cron service
 systemctl status cron
@@ -1837,12 +1959,14 @@ ls -l /usr/local/bin/aurelle-backup-all
 #### 5. Restore Test Fails
 
 **Symptoms**:
+
 ```
 ⚠️ Weekly Restore Test: FAILED
 Database Restore: ❌ FAILED
 ```
 
 **Solution**:
+
 ```bash
 # Run test manually to see detailed error
 sudo bash scripts/restore-test.sh
@@ -1868,9 +1992,11 @@ tail -100 /var/log/aurelle-backups/restore-test.log
 #### 6. Telegram Notifications Not Received
 
 **Symptoms**:
+
 - Backups running but no Telegram notifications
 
 **Solution**:
+
 ```bash
 # Check Telegram script exists
 ls -l /var/www/aurelle/scripts/telegram-send.sh
@@ -1896,6 +2022,7 @@ curl https://api.telegram.org/
 ### Immediate (Post-Deployment)
 
 1. **Run Initial Setup**:
+
    ```bash
    # 1. Setup Backblaze B2
    sudo bash scripts/setup-backblaze-b2.sh
@@ -1911,6 +2038,7 @@ curl https://api.telegram.org/
    ```
 
 2. **Test Restore Capability**:
+
    ```bash
    # Run automated restore test
    sudo bash scripts/restore-test.sh

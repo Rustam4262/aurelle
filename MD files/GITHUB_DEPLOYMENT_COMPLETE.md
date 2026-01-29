@@ -11,12 +11,14 @@
 ### GitHub репозиторий успешно обновлен!
 
 **Последние коммиты:**
+
 1. ✅ `f089c03` - Update README with deployment status
 2. ✅ `43e4aee` - Add quick deploy commands reference file
 3. ✅ `4040d40` - Add deployment instructions from GitHub
 4. ✅ `a3990ba` - Add multiple authentication methods and prepare for production deployment
 
 **Всего изменений в основном коммите:**
+
 - 📝 78 файлов изменено
 - ➕ 10,668 строк добавлено
 - ➖ 2,251 строка удалена
@@ -95,12 +97,14 @@
 ### Метод 1: Автоматический (РЕКОМЕНДУЕТСЯ)
 
 **Шаг 1:** Подключитесь к серверу
+
 ```bash
 ssh root@89.39.94.194
 # Пароль: w2@nT*6D
 ```
 
 **Шаг 2:** Клонируйте проект
+
 ```bash
 mkdir -p /var/www/aurelle
 cd /var/www/aurelle
@@ -108,6 +112,7 @@ git clone https://github.com/Rustam4262/aurelle.git .
 ```
 
 **Шаг 3:** Следуйте инструкции
+
 ```bash
 # Откройте файл DEPLOY_FROM_GITHUB.md
 # и выполняйте команды шаг за шагом
@@ -150,6 +155,7 @@ cat QUICK_DEPLOY_COMMANDS.txt
 ## 🔐 ДАННЫЕ ДЛЯ ДЕПЛОЯ
 
 ### Сервер:
+
 ```
 IP:      89.39.94.194
 Логин:   root
@@ -158,6 +164,7 @@ IP:      89.39.94.194
 ```
 
 ### База данных:
+
 ```
 Имя БД:        aurelle
 Пользователь:  aurelle_user
@@ -167,12 +174,14 @@ Port:          5432
 ```
 
 ### Google OAuth:
+
 ```
 Client ID:     60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com
 Client Secret: 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
 ```
 
 ### Yandex OAuth:
+
 ```
 Client ID:     3b79a753092d49bb977ce1ec5b3017ec
 Client Secret: 3086c3c9bf844b5298f801005307e4d4
@@ -185,10 +194,12 @@ Client Secret: 3086c3c9bf844b5298f801005307e4d4
 ### Обновление OAuth Redirect URIs:
 
 **Google Console** (https://console.cloud.google.com/):
+
 - Добавьте: `https://aurelle.uz/api/auth/google/callback`
 - Добавьте: `https://www.aurelle.uz/api/auth/google/callback`
 
 **Yandex OAuth** (https://oauth.yandex.ru/):
+
 - Добавьте: `https://aurelle.uz/api/auth/yandex/callback`
 - Добавьте: `https://www.aurelle.uz/api/auth/yandex/callback`
 
@@ -213,6 +224,7 @@ Client Secret: 3086c3c9bf844b5298f801005307e4d4
 Когда вы внесете изменения в код:
 
 **Шаг 1:** Закоммитьте изменения в GitHub
+
 ```bash
 # На локальном компьютере:
 git add .
@@ -221,6 +233,7 @@ git push origin main
 ```
 
 **Шаг 2:** Обновите на сервере
+
 ```bash
 # На сервере:
 cd /var/www/aurelle
@@ -232,6 +245,7 @@ pm2 restart aurelle
 ```
 
 Или используйте автоматический скрипт:
+
 ```bash
 cd /var/www/aurelle
 ./deploy.sh
@@ -242,6 +256,7 @@ cd /var/www/aurelle
 ## 📞 ПОЛЕЗНЫЕ КОМАНДЫ
 
 ### Логи:
+
 ```bash
 pm2 logs aurelle                  # Логи в реальном времени
 pm2 logs aurelle --lines 100     # Последние 100 строк
@@ -249,6 +264,7 @@ tail -f /var/log/nginx/error.log # Nginx ошибки
 ```
 
 ### Управление:
+
 ```bash
 pm2 status          # Статус приложения
 pm2 restart aurelle # Перезапуск
@@ -257,6 +273,7 @@ pm2 monit          # Мониторинг CPU/Memory
 ```
 
 ### Бэкап:
+
 ```bash
 cd /var/www/aurelle
 ./backup.sh
@@ -267,26 +284,31 @@ cd /var/www/aurelle
 ## 🎯 ИТОГ
 
 ✅ **Проект полностью в GitHub**
+
 - Repository: https://github.com/Rustam4262/aurelle
 - Branch: main
 - Commits: 4 коммита (основной + 3 доп.)
 
 ✅ **Документация готова**
+
 - 12 файлов документации
 - Все на русском языке
 - Пошаговые инструкции
 
 ✅ **Скрипты автоматизации**
+
 - server-setup.sh (не используется при деплое с GitHub)
 - deploy.sh (обновление)
 - backup.sh (бэкап БД)
 
 ✅ **Конфигурации готовы**
+
 - Nginx
 - PM2
 - Environment templates
 
 ✅ **Готов к деплою**
+
 - Все файлы на месте
 - Все credentials настроены
 - Все инструкции подготовлены
@@ -298,6 +320,7 @@ cd /var/www/aurelle
 **ОТКРОЙТЕ:** [DEPLOY_FROM_GITHUB.md](https://github.com/Rustam4262/aurelle/blob/main/DEPLOY_FROM_GITHUB.md)
 
 Или на сервере после клонирования:
+
 ```bash
 cat /var/www/aurelle/DEPLOY_FROM_GITHUB.md
 ```

@@ -9,11 +9,7 @@ interface LocationPickerProps {
   latitude?: number;
   longitude?: number;
   address?: string;
-  onLocationChange: (location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  }) => void;
+  onLocationChange: (location: { latitude: number; longitude: number; address: string }) => void;
   className?: string;
 }
 
@@ -105,10 +101,7 @@ export function LocationPicker({
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const newCoords: [number, number] = [
-            position.coords.latitude,
-            position.coords.longitude,
-          ];
+          const newCoords: [number, number] = [position.coords.latitude, position.coords.longitude];
           setCoords(newCoords);
 
           // Get address for current location
@@ -140,7 +133,7 @@ export function LocationPicker({
         },
         (error) => {
           console.error("Geolocation error:", error);
-        }
+        },
       );
     }
   };

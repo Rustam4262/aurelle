@@ -18,9 +18,11 @@ Successfully implemented complete dark mode support for the AURELLE platform usi
 ### 1. ✅ Theme Infrastructure
 
 #### ThemeProvider Component
+
 **Location**: [client/src/components/theme-provider.tsx](client/src/components/theme-provider.tsx)
 
 Created a robust theme provider using React Context API:
+
 - Supports 3 theme modes: `light`, `dark`, `system`
 - Automatic system preference detection
 - LocalStorage persistence (`aurelle-ui-theme` key)
@@ -28,11 +30,9 @@ Created a robust theme provider using React Context API:
 - Custom `useTheme` hook for theme access
 
 **Key Features**:
+
 ```typescript
-export function ThemeProvider({
-  defaultTheme = "system",
-  storageKey = "aurelle-ui-theme",
-}) {
+export function ThemeProvider({ defaultTheme = "system", storageKey = "aurelle-ui-theme" }) {
   // Persists theme preference in localStorage
   // Automatically detects system color scheme preference
   // Applies theme class to document root
@@ -41,13 +41,15 @@ export function ThemeProvider({
 export const useTheme = () => {
   // Returns { theme, setTheme }
   // Accessible from any component
-}
+};
 ```
 
 ### 2. ✅ Theme Toggle Component
+
 **Location**: [client/src/components/theme-toggle.tsx](client/src/components/theme-toggle.tsx)
 
 Created elegant dropdown theme switcher:
+
 - Animated sun/moon icons with smooth transitions
 - Dropdown menu with 3 theme options
 - Fully internationalized labels
@@ -55,6 +57,7 @@ Created elegant dropdown theme switcher:
 - Icon indicators for each theme mode
 
 **Features**:
+
 - **Light Mode**: Sun icon
 - **Dark Mode**: Moon icon
 - **System Mode**: Monitor icon
@@ -71,6 +74,7 @@ All dark mode CSS variables were **already configured** in the project:
 - `.dark` - Dark mode variables (lines 90-166)
 
 **Color Variables Configured**:
+
 - Background/Foreground colors
 - Border colors
 - Card colors
@@ -82,13 +86,14 @@ All dark mode CSS variables were **already configured** in the project:
 - Status colors
 
 **Example Dark Mode Variables**:
+
 ```css
 .dark {
-  --background: 0 0% 7%;      /* Nearly black background */
-  --foreground: 0 0% 98%;     /* Nearly white text */
-  --primary: 340 75% 55%;     /* Adjusted primary color */
-  --card: 0 0% 9%;            /* Dark cards */
-  --border: 0 0% 16%;         /* Dark borders */
+  --background: 0 0% 7%; /* Nearly black background */
+  --foreground: 0 0% 98%; /* Nearly white text */
+  --primary: 340 75% 55%; /* Adjusted primary color */
+  --card: 0 0% 9%; /* Dark cards */
+  --border: 0 0% 16%; /* Dark borders */
   /* ... and 40+ more variables */
 }
 ```
@@ -98,14 +103,16 @@ All dark mode CSS variables were **already configured** in the project:
 **Location**: [tailwind.config.ts](tailwind.config.ts:4)
 
 Already configured for class-based dark mode:
+
 ```typescript
 export default {
-  darkMode: ["class"],  // Uses .dark class on html element
+  darkMode: ["class"], // Uses .dark class on html element
   // ... theme colors use CSS variables
-}
+};
 ```
 
 This allows using `dark:` utility classes:
+
 ```tsx
 <div className="bg-white dark:bg-gray-900">
   <p className="text-black dark:text-white">Auto-adapts to theme</p>
@@ -117,6 +124,7 @@ This allows using `dark:` utility classes:
 Added translations for theme switching in all 3 languages:
 
 **English** ([client/src/locales/en.json](client/src/locales/en.json:904-910)):
+
 ```json
 "theme": {
   "light": "Light",
@@ -128,6 +136,7 @@ Added translations for theme switching in all 3 languages:
 ```
 
 **Russian** ([client/src/locales/ru.json](client/src/locales/ru.json:905-911)):
+
 ```json
 "theme": {
   "light": "Светлая",
@@ -139,6 +148,7 @@ Added translations for theme switching in all 3 languages:
 ```
 
 **Uzbek** ([client/src/locales/uz.json](client/src/locales/uz.json:903-909)):
+
 ```json
 "theme": {
   "light": "Yorug'",
@@ -154,6 +164,7 @@ Added translations for theme switching in all 3 languages:
 **Location**: [client/src/App.tsx](client/src/App.tsx:43)
 
 Wrapped entire app with ThemeProvider:
+
 ```tsx
 function App() {
   return (
@@ -178,6 +189,7 @@ function App() {
 Added ThemeToggle to main navigation:
 
 **Desktop Navigation** (line 139):
+
 ```tsx
 <div className="hidden md:flex items-center gap-2">
   <ThemeToggle />
@@ -187,6 +199,7 @@ Added ThemeToggle to main navigation:
 ```
 
 **Mobile Navigation** (line 169):
+
 ```tsx
 <div className="md:hidden flex items-center gap-2">
   <ThemeToggle />
@@ -227,9 +240,9 @@ Theme toggle appears in both desktop and mobile views, positioned next to the la
 ### System Theme Detection
 
 When "System" is selected:
+
 ```typescript
-const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-  .matches ? "dark" : "light";
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 ```
 
 Automatically detects OS-level dark mode preference and applies accordingly.
@@ -245,13 +258,12 @@ All existing UI components automatically support dark mode because they use CSS 
 ```tsx
 // This component automatically works in dark mode
 <Card className="bg-card text-card-foreground border-card-border">
-  <Button variant="primary">
-    Click me
-  </Button>
+  <Button variant="primary">Click me</Button>
 </Card>
 ```
 
 **Why?** Because Tailwind maps these to CSS variables:
+
 - `bg-card` → `var(--card)`
 - `.dark` class changes `--card` from `98%` to `9%` lightness
 - No code changes needed!
@@ -300,6 +312,7 @@ All existing UI components automatically support dark mode because they use CSS 
 ### Browser Testing
 
 Test in:
+
 - Chrome/Edge (Chromium)
 - Firefox
 - Safari (macOS/iOS)
@@ -364,9 +377,7 @@ function MyComponent() {
   return (
     <div>
       <p>Current theme: {theme}</p>
-      <button onClick={() => setTheme("dark")}>
-        Switch to Dark
-      </button>
+      <button onClick={() => setTheme("dark")}>Switch to Dark</button>
     </div>
   );
 }
@@ -441,6 +452,7 @@ function MyComponent() {
 **P2 Task #31 - Dark Mode Support is COMPLETE** ✅
 
 The AURELLE platform now provides a full-featured dark mode experience with:
+
 - ✅ Seamless light/dark/system theme switching
 - ✅ Persistent user preferences
 - ✅ Full i18n support (EN/RU/UZ)

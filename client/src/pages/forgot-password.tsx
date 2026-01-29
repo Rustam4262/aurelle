@@ -53,7 +53,7 @@ export default function ForgotPassword() {
             <CardDescription>
               {t(
                 "auth.resetEmailSent",
-                "If an account exists with this email, you will receive password reset instructions shortly."
+                "If an account exists with this email, you will receive password reset instructions shortly.",
               )}
             </CardDescription>
           </CardHeader>
@@ -78,7 +78,7 @@ export default function ForgotPassword() {
           <CardDescription>
             {t(
               "auth.forgotPasswordDescription",
-              "Enter your email address and we'll send you instructions to reset your password."
+              "Enter your email address and we'll send you instructions to reset your password.",
             )}
           </CardDescription>
         </CardHeader>

@@ -14,6 +14,7 @@ Successfully implemented comprehensive server hardening for the AURELLE Beauty S
 ### Key Achievements
 
 ✅ **SSH Hardening**
+
 - Port changed from 22 to 2222
 - Root login disabled
 - Password authentication disabled (SSH keys only)
@@ -21,41 +22,48 @@ Successfully implemented comprehensive server hardening for the AURELLE Beauty S
 - Connection timeouts configured
 
 ✅ **Firewall Protection (UFW)**
+
 - Deny all incoming traffic by default
 - Allow only SSH (2222), HTTP (80), HTTPS (443)
 - Firewall logging enabled
 - Easy management with UFW commands
 
 ✅ **Fail2ban Intrusion Prevention**
+
 - SSH protection: ban after 3 failed attempts for 2 hours
 - Nginx protection: HTTP auth, no-script, bad bots, rate limiting
 - Recidive jail: 7-day ban for repeat offenders
 - Telegram notifications for bans
 
 ✅ **Automatic Security Updates**
+
 - Daily check and installation of security updates
 - Automatic cleanup of old packages and kernels
 - Optional automatic reboot at 3 AM (if required)
 - Telegram notifications for updates
 
 ✅ **Service Minimization**
+
 - Interactive cleanup of unnecessary services (bluetooth, cups, avahi, etc.)
 - Package removal option
 - Attack surface reduced
 
 ✅ **Audit Logging (auditd)**
+
 - Comprehensive monitoring of system events
 - 24 audit rules covering authentication, file access, system changes
 - 30-day log retention
 - Easy searching with ausearch/aureport
 
 ✅ **Security Scanning (Lynis)**
+
 - Automated security audits with hardening index
 - Identifies vulnerabilities and misconfigurations
 - Generates actionable recommendations
 - Monthly scanning schedule
 
 ✅ **Comprehensive Documentation**
+
 - 2,000+ line Server Hardening Guide
 - Step-by-step procedures
 - Troubleshooting guides
@@ -68,11 +76,13 @@ Successfully implemented comprehensive server hardening for the AURELLE Beauty S
 ### 1. Security Scripts
 
 #### a) SSH Hardening Script
+
 **File**: [scripts/harden-ssh.sh](d:\AURELLE\scripts\harden-ssh.sh) (220 lines)
 
 **Purpose**: Secures SSH configuration
 
 **Key Features**:
+
 - SSH key verification before hardening
 - Backup of current configuration
 - Port change to 2222 (configurable)
@@ -85,6 +95,7 @@ Successfully implemented comprehensive server hardening for the AURELLE Beauty S
 - Safe restart procedure with warnings
 
 **Configuration Applied**:
+
 ```bash
 Port 2222
 PermitRootLogin no
@@ -102,6 +113,7 @@ MACs hmac-sha2-512-etm@openssh.com,...
 ```
 
 **Usage**:
+
 ```bash
 # Before running: Setup SSH keys!
 ssh-keygen -t ed25519
@@ -115,6 +127,7 @@ ssh -p 2222 user@server
 ```
 
 **Security Benefits**:
+
 - Port obfuscation avoids mass scans
 - Impossible to brute-force (keys only)
 - Root account protected
@@ -122,11 +135,13 @@ ssh -p 2222 user@server
 - Abandoned sessions auto-disconnect
 
 #### b) Firewall Setup Script
+
 **File**: [scripts/setup-firewall.sh](d:\AURELLE\scripts\setup-firewall.sh) (200 lines)
 
 **Purpose**: Configures UFW firewall with minimal attack surface
 
 **Key Features**:
+
 - Automatic UFW installation
 - SSH port auto-detection
 - User confirmation of SSH port (prevents lockout)
@@ -137,6 +152,7 @@ ssh -p 2222 user@server
 - Numbered rules display
 
 **Rules Configured**:
+
 ```
 To                         Action      From
 --                         ------      ----
@@ -146,11 +162,13 @@ To                         Action      From
 ```
 
 **Default Policies**:
+
 - Incoming: DENY
 - Outgoing: ALLOW
 - Routed: DENY
 
 **Usage**:
+
 ```bash
 # Run firewall setup
 sudo bash scripts/setup-firewall.sh
@@ -163,6 +181,7 @@ sudo ufw status verbose
 ```
 
 **Management Commands**:
+
 ```bash
 # Add rule
 sudo ufw allow 3000/tcp comment 'Application'
@@ -179,11 +198,13 @@ sudo tail -f /var/log/ufw.log
 ```
 
 #### c) Fail2ban Setup Script
+
 **File**: [scripts/setup-fail2ban.sh](d:\AURELLE\scripts\setup-fail2ban.sh) (250 lines)
 
 **Purpose**: Protects against brute-force attacks
 
 **Key Features**:
+
 - Automatic Fail2ban installation
 - SSH port auto-detection
 - Multiple jails configured (SSH, Nginx, recidive)
@@ -214,6 +235,7 @@ sudo tail -f /var/log/ufw.log
    - Ban duration: 604800s (7 days)
 
 **Usage**:
+
 ```bash
 # Run Fail2ban setup
 sudo bash scripts/setup-fail2ban.sh
@@ -233,6 +255,7 @@ sudo tail -f /var/log/fail2ban.log
 ```
 
 **Telegram Notifications**:
+
 ```
 ⚠️ IP Banned by Fail2ban
 
@@ -243,11 +266,13 @@ Time: 2026-01-11 14:32:15
 ```
 
 #### d) Automatic Security Updates Script
+
 **File**: [scripts/setup-auto-updates.sh](d:\AURELLE\scripts\setup-auto-updates.sh) (300 lines)
 
 **Purpose**: Automatically installs security updates
 
 **Key Features**:
+
 - Automatic unattended-upgrades installation
 - Configuration backup
 - Auto-update configuration (daily check, download, install)
@@ -258,12 +283,14 @@ Time: 2026-01-11 14:32:15
 - Checks for pending updates
 
 **Update Schedule**:
+
 - **Update package lists**: Daily
 - **Download upgradeable packages**: Automatically
 - **Install upgrades**: Automatically
 - **Clean old packages**: Weekly (7 days)
 
 **What Gets Updated**:
+
 - Security updates (high priority)
 - Stable updates
 - Kernel updates
@@ -272,6 +299,7 @@ Time: 2026-01-11 14:32:15
 **Exclusions**: Configurable package blacklist (e.g., nginx, postgresql)
 
 **Usage**:
+
 ```bash
 # Run auto-updates setup
 sudo bash scripts/setup-auto-updates.sh
@@ -292,6 +320,7 @@ sudo unattended-upgrade --dry-run --debug
 ```
 
 **Configuration**:
+
 ```
 /etc/apt/apt.conf.d/50unattended-upgrades:
 - Allowed origins (security, updates)
@@ -307,11 +336,13 @@ sudo unattended-upgrade --dry-run --debug
 ```
 
 #### e) Service Cleanup Script
+
 **File**: [scripts/cleanup-services.sh](d:\AURELLE\scripts\cleanup-services.sh) (230 lines)
 
 **Purpose**: Removes or disables unnecessary services to reduce attack surface
 
 **Key Features**:
+
 - Scans for potentially unnecessary services
 - Displays service descriptions
 - Interactive per-service confirmation
@@ -321,6 +352,7 @@ sudo unattended-upgrade --dry-run --debug
 - Protects critical services
 
 **Potentially Unnecessary Services**:
+
 - bluetooth (Bluetooth support)
 - cups (Printing service)
 - avahi-daemon (Network service discovery)
@@ -333,8 +365,9 @@ sudo unattended-upgrade --dry-run --debug
 - snapd (if not using snaps)
 
 **Protected Services** (never disabled):
+
 - ssh/sshd
-- systemd-* services
+- systemd-\* services
 - cron
 - rsyslog
 - postgresql
@@ -344,6 +377,7 @@ sudo unattended-upgrade --dry-run --debug
 - unattended-upgrades
 
 **Usage**:
+
 ```bash
 # Run service cleanup
 sudo bash scripts/cleanup-services.sh
@@ -356,6 +390,7 @@ sudo systemctl status sshd nginx postgresql
 ```
 
 **Re-enabling Services**:
+
 ```bash
 # If needed, re-enable a service
 sudo systemctl unmask SERVICE_NAME
@@ -367,11 +402,13 @@ sudo apt-get install PACKAGE_NAME
 ```
 
 #### f) Audit Logging Setup Script
+
 **File**: [scripts/setup-auditd.sh](d:\AURELLE\scripts\setup-auditd.sh) (280 lines)
 
 **Purpose**: Configures comprehensive audit logging for security monitoring
 
 **Key Features**:
+
 - Automatic auditd installation
 - Configuration backup
 - 24 audit rules for comprehensive monitoring
@@ -383,26 +420,31 @@ sudo apt-get install PACKAGE_NAME
 **Audit Rules** (24 rules covering):
 
 **Authentication & Authorization**:
+
 - /etc/passwd, /etc/group, /etc/shadow, /etc/gshadow
 - /etc/sudoers, /etc/sudoers.d/
 - /var/log/auth.log
 
 **System Configuration**:
+
 - /etc/ssh/sshd_config
 - /etc/pam.d/
 - /etc/network/, /etc/hosts
 - /etc/systemd/
 
 **Critical System Files**:
+
 - Kernel modules (insmod, rmmod, modprobe)
 - System binaries (su, sudo, ssh)
 
 **File Operations**:
+
 - File deletion/renaming (unlink, rename syscalls)
 - Permission changes (chmod syscalls)
 - Ownership changes (chown syscalls)
 
 **Application Files**:
+
 - /var/www/aurelle/ (AURELLE application)
 - /etc/nginx/ (Nginx configuration)
 - /etc/postgresql/ (PostgreSQL configuration)
@@ -410,11 +452,13 @@ sudo apt-get install PACKAGE_NAME
 - /var/www/aurelle/.env (Environment files)
 
 **Security Events**:
-- /etc/cron* (Cron jobs)
+
+- /etc/cron\* (Cron jobs)
 - /etc/ufw/ (Firewall configuration)
 - Suspicious commands (wget, curl, nc)
 
 **Usage**:
+
 ```bash
 # Run auditd setup
 sudo bash scripts/setup-auditd.sh
@@ -447,6 +491,7 @@ sudo tail -f /var/log/audit/audit.log
 ```
 
 **Example Investigation** - Who modified /etc/passwd?:
+
 ```bash
 sudo ausearch -f /etc/passwd -i
 
@@ -460,11 +505,13 @@ sudo ausearch -f /etc/passwd -i
 ```
 
 #### g) Security Scanning Script
+
 **File**: [scripts/security-scan.sh](d:\AURELLE\scripts\security-scan.sh) (280 lines)
 
 **Purpose**: Performs comprehensive security audits using Lynis
 
 **Key Features**:
+
 - Automatic Lynis installation (from official repo)
 - Three scan modes: quick, full, full with auto-fixes
 - Detailed scan logging
@@ -476,11 +523,13 @@ sudo ausearch -f /etc/passwd -i
 - Old scan cleanup (30 days retention)
 
 **Scan Options**:
+
 1. **Quick scan**: Basic checks (faster)
 2. **Full scan**: Comprehensive audit (recommended)
 3. **Full scan with auto-fixes**: Applies automatic fixes where possible
 
 **What Lynis Checks** (60+ categories):
+
 - System information
 - Boot and services
 - Kernel and modules
@@ -500,12 +549,14 @@ sudo ausearch -f /etc/passwd -i
 - And more...
 
 **Hardening Index**:
+
 - **80-100**: Excellent security
 - **70-79**: Good security
 - **60-69**: Moderate security
 - **0-59**: Needs improvement
 
 **Usage**:
+
 ```bash
 # Run security scan
 sudo bash scripts/security-scan.sh
@@ -522,6 +573,7 @@ sudo crontab -e
 ```
 
 **Output**:
+
 ```
 === Security Scan Complete ===
 
@@ -539,6 +591,7 @@ Reports:
 ```
 
 **Telegram Notification**:
+
 ```
 ℹ️ Security Scan Completed
 
@@ -552,6 +605,7 @@ Review full report:
 ```
 
 **Common Findings and Fixes**:
+
 - Kernel not up-to-date → `sudo apt upgrade linux-image-generic`
 - Weak SSH ciphers → Already fixed by harden-ssh.sh
 - No firewall active → Already fixed by setup-firewall.sh
@@ -562,6 +616,7 @@ Review full report:
 ### 2. Documentation
 
 #### Server Hardening Guide
+
 **File**: [SERVER_HARDENING_GUIDE.md](d:\AURELLE\SERVER_HARDENING_GUIDE.md) (2,000+ lines)
 
 **Contents**:
@@ -585,6 +640,7 @@ Review full report:
 **Key Sections**:
 
 **Quick Start**:
+
 ```bash
 # 1. SSH Hardening
 sudo bash scripts/harden-ssh.sh
@@ -609,6 +665,7 @@ sudo bash scripts/security-scan.sh
 ```
 
 **Security Layers**:
+
 ```
 Layer 7: Security Monitoring & Audit Logging
 Layer 6: Regular Security Scanning (Lynis)
@@ -620,6 +677,7 @@ Layer 1: Service Minimization
 ```
 
 **Incident Response Phases**:
+
 1. Detection (indicators of compromise)
 2. Containment (isolate, block, kill)
 3. Investigation (preserve evidence, analyze logs)
@@ -628,12 +686,14 @@ Layer 1: Service Minimization
 6. Lessons Learned (document, improve)
 
 **Maintenance Schedule**:
+
 - **Daily**: Review Fail2ban bans, check alerts
 - **Weekly**: Review audit logs, check for rootkits
 - **Monthly**: Run Lynis scan, update documentation
 - **Quarterly**: Full security audit, penetration test, DR drill
 
 **Security Checklist** (50+ items):
+
 - Initial server setup
 - SSH hardening verification
 - Firewall configuration
@@ -653,9 +713,11 @@ Layer 1: Service Minimization
 ## Configuration Files
 
 ### 1. SSH Configuration
+
 **File**: `/etc/ssh/sshd_config`
 
 Applied by harden-ssh.sh:
+
 - Port 2222 (custom SSH port)
 - PermitRootLogin no
 - PubkeyAuthentication yes
@@ -669,9 +731,11 @@ Applied by harden-ssh.sh:
 - Strong cryptography (curve25519, chacha20-poly1305, hmac-sha2-512)
 
 ### 2. Firewall Rules
+
 **File**: `/etc/ufw/` (UFW configuration)
 
 Applied by setup-firewall.sh:
+
 - Default policy: deny incoming, allow outgoing
 - Allow SSH (port 2222)
 - Allow HTTP (port 80)
@@ -679,33 +743,41 @@ Applied by setup-firewall.sh:
 - Logging enabled
 
 ### 3. Fail2ban Configuration
+
 **File**: `/etc/fail2ban/jail.local`
 
 Applied by setup-fail2ban.sh:
-- 8 jails (sshd, sshd-ddos, nginx-*, recidive)
+
+- 8 jails (sshd, sshd-ddos, nginx-\*, recidive)
 - Ban action: UFW (firewall integration)
 - Telegram notifications (if configured)
 
 ### 4. Automatic Updates
+
 **Files**:
+
 - `/etc/apt/apt.conf.d/50unattended-upgrades`
 - `/etc/apt/apt.conf.d/20auto-upgrades`
 
 Applied by setup-auto-updates.sh:
+
 - Daily update checks
 - Automatic security update installation
 - Kernel and dependency cleanup
 - Reboot policy configuration
 
 ### 5. Audit Rules
+
 **File**: `/etc/audit/rules.d/aurelle-audit.rules`
 
 Applied by setup-auditd.sh:
+
 - 24 audit rules
 - Monitors authentication, system changes, file operations
 - Application-specific monitoring
 
 ### 6. Log Rotation
+
 - Audit logs: 30 days retention
 - Lynis scans: 30 days retention
 - UFW logs: 30 days retention
@@ -903,6 +975,7 @@ EOF
 ### Attack Surface Reduction
 
 **Before Hardening**:
+
 - SSH on default port 22 (mass scanned)
 - Root login enabled
 - Password authentication enabled
@@ -915,6 +988,7 @@ EOF
 - No audit trail
 
 **After Hardening**:
+
 - SSH on non-standard port 2222 (avoids mass scans)
 - Root login disabled
 - SSH keys only (impossible to brute-force)
@@ -929,37 +1003,44 @@ EOF
 ### Defense in Depth
 
 **Layer 1 - Service Minimization**:
+
 - Removed unnecessary services (bluetooth, cups, avahi, etc.)
 - Reduced attack surface
 
 **Layer 2 - SSH Hardening**:
+
 - SSH keys only (no passwords)
 - Non-standard port (2222)
 - Root login disabled
 - Strong cryptography
 
 **Layer 3 - Firewall (UFW)**:
+
 - Default deny incoming
 - Only necessary ports allowed
 - Logging enabled
 
 **Layer 4 - Intrusion Prevention (Fail2ban)**:
+
 - Monitors logs for attacks
 - Automatically bans malicious IPs
 - Multiple jails (SSH, Nginx)
 - Repeat offender detection
 
 **Layer 5 - Automatic Updates**:
+
 - Daily security patch installation
 - Keeps system protected against known vulnerabilities
 - Automatic kernel updates
 
 **Layer 6 - Security Scanning (Lynis)**:
+
 - Regular comprehensive audits
 - Identifies misconfigurations
 - Provides hardening recommendations
 
 **Layer 7 - Audit Logging (auditd)**:
+
 - Monitors all system activity
 - Tracks authentication, file changes, system modifications
 - Forensics capability
@@ -992,11 +1073,13 @@ EOF
 ### ✅ 1. SSH Hardening
 
 **Requirements**:
+
 - Disable root login
 - SSH keys only (disable password auth)
 - Change default port (22 → 2222)
 
 **Validation**:
+
 - ✅ Script created: [harden-ssh.sh](d:\AURELLE\scripts\harden-ssh.sh)
 - ✅ Root login disabled: `PermitRootLogin no`
 - ✅ Password auth disabled: `PasswordAuthentication no`
@@ -1009,9 +1092,11 @@ EOF
 ### ✅ 2. Fail2ban
 
 **Requirements**:
+
 - Fail2ban for blocking brute-force attacks
 
 **Validation**:
+
 - ✅ Script created: [setup-fail2ban.sh](d:\AURELLE\scripts\setup-fail2ban.sh)
 - ✅ SSH jail configured (3 attempts, 2 hour ban)
 - ✅ Nginx jails configured (HTTP auth, bots, rate limiting)
@@ -1023,12 +1108,14 @@ EOF
 ### ✅ 3. Firewall (UFW)
 
 **Requirements**:
+
 - Allow SSH (2222)
 - Allow HTTP (80)
 - Allow HTTPS (443)
 - Deny all other
 
 **Validation**:
+
 - ✅ Script created: [setup-firewall.sh](d:\AURELLE\scripts\setup-firewall.sh)
 - ✅ UFW enabled
 - ✅ SSH allowed: `ufw allow 2222/tcp`
@@ -1041,10 +1128,12 @@ EOF
 ### ✅ 4. Automatic Security Updates
 
 **Requirements**:
+
 - apt install unattended-upgrades
 - dpkg-reconfigure --priority=low unattended-upgrades
 
 **Validation**:
+
 - ✅ Script created: [setup-auto-updates.sh](d:\AURELLE\scripts\setup-auto-updates.sh)
 - ✅ Unattended-upgrades installed and configured
 - ✅ Daily update checks
@@ -1057,9 +1146,11 @@ EOF
 ### ✅ 5. Remove Unused Services
 
 **Requirements**:
+
 - Remove unnecessary services
 
 **Validation**:
+
 - ✅ Script created: [cleanup-services.sh](d:\AURELLE\scripts\cleanup-services.sh)
 - ✅ Scans for unnecessary services (bluetooth, cups, avahi, etc.)
 - ✅ Interactive removal with descriptions
@@ -1070,9 +1161,11 @@ EOF
 ### ✅ 6. Setup Audit Logs (auditd)
 
 **Requirements**:
+
 - Setup audit logs (auditd)
 
 **Validation**:
+
 - ✅ Script created: [setup-auditd.sh](d:\AURELLE\scripts\setup-auditd.sh)
 - ✅ Auditd installed and configured
 - ✅ 24 audit rules covering authentication, file access, system changes
@@ -1084,9 +1177,11 @@ EOF
 ### ✅ 7. Regular Security Scans (Lynis)
 
 **Requirements**:
+
 - Regular security scans (Lynis)
 
 **Validation**:
+
 - ✅ Script created: [security-scan.sh](d:\AURELLE\scripts\security-scan.sh)
 - ✅ Lynis installed (from official repo)
 - ✅ Three scan modes (quick, full, full with auto-fixes)
@@ -1099,9 +1194,11 @@ EOF
 ### ✅ 8. Comprehensive Documentation
 
 **Requirements**:
+
 - Complete server hardening guide
 
 **Validation**:
+
 - ✅ Guide created: [SERVER_HARDENING_GUIDE.md](d:\AURELLE\SERVER_HARDENING_GUIDE.md) (2,000+ lines)
 - ✅ Covers all hardening measures
 - ✅ Step-by-step procedures
@@ -1118,6 +1215,7 @@ EOF
 **Requirement**: Server protected from basic attacks
 
 **Validation**:
+
 - ✅ SSH hardened (keys only, non-standard port, no root)
 - ✅ Firewall configured (minimal ports open)
 - ✅ Intrusion prevention active (Fail2ban)
@@ -1137,6 +1235,7 @@ EOF
 ### P2 Task #45: Monitoring & Alerts
 
 Hardening integrates with monitoring:
+
 - **Fail2ban**: Uses Telegram script for ban notifications
 - **Automatic Updates**: Sends Telegram notifications for updates/reboots
 - **Security Scan**: Sends Telegram notifications with hardening index
@@ -1145,6 +1244,7 @@ Hardening integrates with monitoring:
 ### P2 Task #47: SSL/HTTPS
 
 Hardening protects SSL setup:
+
 - **Firewall**: Allows HTTPS (443)
 - **Audit Logs**: Monitors SSL certificate changes
 - **Security Scan**: Verifies SSL configuration
@@ -1152,6 +1252,7 @@ Hardening protects SSL setup:
 ### P2 Task #48: Backup & Disaster Recovery
 
 Hardening protects backup system:
+
 - **Firewall**: Protects backup connections
 - **Audit Logs**: Monitors backup file access
 - **Service Cleanup**: Preserves backup services (rclone)
@@ -1316,6 +1417,7 @@ sudo ausearch --start today | wc -l    # Today's audit events
 **Issue 1**: Locked out after SSH hardening
 
 **Solution**:
+
 - Access via console/physical access
 - Restore backup: `sudo cp /etc/ssh/sshd_config.backup.* /etc/ssh/sshd_config`
 - Restart SSH: `sudo systemctl restart sshd`
@@ -1323,6 +1425,7 @@ sudo ausearch --start today | wc -l    # Today's audit events
 **Issue 2**: Firewall blocking legitimate traffic
 
 **Solution**:
+
 - Disable temporarily: `sudo ufw disable`
 - Add rule: `sudo ufw allow PORT_NUMBER/tcp`
 - Re-enable: `sudo ufw enable`
@@ -1330,12 +1433,14 @@ sudo ausearch --start today | wc -l    # Today's audit events
 **Issue 3**: Own IP banned by Fail2ban
 
 **Solution**:
+
 - Unban: `sudo fail2ban-client set sshd unbanip YOUR_IP`
 - Whitelist: Add to ignoreip in `/etc/fail2ban/jail.local`
 
 **Issue 4**: Updates broke application
 
 **Solution**:
+
 - Check what updated: `sudo tail -50 /var/log/apt/history.log`
 - Hold package: `sudo apt-mark hold PACKAGE_NAME`
 - Downgrade: `sudo apt-get install PACKAGE_NAME=VERSION`
@@ -1343,6 +1448,7 @@ sudo ausearch --start today | wc -l    # Today's audit events
 **Issue 5**: Audit logs filling disk
 
 **Solution**:
+
 - Check size: `du -sh /var/log/audit/`
 - Compress old: `sudo find /var/log/audit/ -name "audit.log.*" -exec gzip {} \;`
 - Delete old: `sudo find /var/log/audit/ -name "*.gz" -mtime +30 -delete`
@@ -1354,12 +1460,14 @@ sudo ausearch --start today | wc -l    # Today's audit events
 ### Immediate (Post-Hardening)
 
 1. **Run Initial Hardening**:
+
    ```bash
    # Execute all hardening scripts in order
    # See "Usage Instructions" section above
    ```
 
 2. **Test All Services**:
+
    ```bash
    # Verify SSH, firewall, application access
    # See "Testing and Validation" section
@@ -1408,6 +1516,7 @@ sudo ausearch --start today | wc -l    # Today's audit events
 ### Long-term (Ongoing)
 
 1. **Regular Security Scans** (Monthly):
+
    ```bash
    # Schedule with cron
    0 4 1 * * /var/www/aurelle/scripts/security-scan.sh
@@ -1453,6 +1562,7 @@ P2 Task #49 has been successfully completed with comprehensive server hardening 
 ### Security Posture
 
 **Before Hardening**:
+
 - ⚠️ SSH on default port 22
 - ⚠️ Root login enabled
 - ⚠️ Password authentication enabled
@@ -1465,6 +1575,7 @@ P2 Task #49 has been successfully completed with comprehensive server hardening 
 - ⚠️ No audit trail
 
 **After Hardening**:
+
 - ✅ SSH on port 2222 (obscured)
 - ✅ Root login disabled
 - ✅ SSH keys only (no passwords)

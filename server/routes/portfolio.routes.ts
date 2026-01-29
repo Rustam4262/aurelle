@@ -12,7 +12,8 @@ router.get("/master/:masterId", async (req, res) => {
   try {
     const { masterId } = req.params;
 
-    const items = await db.select()
+    const items = await db
+      .select()
       .from(portfolioItems)
       .where(eq(portfolioItems.masterId, masterId))
       .orderBy(portfolioItems.displayOrder, portfolioItems.createdAt);
@@ -31,7 +32,9 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     const parsed = insertPortfolioItemSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid portfolio data", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Invalid portfolio data", details: parsed.error.errors });
     }
 
     // Verify master ownership
@@ -49,7 +52,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       }
     }
 
-    const [item] = await db.insert(portfolioItems).values([parsed.data as any]).returning();
+    const [item] = await db
+      .insert(portfolioItems)
+      .values([parsed.data as any])
+      .returning();
 
     console.log("[PORTFOLIO] Item added:", item);
     return res.status(201).json(item);

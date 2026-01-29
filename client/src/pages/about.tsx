@@ -70,9 +70,7 @@ export default function AboutPage() {
                 <h4 className="text-xl font-medium text-foreground mb-2">
                   {t("about.clients.whatIsIt")}
                 </h4>
-                <p className="text-muted-foreground text-lg">
-                  {t("about.clients.whatIsItAnswer")}
-                </p>
+                <p className="text-muted-foreground text-lg">{t("about.clients.whatIsItAnswer")}</p>
               </div>
 
               <div>
@@ -124,9 +122,7 @@ export default function AboutPage() {
               </div>
 
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-lg font-medium text-foreground">
-                  {t("about.clients.summary")}
-                </p>
+                <p className="text-lg font-medium text-foreground">{t("about.clients.summary")}</p>
               </div>
             </Card>
           </section>
@@ -199,9 +195,7 @@ export default function AboutPage() {
               </div>
 
               <div className="p-4 bg-green-500/5 rounded-lg border border-green-500/20">
-                <p className="text-lg font-medium text-foreground">
-                  {t("about.business.summary")}
-                </p>
+                <p className="text-lg font-medium text-foreground">{t("about.business.summary")}</p>
               </div>
             </Card>
           </section>
@@ -212,12 +206,8 @@ export default function AboutPage() {
               {t("about.why.title")}
             </h3>
             <Card className="p-8 text-center space-y-4">
-              <p className="text-lg text-muted-foreground">
-                {t("about.why.text1")}
-              </p>
-              <p className="text-lg text-muted-foreground">
-                {t("about.why.text2")}
-              </p>
+              <p className="text-lg text-muted-foreground">{t("about.why.text1")}</p>
+              <p className="text-lg text-muted-foreground">{t("about.why.text2")}</p>
             </Card>
           </section>
 
@@ -241,9 +231,7 @@ export default function AboutPage() {
               </Card>
             </div>
             <div className="text-center">
-              <p className="text-xl font-medium text-foreground">
-                {t("about.summary.tagline")}
-              </p>
+              <p className="text-xl font-medium text-foreground">{t("about.summary.tagline")}</p>
             </div>
           </section>
 

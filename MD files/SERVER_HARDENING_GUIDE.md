@@ -64,6 +64,7 @@ This guide provides comprehensive server hardening procedures for the AURELLE Be
 ### Threat Model
 
 **Protected Against**:
+
 - Brute-force SSH attacks
 - Unauthorized network access
 - Known vulnerabilities (via automatic updates)
@@ -73,6 +74,7 @@ This guide provides comprehensive server hardening procedures for the AURELLE Be
 - Common web attacks
 
 **Not Protected Against** (requires additional measures):
+
 - Zero-day exploits
 - Advanced persistent threats (APTs)
 - Physical access attacks
@@ -198,6 +200,7 @@ sudo bash scripts/harden-ssh.sh
 ```
 
 **What the script does**:
+
 1. Backs up current SSH configuration
 2. Checks for SSH keys (warns if missing)
 3. Displays proposed changes
@@ -207,6 +210,7 @@ sudo bash scripts/harden-ssh.sh
 7. Prompts to restart SSH service
 
 **⚠️ CRITICAL WARNING**:
+
 - Keep your current SSH session open!
 - Test new connection in a SEPARATE terminal
 - DO NOT close original session until confirmed working
@@ -364,6 +368,7 @@ sudo bash scripts/setup-firewall.sh
 ```
 
 **What the script does**:
+
 1. Installs UFW (if needed)
 2. Checks current firewall status
 3. Detects SSH port automatically
@@ -376,6 +381,7 @@ sudo bash scripts/setup-firewall.sh
 10. Displays final status
 
 **⚠️ CRITICAL WARNING**:
+
 - Verify SSH port before enabling!
 - Keep current session open
 - Test SSH in new terminal after enabling
@@ -533,6 +539,7 @@ sudo bash scripts/setup-fail2ban.sh
 ```
 
 **What the script does**:
+
 1. Installs Fail2ban (if needed)
 2. Detects SSH port automatically
 3. Backs up existing configuration
@@ -644,6 +651,7 @@ sudo fail2ban-client banned
 If Telegram integration is configured (P2 Task #45), Fail2ban will send notifications:
 
 **Ban Notification**:
+
 ```
 ⚠️ IP Banned by Fail2ban
 
@@ -654,6 +662,7 @@ Time: 2026-01-11 14:32:15
 ```
 
 **Unban Notification**:
+
 ```
 ℹ️ IP Unbanned by Fail2ban
 
@@ -777,6 +786,7 @@ sudo bash scripts/setup-auto-updates.sh
 ```
 
 **What the script does**:
+
 1. Installs unattended-upgrades (if needed)
 2. Backs up existing configuration
 3. Creates auto-update configuration
@@ -829,11 +839,13 @@ APT::Periodic::Unattended-Upgrade "1";
 #### 3. Reboot Policy
 
 **Option 1: No Automatic Reboot** (Default - Safer)
+
 - System installs updates but doesn't reboot
 - Admin must manually reboot when required
 - Check: `ls /var/run/reboot-required`
 
 **Option 2: Automatic Reboot** (Convenient - Higher Risk)
+
 - System automatically reboots if updates require it
 - Reboot at specified time (e.g., 3 AM)
 - Telegram notification 5 minutes before reboot
@@ -894,6 +906,7 @@ Unattended-Upgrade::Package-Blacklist {
 ```
 
 **When to exclude**:
+
 - Custom-configured packages (need testing before update)
 - Packages with known breaking changes
 - Packages requiring manual migration
@@ -965,7 +978,7 @@ Reducing the number of running services decreases the attack surface and improve
 ### Critical Services (Never Disable)
 
 - ssh/sshd
-- systemd-* services
+- systemd-\* services
 - cron
 - rsyslog/systemd-journald
 - postgresql
@@ -996,6 +1009,7 @@ sudo bash scripts/cleanup-services.sh
 ```
 
 **What the script does**:
+
 1. Scans for potentially unnecessary services
 2. Displays found services with descriptions
 3. Asks for confirmation (per-service)
@@ -1139,6 +1153,7 @@ sudo bash scripts/setup-auditd.sh
 ```
 
 **What the script does**:
+
 1. Installs auditd (if needed)
 2. Backs up existing configuration
 3. Creates audit rules
@@ -1174,6 +1189,7 @@ Example rules:
 ```
 
 **Rule format**:
+
 - `-w`: Watch file/directory
 - `-p`: Permissions (r=read, w=write, x=execute, a=attribute)
 - `-k`: Key (tag for searching)
@@ -1264,6 +1280,7 @@ type=SYSCALL msg=audit(01/11/2026 14:32:15.123:456) : arch=x86_64 syscall=open s
 ```
 
 Analysis:
+
 - **Who**: User "john" (auid=john)
 - **When**: 01/11/2026 14:32:15
 - **What**: Modified /etc/passwd
@@ -1414,11 +1431,13 @@ sudo bash scripts/security-scan.sh
 ```
 
 **Options**:
+
 1. **Quick scan**: Basic checks (faster)
 2. **Full scan**: Comprehensive audit (recommended)
 3. **Full scan with auto-fixes**: Applies automatic fixes where possible
 
 **What the script does**:
+
 1. Installs Lynis (if needed)
 2. Updates Lynis database
 3. Runs security scan
@@ -1462,12 +1481,14 @@ grep "suggestion" /var/log/lynis-report.dat
 #### 4. Common Findings and Fixes
 
 **Finding**: "No password set for single user mode"
+
 ```bash
 # Fix: Set root password
 sudo passwd root
 ```
 
 **Finding**: "Kernel has no restriction on dmesg usage"
+
 ```bash
 # Fix: Restrict dmesg
 echo "kernel.dmesg_restrict = 1" | sudo tee -a /etc/sysctl.conf
@@ -1475,6 +1496,7 @@ sudo sysctl -p
 ```
 
 **Finding**: "No legal banner found"
+
 ```bash
 # Fix: Create login banner
 sudo nano /etc/issue.net
@@ -1490,12 +1512,14 @@ sudo systemctl restart sshd
 ```
 
 **Finding**: "iptables module not loaded"
+
 ```bash
 # Fix: Already handled by UFW firewall
 # No action needed if using UFW
 ```
 
 **Finding**: "No anti-virus scanner found"
+
 ```bash
 # Optional: Install ClamAV
 sudo apt-get install clamav clamav-daemon
@@ -1549,16 +1573,16 @@ sudo crontab -e
 
 ### Interpreting Common Warnings
 
-| Warning | Severity | Action |
-|---------|----------|--------|
-| Kernel not up-to-date | High | Update kernel: `sudo apt upgrade linux-image-generic` |
-| Weak SSH ciphers | High | Run SSH hardening script |
-| No firewall active | Critical | Run firewall setup script |
-| Outdated packages | Medium | Enable auto-updates |
-| No intrusion detection | Medium | Install Fail2ban (already done) |
-| Weak file permissions | Medium | Fix with `chmod` |
-| No password aging | Low | Configure in `/etc/login.defs` |
-| No banner | Low | Create banner files |
+| Warning                | Severity | Action                                                |
+| ---------------------- | -------- | ----------------------------------------------------- |
+| Kernel not up-to-date  | High     | Update kernel: `sudo apt upgrade linux-image-generic` |
+| Weak SSH ciphers       | High     | Run SSH hardening script                              |
+| No firewall active     | Critical | Run firewall setup script                             |
+| Outdated packages      | Medium   | Enable auto-updates                                   |
+| No intrusion detection | Medium   | Install Fail2ban (already done)                       |
+| Weak file permissions  | Medium   | Fix with `chmod`                                      |
+| No password aging      | Low      | Configure in `/etc/login.defs`                        |
+| No banner              | Low      | Create banner files                                   |
 
 ### Rollback Procedure
 
@@ -1626,15 +1650,18 @@ Never rely on default settings:
 ### Regular Security Maintenance
 
 **Daily**:
+
 - Review Fail2ban bans
 - Check for security alerts (Telegram)
 
 **Weekly**:
+
 - Review audit logs for anomalies
 - Check system logs (`sudo journalctl -p err -since "1 week ago"`)
 - Verify backups working
 
 **Monthly**:
+
 - Run Lynis security scan
 - Review and update firewall rules
 - Check for outdated packages
@@ -1643,6 +1670,7 @@ Never rely on default settings:
 - Review SSL certificate expiration
 
 **Quarterly**:
+
 - Full security audit
 - Penetration testing
 - Review and update security policies
@@ -1879,6 +1907,7 @@ sudo lnav /var/log/
 #### Phase 1: Detection
 
 **Indicators of compromise**:
+
 - Unusual failed login attempts
 - Unexpected network connections
 - New unknown processes
@@ -1888,6 +1917,7 @@ sudo lnav /var/log/
 - Modified configuration files
 
 **Detection methods**:
+
 - Fail2ban notifications
 - Audit log alerts
 - System monitoring
@@ -1985,6 +2015,7 @@ curl http://localhost:3000/health
 #### Phase 6: Lessons Learned
 
 Document the incident:
+
 - Timeline of events
 - Root cause analysis
 - Actions taken
@@ -2003,23 +2034,27 @@ Hosting Provider Support: [CONTACT]
 ### Incident Severity Levels
 
 **Critical (P0)**:
+
 - Active data breach
 - Complete service outage
 - Ransomware attack
 - Response: Immediate (within 15 minutes)
 
 **High (P1)**:
+
 - Suspicious unauthorized access
 - Partial service disruption
 - Failed intrusion attempt
 - Response: Within 1 hour
 
 **Medium (P2)**:
+
 - Unusual activity detected
 - Minor security misconfiguration
 - Response: Within 4 hours
 
 **Low (P3)**:
+
 - Security scan findings
 - Policy violations
 - Response: Within 24 hours
@@ -2031,6 +2066,7 @@ Hosting Provider Support: [CONTACT]
 ### Security Standards
 
 **Frameworks considered**:
+
 - **CIS Benchmarks**: Center for Internet Security best practices
 - **NIST Cybersecurity Framework**: Risk management framework
 - **OWASP Top 10**: Web application security risks
@@ -2040,26 +2076,28 @@ Hosting Provider Support: [CONTACT]
 
 Key controls implemented:
 
-| Control | Status | Implementation |
-|---------|--------|----------------|
-| Ensure SSH root login disabled | ✓ | harden-ssh.sh |
-| Ensure SSH key-based auth | ✓ | harden-ssh.sh |
-| Ensure firewall enabled | ✓ | setup-firewall.sh |
-| Ensure Fail2ban installed | ✓ | setup-fail2ban.sh |
-| Ensure auto-updates enabled | ✓ | setup-auto-updates.sh |
-| Ensure audit logging enabled | ✓ | setup-auditd.sh |
-| Ensure minimum password requirements | ✓ | libpam-pwquality |
-| Ensure unnecessary services removed | ✓ | cleanup-services.sh |
+| Control                              | Status | Implementation        |
+| ------------------------------------ | ------ | --------------------- |
+| Ensure SSH root login disabled       | ✓      | harden-ssh.sh         |
+| Ensure SSH key-based auth            | ✓      | harden-ssh.sh         |
+| Ensure firewall enabled              | ✓      | setup-firewall.sh     |
+| Ensure Fail2ban installed            | ✓      | setup-fail2ban.sh     |
+| Ensure auto-updates enabled          | ✓      | setup-auto-updates.sh |
+| Ensure audit logging enabled         | ✓      | setup-auditd.sh       |
+| Ensure minimum password requirements | ✓      | libpam-pwquality      |
+| Ensure unnecessary services removed  | ✓      | cleanup-services.sh   |
 
 ### Data Protection
 
 **Data Classification**:
+
 - **Public**: Website content, salon listings
 - **Internal**: Application logs, metrics
 - **Confidential**: User data, booking information
 - **Restricted**: Passwords, payment info, API keys
 
 **Protection measures**:
+
 - Encryption in transit (HTTPS/TLS 1.2+)
 - Encryption at rest (database, backups)
 - Access controls (firewall, authentication)
@@ -2069,6 +2107,7 @@ Key controls implemented:
 ### Privacy Compliance
 
 **GDPR considerations** (if applicable):
+
 - Data minimization
 - Purpose limitation
 - Storage limitation (automated deletion)
@@ -2079,6 +2118,7 @@ Key controls implemented:
 ### Audit Trail Requirements
 
 Maintained audit logs for:
+
 - User authentication (SSH, application)
 - Data access and modification
 - System configuration changes
@@ -2096,6 +2136,7 @@ Retention: 30 days (audit logs), 90 days (backups)
 **Problem**: Can't connect via SSH after hardening
 
 **Solution**:
+
 ```bash
 # Check SSH service status (via console)
 sudo systemctl status sshd
@@ -2123,6 +2164,7 @@ sudo systemctl restart sshd
 **Problem**: Services not accessible after firewall setup
 
 **Solution**:
+
 ```bash
 # Check UFW status
 sudo ufw status numbered
@@ -2148,6 +2190,7 @@ sudo tail -f /var/log/ufw.log
 **Problem**: Own IP getting banned
 
 **Solution**:
+
 ```bash
 # Unban IP
 sudo fail2ban-client set sshd unbanip YOUR_IP
@@ -2170,6 +2213,7 @@ sudo nano /etc/fail2ban/jail.local
 **Problem**: Updates caused application to fail
 
 **Solution**:
+
 ```bash
 # Check what was updated
 sudo tail -50 /var/log/unattended-upgrades/unattended-upgrades.log
@@ -2196,6 +2240,7 @@ sudo apt-mark unhold PACKAGE_NAME
 **Problem**: /var/log/audit/ consuming too much space
 
 **Solution**:
+
 ```bash
 # Check audit log size
 du -sh /var/log/audit/
@@ -2222,6 +2267,7 @@ sudo service auditd restart
 **Problem**: Server performance degraded after hardening
 
 **Solution**:
+
 ```bash
 # Check system load
 uptime
@@ -2463,6 +2509,7 @@ Security is not a one-time task but an ongoing process:
 ### Support
 
 For questions or issues:
+
 - Review this documentation
 - Check troubleshooting section
 - Review script comments

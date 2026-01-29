@@ -5,7 +5,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +25,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Users
+  Users,
 } from "lucide-react";
 
 interface SalonManager {
@@ -70,7 +76,10 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
   const { toast } = useToast();
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [editPermissionsDialog, setEditPermissionsDialog] = useState<{ open: boolean; manager?: SalonManager }>({ open: false });
+  const [editPermissionsDialog, setEditPermissionsDialog] = useState<{
+    open: boolean;
+    manager?: SalonManager;
+  }>({ open: false });
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(DEFAULT_PERMISSIONS);
 
@@ -110,10 +119,20 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
   // Update permissions mutation
   const updatePermissionsMutation = useMutation({
-    mutationFn: async ({ managerId, permissions }: { managerId: string; permissions: string[] }) => {
-      const res = await apiRequest("PATCH", `/api/owner/salons/${salonId}/managers/${managerId}/permissions`, {
-        permissions,
-      });
+    mutationFn: async ({
+      managerId,
+      permissions,
+    }: {
+      managerId: string;
+      permissions: string[];
+    }) => {
+      const res = await apiRequest(
+        "PATCH",
+        `/api/owner/salons/${salonId}/managers/${managerId}/permissions`,
+        {
+          permissions,
+        },
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -194,7 +213,10 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     switch (status) {
       case "active":
         return (
-          <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+          <Badge
+            variant="default"
+            className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+          >
             <CheckCircle className="h-3 w-3 mr-1" />
             {t("marketplace.team.status.active")}
           </Badge>
@@ -232,7 +254,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
       {/* Managers List */}
       {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">{t("marketplace.common.loading")}</div>
+        <div className="text-center py-8 text-muted-foreground">
+          {t("marketplace.common.loading")}
+        </div>
       ) : managers.length === 0 ? (
         <Card className="p-8 text-center">
           <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -265,7 +289,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                   <div className="mt-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                       <Shield className="h-3 w-3" />
-                      <span>{t("marketplace.team.permissions")} ({manager.permissions.length})</span>
+                      <span>
+                        {t("marketplace.team.permissions")} ({manager.permissions.length})
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {manager.permissions.slice(0, 5).map((perm) => (
@@ -283,9 +309,15 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
                   {/* Timestamps */}
                   <div className="mt-3 text-xs text-muted-foreground">
-                    <div>{t("marketplace.team.invitedAt")}: {new Date(manager.invitedAt).toLocaleDateString()}</div>
+                    <div>
+                      {t("marketplace.team.invitedAt")}:{" "}
+                      {new Date(manager.invitedAt).toLocaleDateString()}
+                    </div>
                     {manager.acceptedAt && (
-                      <div>{t("marketplace.team.acceptedAt")}: {new Date(manager.acceptedAt).toLocaleDateString()}</div>
+                      <div>
+                        {t("marketplace.team.acceptedAt")}:{" "}
+                        {new Date(manager.acceptedAt).toLocaleDateString()}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -353,10 +385,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                       checked={selectedPermissions.includes(value)}
                       onCheckedChange={() => togglePermission(value)}
                     />
-                    <label
-                      htmlFor={`perm-${value}`}
-                      className="text-sm cursor-pointer flex-1"
-                    >
+                    <label htmlFor={`perm-${value}`} className="text-sm cursor-pointer flex-1">
                       {t(`marketplace.team.permission.${value.replace("manager.", "")}`)}
                     </label>
                   </div>
@@ -382,7 +411,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               {t("marketplace.common.cancel")}
             </Button>
             <Button onClick={handleInvite} disabled={inviteMutation.isPending}>
-              {inviteMutation.isPending ? t("marketplace.common.sending") : t("marketplace.team.sendInvite")}
+              {inviteMutation.isPending
+                ? t("marketplace.common.sending")
+                : t("marketplace.team.sendInvite")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -403,7 +434,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               <div>
                 <Label>{t("marketplace.team.managerDetails")}</Label>
                 <div className="mt-2 text-sm">
-                  <p className="font-medium">{editPermissionsDialog.manager.fullName || t("marketplace.team.unnamed")}</p>
+                  <p className="font-medium">
+                    {editPermissionsDialog.manager.fullName || t("marketplace.team.unnamed")}
+                  </p>
                   <p className="text-muted-foreground">{editPermissionsDialog.manager.email}</p>
                 </div>
               </div>
@@ -432,10 +465,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
           )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditPermissionsDialog({ open: false })}
-            >
+            <Button variant="outline" onClick={() => setEditPermissionsDialog({ open: false })}>
               {t("marketplace.common.cancel")}
             </Button>
             <Button
@@ -446,7 +476,9 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               }}
               disabled={updatePermissionsMutation.isPending}
             >
-              {updatePermissionsMutation.isPending ? t("marketplace.common.saving") : t("marketplace.common.save")}
+              {updatePermissionsMutation.isPending
+                ? t("marketplace.common.saving")
+                : t("marketplace.common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

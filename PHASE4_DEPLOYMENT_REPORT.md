@@ -11,6 +11,7 @@
 Phase 4 successfully deployed! Added RBAC (Role-Based Access Control) and comprehensive audit logging to all booking management endpoints, ensuring security and accountability for all booking operations.
 
 **Key Improvements:**
+
 - ✅ Added RBAC permission checks to 3 booking endpoints
 - ✅ Added audit logging for bulk booking operations
 - ✅ All booking actions now tracked with actor, timestamp, and details
@@ -28,40 +29,52 @@ Phase 4 successfully deployed! Added RBAC (Role-Based Access Control) and compre
 **Endpoints Protected:**
 
 #### GET `/api/owner/bookings/advanced` (Line 953)
+
 ```typescript
-router.get("/bookings/advanced",
+router.get(
+  "/bookings/advanced",
   isAuthenticated,
   requirePermission(OWNER_PERMISSIONS.READ_BOOKINGS),
   async (req: any, res) => {
-  // ... endpoint logic
-});
+    // ... endpoint logic
+  },
+);
 ```
+
 - **Permission:** `READ_BOOKINGS`
 - **Purpose:** Allows viewing bookings with advanced filters
 - **Effect:** Only owners with read permissions can access booking data
 
 #### POST `/api/owner/bookings/bulk-update` (Line 1048)
+
 ```typescript
-router.post("/bookings/bulk-update",
+router.post(
+  "/bookings/bulk-update",
   isAuthenticated,
   requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS),
   async (req: any, res) => {
-  // ... endpoint logic
-});
+    // ... endpoint logic
+  },
+);
 ```
+
 - **Permission:** `MANAGE_BOOKINGS`
 - **Purpose:** Allows bulk status changes (confirm, cancel, etc.)
 - **Effect:** Only owners with manage permissions can modify multiple bookings
 
 #### GET `/api/owner/bookings/:bookingId/history` (Line 1140)
+
 ```typescript
-router.get("/bookings/:bookingId/history",
+router.get(
+  "/bookings/:bookingId/history",
   isAuthenticated,
   requirePermission(OWNER_PERMISSIONS.READ_BOOKINGS),
   async (req: any, res) => {
-  // ... endpoint logic
-});
+    // ... endpoint logic
+  },
+);
 ```
+
 - **Permission:** `READ_BOOKINGS`
 - **Purpose:** Allows viewing booking modification history
 - **Effect:** Only owners with read permissions can view audit trail
@@ -71,27 +84,29 @@ router.get("/bookings/:bookingId/history",
 **File:** `server/routes/owner.routes.ts` (Lines 1111-1127)
 
 **Bulk Update Audit Trail:**
+
 ```typescript
 // Log audit trail
 await logAudit({
   actorId: ownerId,
-  action: 'booking.bulk_update',
-  entityType: 'booking',
-  entityId: bookingIds.join(','),
+  action: "booking.bulk_update",
+  entityType: "booking",
+  entityId: bookingIds.join(","),
   salonId: bookingsToUpdate[0]?.salonId,
   details: {
     bookingCount: bookingIds.length,
     status: { to: status },
     notes,
-    updatedBookings: successfulUpdates.map(b => b.id),
+    updatedBookings: successfulUpdates.map((b) => b.id),
   },
   ip: req.ip,
-  userAgent: req.headers['user-agent'],
-  result: 'success',
+  userAgent: req.headers["user-agent"],
+  result: "success",
 });
 ```
 
 **Audit Log Structure:**
+
 - `actorId` - Owner who performed the action
 - `action` - Action type (`booking.bulk_update`)
 - `entityType` - Type of entity modified (`booking`)
@@ -113,17 +128,19 @@ await logAudit({
 ```typescript
 // From server/lib/rbac.ts
 export const OWNER_PERMISSIONS = {
-  READ_BOOKINGS: 'read_bookings',
-  MANAGE_BOOKINGS: 'manage_bookings',
+  READ_BOOKINGS: "read_bookings",
+  MANAGE_BOOKINGS: "manage_bookings",
   // ... other permissions
 };
 ```
 
 **Permission Hierarchy:**
+
 - `READ_BOOKINGS` - View bookings, filters, and history (read-only)
 - `MANAGE_BOOKINGS` - Full control: create, update, cancel, bulk operations
 
 **Default Grants:**
+
 - All salon owners automatically receive all permissions
 - Future: Can be customized per-owner for staff management
 
@@ -134,6 +151,7 @@ export const OWNER_PERMISSIONS = {
 ### Middleware Chain
 
 **Before Phase 4:**
+
 ```typescript
 router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
   // Only session check
@@ -141,17 +159,21 @@ router.post("/bookings/bulk-update", isAuthenticated, async (req: any, res) => {
 ```
 
 **After Phase 4:**
+
 ```typescript
-router.post("/bookings/bulk-update",
-  isAuthenticated,                                    // Step 1: Session exists?
+router.post(
+  "/bookings/bulk-update",
+  isAuthenticated, // Step 1: Session exists?
   requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS), // Step 2: Has permission?
   async (req: any, res) => {
     // Step 3: Business logic
     // Step 4: Audit logging
-});
+  },
+);
 ```
 
 **Execution Flow:**
+
 1. `isAuthenticated` - Validates session cookie, extracts ownerId
 2. `requirePermission` - Checks `owner_permissions` table for permission
 3. Business logic - Performs the actual operation
@@ -160,28 +182,36 @@ router.post("/bookings/bulk-update",
 ### Error Responses
 
 **Unauthorized (No Session):**
+
 ```json
 {
   "error": "Unauthorized"
 }
 ```
+
 HTTP 401
 
 **Forbidden (No Permission):**
+
 ```json
 {
   "error": "Forbidden - insufficient permissions"
 }
 ```
+
 HTTP 403
 
 **Success:**
+
 ```json
 {
   "success": true,
-  "updated": [/* booking objects */]
+  "updated": [
+    /* booking objects */
+  ]
 }
 ```
+
 HTTP 200
 
 ---
@@ -191,6 +221,7 @@ HTTP 200
 ### Existing Tables Used
 
 **`owner_permissions` Table:**
+
 ```sql
 CREATE TABLE owner_permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -203,6 +234,7 @@ CREATE TABLE owner_permissions (
 ```
 
 **`audit_logs` Table:**
+
 ```sql
 CREATE TABLE audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -233,12 +265,15 @@ CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
 ### 1. Code Changes
 
 **Commits:**
+
 - `5904a54c` - Phase 4: Add RBAC and audit logging to booking management endpoints
 
 **Files Modified:**
+
 - `server/routes/owner.routes.ts` (+26 lines, -4 lines)
 
 **Changes Summary:**
+
 - Added `requirePermission` middleware to 3 endpoints
 - Added audit logging to bulk-update operation
 - Imported RBAC and audit utilities
@@ -249,6 +284,7 @@ CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
 **Path:** /var/www/aurelle/current
 
 **Steps Executed:**
+
 ```bash
 # 1. Pull latest code
 cd /var/www/aurelle/current
@@ -264,6 +300,7 @@ pm2 restart aurelle-production
 ```
 
 **Build Output:**
+
 ```
 Client: 485.66 kB (153.97 kB gzipped)
 Server: 1.6 MB
@@ -273,6 +310,7 @@ Total Build Time: 37 seconds (client) + 2.2 seconds (server)
 ### 3. Verification
 
 **PM2 Status:**
+
 ```
 ┌────┬───────────────────────┬─────────┬────────┬───────────┬──────────┐
 │ id │ name                  │ mode    │ uptime │ status    │ mem      │
@@ -282,6 +320,7 @@ Total Build Time: 37 seconds (client) + 2.2 seconds (server)
 ```
 
 **Server Logs:**
+
 ```
 ✓ Server started successfully on port 5000
 ✓ Web Push configured with VAPID keys
@@ -296,6 +335,7 @@ Total Build Time: 37 seconds (client) + 2.2 seconds (server)
 ## Security Improvements
 
 ### Before Phase 4:
+
 ```typescript
 // No permission checks
 router.post("/bookings/bulk-update", isAuthenticated, async (req, res) => {
@@ -305,24 +345,29 @@ router.post("/bookings/bulk-update", isAuthenticated, async (req, res) => {
 ```
 
 **Vulnerabilities:**
+
 - ❌ Any owner could modify bookings from other salons (if IDs guessed)
 - ❌ No tracking of who made changes
 - ❌ No audit trail for compliance
 
 ### After Phase 4:
+
 ```typescript
 // Permission-based access
-router.post("/bookings/bulk-update",
+router.post(
+  "/bookings/bulk-update",
   isAuthenticated,
   requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS),
   async (req, res) => {
     // Only owners with MANAGE_BOOKINGS permission
     // Ownership verified: bookings must belong to owner's salons
     // Full audit trail logged
-});
+  },
+);
 ```
 
 **Security Hardening:**
+
 - ✅ Permission-based access control (RBAC)
 - ✅ Ownership verification at database level
 - ✅ Full audit trail with actor, IP, and user-agent
@@ -336,6 +381,7 @@ router.post("/bookings/bulk-update",
 ### Manual Testing Required:
 
 **1. RBAC Testing:**
+
 - [ ] Login as owner: xulkarraziyeva@gmail.com / aurelle2026
 - [ ] Navigate to Bookings tab
 - [ ] Verify bookings load correctly (READ_BOOKINGS permission works)
@@ -344,6 +390,7 @@ router.post("/bookings/bulk-update",
 - [ ] Verify bulk update succeeds (MANAGE_BOOKINGS permission works)
 
 **2. Audit Logging Testing:**
+
 - [ ] Perform bulk update operation
 - [ ] Check database for audit log:
   ```sql
@@ -362,6 +409,7 @@ router.post("/bookings/bulk-update",
   - [ ] User-agent captured
 
 **3. Permission Denial Testing:**
+
 - [ ] Temporarily remove MANAGE_BOOKINGS permission:
   ```sql
   DELETE FROM owner_permissions
@@ -377,11 +425,13 @@ router.post("/bookings/bulk-update",
   ```
 
 **4. History Viewing:**
+
 - [ ] Click "View History" on any booking
 - [ ] Verify history dialog opens (READ_BOOKINGS permission works)
 - [ ] Verify modification history displayed correctly
 
 **5. Advanced Filters:**
+
 - [ ] Apply various filters:
   - [ ] Status filter (pending, confirmed, etc.)
   - [ ] Date range filter
@@ -397,6 +447,7 @@ router.post("/bookings/bulk-update",
 ### Endpoint Performance:
 
 **Before Phase 4:**
+
 ```
 GET /bookings/advanced: ~150ms
 POST /bookings/bulk-update: ~200ms per booking
@@ -404,6 +455,7 @@ GET /bookings/:id/history: ~50ms
 ```
 
 **After Phase 4:**
+
 ```
 GET /bookings/advanced: ~165ms (+15ms for permission check)
 POST /bookings/bulk-update: ~230ms per booking (+30ms for audit log)
@@ -411,11 +463,13 @@ GET /bookings/:id/history: ~65ms (+15ms for permission check)
 ```
 
 **Impact Analysis:**
+
 - Permission checks: +10-15ms (single database query)
 - Audit logging: +20-30ms (async INSERT operation)
 - **Overall Impact:** +10-15% latency (acceptable for security)
 
 **Optimization Opportunities:**
+
 - Cache permissions in Redis (reduce permission check to <5ms)
 - Batch audit logs (reduce logging overhead to <10ms)
 - Use database connection pooling (already implemented)
@@ -423,15 +477,18 @@ GET /bookings/:id/history: ~65ms (+15ms for permission check)
 ### Database Load:
 
 **New Queries Per Bulk Update:**
+
 1. Permission check: `SELECT * FROM owner_permissions WHERE owner_id = ? AND permission = ?`
 2. Audit log: `INSERT INTO audit_logs (...) VALUES (...)`
 
 **Index Usage:**
+
 - `idx_owner_permissions_owner` - Used for permission checks
 - `idx_audit_logs_actor` - Used for audit queries
 - `idx_audit_logs_created` - Used for time-based queries
 
 **Estimated Load:**
+
 - 10 bulk updates/hour → 20 extra queries/hour (negligible)
 - Storage: ~1KB per audit log × 100 logs/day = 100KB/day = 36MB/year
 
@@ -442,16 +499,20 @@ GET /bookings/:id/history: ~65ms (+15ms for permission check)
 ### Non-Critical Warnings:
 
 1. **Sanctions Table Missing:**
+
    ```
    [Cron] Error expiring sanctions: error: relation "sanctions" does not exist
    ```
+
    - **Impact:** None (unrelated feature)
    - **Plan:** Add sanctions table in future phase
 
 2. **PostCSS Warning:**
+
    ```
    A PostCSS plugin did not pass the `from` option to `postcss.parse`
    ```
+
    - **Impact:** None (cosmetic warning during build)
    - **Plan:** Ignore (external dependency issue)
 
@@ -459,6 +520,7 @@ GET /bookings/:id/history: ~65ms (+15ms for permission check)
    ```
    "React" is not exported by @sentry/react
    ```
+
    - **Impact:** None (Sentry still works)
    - **Plan:** Update Sentry integration in future phase
 
@@ -487,6 +549,7 @@ GET /bookings/:id/history: ~65ms (+15ms for permission check)
 ### Audit Log Queries:
 
 **View All Audit Logs for Owner:**
+
 ```sql
 SELECT * FROM audit_logs
 WHERE actor_id = '<owner_id>'
@@ -494,6 +557,7 @@ ORDER BY created_at DESC;
 ```
 
 **View Booking-Related Audits:**
+
 ```sql
 SELECT * FROM audit_logs
 WHERE entity_type = 'booking'
@@ -502,6 +566,7 @@ ORDER BY created_at DESC;
 ```
 
 **View Bulk Updates Only:**
+
 ```sql
 SELECT * FROM audit_logs
 WHERE action = 'booking.bulk_update'
@@ -509,6 +574,7 @@ ORDER BY created_at DESC;
 ```
 
 **Audit Log Statistics:**
+
 ```sql
 SELECT
   action,
@@ -527,6 +593,7 @@ ORDER BY action_count DESC;
 ### Audit Trail Capabilities:
 
 **What Can Be Tracked:**
+
 - ✅ Who made changes (actor_id)
 - ✅ When changes were made (created_at with millisecond precision)
 - ✅ What was changed (entity_type, entity_id, details)
@@ -536,6 +603,7 @@ ORDER BY action_count DESC;
 - ✅ Result of change (success/failure)
 
 **Compliance Use Cases:**
+
 1. **Financial Audits:** Track all booking status changes affecting revenue
 2. **Dispute Resolution:** Prove who cancelled/modified bookings
 3. **Staff Accountability:** Attribute all actions to specific owners
@@ -545,10 +613,12 @@ ORDER BY action_count DESC;
 ### Data Retention:
 
 **Current Policy:**
+
 - Audit logs stored indefinitely
 - No automatic deletion
 
 **Recommendations:**
+
 - Retain logs for 7 years (tax/legal compliance)
 - Archive logs older than 2 years to cold storage
 - Implement audit log export feature (CSV/Excel)
@@ -671,25 +741,30 @@ No database changes in Phase 4 - all tables already exist.
 ## Documentation
 
 ### Files Created:
+
 1. `PHASE4_DEPLOYMENT_REPORT.md` - This document
 
 ### Files Modified:
+
 1. `server/routes/owner.routes.ts` - Added RBAC and audit logging
 
 ### Code Coverage:
 
 **Endpoints Protected:**
+
 - `/api/owner/bookings/advanced` ✅
 - `/api/owner/bookings/bulk-update` ✅
 - `/api/owner/bookings/:bookingId/history` ✅
 
 **Endpoints NOT Protected (Future Work):**
+
 - `/api/owner/salons` - Salon CRUD
 - `/api/owner/masters` - Master CRUD
 - `/api/owner/services` - Service CRUD
 - `/api/owner/analytics` - Analytics endpoints
 
 **Audit Logging Coverage:**
+
 - Bulk booking updates ✅
 - Individual booking updates ❌ (Future)
 - Salon changes ❌ (Future)
@@ -701,6 +776,7 @@ No database changes in Phase 4 - all tables already exist.
 ## Team Notes
 
 ### For Developers:
+
 - ✅ Use `requirePermission` middleware for all owner endpoints
 - ✅ Use `logAudit` function after all state-changing operations
 - ✅ Always include actor_id, action, entity details in audit logs
@@ -708,6 +784,7 @@ No database changes in Phase 4 - all tables already exist.
 - ✅ Return 403 Forbidden (not 401) when permission is missing
 
 ### For QA:
+
 - **Test URL:** https://aurelle.uz/owner?tab=bookings
 - **Test Account:** xulkarraziyeva@gmail.com / aurelle2026
 - **Focus Areas:**
@@ -717,6 +794,7 @@ No database changes in Phase 4 - all tables already exist.
   - All booking data loads correctly
 
 ### For Product Owner:
+
 - ✅ Phase 4 deployed successfully
 - ✅ Security hardened with RBAC and audit logging
 - ✅ Full accountability for all booking actions
@@ -730,6 +808,7 @@ No database changes in Phase 4 - all tables already exist.
 ### Local Testing:
 
 **Bulk Update (10 bookings):**
+
 ```
 Before Phase 4: 1,850ms average
 After Phase 4:  2,120ms average
@@ -737,6 +816,7 @@ Overhead:       +270ms (+14.6%)
 ```
 
 **Advanced Filters Query:**
+
 ```
 Before Phase 4: 142ms average
 After Phase 4:  158ms average
@@ -744,6 +824,7 @@ Overhead:       +16ms (+11.3%)
 ```
 
 **History Viewing:**
+
 ```
 Before Phase 4: 48ms average
 After Phase 4:  62ms average
@@ -753,6 +834,7 @@ Overhead:       +14ms (+29.2%)
 ### Production Testing (After Deployment):
 
 **To Be Measured:**
+
 - Real-world bulk update latency
 - Permission check cache hit rate
 - Audit log insertion performance
@@ -795,6 +877,7 @@ Overhead:       +14ms (+29.2%)
 **Next Phase:** Week 5 - Permission Management UI + Audit Log Viewer
 
 **Build Stats:**
+
 - Client: 485.66 kB (153.97 kB gzipped)
 - Server: 1.6 MB
 - Total Build Time: 39.2 seconds
@@ -802,6 +885,7 @@ Overhead:       +14ms (+29.2%)
 - Memory Usage: 11.8 MB
 
 **Security Status:**
+
 - RBAC: ✅ Active
 - Audit Logging: ✅ Active
 - Vulnerabilities: 0 new, 3 high (pre-existing, npm dependencies)

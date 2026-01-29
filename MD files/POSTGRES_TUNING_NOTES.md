@@ -26,14 +26,14 @@
 
 ```typescript
 // server/db.ts
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // ВАЖНО: ограничить пул в приложении!
-  max: 20,  // Максимум 20 соединений от этого приложения
-  min: 5,   // Минимум 5 постоянных
+  max: 20, // Максимум 20 соединений от этого приложения
+  min: 5, // Минимум 5 постоянных
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
@@ -42,12 +42,14 @@ export const db = drizzle(pool);
 ```
 
 **PostgreSQL config:**
+
 ```ini
 # /opt/aurelle/postgres/postgresql.conf
 max_connections = 100  # Вместо 200
 ```
 
 **Результат:**
+
 - Приложение использует 5-20 соединений
 - PostgreSQL разрешает до 100 (безопасно)
 - RAM не взрывается
@@ -69,24 +71,27 @@ services:
       DATABASES_USER: aurelle_user
       DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASES_DBNAME: aurelle_db
-      PGBOUNCER_POOL_MODE: transaction  # Важно!
+      PGBOUNCER_POOL_MODE: transaction # Важно!
       PGBOUNCER_MAX_CLIENT_CONN: 200
-      PGBOUNCER_DEFAULT_POOL_SIZE: 25   # Реальные соединения к PG
+      PGBOUNCER_DEFAULT_POOL_SIZE: 25 # Реальные соединения к PG
     ports:
       - "127.0.0.1:6432:5432"
 ```
 
 **PostgreSQL config:**
+
 ```ini
 max_connections = 50  # Только для pgbouncer
 ```
 
 **Приложение подключается через pgbouncer:**
+
 ```env
 DATABASE_URL="postgres://aurelle_user:pass@127.0.0.1:6432/aurelle_db"
 ```
 
 **Результат:**
+
 - 200 клиентских соединений → pgbouncer
 - Только 25 реальных соединений → PostgreSQL
 - RAM в безопасности
@@ -96,11 +101,13 @@ DATABASE_URL="postgres://aurelle_user:pass@127.0.0.1:6432/aurelle_db"
 ## 📊 Рекомендации по max_connections
 
 ### Для 2GB RAM сервера (сейчас):
+
 ```ini
 max_connections = 50
 ```
 
 ### Для 4GB RAM сервера (после апгрейда):
+
 ```ini
 # Если БЕЗ pgbouncer:
 max_connections = 100
@@ -110,6 +117,7 @@ max_connections = 50  # Pgbouncer управляет пулом
 ```
 
 ### Для 8GB RAM сервера (будущее):
+
 ```ini
 # Если БЕЗ pgbouncer:
 max_connections = 200
@@ -147,20 +155,23 @@ WHERE name = 'max_connections';
 ## ✅ Что сделать прямо сейчас
 
 1. **Проверить connection pool в коде:**
+
    ```bash
    grep -r "Pool\|createPool\|max:" d:\AURELLE\server\db.ts
    ```
 
 2. **Если пула нет — добавить:**
+
    ```typescript
    // server/db.ts
    const pool = new Pool({
      connectionString: process.env.DATABASE_URL,
-     max: 20,  // ВАЖНО!
+     max: 20, // ВАЖНО!
    });
    ```
 
 3. **Снизить max_connections в PostgreSQL:**
+
    ```bash
    ssh root@89.39.94.194
    nano /opt/aurelle/postgres/postgresql.conf
@@ -173,6 +184,7 @@ WHERE name = 'max_connections';
    ```
 
 4. **Проверить что всё работает:**
+
    ```bash
    # На сервере
    docker exec aurelle-postgres psql -U aurelle_user -d aurelle_db \

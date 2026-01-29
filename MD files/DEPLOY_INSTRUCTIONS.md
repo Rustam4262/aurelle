@@ -3,19 +3,23 @@
 ## Что будет развёрнуто:
 
 ### ✅ Fix #1: Исправление бронирования (master_id nullable)
+
 - Клиенты могут бронировать без выбора конкретного мастера
 - Изменена схема БД: master_id теперь опциональный
 
 ### ✅ Fix #2: Исправление загрузки фото
+
 - Автоматическое создание папок для загрузок при старте сервера
 - Работает загрузка фото салонов и портфолио мастеров
 
 ### ✅ Fix #3: Геолокация с Яндекс.Картами
+
 - Владельцы могут указать местоположение салона на карте
 - Клиенты видят салон на карте с возможностью скопировать адрес
 - Интеграция с Яндекс.Картами
 
 ### ✅ Fix #4: Исправления TypeScript
+
 - Убраны все ошибки компиляции
 - Убраны предупреждения о устаревших опциях
 
@@ -37,6 +41,7 @@ bash deploy_booking_fix.sh
 ```
 
 Скрипт автоматически выполнит:
+
 1. ✅ Подтянет последний код с GitHub
 2. ✅ Скопирует обновлённые файлы в контейнер
 3. ✅ Установит новые зависимости (@pbe/react-yandex-maps)
@@ -89,6 +94,7 @@ docker logs --tail=30 aurelle_app_1
 ## ✅ Проверка после развёртывания
 
 ### 1. Проверка работы сервера
+
 ```bash
 docker ps | grep aurelle_app_1
 # Статус должен быть "Up X seconds/minutes"
@@ -98,6 +104,7 @@ docker logs --tail=50 aurelle_app_1
 ```
 
 ### 2. Проверка БД
+
 ```bash
 docker exec aurelle_postgres_1 psql -U aurelle_user -d aurelle -c "\d bookings" | grep master_id
 # Должно быть: master_id | varchar |  |  |
@@ -105,6 +112,7 @@ docker exec aurelle_postgres_1 psql -U aurelle_user -d aurelle -c "\d bookings" 
 ```
 
 ### 3. Проверка папок для загрузок
+
 ```bash
 docker exec aurelle_app_1 ls -la /app/server/uploads/
 # Должны быть папки: salons/, masters/, portfolio/, avatars/
@@ -113,6 +121,7 @@ docker exec aurelle_app_1 ls -la /app/server/uploads/
 ### 4. Функциональная проверка
 
 **Тест бронирования:**
+
 1. Откройте https://aurelle.uz
 2. Зайдите как клиент
 3. Выберите салон → услугу
@@ -121,6 +130,7 @@ docker exec aurelle_app_1 ls -la /app/server/uploads/
 6. ✅ Должно успешно создаться бронирование
 
 **Тест загрузки фото:**
+
 1. Зайдите как владелец салона
 2. Перейдите в управление салоном
 3. Нажмите "Фотографии" → "Добавить фото"
@@ -128,6 +138,7 @@ docker exec aurelle_app_1 ls -la /app/server/uploads/
 5. ✅ Должно успешно загрузиться
 
 **Тест геолокации:**
+
 1. Зайдите как владелец
 2. В разделе "Информация о салоне"
 3. Нажмите "Изменить местоположение"
@@ -166,6 +177,7 @@ docker restart aurelle_app_1
 **Последний коммит:** `71d16e7a`
 
 **История изменений:**
+
 - `51f07c2b` - Fix booking creation: make master_id nullable
 - `fd05f5e4` - Fix photo upload: initialize upload directories
 - `460230a6` - Add Yandex Maps geolocation feature
@@ -181,11 +193,13 @@ docker restart aurelle_app_1
 Если возникнут проблемы:
 
 1. **Проверьте логи:**
+
    ```bash
    docker logs -f aurelle_app_1
    ```
 
 2. **Проверьте статус контейнеров:**
+
    ```bash
    docker ps -a
    ```

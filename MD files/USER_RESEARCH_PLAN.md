@@ -89,12 +89,14 @@ Conduct comprehensive user research to validate AURELLE's product-market fit, id
 #### Salon Owners (5-10 participants)
 
 **Profile**:
+
 - Own or manage a beauty salon in Tashkent, Samarkand, or Bukhara
 - 2-5 specialists working
 - Currently accepting bookings (phone, WhatsApp, or booking system)
 - Tech-savvy (comfortable with smartphones/computers)
 
 **Recruitment Channels**:
+
 1. Direct outreach to salons listed on platform
 2. Beauty industry Facebook groups
 3. Instagram DMs to local salons
@@ -106,12 +108,14 @@ Conduct comprehensive user research to validate AURELLE's product-market fit, id
 #### End Clients (20-30 participants)
 
 **Profile**:
+
 - Age 20-45, living in target cities
 - Book beauty services 2+ times per month
 - Active on social media (Instagram, Telegram)
 - Comfortable with mobile apps
 
 **Recruitment Channels**:
+
 1. Instagram ads targeting beauty enthusiasts
 2. Telegram beauty channels
 3. Referrals from early adopters
@@ -123,12 +127,14 @@ Conduct comprehensive user research to validate AURELLE's product-market fit, id
 #### Specialists/Masters (5-10 participants)
 
 **Profile**:
+
 - Hairstylist, nail technician, makeup artist, etc.
 - 2+ years experience
 - Currently manage bookings (manually or with system)
 - Interested in growing client base
 
 **Recruitment Channels**:
+
 1. Through salon owners
 2. Instagram beauty community
 3. Professional beauty groups
@@ -168,10 +174,10 @@ Subject: Участвуй в развитии новой платформы дл
 
 **File**: `USER_RESEARCH_PARTICIPANTS.xlsx`
 
-| Name | Role | City | Contact | Status | Interview Date | Survey Done | NPS Score | Notes |
-|------|------|------|---------|--------|----------------|-------------|-----------|-------|
-| Айжан | Salon Owner | Tashkent | +998... | Confirmed | 2026-01-15 | ✅ | 8 | Wants mobile app |
-| Дильназ | Client | Samarkand | +998... | Scheduled | 2026-01-16 | ⏳ | - | Found via Instagram |
+| Name    | Role        | City      | Contact | Status    | Interview Date | Survey Done | NPS Score | Notes               |
+| ------- | ----------- | --------- | ------- | --------- | -------------- | ----------- | --------- | ------------------- |
+| Айжан   | Salon Owner | Tashkent  | +998... | Confirmed | 2026-01-15     | ✅          | 8         | Wants mobile app    |
+| Дильназ | Client      | Samarkand | +998... | Scheduled | 2026-01-16     | ⏳          | -         | Found via Instagram |
 
 ---
 
@@ -191,6 +197,7 @@ Subject: Участвуй в развитии новой платформы дл
 #### 1. Introduction (5 minutes)
 
 **Script**:
+
 ```
 Здравствуйте, [Имя]! Спасибо, что нашли время для интервью.
 
@@ -209,6 +216,7 @@ Subject: Участвуй в развитии новой платформы дл
 #### 2. Background & Context (5-10 minutes)
 
 **For Salon Owners**:
+
 ```
 1. Расскажите о вашем салоне
    - Сколько мастеров работает?
@@ -228,6 +236,7 @@ Subject: Участвуй в развитии новой платформы дл
 ```
 
 **For End Clients**:
+
 ```
 1. Как часто вы ходите в салоны красоты?
    - Какие услуги обычно заказываете?
@@ -245,6 +254,7 @@ Subject: Участвуй в развитии новой платформы дл
 ```
 
 **For Specialists**:
+
 ```
 1. Расскажите о вашей работе
    - Какие услуги предоставляете?
@@ -377,43 +387,54 @@ For Specialists:
 **Location**: [City]
 
 ## Background
+
 - [Key background info]
 
 ## Current Pain Points
+
 1. [Pain point 1]
 2. [Pain point 2]
 
 ## Product Feedback
 
 ### Liked
+
 - [Positive feedback]
 
 ### Disliked
+
 - [Negative feedback]
 
 ### Confused By
+
 - [Confusion points]
 
 ### Missing Features
+
 - [Requested features]
 
 ## Feature Prioritization
+
 - Must-have: [Features]
 - Nice-to-have: [Features]
 - Not important: [Features]
 
 ## NPS Score: [Score]/10
+
 **Reason**: [Why this score]
 
 ## Key Quotes
+
 > "[Memorable quote 1]"
 > "[Memorable quote 2]"
 
 ## Action Items
+
 - [ ] [Action 1]
 - [ ] [Action 2]
 
 ## Follow-up Questions
+
 - [Question to clarify later]
 ```
 
@@ -451,6 +472,7 @@ For Specialists:
 #### Section 2: Current Behavior (3-5 questions)
 
 **For Clients**:
+
 ```
 3. Как часто вы посещаете салоны красоты?
    ( ) Несколько раз в неделю
@@ -478,6 +500,7 @@ For Specialists:
 ```
 
 **For Salon Owners**:
+
 ```
 3. Сколько мастеров работает в вашем салоне?
    ( ) Только я (частная практика)
@@ -589,6 +612,7 @@ For Specialists:
 ### Survey Distribution
 
 **Channels**:
+
 1. Email to beta testers
 2. In-app prompt after first booking
 3. WhatsApp message after interview
@@ -596,6 +620,7 @@ For Specialists:
 5. QR codes in partner salons
 
 **Timing**:
+
 - Send after user completes first action (registration, booking, etc.)
 - Follow up after 7 days if no response
 - Close survey after 100+ responses or 30 days
@@ -607,16 +632,19 @@ For Specialists:
 ### Tools & Setup
 
 #### 1. Interview Recording
+
 - **Tool**: Zoom (with recording enabled)
 - **Storage**: Google Drive folder `/User Research/Interviews/`
 - **Transcription**: Otter.ai or manual notes
 
 #### 2. Survey Responses
+
 - **Tool**: Google Forms
 - **Export**: Automatic to Google Sheets
 - **File**: `USER_RESEARCH_SURVEY_RESPONSES.xlsx`
 
 #### 3. Analytics Data
+
 - **Tool**: Google Analytics 4 (to be set up in Task #52)
 - **Metrics**: User behavior, drop-off points, time on page
 
@@ -652,11 +680,13 @@ For Specialists:
 ### Step 1: Data Aggregation
 
 **Interviews** (Qualitative):
+
 1. Transcribe all interviews
 2. Tag key themes (pain points, likes, dislikes, feature requests)
 3. Extract memorable quotes
 
 **Surveys** (Quantitative):
+
 1. Export to Excel/Sheets
 2. Clean data (remove incomplete responses)
 3. Calculate statistics (averages, percentages)
@@ -666,6 +696,7 @@ For Specialists:
 **Method**: Affinity Mapping
 
 Create categories:
+
 - **Pain Points**: Current problems users face
 - **Delighters**: What users love
 - **Frustrations**: What annoys users
@@ -674,15 +705,16 @@ Create categories:
 
 **Example**:
 
-| Theme | Frequency | Severity | Quotes |
-|-------|-----------|----------|--------|
-| Hard to reach salon by phone | 18/30 clients | High | "Я звоню по 5 раз, пока дозвонюсь" |
-| No online payment | 12/30 clients | Medium | "Хотелось бы платить картой сразу" |
-| Confusing salon search | 8/30 clients | High | "Не понятно, как фильтровать по услугам" |
+| Theme                        | Frequency     | Severity | Quotes                                   |
+| ---------------------------- | ------------- | -------- | ---------------------------------------- |
+| Hard to reach salon by phone | 18/30 clients | High     | "Я звоню по 5 раз, пока дозвонюсь"       |
+| No online payment            | 12/30 clients | Medium   | "Хотелось бы платить картой сразу"       |
+| Confusing salon search       | 8/30 clients  | High     | "Не понятно, как фильтровать по услугам" |
 
 ### Step 3: NPS Analysis
 
 **Calculate NPS**:
+
 ```
 NPS = % Promoters (9-10) - % Detractors (0-6)
 
@@ -701,6 +733,7 @@ Interpretation:
 ```
 
 **By Segment**:
+
 - Salon Owners NPS: [Score]
 - Clients NPS: [Score]
 - Specialists NPS: [Score]
@@ -729,12 +762,12 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 
 **Prioritization Spreadsheet**:
 
-| Feature | Reach | Impact | Confidence | Effort | RICE Score | Priority |
-|---------|-------|--------|------------|--------|------------|----------|
-| Mobile app | 1000 | 3 | 0.8 | 12 | 200 | P0 |
-| Online payment | 800 | 2 | 0.9 | 4 | 360 | P0 |
-| Telegram notifications | 1000 | 1 | 1.0 | 2 | 500 | P0 |
-| Loyalty program | 500 | 1 | 0.5 | 8 | 31 | P2 |
+| Feature                | Reach | Impact | Confidence | Effort | RICE Score | Priority |
+| ---------------------- | ----- | ------ | ---------- | ------ | ---------- | -------- |
+| Mobile app             | 1000  | 3      | 0.8        | 12     | 200        | P0       |
+| Online payment         | 800   | 2      | 0.9        | 4      | 360        | P0       |
+| Telegram notifications | 1000  | 1      | 1.0        | 2      | 500        | P0       |
+| Loyalty program        | 500   | 1      | 0.5        | 8      | 31         | P2       |
 
 ### Step 5: Insight Documentation
 
@@ -792,12 +825,15 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 ## Segmented Insights
 
 ### Salon Owners
+
 - [Key insights]
 
 ### Clients
+
 - [Key insights]
 
 ### Specialists
+
 - [Key insights]
 ```
 
@@ -821,6 +857,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 ## Now (January 2026) - Foundation
 
 ### P0: Critical Issues
+
 - [ ] Fix confusing booking flow
   - Issue: 8 users got stuck at payment step
   - Solution: Simplify to 3 steps, add progress indicator
@@ -834,6 +871,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
   - Impact: 50% faster salon discovery
 
 ### P1: High Value
+
 - [ ] Master portfolios
   - Requested by: 14 users
   - Solution: Photo gallery for each specialist
@@ -842,6 +880,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 ## Next (February 2026) - Growth
 
 ### P0: Mobile Experience
+
 - [ ] Mobile app MVP (iOS + Android)
   - Requested by: 28/40 users (#1 request)
   - RICE Score: 200
@@ -849,6 +888,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
   - Features: Browse, book, manage bookings
 
 ### P1: Payment
+
 - [ ] Online payment (Payme, Click)
   - Requested by: 22/40 users
   - RICE Score: 360
@@ -857,6 +897,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 ## Later (March 2026) - Engagement
 
 ### P1: Retention
+
 - [ ] Telegram notifications
   - RICE Score: 500
   - Effort: 1 week
@@ -867,6 +908,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
   - Effort: 3 weeks
 
 ### P2: Nice to Have
+
 - [ ] CRM for salons
 - [ ] Analytics dashboard
 - [ ] Multi-location management
@@ -891,6 +933,7 @@ RICE = (1000 × 3 × 0.8) / 12 = 200
 **Tool**: ProductPlan, Roadmunk, or Google Sheets with Gantt chart
 
 **Format**:
+
 ```
 Month: January 2026
 Week 1-2: Fix booking flow
@@ -949,6 +992,7 @@ Week 3-5: Loyalty program
 ### Email Templates
 
 #### Interview Confirmation
+
 ```
 Subject: Подтверждение интервью AURELLE - [Date]
 
@@ -979,6 +1023,7 @@ AURELLE Team
 ```
 
 #### Interview Reminder (24h before)
+
 ```
 Subject: Напоминание: интервью завтра в [Time]
 
@@ -994,6 +1039,7 @@ Subject: Напоминание: интервью завтра в [Time]
 ```
 
 #### Survey Follow-up
+
 ```
 Subject: Последний шаг: опрос AURELLE (5 минут)
 
@@ -1044,6 +1090,7 @@ Subject: Последний шаг: опрос AURELLE (5 минут)
 This user research plan provides a structured approach to gathering and analyzing user feedback. By following this framework, AURELLE will have data-driven insights to guide product development and ensure product-market fit.
 
 **Next Steps**:
+
 1. Review and approve this plan
 2. Begin recruitment (Week 1)
 3. Conduct interviews (Week 3-4)

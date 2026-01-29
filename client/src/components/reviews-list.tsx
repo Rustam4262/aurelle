@@ -41,8 +41,8 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
   const endpoint = salonId
     ? `/api/reviews/salon/${salonId}`
     : masterId
-    ? `/api/reviews/master/${masterId}`
-    : null;
+      ? `/api/reviews/master/${masterId}`
+      : null;
 
   const { data: reviews, isLoading } = useQuery<Review[]>({
     queryKey: [endpoint, { limit }],
@@ -55,7 +55,13 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
   });
 
   const respondMutation = useMutation({
-    mutationFn: async ({ reviewId, ownerResponse }: { reviewId: string; ownerResponse: string }) => {
+    mutationFn: async ({
+      reviewId,
+      ownerResponse,
+    }: {
+      reviewId: string;
+      ownerResponse: string;
+    }) => {
       return apiRequest("PATCH", `/api/reviews/${reviewId}/respond`, { ownerResponse });
     },
     onSuccess: () => {
@@ -141,9 +147,7 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
               </p>
             )}
 
-            {review.comment && (
-              <p className="text-sm mt-2 leading-relaxed">{review.comment}</p>
-            )}
+            {review.comment && <p className="text-sm mt-2 leading-relaxed">{review.comment}</p>}
 
             {review.ownerResponse && (
               <div className="mt-4 p-3 bg-muted rounded-lg">
@@ -168,7 +172,9 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
                         onClick={() => handleRespond(review.id)}
                         disabled={respondMutation.isPending}
                       >
-                        {respondMutation.isPending ? t("common.submitting") : t("reviews.submitResponse")}
+                        {respondMutation.isPending
+                          ? t("common.submitting")
+                          : t("reviews.submitResponse")}
                       </Button>
                       <Button
                         size="sm"
@@ -183,11 +189,7 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setRespondingTo(review.id)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => setRespondingTo(review.id)}>
                     {t("reviews.respondToReview")}
                   </Button>
                 )}

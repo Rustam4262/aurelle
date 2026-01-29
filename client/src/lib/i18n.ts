@@ -5,9 +5,8 @@ import en from "../locales/en.json";
 import ru from "../locales/ru.json";
 import uz from "../locales/uz.json";
 
-const savedLanguage = typeof window !== "undefined" 
-  ? localStorage.getItem("language") || "en" 
-  : "en";
+const savedLanguage =
+  typeof window !== "undefined" ? localStorage.getItem("language") || "en" : "en";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -29,6 +28,15 @@ export const formatCurrency = (amount: number): string => {
     maximumFractionDigits: 0,
   }).format(amount);
 };
+
+export function getLocalizedText(
+  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
+  lang: string,
+): string {
+  if (!obj) return "";
+  const langKey = lang as keyof typeof obj;
+  return obj[langKey] || obj.en || "";
+}
 
 export const changeLanguage = (lang: string) => {
   i18n.changeLanguage(lang);

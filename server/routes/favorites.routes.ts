@@ -12,14 +12,16 @@ const router = Router();
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    const userFavorites = await db.select({
-      id: salons.id,
-      name: salons.name,
-      city: salons.city,
-      photos: salons.photos,
-      averageRating: salons.averageRating,
-      reviewCount: salons.reviewCount,
-    }).from(favorites)
+    const userFavorites = await db
+      .select({
+        id: salons.id,
+        name: salons.name,
+        city: salons.city,
+        photos: salons.photos,
+        averageRating: salons.averageRating,
+        reviewCount: salons.reviewCount,
+      })
+      .from(favorites)
       .innerJoin(salons, eq(favorites.salonId, salons.id))
       .where(eq(favorites.userId, userId));
     return res.json(userFavorites);
@@ -45,9 +47,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     const { salonId } = parsed.data;
 
-    const [favorite] = await db.insert(favorites)
-      .values([{ userId, salonId }])
-      .returning();
+    const [favorite] = await db.insert(favorites).values([{ userId, salonId }]).returning();
     return res.status(201).json(favorite);
   } catch (error) {
     console.error("Add favorite error:", error);
@@ -61,7 +61,8 @@ router.delete("/:salonId", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const { salonId } = req.params;
 
-    await db.delete(favorites)
+    await db
+      .delete(favorites)
       .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
     return res.json({ success: true });
   } catch (error) {
@@ -76,11 +77,14 @@ router.post("/:salonId", isAuthenticated, async (req: any, res) => {
     const { salonId } = req.params;
     const userId = req.user.claims.sub;
 
-    const existing = await db.select().from(favorites)
+    const existing = await db
+      .select()
+      .from(favorites)
       .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
 
     if (existing.length > 0) {
-      await db.delete(favorites)
+      await db
+        .delete(favorites)
         .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
       return res.json({ favorited: false });
     } else {
@@ -97,8 +101,7 @@ router.post("/:salonId", isAuthenticated, async (req: any, res) => {
 router.get("/my-favorites", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    const userFavorites = await db.select().from(favorites)
-      .where(eq(favorites.userId, userId));
+    const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
     return res.json(userFavorites);
   } catch (error) {
     console.error("Get favorites error:", error);

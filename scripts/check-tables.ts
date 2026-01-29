@@ -19,7 +19,7 @@ async function checkTables() {
     `);
 
     const salonManagersExists = salonManagersCheck.rows[0]?.exists;
-    console.log(`✓ salon_managers table: ${salonManagersExists ? '✅ EXISTS' : '❌ NOT FOUND'}`);
+    console.log(`✓ salon_managers table: ${salonManagersExists ? "✅ EXISTS" : "❌ NOT FOUND"}`);
 
     if (salonManagersExists) {
       // Count managers
@@ -38,7 +38,7 @@ async function checkTables() {
     `);
 
     const salonBreaksExists = salonBreaksCheck.rows[0]?.exists;
-    console.log(`✓ salon_breaks table: ${salonBreaksExists ? '✅ EXISTS' : '❌ NOT FOUND'}\n`);
+    console.log(`✓ salon_breaks table: ${salonBreaksExists ? "✅ EXISTS" : "❌ NOT FOUND"}\n`);
 
     process.exit(0);
   } catch (error) {

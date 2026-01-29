@@ -40,12 +40,9 @@ export function setupLocalAuth(app: Express) {
       }
 
       const { email, password, firstName, lastName } = parsed.data;
+      console.log(`[Registration] Attempt for email: ${email}`);
 
-      const existingUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       if (existingUser.length > 0) {
         return res.status(400).json({ message: "User with this email already exists" });
@@ -64,6 +61,8 @@ export function setupLocalAuth(app: Express) {
           lastName: lastName || null,
         })
         .returning();
+
+      console.log(`[Registration] User created with ID: ${newUser.id}`);
 
       (req.session as any).passport = {
         user: {
@@ -93,9 +92,12 @@ export function setupLocalAuth(app: Express) {
           },
         });
       });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
+    } catch (error: any) {
+      console.error("[Registration] Critical error:", error);
+      res.status(500).json({
+        message: "Registration failed",
+        error: process.env.NODE_ENV === "development" ? error.message : undefined
+      });
     }
   });
 
@@ -108,11 +110,7 @@ export function setupLocalAuth(app: Express) {
 
       const { email, password } = parsed.data;
 
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       if (!user || !user.passwordHash) {
         return res.status(401).json({ message: "Invalid email or password" });
@@ -167,22 +165,18 @@ export function setupLocalAuth(app: Express) {
 
       const { email } = parsed.data;
 
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       // Always return success to prevent email enumeration
       if (!user) {
         return res.json({
           success: true,
-          message: "If this email exists, you will receive password reset instructions"
+          message: "If this email exists, you will receive password reset instructions",
         });
       }
 
       // Generate secure random token
-      const token = crypto.randomBytes(32).toString('hex'); // 64 hex chars
+      const token = crypto.randomBytes(32).toString("hex"); // 64 hex chars
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
       // Save token to database
@@ -194,16 +188,16 @@ export function setupLocalAuth(app: Express) {
 
       // TODO: Send email with reset link
       // For now, log the reset link (in production, send via email)
-      const resetLink = `${process.env.APP_URL || 'http://localhost:5000'}/auth/reset-password?token=${token}`;
+      const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
       console.log(`[Password Reset] Link for ${email}: ${resetLink}`);
 
       // In development, include token in response (REMOVE IN PRODUCTION)
-      const devResponse = process.env.NODE_ENV !== 'production' ? { token, resetLink } : {};
+      const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
 
       res.json({
         success: true,
         message: "If this email exists, you will receive password reset instructions",
-        ...devResponse
+        ...devResponse,
       });
     } catch (error) {
       console.error("Password reset request error:", error);
@@ -229,14 +223,14 @@ export function setupLocalAuth(app: Express) {
           and(
             eq(passwordResetTokens.token, token),
             gt(passwordResetTokens.expiresAt, new Date()),
-            eq(passwordResetTokens.usedAt, null as any)
-          )
+            eq(passwordResetTokens.usedAt, null as any),
+          ),
         )
         .limit(1);
 
       if (!resetToken) {
         return res.status(400).json({
-          message: "Invalid or expired reset token"
+          message: "Invalid or expired reset token",
         });
       }
 
@@ -244,10 +238,7 @@ export function setupLocalAuth(app: Express) {
       const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
       // Update user password
-      await db
-        .update(users)
-        .set({ passwordHash })
-        .where(eq(users.id, resetToken.userId));
+      await db.update(users).set({ passwordHash }).where(eq(users.id, resetToken.userId));
 
       // Mark token as used
       await db
@@ -257,7 +248,7 @@ export function setupLocalAuth(app: Express) {
 
       res.json({
         success: true,
-        message: "Password has been reset successfully. You can now log in with your new password."
+        message: "Password has been reset successfully. You can now log in with your new password.",
       });
     } catch (error) {
       console.error("Password reset confirmation error:", error);

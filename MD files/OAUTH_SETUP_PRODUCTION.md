@@ -11,6 +11,7 @@
 ## 1. Google OAuth
 
 ### Ваши текущие credentials:
+
 - **Client ID**: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com`
 - **Client Secret**: `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`
 
@@ -32,6 +33,7 @@
 8. **Сохраните** изменения
 
 ### Проверка:
+
 ```bash
 curl https://your-domain.com/api/auth/providers
 # Должно вернуть: { "google": true, ... }
@@ -42,6 +44,7 @@ curl https://your-domain.com/api/auth/providers
 ## 2. Yandex OAuth
 
 ### Ваши текущие credentials:
+
 - **Client ID**: `3b79a753092d49bb977ce1ec5b3017ec`
 - **Client Secret**: `3086c3c9bf844b5298f801005307e4d4`
 
@@ -62,6 +65,7 @@ curl https://your-domain.com/api/auth/providers
 7. **Сохраните** изменения
 
 ### Проверка:
+
 ```bash
 curl https://your-domain.com/api/auth/providers
 # Должно вернуть: { "yandex": true, ... }
@@ -105,13 +109,14 @@ curl https://your-domain.com/api/auth/providers
 ```
 
 Ожидаемый ответ:
+
 ```json
 {
   "local": true,
   "yandex": true,
   "google": true,
-  "github": false,  // или true, если настроили
-  "phone": false    // или true, если настроили Twilio
+  "github": false, // или true, если настроили
+  "phone": false // или true, если настроили Twilio
 }
 ```
 
@@ -120,12 +125,14 @@ curl https://your-domain.com/api/auth/providers
 ## 5. Тестирование OAuth
 
 ### Тест Google OAuth:
+
 1. Откройте https://your-domain.com/auth
 2. Нажмите **Sign in with Google**
 3. Вас перенаправит на страницу авторизации Google
 4. После успешного входа вернет на ваш сайт
 
 ### Тест Yandex OAuth:
+
 1. Откройте https://your-domain.com/auth
 2. Нажмите **Войти через Яндекс**
 3. Вас перенаправит на страницу авторизации Яндекс
@@ -140,6 +147,7 @@ curl https://your-domain.com/api/auth/providers
 **Проблема**: Google/Yandex возвращает ошибку о несовпадении redirect_uri
 
 **Решение**:
+
 1. Убедитесь что используете **HTTPS** (не HTTP)
 2. Проверьте что домен точно совпадает (включая www или без него)
 3. Проверьте что путь точно `/api/auth/google/callback` или `/api/auth/yandex/callback`
@@ -148,12 +156,14 @@ curl https://your-domain.com/api/auth/providers
 ### OAuth работает локально, но не на сервере
 
 **Проверьте**:
+
 1. `.env` файл на сервере содержит правильные Client ID и Secret
 2. HTTPS настроен правильно (проверьте SSL сертификат)
 3. Nginx проксирует запросы на Node.js (проверьте логи nginx)
 4. Приложение запущено: `pm2 status aurelle`
 
 **Логи**:
+
 ```bash
 # Логи приложения
 pm2 logs aurelle
@@ -167,6 +177,7 @@ sudo tail -f /var/log/nginx/aurelle_error.log
 **Проблема**: После успешной авторизации пользователь остается неавторизованным
 
 **Решение**:
+
 1. Проверьте что `SESSION_SECRET` установлен в `.env`
 2. Убедитесь что используется один домен (не смешивайте с/без www)
 3. Проверьте настройки cookies в браузере
@@ -200,6 +211,7 @@ sudo tail -f /var/log/nginx/aurelle_error.log
 ### Важные рекомендации:
 
 1. **Никогда не коммитьте `.env` в git**
+
    ```bash
    # Убедитесь что .env в .gitignore
    echo ".env" >> .gitignore

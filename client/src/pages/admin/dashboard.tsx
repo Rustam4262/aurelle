@@ -105,12 +105,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Platform overview and key metrics
-        </p>
+        <h1 className="text-3xl font-serif font-semibold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">Platform overview and key metrics</p>
       </div>
 
       {/* KPI Cards */}
@@ -131,9 +127,7 @@ export default function AdminDashboard() {
                 <div className="text-3xl font-bold text-foreground">
                   {card.value.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {card.subtitle}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
               </CardContent>
             </Card>
           );
@@ -153,15 +147,11 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">User Verification Rate</p>
-                <p className="text-sm text-muted-foreground">
-                  Email and phone verified users
-                </p>
+                <p className="text-sm text-muted-foreground">Email and phone verified users</p>
               </div>
               <div className="text-2xl font-bold text-green-600">
                 {stats?.stats.salons.total
-                  ? Math.round(
-                      (stats.stats.salons.verified / stats.stats.salons.total) * 100
-                    )
+                  ? Math.round((stats.stats.salons.verified / stats.stats.salons.total) * 100)
                   : 0}
                 %
               </div>
@@ -170,9 +160,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Complaint Resolution</p>
-                <p className="text-sm text-muted-foreground">
-                  Open complaints requiring attention
-                </p>
+                <p className="text-sm text-muted-foreground">Open complaints requiring attention</p>
               </div>
               <div className="text-2xl font-bold text-orange-600">
                 {stats?.stats.moderation.openComplaints || 0}
@@ -182,9 +170,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Active Enforcement</p>
-                <p className="text-sm text-muted-foreground">
-                  Current sanctions in effect
-                </p>
+                <p className="text-sm text-muted-foreground">Current sanctions in effect</p>
               </div>
               <div className="text-2xl font-bold text-red-600">
                 {stats?.stats.moderation.activeSanctions || 0}

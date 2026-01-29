@@ -31,31 +31,32 @@
 **Файл:** `client/src/pages/auth.tsx`
 
 **До исправления:**
+
 ```tsx
 <Input
   type="password"
-  minLength={6}  // ❌ Несоответствие с сервером
+  minLength={6} // ❌ Несоответствие с сервером
   required
 />
 ```
 
 **После исправления:**
+
 ```tsx
 <Input
   type="password"
-  minLength={8}  // ✅ Соответствует серверу
+  minLength={8} // ✅ Соответствует серверу
   required
-/>
-{authMode === "register" && (
-  <p className="text-xs text-muted-foreground">
-    Минимум 8 символов
-  </p>
-)}
+/>;
+{
+  authMode === "register" && <p className="text-xs text-muted-foreground">Минимум 8 символов</p>;
+}
 ```
 
 ### 2. Улучшена обработка ошибок
 
 **До исправления:**
+
 ```typescript
 if (!response.ok) {
   const error = await response.json();
@@ -65,6 +66,7 @@ if (!response.ok) {
 ```
 
 **После исправления:**
+
 ```typescript
 if (!response.ok) {
   const error = await response.json();
@@ -81,6 +83,7 @@ if (!response.ok) {
 ### 3. Добавлена подсказка для пользователя
 
 Теперь при регистрации под полем пароля отображается:
+
 ```
 Минимум 8 символов
 ```
@@ -103,14 +106,11 @@ const registerSchema = z.object({
 ### Клиентская валидация (`client/src/pages/auth.tsx`):
 
 ```tsx
-<Input
-  type="password"
-  required
-  minLength={8}
-/>
+<Input type="password" required minLength={8} />
 ```
 
 **Требования к паролю:**
+
 - ✅ Минимум 8 символов
 - ✅ Обязательное поле
 - ✅ Совпадение с подтверждением пароля (при регистрации)
@@ -122,24 +122,28 @@ const registerSchema = z.object({
 ### Теперь пользователь видит конкретные ошибки:
 
 **1. Слишком короткий пароль (< 8 символов):**
+
 ```
 Error
 Password must be at least 8 characters
 ```
 
 **2. Пароли не совпадают:**
+
 ```
 Error
 Passwords do not match
 ```
 
 **3. Email уже существует:**
+
 ```
 Error
 User with this email already exists
 ```
 
 **4. Невалидный email:**
+
 ```
 Error
 Invalid email
@@ -152,6 +156,7 @@ Invalid email
 ### Регистрация через Email:
 
 **Шаги:**
+
 1. Откройте https://aurelle.uz/auth
 2. Перейдите на вкладку "Email"
 3. Нажмите "Регистрация"
@@ -162,6 +167,7 @@ Invalid email
 5. Нажмите "Создать аккаунт"
 
 **Результат:**
+
 - ✅ Аккаунт создается
 - ✅ Автоматический вход в систему
 - ✅ Переход в профиль
@@ -169,12 +175,14 @@ Invalid email
 ### Вход через Email:
 
 **Шаги:**
+
 1. https://aurelle.uz/auth
 2. Вкладка "Email" → "Вход"
 3. Email + Пароль
 4. "Sign In"
 
 **Результат:**
+
 - ✅ Успешный вход
 - ✅ Сохранение сессии
 
@@ -203,7 +211,7 @@ const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 ### Валидация на стороне сервера:
 
 ```typescript
-z.string().min(8)  // Zod schema validation
+z.string().min(8); // Zod schema validation
 ```
 
 **Двойная защита:** Клиент + Сервер
@@ -215,9 +223,11 @@ z.string().min(8)  // Zod schema validation
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Коммиты:**
+
 - `269b6baf` - Fix password validation: change minLength from 6 to 8 and improve error messages
 
 **Изменения:**
+
 - `client/src/pages/auth.tsx` - Исправлена валидация пароля
 
 ---
@@ -245,6 +255,7 @@ z.string().min(8)  // Zod schema validation
 Попробуйте зарегистрироваться на https://aurelle.uz/auth:
 
 **Тест 1: Короткий пароль (должна быть ошибка)**
+
 ```
 Email: test@example.com
 Пароль: 123456 (6 символов)
@@ -252,6 +263,7 @@ Email: test@example.com
 ```
 
 **Тест 2: Нормальный пароль (должно работать)**
+
 ```
 Email: test@example.com
 Пароль: password123 (12 символов)
@@ -259,6 +271,7 @@ Email: test@example.com
 ```
 
 **Тест 3: Пароли не совпадают (должна быть ошибка)**
+
 ```
 Email: test@example.com
 Пароль: password123
@@ -271,6 +284,7 @@ Email: test@example.com
 **Регистрация полностью работает! 🎉**
 
 Пользователи теперь:
+
 - Понимают требования к паролю (8+ символов)
 - Видят конкретные ошибки валидации
 - Могут успешно регистрироваться и входить

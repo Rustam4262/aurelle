@@ -21,30 +21,36 @@ Complete infrastructure monitoring system with Telegram alerts for the AURELLE p
 ### Features
 
 ✅ **Resource Monitoring**:
+
 - Disk usage (alert > 85%)
 - Memory usage (alert > 90%)
 - CPU usage (alert > 80% for 5min)
 
 ✅ **Application Monitoring**:
+
 - PM2 process crashes
 - PM2 automatic restarts
 - High memory usage by processes
 
 ✅ **Database Monitoring**:
+
 - PostgreSQL connection status
 - Connection count
 - Long-running queries
 
 ✅ **Security Monitoring**:
+
 - SSL certificate expiration (alert < 30 days)
 - Certificate validation
 
 ✅ **Health Monitoring**:
+
 - Application health endpoints
 - Response time tracking
 - Availability monitoring
 
 ✅ **Telegram Notifications**:
+
 - Real-time alerts
 - Different severity levels
 - Alert cooldown to prevent spam
@@ -56,12 +62,12 @@ Complete infrastructure monitoring system with Telegram alerts for the AURELLE p
 
 ### Alert Levels
 
-| Level | Icon | Telegram Color | When Used |
-|-------|------|---------------|-----------|
-| **CRITICAL** | 🚨 | Red | Disk > 95%, Memory > 95%, PM2 crash, DB failure, SSL expired |
-| **WARNING** | ⚠️ | Yellow | Disk > 85%, Memory > 90%, CPU > 80%, SSL < 30 days |
-| **INFO** | ℹ️ | Blue | Deployment started, configuration changes |
-| **SUCCESS** | ✅ | Green | Issue recovered, deployment successful |
+| Level        | Icon | Telegram Color | When Used                                                    |
+| ------------ | ---- | -------------- | ------------------------------------------------------------ |
+| **CRITICAL** | 🚨   | Red            | Disk > 95%, Memory > 95%, PM2 crash, DB failure, SSL expired |
+| **WARNING**  | ⚠️   | Yellow         | Disk > 85%, Memory > 90%, CPU > 80%, SSL < 30 days           |
+| **INFO**     | ℹ️   | Blue           | Deployment started, configuration changes                    |
+| **SUCCESS**  | ✅   | Green          | Issue recovered, deployment successful                       |
 
 ### Alert Thresholds
 
@@ -106,15 +112,15 @@ WARNING: HTTP 4xx or slow response (> 5s)
 
 To prevent alert spam, cooldown periods are implemented:
 
-| Monitor Type | Cooldown Period |
-|--------------|-----------------|
-| Disk | 1 hour |
-| Memory | 30 minutes |
-| CPU | 30 minutes |
-| PM2 | No cooldown (immediate) |
-| Database | 10 minutes |
-| SSL | 1 day |
-| Health | 10 minutes |
+| Monitor Type | Cooldown Period         |
+| ------------ | ----------------------- |
+| Disk         | 1 hour                  |
+| Memory       | 30 minutes              |
+| CPU          | 30 minutes              |
+| PM2          | No cooldown (immediate) |
+| Database     | 10 minutes              |
+| SSL          | 1 day                   |
+| Health       | 10 minutes              |
 
 ---
 
@@ -127,6 +133,7 @@ To prevent alert spam, cooldown periods are implemented:
 **Purpose**: Core notification script for sending Telegram alerts
 
 **Usage**:
+
 ```bash
 # Critical alert
 bash scripts/telegram-send.sh critical "Disk Full" "Usage: 95%"
@@ -142,6 +149,7 @@ bash scripts/telegram-send.sh success "Recovered" "Disk usage back to normal"
 ```
 
 **Configuration**:
+
 ```bash
 TELEGRAM_BOT_TOKEN="7985842709:AAE_0p3pDQdw8jis9RkCXlDFIMuqZZqmUvo"
 TELEGRAM_CHAT_ID="1680204574"
@@ -154,17 +162,20 @@ TELEGRAM_CHAT_ID="1680204574"
 **Checks**: Disk usage on all mounted filesystems
 
 **Alerts**:
+
 - > 85%: Warning
 - > 90%: Critical
 - > 95%: Very Critical
 
 **Features**:
+
 - Checks all mount points
 - Shows filesystem, size, used, available
 - 1-hour cooldown between duplicate alerts
 - Sends recovery notification
 
 **Example Output**:
+
 ```
 Checking /: 78%
 ✅ Disk usage is normal
@@ -180,17 +191,20 @@ Checking /var: 92%
 **Checks**: RAM usage
 
 **Alerts**:
+
 - > 90%: Warning
 - > 92%: Critical
 - > 95%: Very Critical
 
 **Features**:
+
 - Shows total, used, available memory
 - Lists top 5 memory-consuming processes
 - 30-minute cooldown
 - Recovery notification
 
 **Example Output**:
+
 ```
 Memory Usage: 85% (6800MB / 8000MB)
 ✅ Memory usage is normal
@@ -207,17 +221,20 @@ postgres: 1.2GB
 **Checks**: CPU usage sustained over 5 minutes
 
 **Alerts**:
+
 - > 80% sustained: Warning
 - > 90% sustained: Critical
 - > 95% sustained: Very Critical
 
 **Features**:
+
 - Monitors CPU for 5 minutes (30 checks × 10s intervals)
 - Only alerts if high usage is sustained (> 80% of checks)
 - Shows top 5 CPU-consuming processes
 - 30-minute cooldown
 
 **Example Output**:
+
 ```
 Check 1/30: CPU 85%
 Check 2/30: CPU 82%
@@ -234,6 +251,7 @@ High usage checks: 25/30 (83%)
 **Checks**: PM2 process status, crashes, restarts
 
 **Alerts**:
+
 - Process crashed/stopped: Critical
 - Process missing: Critical
 - Single restart: Warning
@@ -241,12 +259,14 @@ High usage checks: 25/30 (83%)
 - High memory usage (> 1GB): Warning
 
 **Features**:
+
 - Monitors configured apps
 - Tracks restart count
 - Shows process logs on errors
 - No cooldown (immediate alerts)
 
 **Example Output**:
+
 ```
 Checking aurelle-production...
   Status: online
@@ -265,11 +285,13 @@ Checking aurelle-staging...
 **Checks**: PostgreSQL connection and health
 
 **Alerts**:
+
 - Connection failed: Critical
 - High connection count (> 80): Warning
 - Long-running queries (> 5 min): Warning
 
 **Features**:
+
 - Tests database connectivity
 - Shows database size
 - Monitors active connections
@@ -277,6 +299,7 @@ Checking aurelle-staging...
 - 10-minute cooldown
 
 **Example Output**:
+
 ```
 Testing connection to PostgreSQL...
   Host: localhost
@@ -297,22 +320,26 @@ Database Statistics:
 **Checks**: SSL certificate expiration for all domains
 
 **Alerts**:
+
 - Expired: Critical
 - < 7 days: Critical
 - < 30 days: Warning
 
 **Features**:
+
 - Checks multiple domains
 - Shows issuer and expiry date
 - Calculates days remaining
 - 1-day cooldown
 
 **Domains Monitored**:
+
 - aurelle.uz
 - www.aurelle.uz
 - staging.aurelle.uz
 
 **Example Output**:
+
 ```
 Checking SSL certificate for aurelle.uz...
   Expires: Feb 15 12:00:00 2026 GMT
@@ -327,24 +354,28 @@ Checking SSL certificate for aurelle.uz...
 **Checks**: Application health endpoints
 
 **Alerts**:
+
 - Connection failed: Critical
 - HTTP 5xx: Critical
 - HTTP 4xx: Warning
 - Slow response (> 5s): Warning
 
 **Features**:
+
 - Checks multiple endpoints
 - Measures response time
 - Tracks availability
 - 10-minute cooldown
 
 **Endpoints Monitored**:
+
 - https://aurelle.uz/api/health (production)
 - https://staging.aurelle.uz/api/health (staging)
 - http://localhost:5000/api/health (local production)
 - http://localhost:5001/api/health (local staging)
 
 **Example Output**:
+
 ```
 Checking production (https://aurelle.uz/api/health)...
   Status: 200
@@ -604,16 +635,17 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'node'
+  - job_name: "node"
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ["localhost:9100"]
 
-  - job_name: 'postgres'
+  - job_name: "postgres"
     static_configs:
-      - targets: ['localhost:9187']
+      - targets: ["localhost:9187"]
 ```
 
 **Grafana**:
+
 1. Access: http://localhost:3000
 2. Login: admin/admin
 3. Add Prometheus data source
@@ -637,76 +669,103 @@ Create `/var/www/monitoring/index.html`:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>AURELLE Monitoring</title>
-    <meta http-equiv="refresh" content="30">
+    <meta http-equiv="refresh" content="30" />
     <style>
-        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .status-ok { color: #4caf50; }
-        .status-warning { color: #ff9800; }
-        .status-critical { color: #f44336; }
-        .metric { display: flex; justify-content: space-between; margin: 10px 0; }
-        .metric-name { font-weight: bold; }
-        .metric-value { font-family: monospace; }
+      body {
+        font-family: Arial;
+        margin: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        margin: 10px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status-ok {
+        color: #4caf50;
+      }
+      .status-warning {
+        color: #ff9800;
+      }
+      .status-critical {
+        color: #f44336;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+      }
+      .metric-name {
+        font-weight: bold;
+      }
+      .metric-value {
+        font-family: monospace;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>AURELLE Infrastructure Monitoring</h1>
-        <p>Last update: <span id="timestamp"></span></p>
+      <h1>AURELLE Infrastructure Monitoring</h1>
+      <p>Last update: <span id="timestamp"></span></p>
 
-        <div class="card">
-            <h2>System Resources</h2>
-            <div class="metric">
-                <span class="metric-name">Disk Usage:</span>
-                <span class="metric-value status-ok" id="disk">Loading...</span>
-            </div>
-            <div class="metric">
-                <span class="metric-name">Memory Usage:</span>
-                <span class="metric-value status-ok" id="memory">Loading...</span>
-            </div>
-            <div class="metric">
-                <span class="metric-name">CPU Usage:</span>
-                <span class="metric-value status-ok" id="cpu">Loading...</span>
-            </div>
+      <div class="card">
+        <h2>System Resources</h2>
+        <div class="metric">
+          <span class="metric-name">Disk Usage:</span>
+          <span class="metric-value status-ok" id="disk">Loading...</span>
         </div>
+        <div class="metric">
+          <span class="metric-name">Memory Usage:</span>
+          <span class="metric-value status-ok" id="memory">Loading...</span>
+        </div>
+        <div class="metric">
+          <span class="metric-name">CPU Usage:</span>
+          <span class="metric-value status-ok" id="cpu">Loading...</span>
+        </div>
+      </div>
 
-        <div class="card">
-            <h2>Application Status</h2>
-            <div class="metric">
-                <span class="metric-name">Production:</span>
-                <span class="metric-value status-ok" id="prod">Loading...</span>
-            </div>
-            <div class="metric">
-                <span class="metric-name">Staging:</span>
-                <span class="metric-value status-ok" id="staging">Loading...</span>
-            </div>
+      <div class="card">
+        <h2>Application Status</h2>
+        <div class="metric">
+          <span class="metric-name">Production:</span>
+          <span class="metric-value status-ok" id="prod">Loading...</span>
         </div>
+        <div class="metric">
+          <span class="metric-name">Staging:</span>
+          <span class="metric-value status-ok" id="staging">Loading...</span>
+        </div>
+      </div>
     </div>
 
     <script>
-        async function updateMetrics() {
-            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+      async function updateMetrics() {
+        document.getElementById("timestamp").textContent = new Date().toLocaleString();
 
-            // Fetch health endpoint
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
+        // Fetch health endpoint
+        try {
+          const response = await fetch("/api/health");
+          const data = await response.json();
 
-                // Update values from health endpoint
-                document.getElementById('prod').textContent = data.status;
-                // Add more metrics as needed
-            } catch (error) {
-                console.error('Failed to fetch metrics:', error);
-            }
+          // Update values from health endpoint
+          document.getElementById("prod").textContent = data.status;
+          // Add more metrics as needed
+        } catch (error) {
+          console.error("Failed to fetch metrics:", error);
         }
+      }
 
-        updateMetrics();
-        setInterval(updateMetrics, 30000); // Update every 30 seconds
+      updateMetrics();
+      setInterval(updateMetrics, 30000); // Update every 30 seconds
     </script>
-</body>
+  </body>
 </html>
 ```
 
@@ -717,6 +776,7 @@ Create `/var/www/monitoring/index.html`:
 ### Issue: Not Receiving Telegram Notifications
 
 **Check**:
+
 1. Verify bot token and chat ID are correct
 2. Start a chat with your bot (required for it to send messages)
 3. Test manually:
@@ -731,6 +791,7 @@ Create `/var/www/monitoring/index.html`:
 ### Issue: Cron Jobs Not Running
 
 **Check**:
+
 1. Verify cron service is running:
    ```bash
    sudo systemctl status cron
@@ -752,6 +813,7 @@ Create `/var/www/monitoring/index.html`:
 ### Issue: False Positive Alerts
 
 **Solutions**:
+
 1. Adjust thresholds in scripts
 2. Increase cooldown periods
 3. Review alert conditions
@@ -759,6 +821,7 @@ Create `/var/www/monitoring/index.html`:
 **Example** - Adjust disk threshold:
 
 Edit [scripts/monitor-disk.sh](scripts/monitor-disk.sh:7):
+
 ```bash
 THRESHOLD=90  # Change from 85 to 90
 ```
@@ -766,6 +829,7 @@ THRESHOLD=90  # Change from 85 to 90
 ### Issue: Missing Logs
 
 **Check**:
+
 1. Log directory exists and is writable:
    ```bash
    ls -ld /var/log/aurelle-monitoring
@@ -779,6 +843,7 @@ THRESHOLD=90  # Change from 85 to 90
 ### Issue: Script Errors
 
 **Debug**:
+
 ```bash
 # Run script manually to see errors
 bash -x scripts/monitor-disk.sh
@@ -831,6 +896,7 @@ which jq curl
 ### 7. Escalation
 
 For critical alerts:
+
 1. First notification: Telegram
 2. No response in 15 min: SMS/Call
 3. No response in 30 min: Escalate to senior
@@ -886,16 +952,19 @@ bash scripts/telegram-send.sh info "Test" "Manual test alert"
 ### Monitoring Checklist
 
 Daily:
+
 - [ ] Check Telegram for new alerts
 - [ ] Review critical alerts from last 24h
 
 Weekly:
+
 - [ ] Review warning alerts
 - [ ] Check monitoring logs
 - [ ] Verify all monitors are running
 - [ ] Test alert system
 
 Monthly:
+
 - [ ] Review and adjust thresholds
 - [ ] Check disk space trends
 - [ ] Review SSL certificate expiration dates

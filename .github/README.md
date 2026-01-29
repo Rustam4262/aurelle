@@ -5,18 +5,22 @@
 ## Workflows
 
 ### 1. CI - Continuous Integration (`ci.yml`)
+
 - **Триггер**: Push и PR в ветки `main`, `develop`, `feature/**`
 - **Задачи**: TypeScript проверка, тесты, линтинг
 
 ### 2. Deploy to Production (`deploy-production.yml`)
+
 - **Триггер**: Push в ветку `main` или manual dispatch
 - **Задачи**: Сборка, деплой на продакшн сервер, smoke tests
 
 ### 3. Deploy to Staging (`deploy-staging.yml`)
+
 - **Триггер**: Push в ветку `develop` или manual dispatch
 - **Задачи**: Сборка, деплой на staging сервер
 
 ### 4. Rollback Deployment (`rollback.yml`)
+
 - **Триггер**: Manual dispatch только
 - **Задачи**: Откат деплоя на предыдущую версию
 

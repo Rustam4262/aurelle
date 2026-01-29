@@ -19,6 +19,7 @@
 3. **Скопируйте пароль** из настроек подключения
 
 4. **Обновите файл `.env`**:
+
    ```bash
    DATABASE_URL=postgresql://postgres:ВАШ_ПАРОЛЬ@localhost:5432/aurelle
    ```
@@ -67,17 +68,17 @@ npm run dev
 
 **Пароль для всех**: `password123`
 
-| Email | Роль |
-|-------|------|
-| admin@aurelle.uz | Администратор |
-| salon1@aurelle.uz | Владелец салона #1 |
-| salon2@aurelle.uz | Владелец салона #2 |
-| specialist1@aurelle.uz | Специалист #1 |
-| specialist2@aurelle.uz | Специалист #2 |
-| specialist3@aurelle.uz | Специалист #3 |
-| client1@aurelle.uz | Клиент #1 |
-| client2@aurelle.uz | Клиент #2 |
-| client3@aurelle.uz | Клиент #3 |
+| Email                  | Роль               |
+| ---------------------- | ------------------ |
+| admin@aurelle.uz       | Администратор      |
+| salon1@aurelle.uz      | Владелец салона #1 |
+| salon2@aurelle.uz      | Владелец салона #2 |
+| specialist1@aurelle.uz | Специалист #1      |
+| specialist2@aurelle.uz | Специалист #2      |
+| specialist3@aurelle.uz | Специалист #3      |
+| client1@aurelle.uz     | Клиент #1          |
+| client2@aurelle.uz     | Клиент #2          |
+| client3@aurelle.uz     | Клиент #3          |
 
 ---
 
@@ -87,10 +88,11 @@ npm run dev
 
 ✅ 9 тестовых пользователей (1 админ, 2 владельца, 3 специалиста, 3 клиента)
 ✅ 2 салона красоты:
-   - Beauty Lounge Tashkent (6 услуг)
-   - Elegant Salon Tashkent (6 услуг)
-✅ 12 услуг (по 6 на салон)
-✅ 3 специалиста, назначенных в Beauty Lounge
+
+- Beauty Lounge Tashkent (6 услуг)
+- Elegant Salon Tashkent (6 услуг)
+  ✅ 12 услуг (по 6 на салон)
+  ✅ 3 специалиста, назначенных в Beauty Lounge
 
 ---
 
@@ -108,15 +110,19 @@ npm run dev
 ## ❓ Проблемы?
 
 ### "Password authentication failed"
+
 → Проверьте пароль в `.env`
 
 ### "Database aurelle does not exist"
+
 → Создайте через Database Client: `CREATE DATABASE aurelle;`
 
 ### "Cannot connect to database"
+
 → Убедитесь, что PostgreSQL запущен
 
 ### "Port 5000 already in use"
+
 → Измените `PORT=5001` в `.env`
 
 ---

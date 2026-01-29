@@ -9,12 +9,14 @@ Rate limiting **УЖЕ РЕАЛИЗОВАН** и применяется на pro
 ## 📊 Текущая конфигурация
 
 ### 1. Global Rate Limiter (все API запросы)
+
 ```typescript
 // server/routes.ts:22
 app.use("/api", globalLimiter);
 ```
 
 **Лимиты:**
+
 - 200 запросов/минуту на IP
 - Исключения: `/uploads`, `/assets`
 - Headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`
@@ -24,6 +26,7 @@ app.use("/api", globalLimiter);
 ---
 
 ### 2. Auth Rate Limiter (login/password)
+
 ```typescript
 // server/middleware/rateLimiter.ts:4-14
 windowMs: 15 * 60 * 1000,  // 15 минут
@@ -32,6 +35,7 @@ skipSuccessfulRequests: true // Только неудачные попытки
 ```
 
 **Применяется к:**
+
 - `/api/auth/login`
 - `/api/auth/phone/verify`
 
@@ -40,6 +44,7 @@ skipSuccessfulRequests: true // Только неудачные попытки
 ---
 
 ### 3. Register Rate Limiter (регистрация)
+
 ```typescript
 // server/middleware/rateLimiter.ts:17-25
 windowMs: 60 * 60 * 1000,  // 1 час
@@ -47,6 +52,7 @@ max: 3                      // 3 регистрации
 ```
 
 **Применяется к:**
+
 - `/api/auth/register`
 
 **Результат:** Защита от массовой регистрации ботов ✅
@@ -54,6 +60,7 @@ max: 3                      // 3 регистрации
 ---
 
 ### 4. API Rate Limiter (обычные запросы)
+
 ```typescript
 // server/middleware/rateLimiter.ts:28-36
 windowMs: 1 * 60 * 1000,  // 1 минута
@@ -61,6 +68,7 @@ max: 100                   // 100 запросов/мин
 ```
 
 **Применяется к:**
+
 - Большинство GET endpoints
 
 **Результат:** Защита от spam запросов ✅
@@ -68,6 +76,7 @@ max: 100                   // 100 запросов/мин
 ---
 
 ### 5. Create Rate Limiter (создание контента)
+
 ```typescript
 // server/middleware/rateLimiter.ts:39-48
 windowMs: 1 * 60 * 1000,  // 1 минута
@@ -75,6 +84,7 @@ max: 10                    // 10 создания/мин
 ```
 
 **Применяется к:**
+
 - `/api/bookings` (POST)
 - `/api/reviews` (POST)
 - `/api/favorites` (POST)
@@ -84,6 +94,7 @@ max: 10                    // 10 создания/мин
 ---
 
 ### 6. Upload Rate Limiter (загрузка файлов)
+
 ```typescript
 // server/middleware/rateLimiter.ts:51-59
 windowMs: 15 * 60 * 1000,  // 15 минут
@@ -91,6 +102,7 @@ max: 20                     // 20 загрузок
 ```
 
 **Применяется к:**
+
 - `/api/upload/*`
 
 **Результат:** Защита от массовой загрузки файлов ✅
@@ -178,7 +190,7 @@ import RedisStore from "rate-limit-redis";
 import { createClient } from "redis";
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL
+  url: process.env.REDIS_URL,
 });
 
 export const globalLimiter = rateLimit({

@@ -11,11 +11,13 @@
 ## ✅ Что Сделано
 
 ### 1. Добавлен Google Analytics тег
+
 - Тег добавлен в `client/index.html` сразу после `<head>`
 - Используется официальный gtag.js от Google
 - Tracking ID: **G-2NNQ2EXYV3**
 
 ### 2. Развёрнуто на продакшн
+
 - ✅ Код загружен на GitHub
 - ✅ Развёрнуто на сервер 89.39.94.194
 - ✅ Приложение пересобрано
@@ -23,6 +25,7 @@
 - ✅ Сайт работает: https://aurelle.uz
 
 ### 3. Проверка
+
 - ✅ Google Analytics тег присутствует в HTML
 - ✅ Скрипт gtag.js загружается
 - ✅ Tracking работает на всех страницах
@@ -38,14 +41,17 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NNQ2EXYV3"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
 
-  gtag('config', 'G-2NNQ2EXYV3');
+  gtag("config", "G-2NNQ2EXYV3");
 </script>
 ```
 
 ### Расположение:
+
 - **Файл**: `client/index.html`
 - **Позиция**: Сразу после открывающего тега `<head>` (строки 4-12)
 - **Загрузка**: Асинхронная (async) - не блокирует загрузку страницы
@@ -55,6 +61,7 @@
 ## 🔍 Как Проверить
 
 ### 1. В браузере (Chrome DevTools):
+
 1. Открыть https://aurelle.uz
 2. Нажать F12 (открыть DevTools)
 3. Перейти на вкладку **Network**
@@ -62,6 +69,7 @@
 5. Проверить что запросы успешны (200 OK)
 
 ### 2. В Google Analytics:
+
 1. Войти в Google Analytics: https://analytics.google.com/
 2. Выбрать поток данных **Платформа салонов красоты** (13314477423)
 3. Перейти в **Отчёты → Реальное время**
@@ -69,6 +77,7 @@
 5. В течение 10-30 секунд увидите активного пользователя
 
 ### 3. Google Tag Assistant:
+
 1. Установить расширение [Tag Assistant](https://chrome.google.com/webstore/detail/tag-assistant-legacy-by-g/kejbdjndbnbjgmefkgdddjlbokphdefk)
 2. Открыть https://aurelle.uz
 3. Нажать на иконку Tag Assistant
@@ -81,6 +90,7 @@
 Google Analytics автоматически собирает:
 
 ### Основные метрики:
+
 - **Посещения страниц** (page_view)
 - **Сессии пользователей**
 - **Уникальные посетители**
@@ -91,6 +101,7 @@ Google Analytics автоматически собирает:
 - **Языки пользователей**
 
 ### Автоматические события:
+
 - `page_view` - просмотр страницы
 - `first_visit` - первое посещение
 - `session_start` - начало сессии
@@ -105,38 +116,45 @@ Google Analytics автоматически собирает:
 ## 🎯 Следующие Шаги (Опционально)
 
 ### 1. Настройка Целей (Conversions)
+
 Можно отслеживать важные действия:
+
 - Регистрация нового пользователя
 - Создание бронирования
 - Завершение оплаты
 - Добавление салона в избранное
 
 **Как добавить**:
+
 ```javascript
 // Пример: отслеживание регистрации
-gtag('event', 'sign_up', {
-  method: 'Email',
-  user_id: userId
+gtag("event", "sign_up", {
+  method: "Email",
+  user_id: userId,
 });
 
 // Пример: отслеживание бронирования
-gtag('event', 'booking_complete', {
+gtag("event", "booking_complete", {
   salon_id: salonId,
   service: serviceName,
   value: price,
-  currency: 'UZS'
+  currency: "UZS",
 });
 ```
 
 ### 2. Расширенная Электронная Торговля (Enhanced Ecommerce)
+
 Для отслеживания:
+
 - Просмотр услуг
 - Добавление в корзину
 - Начало оформления
 - Завершение покупки
 
 ### 3. Кастомные Параметры
+
 Можно передавать:
+
 - Роль пользователя (owner, master, client)
 - Выбранный язык (en, ru, uz)
 - ID салона
@@ -156,9 +174,11 @@ gtag('event', 'booking_complete', {
 ## 📊 Где Смотреть Статистику
 
 ### Google Analytics Dashboard:
+
 **URL**: https://analytics.google.com/
 
 ### Основные отчёты:
+
 1. **Реальное время** - текущие посетители (обновляется каждые 10 сек)
 2. **Аудитория** - демография, география, устройства
 3. **Источники трафика** - откуда приходят пользователи
@@ -166,6 +186,7 @@ gtag('event', 'booking_complete', {
 5. **Конверсии** - достижение целей
 
 ### Популярные метрики:
+
 - **Пользователи** (Users) - уникальные посетители
 - **Сеансы** (Sessions) - визиты
 - **Показатель отказов** (Bounce Rate) - % ушедших с первой страницы
@@ -177,14 +198,17 @@ gtag('event', 'booking_complete', {
 ## 🛠 Техническая Информация
 
 ### Коммиты:
+
 - **Commit**: fe9b95e9
 - **Message**: "Add Google Analytics (G-2NNQ2EXYV3) tracking"
 - **Дата**: 2026-01-17
 
 ### Файлы изменены:
+
 - `client/index.html` (+10 строк)
 
 ### Развёртывание:
+
 - **Сервер**: 89.39.94.194 (root)
 - **Путь**: /var/www/aurelle/current
 - **PM2**: aurelle-production (online, 132 MB)
@@ -208,12 +232,14 @@ gtag('event', 'booking_complete', {
 ## 📞 Доступ
 
 ### Google Analytics:
+
 - **URL**: https://analytics.google.com/
 - **Поток данных**: Платформа салонов красоты
 - **ID**: 13314477423
 - **Tracking ID**: G-2NNQ2EXYV3
 
 ### Сервер:
+
 ```bash
 ssh root@89.39.94.194
 cd /var/www/aurelle/current

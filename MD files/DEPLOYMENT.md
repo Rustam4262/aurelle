@@ -226,6 +226,7 @@ npm run db:push
 ### 9. Обновление OAuth Redirect URIs
 
 #### Google OAuth Console:
+
 1. Перейдите в [Google Cloud Console](https://console.cloud.google.com/)
 2. Выберите ваш проект
 3. Credentials → OAuth 2.0 Client IDs
@@ -235,6 +236,7 @@ npm run db:push
    ```
 
 #### Yandex OAuth:
+
 1. Перейдите на [Яндекс OAuth](https://oauth.yandex.ru/)
 2. Откройте ваше приложение
 3. Добавьте в Redirect URI:
@@ -243,6 +245,7 @@ npm run db:push
    ```
 
 #### GitHub OAuth (если используете):
+
 1. Перейдите в [GitHub Developer Settings](https://github.com/settings/developers)
 2. Откройте ваше OAuth App
 3. Обновите Authorization callback URL:

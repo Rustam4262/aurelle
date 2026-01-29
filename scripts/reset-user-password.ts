@@ -15,11 +15,7 @@ async function resetUserPassword(email: string, newPassword: string) {
     console.log(`🔍 Searching for user: ${email}`);
 
     // Find user
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     if (!user) {
       console.error(`❌ User not found: ${email}`);
@@ -34,10 +30,7 @@ async function resetUserPassword(email: string, newPassword: string) {
 
     // Update password
     console.log(`💾 Updating password in database...`);
-    await db
-      .update(users)
-      .set({ passwordHash })
-      .where(eq(users.id, user.id));
+    await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
 
     console.log(`✅ Password successfully reset for ${email}`);
     console.log(`🔑 New password: ${newPassword}`);

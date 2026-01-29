@@ -7,45 +7,45 @@ import { Request, Response, NextFunction } from "express";
  * User roles
  */
 export const ROLES = {
-  OWNER: 'owner',
-  SALON_MANAGER: 'salon_manager',
-  MASTER: 'master',
-  CLIENT: 'client',
+  OWNER: "owner",
+  SALON_MANAGER: "salon_manager",
+  MASTER: "master",
+  CLIENT: "client",
 } as const;
 
 /**
  * Available owner permissions
  */
 export const OWNER_PERMISSIONS = {
-  READ_DASHBOARD: 'owner.read_dashboard',
-  READ_BOOKINGS: 'owner.read_bookings',
-  MANAGE_BOOKINGS: 'owner.manage_bookings',
-  READ_SERVICES: 'owner.read_services',
-  MANAGE_SERVICES: 'owner.manage_services',
-  READ_MASTERS: 'owner.read_masters',
-  MANAGE_MASTERS: 'owner.manage_masters',
-  READ_SALONS: 'owner.read_salons',
-  MANAGE_SALONS: 'owner.manage_salons',
-  READ_CALENDAR: 'owner.read_calendar',
-  MANAGE_CALENDAR: 'owner.manage_calendar',
-  READ_ANALYTICS: 'owner.read_analytics',
+  READ_DASHBOARD: "owner.read_dashboard",
+  READ_BOOKINGS: "owner.read_bookings",
+  MANAGE_BOOKINGS: "owner.manage_bookings",
+  READ_SERVICES: "owner.read_services",
+  MANAGE_SERVICES: "owner.manage_services",
+  READ_MASTERS: "owner.read_masters",
+  MANAGE_MASTERS: "owner.manage_masters",
+  READ_SALONS: "owner.read_salons",
+  MANAGE_SALONS: "owner.manage_salons",
+  READ_CALENDAR: "owner.read_calendar",
+  MANAGE_CALENDAR: "owner.manage_calendar",
+  READ_ANALYTICS: "owner.read_analytics",
 } as const;
 
 /**
  * Available salon manager permissions
  */
 export const SALON_MANAGER_PERMISSIONS = {
-  READ_SALON_INFO: 'manager.read_salon',
-  READ_DASHBOARD: 'manager.read_dashboard',
-  READ_BOOKINGS: 'manager.read_bookings',
-  MANAGE_BOOKINGS: 'manager.manage_bookings',
-  READ_SERVICES: 'manager.read_services',
-  MANAGE_SERVICES: 'manager.manage_services',
-  READ_MASTERS: 'manager.read_masters',
-  MANAGE_MASTERS: 'manager.manage_masters',
-  READ_CALENDAR: 'manager.read_calendar',
-  MANAGE_CALENDAR: 'manager.manage_calendar',
-  VIEW_ANALYTICS: 'manager.view_analytics',
+  READ_SALON_INFO: "manager.read_salon",
+  READ_DASHBOARD: "manager.read_dashboard",
+  READ_BOOKINGS: "manager.read_bookings",
+  MANAGE_BOOKINGS: "manager.manage_bookings",
+  READ_SERVICES: "manager.read_services",
+  MANAGE_SERVICES: "manager.manage_services",
+  READ_MASTERS: "manager.read_masters",
+  MANAGE_MASTERS: "manager.manage_masters",
+  READ_CALENDAR: "manager.read_calendar",
+  MANAGE_CALENDAR: "manager.manage_calendar",
+  VIEW_ANALYTICS: "manager.view_analytics",
   // Cannot: delete salon, change owner, manage finances, invite other managers
 } as const;
 
@@ -66,25 +66,19 @@ export const DEFAULT_MANAGER_PERMISSIONS = [
 /**
  * Check if owner has a specific permission
  */
-export async function hasPermission(
-  ownerId: string,
-  permission: string
-): Promise<boolean> {
+export async function hasPermission(ownerId: string, permission: string): Promise<boolean> {
   try {
     const result = await db
       .select()
       .from(ownerPermissions)
       .where(
-        and(
-          eq(ownerPermissions.ownerId, ownerId),
-          eq(ownerPermissions.permission, permission)
-        )
+        and(eq(ownerPermissions.ownerId, ownerId), eq(ownerPermissions.permission, permission)),
       )
       .limit(1);
 
     return result.length > 0;
   } catch (error) {
-    console.error('[RBAC] Error checking permission:', error);
+    console.error("[RBAC] Error checking permission:", error);
     return false;
   }
 }
@@ -95,16 +89,19 @@ export async function hasPermission(
 export async function grantPermission(
   ownerId: string,
   permission: string,
-  grantedBy?: string
+  grantedBy?: string,
 ): Promise<void> {
   try {
-    await db.insert(ownerPermissions).values({
-      ownerId,
-      permission,
-      grantedBy,
-    }).onConflictDoNothing();
+    await db
+      .insert(ownerPermissions)
+      .values({
+        ownerId,
+        permission,
+        grantedBy,
+      })
+      .onConflictDoNothing();
   } catch (error) {
-    console.error('[RBAC] Error granting permission:', error);
+    console.error("[RBAC] Error granting permission:", error);
     throw error;
   }
 }
@@ -129,7 +126,7 @@ export async function grantDefaultOwnerPermissions(ownerId: string): Promise<voi
   ];
 
   for (const permission of defaultPermissions) {
-    await grantPermission(ownerId, permission, 'system');
+    await grantPermission(ownerId, permission, "system");
   }
 }
 
@@ -147,8 +144,8 @@ export function requirePermission(permission: string) {
 
     if (!ownerId) {
       return res.status(401).json({
-        error: 'UNAUTHORIZED',
-        message: 'Authentication required',
+        error: "UNAUTHORIZED",
+        message: "Authentication required",
       });
     }
 
@@ -156,7 +153,7 @@ export function requirePermission(permission: string) {
 
     if (!hasAccess) {
       return res.status(403).json({
-        error: 'FORBIDDEN',
+        error: "FORBIDDEN",
         message: `Missing permission: ${permission}`,
       });
     }
@@ -171,7 +168,7 @@ export function requirePermission(permission: string) {
 export async function hasManagerPermission(
   userId: string,
   salonId: string,
-  permission: string
+  permission: string,
 ): Promise<boolean> {
   try {
     const result = await db
@@ -181,8 +178,8 @@ export async function hasManagerPermission(
         and(
           eq(salonManagers.userId, userId),
           eq(salonManagers.salonId, salonId),
-          eq(salonManagers.status, 'active')
-        )
+          eq(salonManagers.status, "active"),
+        ),
       )
       .limit(1);
 
@@ -194,7 +191,7 @@ export async function hasManagerPermission(
     const permissions = manager.permissions as string[];
     return permissions.includes(permission);
   } catch (error) {
-    console.error('[RBAC] Error checking manager permission:', error);
+    console.error("[RBAC] Error checking manager permission:", error);
     return false;
   }
 }
@@ -202,10 +199,7 @@ export async function hasManagerPermission(
 /**
  * Check if user is a salon manager for a specific salon
  */
-export async function isSalonManager(
-  userId: string,
-  salonId: string
-): Promise<boolean> {
+export async function isSalonManager(userId: string, salonId: string): Promise<boolean> {
   try {
     const result = await db
       .select()
@@ -214,14 +208,14 @@ export async function isSalonManager(
         and(
           eq(salonManagers.userId, userId),
           eq(salonManagers.salonId, salonId),
-          eq(salonManagers.status, 'active')
-        )
+          eq(salonManagers.status, "active"),
+        ),
       )
       .limit(1);
 
     return result.length > 0;
   } catch (error) {
-    console.error('[RBAC] Error checking manager status:', error);
+    console.error("[RBAC] Error checking manager status:", error);
     return false;
   }
 }
@@ -234,16 +228,11 @@ export async function getManagedSalons(userId: string): Promise<string[]> {
     const result = await db
       .select({ salonId: salonManagers.salonId })
       .from(salonManagers)
-      .where(
-        and(
-          eq(salonManagers.userId, userId),
-          eq(salonManagers.status, 'active')
-        )
-      );
+      .where(and(eq(salonManagers.userId, userId), eq(salonManagers.status, "active")));
 
-    return result.map(r => r.salonId);
+    return result.map((r) => r.salonId);
   } catch (error) {
-    console.error('[RBAC] Error getting managed salons:', error);
+    console.error("[RBAC] Error getting managed salons:", error);
     return [];
   }
 }
@@ -251,27 +240,19 @@ export async function getManagedSalons(userId: string): Promise<string[]> {
 /**
  * Check if owner has access to a specific salon
  */
-export async function canAccessSalon(
-  ownerId: string,
-  salonId: string
-): Promise<boolean> {
+export async function canAccessSalon(ownerId: string, salonId: string): Promise<boolean> {
   try {
     const { salons } = await import("../../shared/schema");
 
     const result = await db
       .select()
       .from(salons)
-      .where(
-        and(
-          eq(salons.id, salonId),
-          eq(salons.ownerId, ownerId)
-        )
-      )
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)))
       .limit(1);
 
     return result.length > 0;
   } catch (error) {
-    console.error('[RBAC] Error checking salon access:', error);
+    console.error("[RBAC] Error checking salon access:", error);
     return false;
   }
 }
@@ -282,8 +263,8 @@ export async function canAccessSalon(
  */
 export async function canAccessSalonAsOwnerOrManager(
   userId: string,
-  salonId: string
-): Promise<{ hasAccess: boolean; role: 'owner' | 'manager' | null }> {
+  salonId: string,
+): Promise<{ hasAccess: boolean; role: "owner" | "manager" | null }> {
   try {
     const { salons } = await import("../../shared/schema");
 
@@ -291,27 +272,22 @@ export async function canAccessSalonAsOwnerOrManager(
     const ownerResult = await db
       .select()
       .from(salons)
-      .where(
-        and(
-          eq(salons.id, salonId),
-          eq(salons.ownerId, userId)
-        )
-      )
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, userId)))
       .limit(1);
 
     if (ownerResult.length > 0) {
-      return { hasAccess: true, role: 'owner' };
+      return { hasAccess: true, role: "owner" };
     }
 
     // Check if manager
     const isManager = await isSalonManager(userId, salonId);
     if (isManager) {
-      return { hasAccess: true, role: 'manager' };
+      return { hasAccess: true, role: "manager" };
     }
 
     return { hasAccess: false, role: null };
   } catch (error) {
-    console.error('[RBAC] Error checking salon access:', error);
+    console.error("[RBAC] Error checking salon access:", error);
     return { hasAccess: false, role: null };
   }
 }
@@ -324,19 +300,15 @@ export async function canAccessSalonAsOwnerOrManager(
  *   // req.params.id is guaranteed to belong to req.session.ownerId
  * });
  */
-export function verifySalonOwnership(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function verifySalonOwnership(req: Request, res: Response, next: NextFunction) {
   return async () => {
     const ownerId = (req.session as any).ownerId;
     const salonId = req.params.id || req.body.salon_id;
 
     if (!salonId) {
       return res.status(400).json({
-        error: 'BAD_REQUEST',
-        message: 'salon_id is required',
+        error: "BAD_REQUEST",
+        message: "salon_id is required",
       });
     }
 
@@ -344,8 +316,8 @@ export function verifySalonOwnership(
 
     if (!hasAccess) {
       return res.status(403).json({
-        error: 'FORBIDDEN',
-        message: 'You do not have access to this salon',
+        error: "FORBIDDEN",
+        message: "You do not have access to this salon",
       });
     }
 

@@ -94,7 +94,9 @@ export function WaitlistButton({ salonId, serviceId, masterId, disabled }: Waitl
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="preferred-date">{t("waitlist.preferredDate")} ({t("common.optional")})</Label>
+              <Label htmlFor="preferred-date">
+                {t("waitlist.preferredDate")} ({t("common.optional")})
+              </Label>
               <Input
                 id="preferred-date"
                 type="date"
@@ -105,7 +107,9 @@ export function WaitlistButton({ salonId, serviceId, masterId, disabled }: Waitl
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="time-start">{t("waitlist.preferredTimeStart")} ({t("common.optional")})</Label>
+                <Label htmlFor="time-start">
+                  {t("waitlist.preferredTimeStart")} ({t("common.optional")})
+                </Label>
                 <Input
                   id="time-start"
                   type="time"
@@ -115,7 +119,9 @@ export function WaitlistButton({ salonId, serviceId, masterId, disabled }: Waitl
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="time-end">{t("waitlist.preferredTimeEnd")} ({t("common.optional")})</Label>
+                <Label htmlFor="time-end">
+                  {t("waitlist.preferredTimeEnd")} ({t("common.optional")})
+                </Label>
                 <Input
                   id="time-end"
                   type="time"
@@ -125,9 +131,7 @@ export function WaitlistButton({ salonId, serviceId, masterId, disabled }: Waitl
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              {t("waitlist.expiresIn")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("waitlist.expiresIn")}</p>
           </div>
 
           <DialogFooter>

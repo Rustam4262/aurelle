@@ -11,8 +11,7 @@ const router = Router();
 router.get("/profile", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    const [profile] = await db.select().from(userProfiles)
-      .where(eq(userProfiles.userId, userId));
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
 
     if (!profile) {
       return res.json({
@@ -47,11 +46,11 @@ router.post("/profile", isAuthenticated, async (req: any, res) => {
 
     const { role, fullName, phone, city } = parsed.data;
 
-    const [existing] = await db.select().from(userProfiles)
-      .where(eq(userProfiles.userId, userId));
+    const [existing] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
 
     if (existing) {
-      const [updated] = await db.update(userProfiles)
+      const [updated] = await db
+        .update(userProfiles)
         .set({
           role,
           fullName,
@@ -64,15 +63,18 @@ router.post("/profile", isAuthenticated, async (req: any, res) => {
         .returning();
       return res.json(updated);
     } else {
-      const [created] = await db.insert(userProfiles)
-        .values([{
-          userId,
-          role,
-          fullName,
-          phone,
-          city,
-          isProfileComplete: true,
-        }])
+      const [created] = await db
+        .insert(userProfiles)
+        .values([
+          {
+            userId,
+            role,
+            fullName,
+            phone,
+            city,
+            isProfileComplete: true,
+          },
+        ])
         .returning();
       return res.status(201).json(created);
     }

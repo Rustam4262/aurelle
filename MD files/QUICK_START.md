@@ -51,6 +51,7 @@ npx tsx scripts/create-test-users.ts
 ```
 
 Это создаст:
+
 - ✅ 1 администратор
 - ✅ 2 владельца салонов (с салонами и услугами)
 - ✅ 3 специалиста
@@ -72,17 +73,17 @@ npm run dev
 
 **Все пользователи имеют пароль**: `password123`
 
-| Роль | Email | Описание |
-|------|-------|----------|
-| **Администратор** | admin@aurelle.uz | Полный доступ к системе |
-| **Владелец салона** | salon1@aurelle.uz | Beauty Lounge Tashkent |
-| **Владелец салона** | salon2@aurelle.uz | Elegant Salon Tashkent |
-| **Специалист** | specialist1@aurelle.uz | Maria Ivanova |
-| **Специалист** | specialist2@aurelle.uz | Anna Petrova |
-| **Специалист** | specialist3@aurelle.uz | Elena Sidorova |
-| **Клиент** | client1@aurelle.uz | John Doe |
-| **Клиент** | client2@aurelle.uz | Jane Smith |
-| **Клиент** | client3@aurelle.uz | Alice Johnson |
+| Роль                | Email                  | Описание                |
+| ------------------- | ---------------------- | ----------------------- |
+| **Администратор**   | admin@aurelle.uz       | Полный доступ к системе |
+| **Владелец салона** | salon1@aurelle.uz      | Beauty Lounge Tashkent  |
+| **Владелец салона** | salon2@aurelle.uz      | Elegant Salon Tashkent  |
+| **Специалист**      | specialist1@aurelle.uz | Maria Ivanova           |
+| **Специалист**      | specialist2@aurelle.uz | Anna Petrova            |
+| **Специалист**      | specialist3@aurelle.uz | Elena Sidorova          |
+| **Клиент**          | client1@aurelle.uz     | John Doe                |
+| **Клиент**          | client2@aurelle.uz     | Jane Smith              |
+| **Клиент**          | client3@aurelle.uz     | Alice Johnson           |
 
 ---
 
@@ -140,6 +141,7 @@ createdb aurelle
 ### Ошибка: "Cannot connect to database"
 
 **Проверьте**:
+
 1. ✅ PostgreSQL запущен
 2. ✅ Порт 5432 открыт
 3. ✅ Пароль в `.env` правильный

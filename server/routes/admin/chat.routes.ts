@@ -90,10 +90,7 @@ router.post("/threads/:id/messages", requirePermission("chat.write"), async (req
 
     const validatedData = insertChatMessageSchema.parse(messageData);
 
-    const [newMessage] = await db
-      .insert(chatMessages)
-      .values(validatedData)
-      .returning();
+    const [newMessage] = await db.insert(chatMessages).values(validatedData).returning();
 
     // Update thread's last message time
     await db

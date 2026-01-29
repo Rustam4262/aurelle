@@ -62,7 +62,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
     queryFn: async () => {
       const from = format(today, "yyyy-MM-dd");
       const to = format(sixMonthsLater, "yyyy-MM-dd");
-      const res = await apiRequest("GET", `/api/owner/salons/${salonId}/exceptions?from=${from}&to=${to}`);
+      const res = await apiRequest(
+        "GET",
+        `/api/owner/salons/${salonId}/exceptions?from=${from}&to=${to}`,
+      );
       return res.json();
     },
   });
@@ -76,7 +79,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
       queryClient.invalidateQueries({ queryKey: [`/api/owner/salons/${salonId}/exceptions`] });
       toast({
         title: t("workingHours.exceptions.createSuccess", "Exception created"),
-        description: t("workingHours.exceptions.createSuccessDesc", "Date exception has been added"),
+        description: t(
+          "workingHours.exceptions.createSuccessDesc",
+          "Date exception has been added",
+        ),
       });
       setDialogOpen(false);
       resetForm();
@@ -176,7 +182,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
       if (formData.openTime >= formData.closeTime) {
         toast({
           title: t("common.error", "Error"),
-          description: t("workingHours.exceptions.invalidTime", "Close time must be after open time"),
+          description: t(
+            "workingHours.exceptions.invalidTime",
+            "Close time must be after open time",
+          ),
           variant: "destructive",
         });
         return;
@@ -199,14 +208,21 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
   };
 
   const handleDelete = (exceptionId: string) => {
-    if (confirm(t("workingHours.exceptions.confirmDelete", "Are you sure you want to delete this exception?"))) {
+    if (
+      confirm(
+        t(
+          "workingHours.exceptions.confirmDelete",
+          "Are you sure you want to delete this exception?",
+        ),
+      )
+    ) {
       deleteMutation.mutate(exceptionId);
     }
   };
 
   // Sort exceptions by date
-  const sortedExceptions = [...exceptions].sort((a, b) =>
-    new Date(a.exceptionDate).getTime() - new Date(b.exceptionDate).getTime()
+  const sortedExceptions = [...exceptions].sort(
+    (a, b) => new Date(a.exceptionDate).getTime() - new Date(b.exceptionDate).getTime(),
   );
 
   if (isLoading) {
@@ -217,9 +233,14 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">{t("workingHours.exceptions.title", "Exceptions & Holidays")}</h3>
+          <h3 className="text-lg font-medium">
+            {t("workingHours.exceptions.title", "Exceptions & Holidays")}
+          </h3>
           <p className="text-sm text-muted-foreground">
-            {t("workingHours.exceptions.description", "Define special dates when salon is closed or has custom hours")}
+            {t(
+              "workingHours.exceptions.description",
+              "Define special dates when salon is closed or has custom hours",
+            )}
           </p>
         </div>
         <Button onClick={() => handleOpenDialog()} size="sm">
@@ -232,13 +253,16 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground text-center">
-              {t("workingHours.exceptions.noExceptions", "No exceptions defined for the next 6 months")}
+              {t(
+                "workingHours.exceptions.noExceptions",
+                "No exceptions defined for the next 6 months",
+              )}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-2">
-          {sortedExceptions.map(exception => {
+          {sortedExceptions.map((exception) => {
             const exDate = new Date(exception.exceptionDate);
             return (
               <Card key={exception.id}>
@@ -255,7 +279,8 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
                           </span>
                         ) : (
                           <span className="text-sm text-amber-600">
-                            {t("workingHours.exceptions.customHours", "Custom Hours")}: {exception.openTime} - {exception.closeTime}
+                            {t("workingHours.exceptions.customHours", "Custom Hours")}:{" "}
+                            {exception.openTime} - {exception.closeTime}
                           </span>
                         )}
                       </div>
@@ -264,18 +289,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
                       )}
                     </div>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDialog(exception)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(exception)}>
                         {t("common.edit", "Edit")}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(exception.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(exception.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -297,7 +314,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
                 : t("workingHours.exceptions.addException", "Add Exception")}
             </DialogTitle>
             <DialogDescription>
-              {t("workingHours.exceptions.dialogDescription", "Mark a specific date as closed or with custom hours")}
+              {t(
+                "workingHours.exceptions.dialogDescription",
+                "Mark a specific date as closed or with custom hours",
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -307,12 +327,11 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
               <Label>{t("workingHours.exceptions.date", "Date")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : t("workingHours.exceptions.pickDate", "Pick a date")}
+                    {selectedDate
+                      ? format(selectedDate, "PPP")
+                      : t("workingHours.exceptions.pickDate", "Pick a date")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -346,7 +365,9 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
             {!formData.isClosed && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="openTime">{t("workingHours.exceptions.openTime", "Open Time")}</Label>
+                  <Label htmlFor="openTime">
+                    {t("workingHours.exceptions.openTime", "Open Time")}
+                  </Label>
                   <Input
                     id="openTime"
                     type="time"
@@ -355,7 +376,9 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="closeTime">{t("workingHours.exceptions.closeTime", "Close Time")}</Label>
+                  <Label htmlFor="closeTime">
+                    {t("workingHours.exceptions.closeTime", "Close Time")}
+                  </Label>
                   <Input
                     id="closeTime"
                     type="time"
@@ -373,7 +396,10 @@ export function SalonExceptionsManagement({ salonId }: SalonExceptionsManagement
               </Label>
               <Textarea
                 id="reason"
-                placeholder={t("workingHours.exceptions.reasonPlaceholder", "e.g., National Holiday, Renovation")}
+                placeholder={t(
+                  "workingHours.exceptions.reasonPlaceholder",
+                  "e.g., National Holiday, Renovation",
+                )}
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 rows={2}

@@ -117,6 +117,7 @@ sudo cat /etc/aurelle-redis.conf
 ```
 
 Output example:
+
 ```bash
 REDIS_HOST="127.0.0.1"
 REDIS_PORT="6379"
@@ -137,6 +138,7 @@ REDIS_URL=redis://:YOUR_REDIS_PASSWORD@127.0.0.1:6379
 ```
 
 Example:
+
 ```bash
 REDIS_URL=redis://:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6@127.0.0.1:6379
 ```
@@ -155,6 +157,7 @@ pm2 logs aurelle --lines 50
 ```
 
 Look for these log messages:
+
 ```
 [REDIS] Connected successfully
 Redis: Ready to accept commands
@@ -190,6 +193,7 @@ redis-cli ping
 ### Configuration File Location
 
 After running the setup script, Redis configuration is stored in:
+
 ```
 /etc/redis/redis.conf
 ```
@@ -216,6 +220,7 @@ tcp-keepalive 300
 ```
 
 **Why localhost only?**
+
 - Security: Redis is not exposed to the internet
 - Performance: Lower latency for local connections
 - Simplicity: No need for firewall rules
@@ -235,15 +240,16 @@ maxmemory-samples 5
 
 **Eviction Policies Explained:**
 
-| Policy | Description | Use Case |
-|--------|-------------|----------|
-| `allkeys-lru` | Remove least recently used keys | General caching (recommended) |
-| `allkeys-lfu` | Remove least frequently used keys | Hot data caching |
-| `volatile-lru` | Remove LRU keys with TTL | Mixed cache and persistent data |
-| `volatile-ttl` | Remove keys with shortest TTL | Time-sensitive data |
-| `noeviction` | Return errors when memory full | Critical data only |
+| Policy         | Description                       | Use Case                        |
+| -------------- | --------------------------------- | ------------------------------- |
+| `allkeys-lru`  | Remove least recently used keys   | General caching (recommended)   |
+| `allkeys-lfu`  | Remove least frequently used keys | Hot data caching                |
+| `volatile-lru` | Remove LRU keys with TTL          | Mixed cache and persistent data |
+| `volatile-ttl` | Remove keys with shortest TTL     | Time-sensitive data             |
+| `noeviction`   | Return errors when memory full    | Critical data only              |
 
 **AURELLE uses `allkeys-lru`** because:
+
 - All cached data can be regenerated from PostgreSQL
 - Most recent data is usually most relevant
 - Simple and predictable behavior
@@ -259,6 +265,7 @@ maxclients 10000
 ```
 
 **Password Requirements:**
+
 - Minimum 32 characters
 - Generated using `openssl rand -base64 32`
 - Stored in `/etc/aurelle-redis.conf`
@@ -289,6 +296,7 @@ dir /var/lib/redis
 ```
 
 **Persistence Strategy:**
+
 - RDB (snapshot) enabled for disaster recovery
 - AOF (append-only file) disabled for performance
 - Cache data can be regenerated, so persistence is optional
@@ -325,6 +333,7 @@ logfile /var/log/redis/redis-server.log
 ```
 
 View logs:
+
 ```bash
 # Real-time logs
 sudo tail -f /var/log/redis/redis-server.log
@@ -446,13 +455,13 @@ This is the core module that establishes connection to Redis and provides helper
 #### Configuration and Connection
 
 ```typescript
-import Redis from 'ioredis';
-import { logger } from '../utils/logger';
+import Redis from "ioredis";
+import { logger } from "../utils/logger";
 
 // Redis configuration
 const redisConfig = {
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+  host: process.env.REDIS_HOST || "127.0.0.1",
+  port: parseInt(process.env.REDIS_PORT || "6379"),
   password: process.env.REDIS_PASSWORD || undefined,
   maxRetriesPerRequest: 3,
   retryStrategy: (times: number) => {
@@ -460,7 +469,7 @@ const redisConfig = {
     return delay;
   },
   reconnectOnError: (err: Error) => {
-    const targetError = 'READONLY';
+    const targetError = "READONLY";
     if (err.message.includes(targetError)) {
       return true;
     }
@@ -473,6 +482,7 @@ export const redisClient = new Redis(redisConfig);
 ```
 
 **Key Features:**
+
 - **Environment-based configuration**: Reads from `REDIS_URL` or individual variables
 - **Automatic retry**: Reconnects with exponential backoff (50ms to 2000ms)
 - **Error handling**: Reconnects on READONLY errors
@@ -482,24 +492,24 @@ export const redisClient = new Redis(redisConfig);
 
 ```typescript
 // Connection events
-redisClient.on('connect', () => {
-  logger.info('Redis: Connected');
+redisClient.on("connect", () => {
+  logger.info("Redis: Connected");
 });
 
-redisClient.on('ready', () => {
-  logger.info('Redis: Ready to accept commands');
+redisClient.on("ready", () => {
+  logger.info("Redis: Ready to accept commands");
 });
 
-redisClient.on('error', (err) => {
-  logger.error('Redis error:', err);
+redisClient.on("error", (err) => {
+  logger.error("Redis error:", err);
 });
 
-redisClient.on('close', () => {
-  logger.warn('Redis: Connection closed');
+redisClient.on("close", () => {
+  logger.warn("Redis: Connection closed");
 });
 
-redisClient.on('reconnecting', () => {
-  logger.info('Redis: Reconnecting...');
+redisClient.on("reconnecting", () => {
+  logger.info("Redis: Reconnecting...");
 });
 ```
 
@@ -520,11 +530,12 @@ export const CacheKey = {
 ```
 
 **Examples:**
+
 ```typescript
-CacheKey.SALONS_BY_CITY('Tashkent')        // "salons:city:Tashkent"
-CacheKey.SALON_BY_ID('123')                 // "salon:123"
-CacheKey.SERVICES_BY_SALON('123')           // "services:salon:123"
-CacheKey.SEARCH('spa', '{"city":"Tashkent"}') // "search:spa:{"city":"Tashkent"}"
+CacheKey.SALONS_BY_CITY("Tashkent"); // "salons:city:Tashkent"
+CacheKey.SALON_BY_ID("123"); // "salon:123"
+CacheKey.SERVICES_BY_SALON("123"); // "services:salon:123"
+CacheKey.SEARCH("spa", '{"city":"Tashkent"}'); // "search:spa:{"city":"Tashkent"}"
 ```
 
 #### Cache TTL Constants
@@ -533,16 +544,17 @@ Different data types have different cache durations:
 
 ```typescript
 export const CacheTTL = {
-  SALONS_LIST: 600,       // 10 minutes - frequently updated
-  SALON_DETAIL: 300,      // 5 minutes - specific salon info
-  SERVICES_LIST: 3600,    // 1 hour - rarely changes
+  SALONS_LIST: 600, // 10 minutes - frequently updated
+  SALON_DETAIL: 300, // 5 minutes - specific salon info
+  SERVICES_LIST: 3600, // 1 hour - rarely changes
   SPECIALISTS_LIST: 1800, // 30 minutes - moderate changes
-  USER_PROFILE: 900,      // 15 minutes - user data
-  SEARCH_RESULTS: 600,    // 10 minutes - search queries
+  USER_PROFILE: 900, // 15 minutes - user data
+  SEARCH_RESULTS: 600, // 10 minutes - search queries
 } as const;
 ```
 
 **TTL Strategy:**
+
 - **Short TTL (5-10 min)**: Frequently changing data (salons, availability)
 - **Medium TTL (15-30 min)**: Moderately stable data (specialists, users)
 - **Long TTL (1 hour)**: Rarely changing data (services, categories)
@@ -565,12 +577,13 @@ async get<T>(key: string): Promise<T | null> {
 ```
 
 Usage:
+
 ```typescript
-const salons = await cacheHelpers.get<Salon[]>('salons:city:Tashkent');
+const salons = await cacheHelpers.get<Salon[]>("salons:city:Tashkent");
 if (salons) {
-  console.log('Cache hit!', salons);
+  console.log("Cache hit!", salons);
 } else {
-  console.log('Cache miss, fetch from database');
+  console.log("Cache miss, fetch from database");
 }
 ```
 
@@ -589,8 +602,9 @@ async set(key: string, value: any, ttl: number): Promise<boolean> {
 ```
 
 Usage:
+
 ```typescript
-await cacheHelpers.set('salons:city:Tashkent', salons, CacheTTL.SALONS_LIST);
+await cacheHelpers.set("salons:city:Tashkent", salons, CacheTTL.SALONS_LIST);
 ```
 
 ##### Delete Cache
@@ -608,12 +622,13 @@ async del(key: string | string[]): Promise<boolean> {
 ```
 
 Usage:
+
 ```typescript
 // Delete single key
-await cacheHelpers.del('salon:123');
+await cacheHelpers.del("salon:123");
 
 // Delete multiple keys
-await cacheHelpers.del(['salon:123', 'services:salon:123']);
+await cacheHelpers.del(["salon:123", "services:salon:123"]);
 ```
 
 ##### Delete by Pattern
@@ -633,12 +648,13 @@ async delPattern(pattern: string): Promise<number> {
 ```
 
 Usage:
+
 ```typescript
 // Delete all salon caches
-await cacheHelpers.delPattern('salons:*');
+await cacheHelpers.delPattern("salons:*");
 
 // Delete all caches for a specific city
-await cacheHelpers.delPattern('salons:city:Tashkent');
+await cacheHelpers.delPattern("salons:city:Tashkent");
 ```
 
 ##### Rate Limiting
@@ -672,10 +688,11 @@ async rateLimit(
 ```
 
 Usage:
+
 ```typescript
-const result = await cacheHelpers.rateLimit('ratelimit:192.168.1.1', 100, 3600);
+const result = await cacheHelpers.rateLimit("ratelimit:192.168.1.1", 100, 3600);
 if (!result.allowed) {
-  console.log('Rate limit exceeded');
+  console.log("Rate limit exceeded");
   console.log(`Try again at: ${new Date(result.resetAt)}`);
 }
 ```
@@ -691,21 +708,16 @@ Express middleware for automatic request/response caching.
 Automatically caches GET requests:
 
 ```typescript
-export const cacheMiddleware = (
-  ttl: number,
-  keyGenerator?: (req: Request) => string
-) => {
+export const cacheMiddleware = (ttl: number, keyGenerator?: (req: Request) => string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Only cache GET requests
-    if (req.method !== 'GET') {
+    if (req.method !== "GET") {
       return next();
     }
 
     try {
       // Generate cache key
-      const cacheKey = keyGenerator
-        ? keyGenerator(req)
-        : `cache:${req.originalUrl || req.url}`;
+      const cacheKey = keyGenerator ? keyGenerator(req) : `cache:${req.originalUrl || req.url}`;
 
       // Try to get cached response
       const cachedData = await cacheHelpers.get(cacheKey);
@@ -730,7 +742,7 @@ export const cacheMiddleware = (
 
       next();
     } catch (error) {
-      logger.error('Cache middleware error:', error);
+      logger.error("Cache middleware error:", error);
       next();
     }
   };
@@ -740,35 +752,28 @@ export const cacheMiddleware = (
 **Usage in Routes:**
 
 ```typescript
-import { Router } from 'express';
-import { cacheMiddleware } from './middleware/cache.middleware';
-import { CacheTTL } from './config/redis';
+import { Router } from "express";
+import { cacheMiddleware } from "./middleware/cache.middleware";
+import { CacheTTL } from "./config/redis";
 
 const router = Router();
 
 // Cache salon list for 10 minutes
-router.get(
-  '/api/salons',
-  cacheMiddleware(CacheTTL.SALONS_LIST),
-  async (req, res) => {
-    const salons = await db.query.salons.findMany();
-    res.json(salons);
-  }
-);
+router.get("/api/salons", cacheMiddleware(CacheTTL.SALONS_LIST), async (req, res) => {
+  const salons = await db.query.salons.findMany();
+  res.json(salons);
+});
 
 // Custom cache key generator
 router.get(
-  '/api/salons/:city',
-  cacheMiddleware(
-    CacheTTL.SALONS_LIST,
-    (req) => `salons:city:${req.params.city}`
-  ),
+  "/api/salons/:city",
+  cacheMiddleware(CacheTTL.SALONS_LIST, (req) => `salons:city:${req.params.city}`),
   async (req, res) => {
     const salons = await db.query.salons.findMany({
-      where: eq(salons.city, req.params.city)
+      where: eq(salons.city, req.params.city),
     });
     res.json(salons);
-  }
+  },
 );
 ```
 
@@ -777,21 +782,16 @@ router.get(
 Automatically invalidates cache after successful mutations:
 
 ```typescript
-export const invalidateCacheMiddleware = (
-  patterns: string[] | ((req: Request) => string[])
-) => {
+export const invalidateCacheMiddleware = (patterns: string[] | ((req: Request) => string[])) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const originalJson = res.json.bind(res);
 
     res.json = function (data: any) {
       // Only invalidate on successful responses (2xx)
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        const patternsToInvalidate =
-          typeof patterns === 'function' ? patterns(req) : patterns;
+        const patternsToInvalidate = typeof patterns === "function" ? patterns(req) : patterns;
 
-        Promise.all(
-          patternsToInvalidate.map((pattern) => cacheHelpers.delPattern(pattern))
-        )
+        Promise.all(patternsToInvalidate.map((pattern) => cacheHelpers.delPattern(pattern)))
           .then((results) => {
             const totalDeleted = results.reduce((sum, count) => sum + count, 0);
             if (totalDeleted > 0) {
@@ -799,7 +799,7 @@ export const invalidateCacheMiddleware = (
             }
           })
           .catch((err) => {
-            logger.error('Cache invalidation error:', err);
+            logger.error("Cache invalidation error:", err);
           });
       }
 
@@ -816,28 +816,26 @@ export const invalidateCacheMiddleware = (
 ```typescript
 // Invalidate salon caches after creating/updating
 router.post(
-  '/api/salons',
-  invalidateCacheMiddleware(['salons:*', 'search:*']),
+  "/api/salons",
+  invalidateCacheMiddleware(["salons:*", "search:*"]),
   async (req, res) => {
     const newSalon = await db.insert(salons).values(req.body);
     res.json(newSalon);
-  }
+  },
 );
 
 // Dynamic invalidation based on salon ID
 router.put(
-  '/api/salons/:id',
+  "/api/salons/:id",
   invalidateCacheMiddleware((req) => [
     `salon:${req.params.id}`,
     `salons:*`,
     `services:salon:${req.params.id}`,
   ]),
   async (req, res) => {
-    const updated = await db.update(salons)
-      .set(req.body)
-      .where(eq(salons.id, req.params.id));
+    const updated = await db.update(salons).set(req.body).where(eq(salons.id, req.params.id));
     res.json(updated);
-  }
+  },
 );
 ```
 
@@ -849,24 +847,24 @@ Protects endpoints from abuse:
 export const rateLimitMiddleware = (
   maxRequests: number,
   windowSeconds: number,
-  keyGenerator?: (req: Request) => string
+  keyGenerator?: (req: Request) => string,
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const identifier = keyGenerator
         ? keyGenerator(req)
-        : req.ip || req.socket.remoteAddress || 'unknown';
+        : req.ip || req.socket.remoteAddress || "unknown";
 
       const key = `ratelimit:${identifier}:${req.path}`;
       const result = await cacheHelpers.rateLimit(key, maxRequests, windowSeconds);
 
-      res.setHeader('X-RateLimit-Limit', maxRequests);
-      res.setHeader('X-RateLimit-Remaining', result.remaining);
-      res.setHeader('X-RateLimit-Reset', result.resetAt);
+      res.setHeader("X-RateLimit-Limit", maxRequests);
+      res.setHeader("X-RateLimit-Remaining", result.remaining);
+      res.setHeader("X-RateLimit-Reset", result.resetAt);
 
       if (!result.allowed) {
         return res.status(429).json({
-          error: 'Too many requests',
+          error: "Too many requests",
           message: `Rate limit exceeded. Try again after ${new Date(result.resetAt).toISOString()}`,
           retryAfter: Math.ceil((result.resetAt - Date.now()) / 1000),
         });
@@ -874,7 +872,7 @@ export const rateLimitMiddleware = (
 
       next();
     } catch (error) {
-      logger.error('Rate limit middleware error:', error);
+      logger.error("Rate limit middleware error:", error);
       next();
     }
   };
@@ -885,38 +883,26 @@ export const rateLimitMiddleware = (
 
 ```typescript
 // Limit search endpoint: 60 requests per minute per IP
-router.get(
-  '/api/search',
-  rateLimitMiddleware(60, 60),
-  async (req, res) => {
-    const results = await searchSalons(req.query);
-    res.json(results);
-  }
-);
+router.get("/api/search", rateLimitMiddleware(60, 60), async (req, res) => {
+  const results = await searchSalons(req.query);
+  res.json(results);
+});
 
 // Limit booking endpoint: 10 requests per hour per user
 router.post(
-  '/api/bookings',
-  rateLimitMiddleware(
-    10,
-    3600,
-    (req) => req.user?.id || req.ip
-  ),
+  "/api/bookings",
+  rateLimitMiddleware(10, 3600, (req) => req.user?.id || req.ip),
   async (req, res) => {
     const booking = await createBooking(req.body);
     res.json(booking);
-  }
+  },
 );
 
 // Public API: 1000 requests per hour
-router.get(
-  '/api/public/salons',
-  rateLimitMiddleware(1000, 3600),
-  async (req, res) => {
-    const salons = await db.query.salons.findMany();
-    res.json(salons);
-  }
-);
+router.get("/api/public/salons", rateLimitMiddleware(1000, 3600), async (req, res) => {
+  const salons = await db.query.salons.findMany();
+  res.json(salons);
+});
 ```
 
 ### 3. Cache Service (cache.service.ts)
@@ -961,27 +947,24 @@ static async getSalonsByCity(
 **Usage:**
 
 ```typescript
-import { CacheService } from './services/cache.service';
-import { db } from './db';
-import { salons } from './schema';
-import { eq } from 'drizzle-orm';
+import { CacheService } from "./services/cache.service";
+import { db } from "./db";
+import { salons } from "./schema";
+import { eq } from "drizzle-orm";
 
 // In your route handler
-router.get('/api/salons/:city', async (req, res) => {
+router.get("/api/salons/:city", async (req, res) => {
   const { city } = req.params;
 
-  const salonsList = await CacheService.getSalonsByCity(
-    city,
-    async () => {
-      return await db.query.salons.findMany({
-        where: eq(salons.city, city),
-        with: {
-          services: true,
-          specialists: true,
-        },
-      });
-    }
-  );
+  const salonsList = await CacheService.getSalonsByCity(city, async () => {
+    return await db.query.salons.findMany({
+      where: eq(salons.city, city),
+      with: {
+        services: true,
+        specialists: true,
+      },
+    });
+  });
 
   res.json(salonsList);
 });
@@ -1021,23 +1004,20 @@ static async getSalonById(
 **Usage:**
 
 ```typescript
-router.get('/api/salons/:id', async (req, res) => {
-  const salon = await CacheService.getSalonById(
-    req.params.id,
-    async () => {
-      return await db.query.salons.findFirst({
-        where: eq(salons.id, req.params.id),
-        with: {
-          services: true,
-          specialists: true,
-          reviews: { limit: 10 },
-        },
-      });
-    }
-  );
+router.get("/api/salons/:id", async (req, res) => {
+  const salon = await CacheService.getSalonById(req.params.id, async () => {
+    return await db.query.salons.findFirst({
+      where: eq(salons.id, req.params.id),
+      with: {
+        services: true,
+        specialists: true,
+        reviews: { limit: 10 },
+      },
+    });
+  });
 
   if (!salon) {
-    return res.status(404).json({ error: 'Salon not found' });
+    return res.status(404).json({ error: "Salon not found" });
   }
 
   res.json(salon);
@@ -1075,10 +1055,8 @@ static async invalidateSalon(salonId: string) {
 
 ```typescript
 // After updating salon
-router.put('/api/salons/:id', async (req, res) => {
-  const updatedSalon = await db.update(salons)
-    .set(req.body)
-    .where(eq(salons.id, req.params.id));
+router.put("/api/salons/:id", async (req, res) => {
+  const updatedSalon = await db.update(salons).set(req.body).where(eq(salons.id, req.params.id));
 
   // Invalidate all related caches
   await CacheService.invalidateSalon(req.params.id);
@@ -1087,7 +1065,7 @@ router.put('/api/salons/:id', async (req, res) => {
 });
 
 // After deleting salon
-router.delete('/api/salons/:id', async (req, res) => {
+router.delete("/api/salons/:id", async (req, res) => {
   await db.delete(salons).where(eq(salons.id, req.params.id));
   await CacheService.invalidateSalon(req.params.id);
   res.json({ success: true });
@@ -1139,16 +1117,13 @@ static async getCachedSearch(
 **Usage:**
 
 ```typescript
-router.get('/api/search', async (req, res) => {
+router.get("/api/search", async (req, res) => {
   const { q: query, city, category, priceMin, priceMax } = req.query;
 
   const filters = { city, category, priceMin, priceMax };
 
   // Check cache first
-  const cachedResults = await CacheService.getCachedSearch(
-    query as string,
-    filters
-  );
+  const cachedResults = await CacheService.getCachedSearch(query as string, filters);
 
   if (cachedResults) {
     return res.json(cachedResults);
@@ -1159,7 +1134,7 @@ router.get('/api/search', async (req, res) => {
     where: and(
       ilike(salons.name, `%${query}%`),
       city ? eq(salons.city, city) : undefined,
-      category ? eq(salons.category, category) : undefined
+      category ? eq(salons.category, category) : undefined,
     ),
   });
 
@@ -1201,7 +1176,7 @@ static async warmUp() {
 
 ```typescript
 // In your main server file (index.ts)
-import { CacheService } from './services/cache.service';
+import { CacheService } from "./services/cache.service";
 
 async function startServer() {
   // ... initialize database, etc.
@@ -1222,19 +1197,23 @@ startServer();
 Here's a complete example of a salon routes file with caching:
 
 ```typescript
-import { Router } from 'express';
-import { db } from '../db';
-import { salons, services, specialists } from '../schema';
-import { eq, ilike, and } from 'drizzle-orm';
-import { CacheService } from '../services/cache.service';
-import { cacheMiddleware, rateLimitMiddleware, invalidateCacheMiddleware } from '../middleware/cache.middleware';
-import { CacheTTL } from '../config/redis';
+import { Router } from "express";
+import { db } from "../db";
+import { salons, services, specialists } from "../schema";
+import { eq, ilike, and } from "drizzle-orm";
+import { CacheService } from "../services/cache.service";
+import {
+  cacheMiddleware,
+  rateLimitMiddleware,
+  invalidateCacheMiddleware,
+} from "../middleware/cache.middleware";
+import { CacheTTL } from "../config/redis";
 
 const router = Router();
 
 // GET /api/salons - List all salons (with caching)
 router.get(
-  '/api/salons',
+  "/api/salons",
   rateLimitMiddleware(100, 60), // 100 requests per minute
   cacheMiddleware(CacheTTL.SALONS_LIST),
   async (req, res) => {
@@ -1242,77 +1221,64 @@ router.get(
       with: { services: true },
     });
     res.json(salonsList);
-  }
+  },
 );
 
 // GET /api/salons/:city - Salons by city (with caching)
-router.get(
-  '/api/salons/:city',
-  rateLimitMiddleware(100, 60),
-  async (req, res) => {
-    const { city } = req.params;
+router.get("/api/salons/:city", rateLimitMiddleware(100, 60), async (req, res) => {
+  const { city } = req.params;
 
-    const salonsList = await CacheService.getSalonsByCity(
-      city,
-      async () => {
-        return await db.query.salons.findMany({
-          where: eq(salons.city, city),
-          with: {
-            services: true,
-            specialists: true,
-          },
-        });
-      }
-    );
+  const salonsList = await CacheService.getSalonsByCity(city, async () => {
+    return await db.query.salons.findMany({
+      where: eq(salons.city, city),
+      with: {
+        services: true,
+        specialists: true,
+      },
+    });
+  });
 
-    res.json(salonsList);
-  }
-);
+  res.json(salonsList);
+});
 
 // GET /api/salons/detail/:id - Salon details (with caching)
-router.get(
-  '/api/salons/detail/:id',
-  rateLimitMiddleware(200, 60),
-  async (req, res) => {
-    const salon = await CacheService.getSalonById(
-      req.params.id,
-      async () => {
-        return await db.query.salons.findFirst({
-          where: eq(salons.id, req.params.id),
-          with: {
-            services: true,
-            specialists: true,
-            reviews: { limit: 10, orderBy: (reviews, { desc }) => [desc(reviews.createdAt)] },
-          },
-        });
-      }
-    );
+router.get("/api/salons/detail/:id", rateLimitMiddleware(200, 60), async (req, res) => {
+  const salon = await CacheService.getSalonById(req.params.id, async () => {
+    return await db.query.salons.findFirst({
+      where: eq(salons.id, req.params.id),
+      with: {
+        services: true,
+        specialists: true,
+        reviews: { limit: 10, orderBy: (reviews, { desc }) => [desc(reviews.createdAt)] },
+      },
+    });
+  });
 
-    if (!salon) {
-      return res.status(404).json({ error: 'Salon not found' });
-    }
-
-    res.json(salon);
+  if (!salon) {
+    return res.status(404).json({ error: "Salon not found" });
   }
-);
+
+  res.json(salon);
+});
 
 // POST /api/salons - Create salon (with cache invalidation)
 router.post(
-  '/api/salons',
+  "/api/salons",
   rateLimitMiddleware(10, 3600), // 10 creates per hour
-  invalidateCacheMiddleware(['salons:*', 'search:*']),
+  invalidateCacheMiddleware(["salons:*", "search:*"]),
   async (req, res) => {
     const newSalon = await db.insert(salons).values(req.body).returning();
     res.status(201).json(newSalon[0]);
-  }
+  },
 );
 
 // PUT /api/salons/:id - Update salon (with cache invalidation)
 router.put(
-  '/api/salons/:id',
+  "/api/salons/:id",
   rateLimitMiddleware(20, 3600), // 20 updates per hour
   async (req, res) => {
-    const updatedSalon = await db.update(salons)
+    const updatedSalon = await db
+      .update(salons)
       .set(req.body)
       .where(eq(salons.id, req.params.id))
       .returning();
@@ -1321,33 +1287,30 @@ router.put(
     await CacheService.invalidateSalon(req.params.id);
 
     res.json(updatedSalon[0]);
-  }
+  },
 );
 
 // DELETE /api/salons/:id - Delete salon (with cache invalidation)
 router.delete(
-  '/api/salons/:id',
+  "/api/salons/:id",
   rateLimitMiddleware(5, 3600), // 5 deletes per hour
   async (req, res) => {
     await db.delete(salons).where(eq(salons.id, req.params.id));
     await CacheService.invalidateSalon(req.params.id);
     res.json({ success: true });
-  }
+  },
 );
 
 // GET /api/search - Search salons (with caching)
 router.get(
-  '/api/search',
+  "/api/search",
   rateLimitMiddleware(60, 60), // 60 searches per minute
   async (req, res) => {
     const { q: query, city, category } = req.query;
     const filters = { city, category };
 
     // Check cache
-    const cachedResults = await CacheService.getCachedSearch(
-      query as string,
-      filters
-    );
+    const cachedResults = await CacheService.getCachedSearch(query as string, filters);
 
     if (cachedResults) {
       return res.json(cachedResults);
@@ -1358,7 +1321,7 @@ router.get(
       where: and(
         query ? ilike(salons.name, `%${query}%`) : undefined,
         city ? eq(salons.city, city) : undefined,
-        category ? eq(salons.category, category) : undefined
+        category ? eq(salons.category, category) : undefined,
       ),
       with: { services: true },
     });
@@ -1367,7 +1330,7 @@ router.get(
     await CacheService.cacheSearch(query as string, filters, results);
 
     res.json(results);
-  }
+  },
 );
 
 export default router;
@@ -1387,10 +1350,11 @@ export default router;
 
 ```typescript
 // Example: Cache salons in Tashkent
-const salons = await CacheService.getSalonsByCity('Tashkent', fetchFromDb);
+const salons = await CacheService.getSalonsByCity("Tashkent", fetchFromDb);
 ```
 
 **Invalidation Triggers:**
+
 - New salon created
 - Salon updated (name, address, city)
 - Salon deleted
@@ -1403,10 +1367,11 @@ const salons = await CacheService.getSalonsByCity('Tashkent', fetchFromDb);
 **Key Pattern**: `salon:{salonId}`
 
 ```typescript
-const salon = await CacheService.getSalonById('123', fetchFromDb);
+const salon = await CacheService.getSalonById("123", fetchFromDb);
 ```
 
 **Invalidation Triggers:**
+
 - Salon information updated
 - Services added/removed
 - Specialists added/removed
@@ -1424,6 +1389,7 @@ await cacheHelpers.set(cacheKey, services, CacheTTL.SERVICES_LIST);
 ```
 
 **Invalidation Triggers:**
+
 - Service created/updated/deleted
 - Service prices changed
 - Service availability changed
@@ -1435,12 +1401,11 @@ await cacheHelpers.set(cacheKey, services, CacheTTL.SERVICES_LIST);
 **Key Pattern**: `specialists:salon:{salonId}`
 
 ```typescript
-const specialists = await cacheHelpers.get(
-  CacheKey.SPECIALISTS_BY_SALON(salonId)
-);
+const specialists = await cacheHelpers.get(CacheKey.SPECIALISTS_BY_SALON(salonId));
 ```
 
 **Invalidation Triggers:**
+
 - Specialist added/removed
 - Specialist schedule updated
 - Specialist availability changed
@@ -1452,10 +1417,11 @@ const specialists = await cacheHelpers.get(
 **Key Pattern**: `search:{query}:{filters}`
 
 ```typescript
-await CacheService.cacheSearch('spa', { city: 'Tashkent' }, results);
+await CacheService.cacheSearch("spa", { city: "Tashkent" }, results);
 ```
 
 **Invalidation Triggers:**
+
 - Any salon created/updated/deleted
 - Search index rebuilt
 
@@ -1470,6 +1436,7 @@ const user = await cacheHelpers.get(CacheKey.USER_PROFILE(userId));
 ```
 
 **Invalidation Triggers:**
+
 - User updates profile
 - User preferences changed
 - User bookings updated
@@ -1495,11 +1462,13 @@ await cacheHelpers.set(key, data, 600);
 ```
 
 **Pros:**
+
 - Simple and predictable
 - No manual invalidation needed
 - Prevents stale data
 
 **Cons:**
+
 - Data may be slightly outdated
 - Cache miss after expiration
 
@@ -1516,11 +1485,13 @@ await CacheService.invalidateSalon(salonId);
 ```
 
 **Pros:**
+
 - Always fresh data
 - No stale cache issues
 - Efficient for frequently updated data
 
 **Cons:**
+
 - Requires careful tracking of dependencies
 - More complex implementation
 
@@ -1548,11 +1519,13 @@ static async invalidateSalon(salonId: string) {
 ```
 
 **Pros:**
+
 - Ensures consistency
 - No orphaned cache entries
 - Comprehensive cleanup
 
 **Cons:**
+
 - May invalidate more than necessary
 - Temporary performance impact
 
@@ -1562,9 +1535,9 @@ Only invalidate what's affected:
 
 ```typescript
 // Only invalidate specific city
-router.put('/api/salons/:id', async (req, res) => {
+router.put("/api/salons/:id", async (req, res) => {
   const salon = await db.query.salons.findFirst({
-    where: eq(salons.id, req.params.id)
+    where: eq(salons.id, req.params.id),
   });
 
   await db.update(salons).set(req.body).where(eq(salons.id, req.params.id));
@@ -1576,11 +1549,13 @@ router.put('/api/salons/:id', async (req, res) => {
 ```
 
 **Pros:**
+
 - Minimal cache disruption
 - Better performance
 - More cache hits preserved
 
 **Cons:**
+
 - Complex logic
 - Risk of missing dependencies
 
@@ -1608,11 +1583,11 @@ async function startServer() {
 Periodically refresh cache:
 
 ```typescript
-import cron from 'node-cron';
+import cron from "node-cron";
 
 // Refresh cache every hour
-cron.schedule('0 * * * *', async () => {
-  console.log('Warming up cache...');
+cron.schedule("0 * * * *", async () => {
+  console.log("Warming up cache...");
   await CacheService.warmUp();
 });
 ```
@@ -1623,7 +1598,7 @@ Warm cache after bulk operations:
 
 ```typescript
 // After importing salons
-router.post('/api/admin/import-salons', async (req, res) => {
+router.post("/api/admin/import-salons", async (req, res) => {
   await importSalons(req.body);
 
   // Warm cache with new data
@@ -1639,7 +1614,7 @@ Warm cache based on usage patterns:
 
 ```typescript
 // Warm popular cities during peak hours
-cron.schedule('0 9 * * *', async () => {
+cron.schedule("0 9 * * *", async () => {
   const popularCities = await getPopularCities();
 
   for (const city of popularCities) {
@@ -1690,6 +1665,7 @@ Follow consistent naming for maintainability:
 ```
 
 Examples:
+
 ```
 salons:city:Tashkent              # Salons in Tashkent
 salon:123                          # Specific salon
@@ -1701,6 +1677,7 @@ ratelimit:192.168.1.1:/api/search # Rate limit key
 ```
 
 **Benefits:**
+
 - Easy to identify cache type
 - Simple pattern matching for invalidation
 - Clear relationship between keys
@@ -1715,6 +1692,7 @@ ratelimit:192.168.1.1:/api/search # Rate limit key
 #### 1. Response Time Reduction
 
 **Without Cache:**
+
 ```
 GET /api/salons/Tashkent
 ├─ Database Query: 45ms
@@ -1724,6 +1702,7 @@ GET /api/salons/Tashkent
 ```
 
 **With Cache:**
+
 ```
 GET /api/salons/Tashkent
 ├─ Redis Lookup: 2ms
@@ -1739,12 +1718,14 @@ GET /api/salons/Tashkent
 **Scenario**: 1000 requests for salon listings
 
 **Without Cache:**
+
 - 1000 database queries
 - ~45,000ms total query time
 - High database CPU usage
 - Risk of connection pool exhaustion
 
 **With Cache (10-minute TTL):**
+
 - 1 database query every 10 minutes
 - ~45ms query time
 - Low database CPU usage
@@ -1757,7 +1738,7 @@ GET /api/salons/Tashkent
 **Concurrent Users:**
 
 | Users | Without Cache | With Cache | Improvement |
-|-------|---------------|------------|-------------|
+| ----- | ------------- | ---------- | ----------- |
 | 10    | 650ms avg     | 110ms avg  | 83%         |
 | 100   | 2.5s avg      | 150ms avg  | 94%         |
 | 1000  | 15s avg       | 200ms avg  | 98.7%       |
@@ -1766,6 +1747,7 @@ GET /api/salons/Tashkent
 #### 4. Cost Savings
 
 **Database Resources:**
+
 - **Before**: 4 vCPU, 8GB RAM database ($200/month)
 - **After**: 2 vCPU, 4GB RAM database ($80/month)
 - **Redis**: 512MB instance ($20/month)
@@ -1792,12 +1774,14 @@ ab -n 1000 -c 50 https://aurelle.uz/api/salons/Tashkent
 #### Expected Results
 
 **Without Cache:**
+
 ```
 Requests per second:    15.23 [#/sec]
 Time per request:       3281.23 [ms] (mean, across all concurrent requests)
 ```
 
 **With Cache (After First Request):**
+
 ```
 Requests per second:    89.47 [#/sec]
 Time per request:       558.73 [ms] (mean, across all concurrent requests)
@@ -1810,10 +1794,10 @@ Time per request:       558.73 [ms] (mean, across all concurrent requests)
 Monitor cache effectiveness:
 
 ```typescript
-import { redisClient } from './config/redis';
+import { redisClient } from "./config/redis";
 
 async function getCacheHitRate() {
-  const info = await redisClient.info('stats');
+  const info = await redisClient.info("stats");
 
   const keyspaceHits = parseInt(info.match(/keyspace_hits:(\d+)/)[1]);
   const keyspaceMisses = parseInt(info.match(/keyspace_misses:(\d+)/)[1]);
@@ -1827,6 +1811,7 @@ async function getCacheHitRate() {
 ```
 
 **Target Hit Rates:**
+
 - **Excellent**: 80-95% (most requests served from cache)
 - **Good**: 60-80% (decent cache efficiency)
 - **Fair**: 40-60% (cache needs optimization)
@@ -1842,14 +1827,14 @@ redis-cli-auth INFO memory | grep used_memory_human
 
 **Expected Memory Usage:**
 
-| Data Type | Records | Memory per Record | Total Memory |
-|-----------|---------|-------------------|--------------|
-| Salon Listings | 500 cities | 50KB | 25MB |
-| Salon Details | 5,000 salons | 5KB | 25MB |
-| Services | 5,000 salons | 10KB | 50MB |
-| Search Results | 1,000 queries | 20KB | 20MB |
-| Rate Limits | 10,000 IPs | 0.1KB | 1MB |
-| **Total** | | | **~120MB** |
+| Data Type      | Records       | Memory per Record | Total Memory |
+| -------------- | ------------- | ----------------- | ------------ |
+| Salon Listings | 500 cities    | 50KB              | 25MB         |
+| Salon Details  | 5,000 salons  | 5KB               | 25MB         |
+| Services       | 5,000 salons  | 10KB              | 50MB         |
+| Search Results | 1,000 queries | 20KB              | 20MB         |
+| Rate Limits    | 10,000 IPs    | 0.1KB             | 1MB          |
+| **Total**      |               |                   | **~120MB**   |
 
 **Recommendation**: 512MB Redis instance provides 4x headroom for growth.
 
@@ -2145,6 +2130,7 @@ Backup format: redis_backup_YYYYMMDD_HHMMSS.rdb.gz
 ```
 
 Example backups:
+
 ```
 /var/backups/aurelle/redis/
 ├── redis_backup_20260111_090000.rdb.gz
@@ -2180,11 +2166,11 @@ sudo tail -f /var/log/aurelle-backups/redis.log
 
 ### Backup Retention Strategy
 
-| Backup Type | Retention | Frequency | Purpose |
-|-------------|-----------|-----------|---------|
-| Daily | 7 days | Daily at 3 AM | Recent recovery |
-| Weekly | 4 weeks | Sunday at 2 AM | Medium-term recovery |
-| Monthly | 12 months | 1st of month | Long-term recovery |
+| Backup Type | Retention | Frequency      | Purpose              |
+| ----------- | --------- | -------------- | -------------------- |
+| Daily       | 7 days    | Daily at 3 AM  | Recent recovery      |
+| Weekly      | 4 weeks   | Sunday at 2 AM | Medium-term recovery |
+| Monthly     | 12 months | 1st of month   | Long-term recovery   |
 
 #### Implement Multi-Level Retention
 
@@ -2402,6 +2388,7 @@ sudo redis-monitor
 ```
 
 Output:
+
 ```
 === Redis Monitoring ===
 
@@ -2445,6 +2432,7 @@ curl https://aurelle.uz/ready
 ```
 
 Response:
+
 ```json
 {
   "status": "ready",
@@ -2475,11 +2463,13 @@ redis-cli-auth INFO stats | grep -E 'keyspace_hits|keyspace_misses'
 ```
 
 Calculate:
+
 ```
 Hit Rate = (keyspace_hits / (keyspace_hits + keyspace_misses)) * 100
 ```
 
 **Actions if <80%:**
+
 - Review TTL values (may be too short)
 - Check cache invalidation frequency
 - Analyze access patterns
@@ -2495,6 +2485,7 @@ redis-cli-auth INFO memory | grep -E 'used_memory|maxmemory'
 ```
 
 **Actions if >75%:**
+
 - Review eviction policy
 - Identify large keys: `redis-cli-auth --bigkeys`
 - Increase maxmemory
@@ -2510,6 +2501,7 @@ redis-cli-auth INFO stats | grep evicted_keys
 ```
 
 **Actions if evictions are high:**
+
 - Increase maxmemory
 - Review caching strategy (cache less data)
 - Optimize data structures
@@ -2525,6 +2517,7 @@ redis-cli-auth INFO clients | grep connected_clients
 ```
 
 **Actions if >100:**
+
 - Check for connection leaks in application
 - Review connection pooling
 - Increase maxclients if legitimate traffic
@@ -2539,6 +2532,7 @@ redis-cli-auth INFO stats | grep instantaneous_ops_per_sec
 ```
 
 **Actions for abnormal spikes:**
+
 - Investigate traffic source
 - Check for DDoS attack
 - Review rate limiting
@@ -2592,6 +2586,7 @@ done
 ```
 
 Run:
+
 ```bash
 chmod +x redis-dashboard.sh
 ./redis-dashboard.sh
@@ -2741,6 +2736,7 @@ sudo apt upgrade redis-server
 #### Issue 1: Redis Connection Failed
 
 **Symptoms:**
+
 ```
 [REDIS] Error: connect ECONNREFUSED 127.0.0.1:6379
 ```
@@ -2780,6 +2776,7 @@ sudo systemctl restart redis-server
 #### Issue 2: Authentication Failed
 
 **Symptoms:**
+
 ```
 [REDIS] Error: NOAUTH Authentication required
 [REDIS] Error: ERR invalid password
@@ -2812,6 +2809,7 @@ pm2 restart aurelle
 #### Issue 3: High Memory Usage / Evictions
 
 **Symptoms:**
+
 ```
 used_memory: 520MB
 maxmemory: 512MB
@@ -2854,6 +2852,7 @@ redis-cli-auth FLUSHDB
 #### Issue 4: Slow Response Times
 
 **Symptoms:**
+
 ```
 Response times: 200-500ms (expected: <50ms)
 ```
@@ -2893,6 +2892,7 @@ redis-cli-auth INFO memory | grep mem_fragmentation_ratio
 #### Issue 5: Keys Not Expiring
 
 **Symptoms:**
+
 ```
 Expected key to expire, but still exists after TTL
 ```
@@ -2925,6 +2925,7 @@ redis-cli-auth DEL salons:city:Tashkent
 #### Issue 6: Application Works Without Redis
 
 **Symptoms:**
+
 ```
 Redis is down, but application still works (as expected)
 Want to verify graceful degradation
@@ -2951,6 +2952,7 @@ sudo systemctl start redis-server
 #### Issue 7: Cache Invalidation Not Working
 
 **Symptoms:**
+
 ```
 Updated salon data, but cache still shows old data
 ```
@@ -2989,6 +2991,7 @@ redis-cli-auth FLUSHALL
 #### Issue 8: Too Many Connections
 
 **Symptoms:**
+
 ```
 ERR max number of clients reached
 ```
@@ -3032,12 +3035,12 @@ const redisConfig = {
   enableReadyCheck: true,
 };
 
-redisClient.on('connect', () => {
-  logger.info('Redis: Connected', { host, port });
+redisClient.on("connect", () => {
+  logger.info("Redis: Connected", { host, port });
 });
 
-redisClient.on('error', (err) => {
-  logger.error('Redis error:', {
+redisClient.on("error", (err) => {
+  logger.error("Redis error:", {
     message: err.message,
     stack: err.stack,
     code: err.code,
@@ -3057,13 +3060,13 @@ export const cacheMiddleware = (ttl: number) => {
 
     if (cachedData) {
       const duration = Date.now() - startTime;
-      logger.info('Cache HIT', {
+      logger.info("Cache HIT", {
         key: cacheKey,
         duration: `${duration}ms`,
         size: JSON.stringify(cachedData).length,
       });
     } else {
-      logger.info('Cache MISS', { key: cacheKey });
+      logger.info("Cache MISS", { key: cacheKey });
     }
 
     // ... rest of code
@@ -3075,44 +3078,44 @@ export const cacheMiddleware = (ttl: number) => {
 
 ```typescript
 // test-redis.ts
-import { redisClient, cacheHelpers } from './config/redis';
+import { redisClient, cacheHelpers } from "./config/redis";
 
 async function testRedis() {
-  console.log('Testing Redis connection...');
+  console.log("Testing Redis connection...");
 
   // Test 1: Connection
   try {
     await redisClient.ping();
-    console.log('✓ Redis connected');
+    console.log("✓ Redis connected");
   } catch (error) {
-    console.error('✗ Redis connection failed:', error);
+    console.error("✗ Redis connection failed:", error);
     return;
   }
 
   // Test 2: Set/Get
-  const testKey = 'test:key';
-  const testValue = { id: 123, name: 'Test' };
+  const testKey = "test:key";
+  const testValue = { id: 123, name: "Test" };
 
   await cacheHelpers.set(testKey, testValue, 60);
   const retrieved = await cacheHelpers.get(testKey);
 
   if (JSON.stringify(retrieved) === JSON.stringify(testValue)) {
-    console.log('✓ Set/Get working');
+    console.log("✓ Set/Get working");
   } else {
-    console.error('✗ Set/Get failed');
+    console.error("✗ Set/Get failed");
   }
 
   // Test 3: TTL
   const ttl = await redisClient.ttl(testKey);
   if (ttl > 0 && ttl <= 60) {
-    console.log('✓ TTL working');
+    console.log("✓ TTL working");
   } else {
-    console.error('✗ TTL failed');
+    console.error("✗ TTL failed");
   }
 
   // Cleanup
   await cacheHelpers.del(testKey);
-  console.log('✓ Cleanup complete');
+  console.log("✓ Cleanup complete");
 
   process.exit(0);
 }
@@ -3121,6 +3124,7 @@ testRedis();
 ```
 
 Run test:
+
 ```bash
 tsx server/test-redis.ts
 ```
@@ -3132,10 +3136,11 @@ tsx server/test-redis.ts
 ### 1. Cache Key Design
 
 **DO:**
+
 ```typescript
 // Use hierarchical, descriptive keys
-CacheKey.SALONS_BY_CITY('Tashkent')  // "salons:city:Tashkent"
-CacheKey.SALON_BY_ID('123')          // "salon:123"
+CacheKey.SALONS_BY_CITY("Tashkent"); // "salons:city:Tashkent"
+CacheKey.SALON_BY_ID("123"); // "salon:123"
 
 // Use consistent delimiters
 const key = `${namespace}:${entity}:${id}`;
@@ -3145,28 +3150,30 @@ const key = `v2:salon:${id}`;
 ```
 
 **DON'T:**
+
 ```typescript
 // Avoid non-descriptive keys
-const key = 'data123';
+const key = "data123";
 
 // Avoid special characters
-const key = 'salon#123';  // Bad
-const key = 'salon:123';  // Good
+const key = "salon#123"; // Bad
+const key = "salon:123"; // Good
 
 // Avoid very long keys
-const key = 'this_is_a_very_long_key_name_that_wastes_memory';
+const key = "this_is_a_very_long_key_name_that_wastes_memory";
 ```
 
 ### 2. TTL Strategy
 
 **DO:**
+
 ```typescript
 // Use appropriate TTL for data type
 const TTL = {
-  STATIC_DATA: 3600,      // 1 hour (categories, services)
-  DYNAMIC_DATA: 300,      // 5 minutes (salon details)
-  VOLATILE_DATA: 60,      // 1 minute (availability)
-  SEARCH_RESULTS: 600,    // 10 minutes (search queries)
+  STATIC_DATA: 3600, // 1 hour (categories, services)
+  DYNAMIC_DATA: 300, // 5 minutes (salon details)
+  VOLATILE_DATA: 60, // 1 minute (availability)
+  SEARCH_RESULTS: 600, // 10 minutes (search queries)
 };
 
 // Always set TTL to prevent memory leaks
@@ -3174,20 +3181,22 @@ await cacheHelpers.set(key, data, TTL.DYNAMIC_DATA);
 ```
 
 **DON'T:**
+
 ```typescript
 // Don't cache without TTL
-await redisClient.set(key, data);  // No expiration = memory leak
+await redisClient.set(key, data); // No expiration = memory leak
 
 // Don't use extremely long TTL for changing data
-await cacheHelpers.set('salon:123', data, 86400 * 7);  // 7 days - too long!
+await cacheHelpers.set("salon:123", data, 86400 * 7); // 7 days - too long!
 
 // Don't use extremely short TTL (defeats caching purpose)
-await cacheHelpers.set('salons', data, 5);  // 5 seconds - too short!
+await cacheHelpers.set("salons", data, 5); // 5 seconds - too short!
 ```
 
 ### 3. Error Handling
 
 **DO:**
+
 ```typescript
 // Graceful degradation
 async function getSalons(city: string) {
@@ -3195,7 +3204,7 @@ async function getSalons(city: string) {
     const cached = await cacheHelpers.get(CacheKey.SALONS_BY_CITY(city));
     if (cached) return cached;
   } catch (error) {
-    logger.error('Cache error, falling back to database', error);
+    logger.error("Cache error, falling back to database", error);
     // Continue to database query
   }
 
@@ -3204,18 +3213,19 @@ async function getSalons(city: string) {
 }
 
 // Handle Redis disconnection
-redisClient.on('error', (err) => {
-  logger.error('Redis error:', err);
+redisClient.on("error", (err) => {
+  logger.error("Redis error:", err);
   // Don't crash application
 });
 ```
 
 **DON'T:**
+
 ```typescript
 // Don't fail if cache fails
 async function getSalons(city: string) {
   const cached = await cacheHelpers.get(CacheKey.SALONS_BY_CITY(city));
-  return cached;  // What if cache is empty or Redis is down?
+  return cached; // What if cache is empty or Redis is down?
 }
 
 // Don't ignore errors
@@ -3229,6 +3239,7 @@ try {
 ### 4. Cache Invalidation
 
 **DO:**
+
 ```typescript
 // Invalidate immediately after mutations
 async function updateSalon(id: string, data: any) {
@@ -3241,11 +3252,12 @@ async function updateSalon(id: string, data: any) {
 }
 
 // Use cascade invalidation for related data
-await cacheHelpers.delPattern('salons:*');  // All salon caches
-await cacheHelpers.delPattern('search:*');  // All search caches
+await cacheHelpers.delPattern("salons:*"); // All salon caches
+await cacheHelpers.delPattern("search:*"); // All search caches
 ```
 
 **DON'T:**
+
 ```typescript
 // Don't forget to invalidate after updates
 async function updateSalon(id: string, data: any) {
@@ -3254,59 +3266,67 @@ async function updateSalon(id: string, data: any) {
 }
 
 // Don't invalidate too aggressively
-await cacheHelpers.delPattern('*');  // Clears EVERYTHING - too much!
+await cacheHelpers.delPattern("*"); // Clears EVERYTHING - too much!
 ```
 
 ### 5. Rate Limiting
 
 **DO:**
+
 ```typescript
 // Apply rate limiting to public endpoints
-router.get('/api/search',
-  rateLimitMiddleware(60, 60),  // 60 requests per minute
-  searchHandler
+router.get(
+  "/api/search",
+  rateLimitMiddleware(60, 60), // 60 requests per minute
+  searchHandler,
 );
 
 // Use different limits for different endpoints
-router.get('/api/salons',
-  rateLimitMiddleware(100, 60),  // Less restrictive
-  salonsHandler
+router.get(
+  "/api/salons",
+  rateLimitMiddleware(100, 60), // Less restrictive
+  salonsHandler,
 );
 
-router.post('/api/bookings',
-  rateLimitMiddleware(10, 3600),  // More restrictive (10 per hour)
-  bookingHandler
+router.post(
+  "/api/bookings",
+  rateLimitMiddleware(10, 3600), // More restrictive (10 per hour)
+  bookingHandler,
 );
 
 // Rate limit by user ID for authenticated endpoints
-router.get('/api/user/profile',
+router.get(
+  "/api/user/profile",
   rateLimitMiddleware(200, 60, (req) => req.user?.id || req.ip),
-  profileHandler
+  profileHandler,
 );
 ```
 
 **DON'T:**
+
 ```typescript
 // Don't apply same limit to all endpoints
-app.use(rateLimitMiddleware(100, 60));  // Too broad
+app.use(rateLimitMiddleware(100, 60)); // Too broad
 
 // Don't forget to rate limit expensive operations
-router.post('/api/send-email', sendEmailHandler);  // Vulnerable to abuse!
+router.post("/api/send-email", sendEmailHandler); // Vulnerable to abuse!
 
 // Don't use overly restrictive limits
-router.get('/api/salons',
-  rateLimitMiddleware(1, 60),  // 1 request per minute - too strict!
-  salonsHandler
+router.get(
+  "/api/salons",
+  rateLimitMiddleware(1, 60), // 1 request per minute - too strict!
+  salonsHandler,
 );
 ```
 
 ### 6. Memory Management
 
 **DO:**
+
 ```typescript
 // Monitor memory usage
 async function checkMemoryUsage() {
-  const info = await redisClient.info('memory');
+  const info = await redisClient.info("memory");
   const used = parseInt(info.match(/used_memory:(\d+)/)[1]);
   const max = parseInt(info.match(/maxmemory:(\d+)/)[1]);
 
@@ -3323,12 +3343,13 @@ async function checkMemoryUsage() {
 // Cache only necessary data
 const salon = await db.query.salons.findFirst({
   where: eq(salons.id, id),
-  columns: { id: true, name: true, city: true },  // Only needed columns
+  columns: { id: true, name: true, city: true }, // Only needed columns
 });
 await cacheHelpers.set(key, salon, TTL);
 ```
 
 **DON'T:**
+
 ```typescript
 // Don't cache huge payloads
 const salon = await db.query.salons.findFirst({
@@ -3350,6 +3371,7 @@ maxmemory-policy noeviction  // Bad: will fail when full
 ### 7. Security
 
 **DO:**
+
 ```bash
 # Use strong password
 requirepass $(openssl rand -base64 32)
@@ -3370,6 +3392,7 @@ rename-command CONFIG "SECRET_CONFIG_COMMAND"
 ```
 
 **DON'T:**
+
 ```bash
 # Don't use weak passwords
 requirepass "password123"  # Too weak!
@@ -3387,9 +3410,10 @@ User=root  # Security risk!
 ### 8. Testing
 
 **DO:**
+
 ```typescript
 // Test with Redis available
-describe('Salons API with Redis', () => {
+describe("Salons API with Redis", () => {
   beforeAll(async () => {
     await redisClient.connect();
   });
@@ -3399,25 +3423,25 @@ describe('Salons API with Redis', () => {
     await redisClient.quit();
   });
 
-  it('should cache salon list', async () => {
-    const response = await request(app).get('/api/salons/Tashkent');
+  it("should cache salon list", async () => {
+    const response = await request(app).get("/api/salons/Tashkent");
     expect(response.status).toBe(200);
 
     // Check if cached
-    const cached = await cacheHelpers.get(CacheKey.SALONS_BY_CITY('Tashkent'));
+    const cached = await cacheHelpers.get(CacheKey.SALONS_BY_CITY("Tashkent"));
     expect(cached).toBeTruthy();
   });
 });
 
 // Test with Redis unavailable (graceful degradation)
-describe('Salons API without Redis', () => {
+describe("Salons API without Redis", () => {
   beforeAll(async () => {
     // Disconnect Redis
     await redisClient.quit();
   });
 
-  it('should still work without cache', async () => {
-    const response = await request(app).get('/api/salons/Tashkent');
+  it("should still work without cache", async () => {
+    const response = await request(app).get("/api/salons/Tashkent");
     expect(response.status).toBe(200);
     // Should fetch from database
   });
@@ -3427,6 +3451,7 @@ describe('Salons API without Redis', () => {
 ### 9. Documentation
 
 **DO:**
+
 ```typescript
 /**
  * Get salons by city with caching
@@ -3450,10 +3475,11 @@ static async getSalonsByCity(
 ### 10. Monitoring
 
 **DO:**
+
 ```typescript
 // Log cache operations
-logger.info('Cache operation', {
-  operation: 'GET',
+logger.info("Cache operation", {
+  operation: "GET",
   key: cacheKey,
   hit: !!cachedData,
   duration: `${Date.now() - startTime}ms`,
@@ -3467,7 +3493,7 @@ const metrics = {
 };
 
 // Expose metrics endpoint
-router.get('/api/metrics/cache', (req, res) => {
+router.get("/api/metrics/cache", (req, res) => {
   res.json({
     hitRate: (metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100,
     totalHits: metrics.cacheHits,
@@ -3500,7 +3526,7 @@ async function getCachedSalons(ids: string[]) {
 async function getCachedSalons(ids: string[]) {
   const pipeline = redisClient.pipeline();
 
-  ids.forEach(id => {
+  ids.forEach((id) => {
     pipeline.get(CacheKey.SALON_BY_ID(id));
   });
 
@@ -3527,7 +3553,7 @@ async function incrementSalonViews(salonId: string) {
 
   // Set TTL on first increment
   if (views === 1) {
-    await redisClient.expire(key, 86400);  // 24 hours
+    await redisClient.expire(key, 86400); // 24 hours
   }
 
   return views;
@@ -3535,14 +3561,14 @@ async function incrementSalonViews(salonId: string) {
 
 // Get popular salons
 async function getPopularSalons() {
-  const keys = await redisClient.keys('salon:*:views');
+  const keys = await redisClient.keys("salon:*:views");
 
   const pipeline = redisClient.pipeline();
-  keys.forEach(key => pipeline.get(key));
+  keys.forEach((key) => pipeline.get(key));
   const results = await pipeline.exec();
 
   const salonViews = keys.map((key, index) => ({
-    salonId: key.split(':')[1],
+    salonId: key.split(":")[1],
     views: parseInt(results[index][1] as string),
   }));
 
@@ -3555,16 +3581,16 @@ async function getPopularSalons() {
 Prevent race conditions with Redis locks:
 
 ```typescript
-import { promisify } from 'util';
+import { promisify } from "util";
 
 async function acquireLock(key: string, ttl: number = 10): Promise<string | null> {
   const lockKey = `lock:${key}`;
   const lockValue = Math.random().toString(36);
 
   // Set lock with NX (only if not exists) and EX (expiration)
-  const result = await redisClient.set(lockKey, lockValue, 'EX', ttl, 'NX');
+  const result = await redisClient.set(lockKey, lockValue, "EX", ttl, "NX");
 
-  return result === 'OK' ? lockValue : null;
+  return result === "OK" ? lockValue : null;
 }
 
 async function releaseLock(key: string, lockValue: string): Promise<boolean> {
@@ -3588,7 +3614,7 @@ async function updateSalonSafely(salonId: string, data: any) {
   const lockValue = await acquireLock(`salon:${salonId}`, 30);
 
   if (!lockValue) {
-    throw new Error('Could not acquire lock');
+    throw new Error("Could not acquire lock");
   }
 
   try {
@@ -3611,21 +3637,24 @@ async function updateAndNotify(salonId: string, data: any) {
   await db.update(salons).set(data).where(eq(salons.id, salonId));
 
   // Publish invalidation message
-  await redisClient.publish('cache:invalidate', JSON.stringify({
-    type: 'salon',
-    id: salonId,
-  }));
+  await redisClient.publish(
+    "cache:invalidate",
+    JSON.stringify({
+      type: "salon",
+      id: salonId,
+    }),
+  );
 }
 
 // Subscriber (all application instances)
 const subscriber = redisClient.duplicate();
 
-await subscriber.subscribe('cache:invalidate');
+await subscriber.subscribe("cache:invalidate");
 
-subscriber.on('message', async (channel, message) => {
+subscriber.on("message", async (channel, message) => {
   const { type, id } = JSON.parse(message);
 
-  if (type === 'salon') {
+  if (type === "salon") {
     await CacheService.invalidateSalon(id);
     logger.info(`Cache invalidated for salon ${id}`);
   }
@@ -3639,17 +3668,17 @@ Maintain sorted salon rankings:
 ```typescript
 // Add salon to rating sorted set
 async function updateSalonRating(salonId: string, rating: number) {
-  await redisClient.zadd('salons:ratings', rating, salonId);
+  await redisClient.zadd("salons:ratings", rating, salonId);
 }
 
 // Get top-rated salons
 async function getTopRatedSalons(count: number = 10) {
   // Get salon IDs sorted by rating (descending)
-  const salonIds = await redisClient.zrevrange('salons:ratings', 0, count - 1);
+  const salonIds = await redisClient.zrevrange("salons:ratings", 0, count - 1);
 
   // Fetch salon details from cache or database
   const salons = await Promise.all(
-    salonIds.map(id => CacheService.getSalonById(id, fetchFromDb))
+    salonIds.map((id) => CacheService.getSalonById(id, fetchFromDb)),
   );
 
   return salons;
@@ -3657,7 +3686,7 @@ async function getTopRatedSalons(count: number = 10) {
 
 // Get salon rank
 async function getSalonRank(salonId: string) {
-  const rank = await redisClient.zrevrank('salons:ratings', salonId);
+  const rank = await redisClient.zrevrank("salons:ratings", salonId);
   return rank !== null ? rank + 1 : null;
 }
 ```
@@ -3671,7 +3700,7 @@ class CacheAsideService<T> {
   constructor(
     private key: string,
     private ttl: number,
-    private fetchFunction: () => Promise<T>
+    private fetchFunction: () => Promise<T>,
   ) {}
 
   async get(): Promise<T> {
@@ -3705,13 +3734,13 @@ class CacheAsideService<T> {
 
 // Usage
 const salonCache = new CacheAsideService(
-  CacheKey.SALON_BY_ID('123'),
+  CacheKey.SALON_BY_ID("123"),
   CacheTTL.SALON_DETAIL,
   async () => {
     return await db.query.salons.findFirst({
-      where: eq(salons.id, '123'),
+      where: eq(salons.id, "123"),
     });
-  }
+  },
 );
 
 const salon = await salonCache.get();
@@ -3722,18 +3751,18 @@ const salon = await salonCache.get();
 Combine in-memory and Redis caching:
 
 ```typescript
-import LRU from 'lru-cache';
+import LRU from "lru-cache";
 
 // L1: In-memory cache (very fast, limited size)
 const memoryCache = new LRU<string, any>({
-  max: 500,  // Max 500 items
-  ttl: 30000,  // 30 seconds
+  max: 500, // Max 500 items
+  ttl: 30000, // 30 seconds
 });
 
 async function getWithMultiLevelCache<T>(
   key: string,
   fetchFunction: () => Promise<T>,
-  redisTTL: number
+  redisTTL: number,
 ): Promise<T> {
   // L1: Check memory cache
   const memCached = memoryCache.get(key);
@@ -3767,7 +3796,7 @@ async function getWithMultiLevelCache<T>(
 Proactively warm cache during idle times:
 
 ```typescript
-import cron from 'node-cron';
+import cron from "node-cron";
 
 class CacheWarmer {
   private queue: Array<() => Promise<void>> = [];
@@ -3787,9 +3816,9 @@ class CacheWarmer {
       for (const task of this.queue) {
         await task();
       }
-      logger.info('Cache warm-up complete');
+      logger.info("Cache warm-up complete");
     } catch (error) {
-      logger.error('Cache warm-up error:', error);
+      logger.error("Cache warm-up error:", error);
     } finally {
       this.isWarming = false;
     }
@@ -3800,15 +3829,15 @@ const warmer = new CacheWarmer();
 
 // Add warm-up tasks
 warmer.add(async () => {
-  await CacheService.getSalonsByCity('Tashkent', fetchFromDb);
+  await CacheService.getSalonsByCity("Tashkent", fetchFromDb);
 });
 
 warmer.add(async () => {
-  await CacheService.getSalonsByCity('Samarkand', fetchFromDb);
+  await CacheService.getSalonsByCity("Samarkand", fetchFromDb);
 });
 
 // Schedule warm-up during low-traffic hours (e.g., 3 AM)
-cron.schedule('0 3 * * *', () => {
+cron.schedule("0 3 * * *", () => {
   warmer.warmAll();
 });
 ```

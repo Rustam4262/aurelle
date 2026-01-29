@@ -3,7 +3,9 @@
 ## Дата: 5 января 2026
 
 ## Проблема
+
 Интерфейс профиля клиента показывал только минимальную информацию о бронированиях:
+
 - Только ID бронирования
 - Дата и время
 - Статус без перевода
@@ -14,9 +16,11 @@
 ## Решение
 
 ### 1. Изменён источник данных
+
 **Файл:** [client/src/pages/profile.tsx:33-36](client/src/pages/profile.tsx#L33-L36)
 
 Вместо простого эндпоинта `/api/bookings` используем обогащённый `/api/client/bookings`, который возвращает:
+
 - Полную информацию о салоне
 - Данные об услуге
 - Информацию о мастере (если назначен)
@@ -37,6 +41,7 @@ const { data: bookings } = useQuery<any[]>({
 ```
 
 ### 2. Добавлена функция отмены бронирования
+
 **Файл:** [client/src/pages/profile.tsx:40-58](client/src/pages/profile.tsx#L40-L58)
 
 ```typescript
@@ -62,9 +67,11 @@ const cancelBookingMutation = useMutation({
 ```
 
 ### 3. Улучшен UI карточки бронирования
+
 **Файл:** [client/src/pages/profile.tsx:132-214](client/src/pages/profile.tsx#L132-L214)
 
 **Теперь отображается:**
+
 - ✅ Название салона (кликабельное, ведёт на страницу салона)
 - ✅ Название услуги с иконкой ножниц
 - ✅ Имя мастера с иконкой пользователя (если назначен)
@@ -74,11 +81,13 @@ const cancelBookingMutation = useMutation({
 - ✅ Кнопка "Отменить" для бронирований со статусом "pending"
 
 **Цветовая схема статусов:**
+
 - `confirmed` → зелёный Badge (default variant)
 - `cancelled` → красный Badge (destructive variant)
 - `pending` → серый Badge (secondary variant)
 
 ### 4. Добавлены импорты
+
 **Файл:** [client/src/pages/profile.tsx:1-26](client/src/pages/profile.tsx#L1-L26)
 
 ```typescript
@@ -90,12 +99,15 @@ import { User, Scissors, XCircle } from "lucide-react";
 ```
 
 ### 5. Добавлены переводы
+
 **Файлы:**
+
 - [client/src/locales/en.json](client/src/locales/en.json)
 - [client/src/locales/ru.json](client/src/locales/ru.json)
 - [client/src/locales/uz.json](client/src/locales/uz.json)
 
 **Новые ключи:**
+
 ```json
 {
   "marketplace.profile": {
@@ -117,6 +129,7 @@ import { User, Scissors, XCircle } from "lucide-react";
 ## Визуальные улучшения
 
 ### До:
+
 ```
 ┌─────────────────────────────────────┐
 │ Booking #9675d5b7                   │
@@ -125,6 +138,7 @@ import { User, Scissors, XCircle } from "lucide-react";
 ```
 
 ### После:
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Салон "Золотые ножницы" →                               │
@@ -152,6 +166,7 @@ import { User, Scissors, XCircle } from "lucide-react";
 ## Backend эндпоинты
 
 Используются существующие эндпоинты:
+
 - `GET /api/client/bookings` - получение обогащённых данных о бронированиях
 - `DELETE /api/client/bookings/:id` - отмена бронирования
 
@@ -162,4 +177,5 @@ import { User, Scissors, XCircle } from "lucide-react";
 3. ⏳ Развернуть все улучшения в продакшен
 
 ## Статус
+
 ✅ **ГОТОВО К РАЗВЁРТЫВАНИЮ**

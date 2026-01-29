@@ -23,7 +23,13 @@ export function ReviewForm({ bookingId, salonId, masterId, onSuccess }: ReviewFo
   const [comment, setComment] = useState("");
 
   const createReviewMutation = useMutation({
-    mutationFn: async (data: { bookingId: string; salonId: string; masterId?: string; rating: number; comment?: string }) => {
+    mutationFn: async (data: {
+      bookingId: string;
+      salonId: string;
+      masterId?: string;
+      rating: number;
+      comment?: string;
+    }) => {
       return apiRequest("POST", "/api/reviews", data);
     },
     onSuccess: () => {
@@ -89,10 +95,7 @@ export function ReviewForm({ bookingId, salonId, masterId, onSuccess }: ReviewFo
         />
       </div>
 
-      <Button
-        type="submit"
-        disabled={createReviewMutation.isPending || rating === 0}
-      >
+      <Button type="submit" disabled={createReviewMutation.isPending || rating === 0}>
         {createReviewMutation.isPending ? t("common.submitting") : t("reviews.submitReview")}
       </Button>
     </form>

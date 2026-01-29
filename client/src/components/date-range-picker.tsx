@@ -29,10 +29,13 @@ const PRESET_RANGES = [
   { label: "Last 30 days", getValue: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
   { label: "Last 90 days", getValue: () => ({ from: subDays(new Date(), 90), to: new Date() }) },
   { label: "This month", getValue: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
-  { label: "Last month", getValue: () => {
-    const lastMonth = subMonths(new Date(), 1);
-    return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
-  }},
+  {
+    label: "Last month",
+    getValue: () => {
+      const lastMonth = subMonths(new Date(), 1);
+      return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+    },
+  },
   { label: "This year", getValue: () => ({ from: startOfYear(new Date()), to: new Date() }) },
 ];
 
@@ -40,7 +43,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handlePresetClick = (preset: typeof PRESET_RANGES[0]) => {
+  const handlePresetClick = (preset: (typeof PRESET_RANGES)[0]) => {
     onChange(preset.getValue());
     setIsOpen(false);
   };
@@ -57,7 +60,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
           className={cn(
             "justify-start text-left font-normal",
             !value && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <Calendar className="mr-2 h-4 w-4" />
@@ -79,7 +82,10 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                 className="w-full justify-start text-sm"
                 onClick={() => handlePresetClick(preset)}
               >
-                {t(`analytics.range.${preset.label.toLowerCase().replace(/\s+/g, "_")}`, preset.label)}
+                {t(
+                  `analytics.range.${preset.label.toLowerCase().replace(/\s+/g, "_")}`,
+                  preset.label,
+                )}
               </Button>
             ))}
           </div>
@@ -115,11 +121,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
               </div>
             </div>
             <div className="flex justify-end mt-3 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
                 {t("common.cancel", "Cancel")}
               </Button>
               <Button

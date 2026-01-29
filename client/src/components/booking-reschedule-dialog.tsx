@@ -71,7 +71,10 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
       queryClient.invalidateQueries({ queryKey: ["/api/owner/bookings"] });
       toast({
         title: t("bookings.reschedule.success", "Booking rescheduled"),
-        description: t("bookings.reschedule.successDesc", "The booking has been successfully rescheduled"),
+        description: t(
+          "bookings.reschedule.successDesc",
+          "The booking has been successfully rescheduled",
+        ),
       });
       onOpenChange(false);
     },
@@ -132,7 +135,8 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
           <div className="rounded-lg bg-muted p-3 space-y-1">
             <p className="text-sm font-medium">{t("bookings.reschedule.current", "Current:")}</p>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(booking.bookingDate), "PPP")} • {booking.startTime} - {booking.endTime}
+              {format(new Date(booking.bookingDate), "PPP")} • {booking.startTime} -{" "}
+              {booking.endTime}
             </p>
           </div>
 
@@ -141,12 +145,11 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
             <Label>{t("bookings.reschedule.newDate", "New Date")}</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {newDate ? format(newDate, "PPP") : t("bookings.reschedule.pickDate", "Pick a date")}
+                  {newDate
+                    ? format(newDate, "PPP")
+                    : t("bookings.reschedule.pickDate", "Pick a date")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -163,7 +166,9 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
 
           {/* New start time */}
           <div className="space-y-2">
-            <Label htmlFor="newStartTime">{t("bookings.reschedule.newStartTime", "New Start Time")}</Label>
+            <Label htmlFor="newStartTime">
+              {t("bookings.reschedule.newStartTime", "New Start Time")}
+            </Label>
             <Input
               id="newStartTime"
               type="time"
@@ -174,7 +179,9 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
 
           {/* New end time */}
           <div className="space-y-2">
-            <Label htmlFor="newEndTime">{t("bookings.reschedule.newEndTime", "New End Time")}</Label>
+            <Label htmlFor="newEndTime">
+              {t("bookings.reschedule.newEndTime", "New End Time")}
+            </Label>
             <Input
               id="newEndTime"
               type="time"
@@ -186,11 +193,15 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
           {/* Reason */}
           <div className="space-y-2">
             <Label htmlFor="reason">
-              {t("bookings.reschedule.reason", "Reason")} <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
+              {t("bookings.reschedule.reason", "Reason")}{" "}
+              <span className="text-muted-foreground">({t("common.optional", "Optional")})</span>
             </Label>
             <Textarea
               id="reason"
-              placeholder={t("bookings.reschedule.reasonPlaceholder", "Why are you rescheduling this booking?")}
+              placeholder={t(
+                "bookings.reschedule.reasonPlaceholder",
+                "Why are you rescheduling this booking?",
+              )}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
@@ -206,10 +217,7 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
           >
             {t("common.cancel", "Cancel")}
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={rescheduleMutation.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={rescheduleMutation.isPending}>
             {rescheduleMutation.isPending
               ? t("bookings.reschedule.saving", "Rescheduling...")
               : t("bookings.reschedule.save", "Reschedule")}

@@ -42,16 +42,16 @@ This guide provides comprehensive API testing documentation for the AURELLE plat
 
 ### Testing Coverage
 
-| Module | Endpoints | Coverage |
-|--------|-----------|----------|
-| **Auth** | 8 | Authentication, Registration, OAuth |
-| **Salons** | 12 | CRUD, Search, Public/Owner views |
-| **Masters** | 10 | CRUD, Availability, Portfolio |
-| **Services** | 8 | CRUD, Filtering |
-| **Bookings** | 12 | Create, Cancel, History, Calendar |
-| **Reviews** | 8 | Create, Respond, Moderate |
-| **Admin** | 22 | Dashboard, User/Salon management, Moderation |
-| **TOTAL** | **80** | **100% API coverage** |
+| Module       | Endpoints | Coverage                                     |
+| ------------ | --------- | -------------------------------------------- |
+| **Auth**     | 8         | Authentication, Registration, OAuth          |
+| **Salons**   | 12        | CRUD, Search, Public/Owner views             |
+| **Masters**  | 10        | CRUD, Availability, Portfolio                |
+| **Services** | 8         | CRUD, Filtering                              |
+| **Bookings** | 12        | Create, Cancel, History, Calendar            |
+| **Reviews**  | 8         | Create, Respond, Moderate                    |
+| **Admin**    | 22        | Dashboard, User/Salon management, Moderation |
+| **TOTAL**    | **80**    | **100% API coverage**                        |
 
 ---
 
@@ -353,81 +353,84 @@ Add this to the **Collection level** Pre-request Scripts:
 // AURELLE API - Global Pre-Request Script
 // Automatically manages authentication tokens
 
-const moment = require('moment');
+const moment = require("moment");
 
 // Function to check if token is expired
 function isTokenExpired() {
-    const tokenTimestamp = pm.environment.get('token_timestamp');
-    if (!tokenTimestamp) return true;
+  const tokenTimestamp = pm.environment.get("token_timestamp");
+  if (!tokenTimestamp) return true;
 
-    const now = moment();
-    const tokenTime = moment(tokenTimestamp);
-    const diffMinutes = now.diff(tokenTime, 'minutes');
+  const now = moment();
+  const tokenTime = moment(tokenTimestamp);
+  const diffMinutes = now.diff(tokenTime, "minutes");
 
-    // Token expires after 30 minutes
-    return diffMinutes >= 30;
+  // Token expires after 30 minutes
+  return diffMinutes >= 30;
 }
 
 // Function to auto-login if no token or token expired
 async function ensureAuthenticated() {
-    const authToken = pm.environment.get('auth_token');
+  const authToken = pm.environment.get("auth_token");
 
-    if (!authToken || isTokenExpired()) {
-        console.log('Token missing or expired. Auto-logging in...');
+  if (!authToken || isTokenExpired()) {
+    console.log("Token missing or expired. Auto-logging in...");
 
-        const loginUrl = pm.environment.get('api_base') + '/auth/login';
-        const email = pm.environment.get('user_email');
-        const password = pm.environment.get('user_password');
+    const loginUrl = pm.environment.get("api_base") + "/auth/login";
+    const email = pm.environment.get("user_email");
+    const password = pm.environment.get("user_password");
 
-        if (!email || !password) {
-            console.warn('No credentials configured in environment');
-            return;
+    if (!email || !password) {
+      console.warn("No credentials configured in environment");
+      return;
+    }
+
+    // Perform login request
+    pm.sendRequest(
+      {
+        url: loginUrl,
+        method: "POST",
+        header: {
+          "Content-Type": "application/json",
+        },
+        body: {
+          mode: "raw",
+          raw: JSON.stringify({
+            email: email,
+            password: password,
+          }),
+        },
+      },
+      function (err, response) {
+        if (err) {
+          console.error("Auto-login failed:", err);
+          return;
         }
 
-        // Perform login request
-        pm.sendRequest({
-            url: loginUrl,
-            method: 'POST',
-            header: {
-                'Content-Type': 'application/json',
-            },
-            body: {
-                mode: 'raw',
-                raw: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            }
-        }, function (err, response) {
-            if (err) {
-                console.error('Auto-login failed:', err);
-                return;
-            }
+        const jsonData = response.json();
 
-            const jsonData = response.json();
-
-            if (jsonData.token) {
-                pm.environment.set('auth_token', jsonData.token);
-                pm.environment.set('user_id', jsonData.user.id);
-                pm.environment.set('token_timestamp', moment().toISOString());
-                console.log('✅ Auto-login successful');
-            } else {
-                console.error('❌ Auto-login failed: No token in response');
-            }
-        });
-    }
+        if (jsonData.token) {
+          pm.environment.set("auth_token", jsonData.token);
+          pm.environment.set("user_id", jsonData.user.id);
+          pm.environment.set("token_timestamp", moment().toISOString());
+          console.log("✅ Auto-login successful");
+        } else {
+          console.error("❌ Auto-login failed: No token in response");
+        }
+      },
+    );
+  }
 }
 
 // Run authentication check for protected endpoints
-const isPublicEndpoint = pm.request.url.path.includes('auth/providers') ||
-                         pm.request.url.path.includes('health');
+const isPublicEndpoint =
+  pm.request.url.path.includes("auth/providers") || pm.request.url.path.includes("health");
 
 if (!isPublicEndpoint) {
-    ensureAuthenticated();
+  ensureAuthenticated();
 }
 
 // Add request timestamp for performance tracking
-pm.environment.set('request_start_time', Date.now());
+pm.environment.set("request_start_time", Date.now());
 ```
 
 ### Individual Request Pre-Request Script Example
@@ -436,16 +439,16 @@ For endpoints that need authentication:
 
 ```javascript
 // Ensure auth token is set
-const authToken = pm.environment.get('auth_token');
+const authToken = pm.environment.get("auth_token");
 
 if (!authToken) {
-    throw new Error('Authentication token not found. Please login first.');
+  throw new Error("Authentication token not found. Please login first.");
 }
 
 // Add auth header
 pm.request.headers.add({
-    key: 'Authorization',
-    value: 'Bearer ' + authToken
+  key: "Authorization",
+  value: "Bearer " + authToken,
 });
 ```
 
@@ -462,6 +465,7 @@ pm.request.headers.add({
 **Description**: Register new user with email and password
 
 **Request Body**:
+
 ```json
 {
   "email": "newuser@example.com",
@@ -473,6 +477,7 @@ pm.request.headers.add({
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "success": true,
@@ -488,38 +493,39 @@ pm.request.headers.add({
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 201", function () {
-    pm.response.to.have.status(201);
+  pm.response.to.have.status(201);
 });
 
 pm.test("Response has token", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('token');
-    pm.expect(jsonData.token).to.be.a('string').and.not.empty;
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("token");
+  pm.expect(jsonData.token).to.be.a("string").and.not.empty;
 
-    // Save token for subsequent requests
-    pm.environment.set('auth_token', jsonData.token);
+  // Save token for subsequent requests
+  pm.environment.set("auth_token", jsonData.token);
 });
 
 pm.test("Response has user object", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('user');
-    pm.expect(jsonData.user).to.have.property('id');
-    pm.expect(jsonData.user).to.have.property('email');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("user");
+  pm.expect(jsonData.user).to.have.property("id");
+  pm.expect(jsonData.user).to.have.property("email");
 
-    // Save user ID
-    pm.environment.set('user_id', jsonData.user.id);
+  // Save user ID
+  pm.environment.set("user_id", jsonData.user.id);
 });
 
 pm.test("Response time is less than 2000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(2000);
+  pm.expect(pm.response.responseTime).to.be.below(2000);
 });
 
 pm.test("Email format is valid", function () {
-    const jsonData = pm.response.json();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    pm.expect(jsonData.user.email).to.match(emailRegex);
+  const jsonData = pm.response.json();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  pm.expect(jsonData.user.email).to.match(emailRegex);
 });
 ```
 
@@ -532,6 +538,7 @@ pm.test("Email format is valid", function () {
 **Description**: Login with email and password
 
 **Request Body**:
+
 ```json
 {
   "email": "{{user_email}}",
@@ -540,6 +547,7 @@ pm.test("Email format is valid", function () {
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "success": true,
@@ -557,29 +565,37 @@ pm.test("Email format is valid", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Login successful", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.success).to.be.true;
-    pm.expect(jsonData).to.have.property('token');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.success).to.be.true;
+  pm.expect(jsonData).to.have.property("token");
 
-    // Save auth token
-    pm.environment.set('auth_token', jsonData.token);
-    pm.environment.set('user_id', jsonData.user.id);
-    pm.environment.set('token_timestamp', new Date().toISOString());
+  // Save auth token
+  pm.environment.set("auth_token", jsonData.token);
+  pm.environment.set("user_id", jsonData.user.id);
+  pm.environment.set("token_timestamp", new Date().toISOString());
 });
 
 pm.test("Response has valid user data", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.user).to.have.all.keys('id', 'email', 'firstName', 'lastName', 'isAdmin', 'adminRole');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.user).to.have.all.keys(
+    "id",
+    "email",
+    "firstName",
+    "lastName",
+    "isAdmin",
+    "adminRole",
+  );
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -592,11 +608,13 @@ pm.test("Response time is less than 1000ms", function () {
 **Description**: Get currently authenticated user
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "user_123456",
@@ -610,20 +628,21 @@ Authorization: Bearer {{auth_token}}
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("User data is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData).to.have.property('email');
-    pm.expect(jsonData.email).to.be.a('string').and.not.empty;
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData).to.have.property("email");
+  pm.expect(jsonData.email).to.be.a("string").and.not.empty;
 });
 
 pm.test("Response time is less than 500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(500);
+  pm.expect(pm.response.responseTime).to.be.below(500);
 });
 ```
 
@@ -636,11 +655,13 @@ pm.test("Response time is less than 500ms", function () {
 **Description**: Logout current user
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "success": true,
@@ -649,23 +670,24 @@ Authorization: Bearer {{auth_token}}
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Logout successful", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.success).to.be.true;
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.success).to.be.true;
 
-    // Clear auth token
-    pm.environment.unset('auth_token');
-    pm.environment.unset('user_id');
-    pm.environment.unset('token_timestamp');
+  // Clear auth token
+  pm.environment.unset("auth_token");
+  pm.environment.unset("user_id");
+  pm.environment.unset("token_timestamp");
 });
 
 pm.test("Response time is less than 500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(500);
+  pm.expect(pm.response.responseTime).to.be.below(500);
 });
 ```
 
@@ -678,6 +700,7 @@ pm.test("Response time is less than 500ms", function () {
 **Description**: Get available authentication providers
 
 **Response** (200 OK):
+
 ```json
 {
   "local": true,
@@ -689,20 +712,21 @@ pm.test("Response time is less than 500ms", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Providers object is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('local');
-    pm.expect(jsonData).to.have.property('google');
-    pm.expect(jsonData.local).to.be.a('boolean');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("local");
+  pm.expect(jsonData).to.have.property("google");
+  pm.expect(jsonData.local).to.be.a("boolean");
 });
 
 pm.test("Response time is less than 300ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(300);
+  pm.expect(pm.response.responseTime).to.be.below(300);
 });
 ```
 
@@ -717,12 +741,14 @@ pm.test("Response time is less than 300ms", function () {
 **Description**: Get all active salons (public endpoint)
 
 **Query Parameters**:
+
 - `city` (optional): Filter by city
 - `minLat`, `maxLat`, `minLng`, `maxLng` (optional): Bounding box for map
 
 **Example**: `GET {{api_base}}/salons?city=Tashkent`
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -739,46 +765,47 @@ pm.test("Response time is less than 300ms", function () {
     "photos": ["url1", "url2"],
     "isActive": true,
     "createdAt": "2024-01-15T10:00:00Z"
-  },
+  }
   // ... more salons
 ]
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Response is an array", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 });
 
 pm.test("Salons have required fields", function () {
-    const jsonData = pm.response.json();
-    if (jsonData.length > 0) {
-        const salon = jsonData[0];
-        pm.expect(salon).to.have.property('id');
-        pm.expect(salon).to.have.property('name');
-        pm.expect(salon).to.have.property('address');
-        pm.expect(salon).to.have.property('city');
-        pm.expect(salon.isActive).to.be.true;
+  const jsonData = pm.response.json();
+  if (jsonData.length > 0) {
+    const salon = jsonData[0];
+    pm.expect(salon).to.have.property("id");
+    pm.expect(salon).to.have.property("name");
+    pm.expect(salon).to.have.property("address");
+    pm.expect(salon).to.have.property("city");
+    pm.expect(salon.isActive).to.be.true;
 
-        // Save first salon ID for subsequent tests
-        pm.environment.set('salon_id', salon.id);
-    }
+    // Save first salon ID for subsequent tests
+    pm.environment.set("salon_id", salon.id);
+  }
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 
 pm.test("Average rating is valid", function () {
-    const jsonData = pm.response.json();
-    if (jsonData.length > 0 && jsonData[0].averageRating !== null) {
-        pm.expect(jsonData[0].averageRating).to.be.within(0, 5);
-    }
+  const jsonData = pm.response.json();
+  if (jsonData.length > 0 && jsonData[0].averageRating !== null) {
+    pm.expect(jsonData[0].averageRating).to.be.within(0, 5);
+  }
 });
 ```
 
@@ -791,6 +818,7 @@ pm.test("Average rating is valid", function () {
 **Description**: Get single salon with full details
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "salon_001",
@@ -851,54 +879,55 @@ pm.test("Average rating is valid", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Salon has complete data", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData).to.have.property('name');
-    pm.expect(jsonData).to.have.property('masters');
-    pm.expect(jsonData).to.have.property('services');
-    pm.expect(jsonData).to.have.property('workingHours');
-    pm.expect(jsonData).to.have.property('reviews');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData).to.have.property("name");
+  pm.expect(jsonData).to.have.property("masters");
+  pm.expect(jsonData).to.have.property("services");
+  pm.expect(jsonData).to.have.property("workingHours");
+  pm.expect(jsonData).to.have.property("reviews");
 });
 
 pm.test("Masters array is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.masters).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.masters).to.be.an("array");
 
-    if (jsonData.masters.length > 0) {
-        const master = jsonData.masters[0];
-        pm.expect(master).to.have.property('id');
-        pm.expect(master).to.have.property('name');
+  if (jsonData.masters.length > 0) {
+    const master = jsonData.masters[0];
+    pm.expect(master).to.have.property("id");
+    pm.expect(master).to.have.property("name");
 
-        // Save master ID
-        pm.environment.set('master_id', master.id);
-    }
+    // Save master ID
+    pm.environment.set("master_id", master.id);
+  }
 });
 
 pm.test("Services array is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.services).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.services).to.be.an("array");
 
-    if (jsonData.services.length > 0) {
-        const service = jsonData.services[0];
-        pm.expect(service).to.have.property('id');
-        pm.expect(service).to.have.property('price');
-        pm.expect(service).to.have.property('duration');
-        pm.expect(service.price).to.be.a('number').and.above(0);
-        pm.expect(service.duration).to.be.a('number').and.above(0);
+  if (jsonData.services.length > 0) {
+    const service = jsonData.services[0];
+    pm.expect(service).to.have.property("id");
+    pm.expect(service).to.have.property("price");
+    pm.expect(service).to.have.property("duration");
+    pm.expect(service.price).to.be.a("number").and.above(0);
+    pm.expect(service.duration).to.be.a("number").and.above(0);
 
-        // Save service ID
-        pm.environment.set('service_id', service.id);
-    }
+    // Save service ID
+    pm.environment.set("service_id", service.id);
+  }
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -911,6 +940,7 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Get all services for a specific salon
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -941,34 +971,35 @@ pm.test("Response time is less than 1500ms", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Response is an array of services", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 
-    if (jsonData.length > 0) {
-        const service = jsonData[0];
-        pm.expect(service).to.have.property('id');
-        pm.expect(service).to.have.property('name');
-        pm.expect(service).to.have.property('price');
-        pm.expect(service).to.have.property('duration');
-        pm.expect(service.isActive).to.be.true;
-    }
+  if (jsonData.length > 0) {
+    const service = jsonData[0];
+    pm.expect(service).to.have.property("id");
+    pm.expect(service).to.have.property("name");
+    pm.expect(service).to.have.property("price");
+    pm.expect(service).to.have.property("duration");
+    pm.expect(service.isActive).to.be.true;
+  }
 });
 
 pm.test("Price is positive number", function () {
-    const jsonData = pm.response.json();
-    if (jsonData.length > 0) {
-        pm.expect(jsonData[0].price).to.be.a('number').and.above(0);
-    }
+  const jsonData = pm.response.json();
+  if (jsonData.length > 0) {
+    pm.expect(jsonData[0].price).to.be.a("number").and.above(0);
+  }
 });
 
 pm.test("Response time is less than 800ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(800);
+  pm.expect(pm.response.responseTime).to.be.below(800);
 });
 ```
 
@@ -981,12 +1012,14 @@ pm.test("Response time is less than 800ms", function () {
 **Description**: Get available time slots for a master on a specific date
 
 **Query Parameters** (required):
+
 - `date`: Date in YYYY-MM-DD format (e.g., "2024-01-20")
 - `serviceId` (optional): Service ID to calculate duration
 
 **Example**: `GET {{api_base}}/salons/masters/{{master_id}}/availability?date=2024-01-20&serviceId=service_001`
 
 **Response** (200 OK):
+
 ```json
 {
   "masterId": "master_001",
@@ -1019,36 +1052,37 @@ pm.test("Response time is less than 800ms", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Availability response is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('masterId');
-    pm.expect(jsonData).to.have.property('date');
-    pm.expect(jsonData).to.have.property('slots');
-    pm.expect(jsonData.slots).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("masterId");
+  pm.expect(jsonData).to.have.property("date");
+  pm.expect(jsonData).to.have.property("slots");
+  pm.expect(jsonData.slots).to.be.an("array");
 });
 
 pm.test("Slots have correct structure", function () {
-    const jsonData = pm.response.json();
-    if (jsonData.slots.length > 0) {
-        const slot = jsonData.slots[0];
-        pm.expect(slot).to.have.all.keys('startTime', 'endTime', 'isAvailable', 'conflictReason');
-        pm.expect(slot.isAvailable).to.be.a('boolean');
-    }
+  const jsonData = pm.response.json();
+  if (jsonData.slots.length > 0) {
+    const slot = jsonData.slots[0];
+    pm.expect(slot).to.have.all.keys("startTime", "endTime", "isAvailable", "conflictReason");
+    pm.expect(slot.isAvailable).to.be.a("boolean");
+  }
 });
 
 pm.test("Available slots count is accurate", function () {
-    const jsonData = pm.response.json();
-    const actualAvailable = jsonData.slots.filter(s => s.isAvailable).length;
-    pm.expect(jsonData.availableSlots).to.equal(actualAvailable);
+  const jsonData = pm.response.json();
+  const actualAvailable = jsonData.slots.filter((s) => s.isAvailable).length;
+  pm.expect(jsonData.availableSlots).to.equal(actualAvailable);
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -1061,12 +1095,14 @@ pm.test("Response time is less than 1000ms", function () {
 **Description**: Create a new salon (requires authentication)
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "name": "Elegant Beauty Salon",
@@ -1085,6 +1121,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "salon_new_001",
@@ -1110,28 +1147,31 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 201", function () {
-    pm.response.to.have.status(201);
+  pm.response.to.have.status(201);
 });
 
 pm.test("Salon created successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData.name).to.equal(pm.request.body.raw ? JSON.parse(pm.request.body.raw).name : null);
-    pm.expect(jsonData).to.have.property('ownerId');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData.name).to.equal(
+    pm.request.body.raw ? JSON.parse(pm.request.body.raw).name : null,
+  );
+  pm.expect(jsonData).to.have.property("ownerId");
 
-    // Save new salon ID
-    pm.environment.set('new_salon_id', jsonData.id);
+  // Save new salon ID
+  pm.environment.set("new_salon_id", jsonData.id);
 });
 
 pm.test("Salon is initially inactive", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.isActive).to.be.false;
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.isActive).to.be.false;
 });
 
 pm.test("Response time is less than 2000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(2000);
+  pm.expect(pm.response.responseTime).to.be.below(2000);
 });
 ```
 
@@ -1146,6 +1186,7 @@ pm.test("Response time is less than 2000ms", function () {
 **Description**: Get master profile with reviews
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "master_001",
@@ -1175,29 +1216,30 @@ pm.test("Response time is less than 2000ms", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Master profile is complete", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData).to.have.property('name');
-    pm.expect(jsonData).to.have.property('salonId');
-    pm.expect(jsonData).to.have.property('reviews');
-    pm.expect(jsonData.reviews).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData).to.have.property("name");
+  pm.expect(jsonData).to.have.property("salonId");
+  pm.expect(jsonData).to.have.property("reviews");
+  pm.expect(jsonData.reviews).to.be.an("array");
 });
 
 pm.test("Rating is within valid range", function () {
-    const jsonData = pm.response.json();
-    if (jsonData.averageRating !== null) {
-        pm.expect(jsonData.averageRating).to.be.within(0, 5);
-    }
+  const jsonData = pm.response.json();
+  if (jsonData.averageRating !== null) {
+    pm.expect(jsonData.averageRating).to.be.within(0, 5);
+  }
 });
 
 pm.test("Response time is less than 800ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(800);
+  pm.expect(pm.response.responseTime).to.be.below(800);
 });
 ```
 
@@ -1212,12 +1254,14 @@ pm.test("Response time is less than 800ms", function () {
 **Description**: Create a new service for a salon
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "name": "Women's Haircut",
@@ -1230,6 +1274,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "service_new_001",
@@ -1247,23 +1292,24 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 201", function () {
-    pm.response.to.have.status(201);
+  pm.response.to.have.status(201);
 });
 
 pm.test("Service created successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData.price).to.be.a('number').and.above(0);
-    pm.expect(jsonData.duration).to.be.a('number').and.above(0);
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData.price).to.be.a("number").and.above(0);
+  pm.expect(jsonData.duration).to.be.a("number").and.above(0);
 
-    // Save service ID
-    pm.environment.set('new_service_id', jsonData.id);
+  // Save service ID
+  pm.environment.set("new_service_id", jsonData.id);
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1278,12 +1324,14 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Create a new booking
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "salonId": "{{salon_id}}",
@@ -1297,6 +1345,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "booking_001",
@@ -1315,25 +1364,26 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 201", function () {
-    pm.response.to.have.status(201);
+  pm.response.to.have.status(201);
 });
 
 pm.test("Booking created successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData.status).to.equal('pending');
-    pm.expect(jsonData).to.have.property('bookingDate');
-    pm.expect(jsonData).to.have.property('startTime');
-    pm.expect(jsonData).to.have.property('endTime');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData.status).to.equal("pending");
+  pm.expect(jsonData).to.have.property("bookingDate");
+  pm.expect(jsonData).to.have.property("startTime");
+  pm.expect(jsonData).to.have.property("endTime");
 
-    // Save booking ID
-    pm.environment.set('booking_id', jsonData.id);
+  // Save booking ID
+  pm.environment.set("booking_id", jsonData.id);
 });
 
 pm.test("Response time is less than 2000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(2000);
+  pm.expect(pm.response.responseTime).to.be.below(2000);
 });
 ```
 
@@ -1346,11 +1396,13 @@ pm.test("Response time is less than 2000ms", function () {
 **Description**: Get all bookings for authenticated user
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 ```
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -1373,25 +1425,26 @@ Authorization: Bearer {{auth_token}}
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Response is array of bookings", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 
-    if (jsonData.length > 0) {
-        const booking = jsonData[0];
-        pm.expect(booking).to.have.property('id');
-        pm.expect(booking).to.have.property('status');
-        pm.expect(booking.status).to.be.oneOf(['pending', 'confirmed', 'completed', 'cancelled']);
-    }
+  if (jsonData.length > 0) {
+    const booking = jsonData[0];
+    pm.expect(booking).to.have.property("id");
+    pm.expect(booking).to.have.property("status");
+    pm.expect(booking.status).to.be.oneOf(["pending", "confirmed", "completed", "cancelled"]);
+  }
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -1404,11 +1457,13 @@ pm.test("Response time is less than 1000ms", function () {
 **Description**: Cancel a booking
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "booking_001",
@@ -1427,19 +1482,20 @@ Authorization: Bearer {{auth_token}}
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Booking cancelled successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.status).to.equal('cancelled');
-    pm.expect(jsonData).to.have.property('updatedAt');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.status).to.equal("cancelled");
+  pm.expect(jsonData).to.have.property("updatedAt");
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1454,12 +1510,14 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Create a review for a completed booking
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "bookingId": "{{booking_id}}",
@@ -1472,6 +1530,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "review_001",
@@ -1489,23 +1548,24 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 201", function () {
-    pm.response.to.have.status(201);
+  pm.response.to.have.status(201);
 });
 
 pm.test("Review created successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData.rating).to.be.within(1, 5);
-    pm.expect(jsonData).to.have.property('comment');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
+  pm.expect(jsonData.rating).to.be.within(1, 5);
+  pm.expect(jsonData).to.have.property("comment");
 
-    // Save review ID
-    pm.environment.set('review_id', jsonData.id);
+  // Save review ID
+  pm.environment.set("review_id", jsonData.id);
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1518,6 +1578,7 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Get all reviews for a salon
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -1539,25 +1600,26 @@ pm.test("Response time is less than 1500ms", function () {
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Reviews array is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 
-    if (jsonData.length > 0) {
-        const review = jsonData[0];
-        pm.expect(review).to.have.property('id');
-        pm.expect(review).to.have.property('rating');
-        pm.expect(review.rating).to.be.within(1, 5);
-    }
+  if (jsonData.length > 0) {
+    const review = jsonData[0];
+    pm.expect(review).to.have.property("id");
+    pm.expect(review).to.have.property("rating");
+    pm.expect(review.rating).to.be.within(1, 5);
+  }
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -1572,12 +1634,14 @@ pm.test("Response time is less than 1000ms", function () {
 **Description**: Get platform statistics for admin dashboard
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 X-Admin-Role: super_admin
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "totalUsers": 15234,
@@ -1594,22 +1658,23 @@ X-Admin-Role: super_admin
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Dashboard stats are valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('totalUsers');
-    pm.expect(jsonData).to.have.property('totalSalons');
-    pm.expect(jsonData).to.have.property('totalBookings');
-    pm.expect(jsonData.totalUsers).to.be.a('number').and.at.least(0);
-    pm.expect(jsonData.totalSalons).to.be.a('number').and.at.least(0);
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("totalUsers");
+  pm.expect(jsonData).to.have.property("totalSalons");
+  pm.expect(jsonData).to.have.property("totalBookings");
+  pm.expect(jsonData.totalUsers).to.be.a("number").and.at.least(0);
+  pm.expect(jsonData.totalSalons).to.be.a("number").and.at.least(0);
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1622,12 +1687,14 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Get salons awaiting admin approval
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 X-Admin-Role: moderator
 ```
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -1648,23 +1715,24 @@ X-Admin-Role: moderator
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Pending salons array is valid", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.be.an('array');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.be.an("array");
 
-    jsonData.forEach(salon => {
-        pm.expect(salon.status).to.equal('pending');
-        pm.expect(salon.isActive).to.be.false;
-    });
+  jsonData.forEach((salon) => {
+    pm.expect(salon.status).to.equal("pending");
+    pm.expect(salon.isActive).to.be.false;
+  });
 });
 
 pm.test("Response time is less than 1000ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1000);
+  pm.expect(pm.response.responseTime).to.be.below(1000);
 });
 ```
 
@@ -1677,6 +1745,7 @@ pm.test("Response time is less than 1000ms", function () {
 **Description**: Approve a pending salon
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 X-Admin-Role: moderator
@@ -1684,6 +1753,7 @@ Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "approvalNote": "All documents verified. Approved for listing."
@@ -1691,6 +1761,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "salon_001",
@@ -1705,21 +1776,22 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Salon approved successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.isActive).to.be.true;
-    pm.expect(jsonData.status).to.equal('approved');
-    pm.expect(jsonData).to.have.property('approvedAt');
-    pm.expect(jsonData).to.have.property('approvedBy');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.isActive).to.be.true;
+  pm.expect(jsonData.status).to.equal("approved");
+  pm.expect(jsonData).to.have.property("approvedAt");
+  pm.expect(jsonData).to.have.property("approvedBy");
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1732,6 +1804,7 @@ pm.test("Response time is less than 1500ms", function () {
 **Description**: Reject a pending salon
 
 **Headers**:
+
 ```
 Authorization: Bearer {{auth_token}}
 X-Admin-Role: moderator
@@ -1739,6 +1812,7 @@ Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "rejectionReason": "Insufficient documentation. Please provide: 1) Business license 2) Clear photos of premises 3) Owner ID verification."
@@ -1746,6 +1820,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "salon_001",
@@ -1760,20 +1835,21 @@ Content-Type: application/json
 ```
 
 **Test Script**:
+
 ```javascript
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 pm.test("Salon rejected successfully", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData.isActive).to.be.false;
-    pm.expect(jsonData.status).to.equal('rejected');
-    pm.expect(jsonData).to.have.property('rejectionReason');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData.isActive).to.be.false;
+  pm.expect(jsonData.status).to.equal("rejected");
+  pm.expect(jsonData).to.have.property("rejectionReason");
 });
 
 pm.test("Response time is less than 1500ms", function () {
-    pm.expect(pm.response.responseTime).to.be.below(1500);
+  pm.expect(pm.response.responseTime).to.be.below(1500);
 });
 ```
 
@@ -1788,50 +1864,53 @@ All API endpoints should include these baseline test assertions:
 ```javascript
 // 1. Status Code Validation
 pm.test("Status code is in 2xx range", function () {
-    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);
+  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);
 });
 
 // 2. Response Time Performance
 pm.test("Response time is acceptable", function () {
-    pm.expect(pm.response.responseTime).to.be.below(3000);
+  pm.expect(pm.response.responseTime).to.be.below(3000);
 });
 
 // 3. Content-Type Header
 pm.test("Content-Type is JSON", function () {
-    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');
+  pm.expect(pm.response.headers.get("Content-Type")).to.include("application/json");
 });
 
 // 4. No Server Errors
 pm.test("No server errors", function () {
-    pm.expect(pm.response.code).to.not.be.oneOf([500, 502, 503, 504]);
+  pm.expect(pm.response.code).to.not.be.oneOf([500, 502, 503, 504]);
 });
 ```
 
 ### Specific Test Patterns
 
 **Authentication Tests**:
+
 ```javascript
 pm.test("Requires authentication", function () {
-    // Test without auth token should return 401
-    pm.expect(pm.response.code).to.equal(401);
-    pm.expect(pm.response.json()).to.have.property('message');
+  // Test without auth token should return 401
+  pm.expect(pm.response.code).to.equal(401);
+  pm.expect(pm.response.json()).to.have.property("message");
 });
 ```
 
 **Pagination Tests**:
+
 ```javascript
 pm.test("Pagination headers present", function () {
-    pm.expect(pm.response.headers.has('X-Total-Count')).to.be.true;
-    pm.expect(pm.response.headers.has('X-Page')).to.be.true;
+  pm.expect(pm.response.headers.has("X-Total-Count")).to.be.true;
+  pm.expect(pm.response.headers.has("X-Page")).to.be.true;
 });
 ```
 
 **Error Handling Tests**:
+
 ```javascript
 pm.test("Error response has proper format", function () {
-    const jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('error');
-    pm.expect(jsonData.error).to.be.a('string');
+  const jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("error");
+  pm.expect(jsonData.error).to.be.a("string");
 });
 ```
 
@@ -1869,12 +1948,14 @@ pm.test("Error response has proper format", function () {
 ### 4. Run Tests
 
 **Option A: Run Individual Request**
+
 1. Expand collection in left sidebar
 2. Select any endpoint
 3. Click **Send**
 4. View **Test Results** tab
 
 **Option B: Run Entire Collection**
+
 1. Right-click collection name
 2. Select **Run collection**
 3. Choose environment
@@ -1882,6 +1963,7 @@ pm.test("Error response has proper format", function () {
 5. View aggregated test results
 
 **Option C: Run Collection with Newman (CLI)**
+
 ```bash
 # Install Newman
 npm install -g newman
@@ -1896,10 +1978,12 @@ newman run AURELLE_API_Collection.postman_collection.json \
 ### 5. View Test Reports
 
 **In Postman**:
+
 - Test results appear in **Test Results** tab after each request
 - Collection runner shows aggregated results
 
 **With Newman**:
+
 - HTML report generated: `report.html`
 - Open in browser to view detailed results
 
@@ -1914,6 +1998,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: `Authentication token not found. Please login first.`
 
 **Solution**:
+
 1. Run `01. Auth → Login (Email/Password)` request first
 2. Verify `auth_token` variable is set in environment
 3. Check Pre-request Scripts are enabled at collection level
@@ -1923,6 +2008,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: Request returns 401 instead of 200
 
 **Solution**:
+
 1. Check `auth_token` is valid (not expired)
 2. Re-run login request to get fresh token
 3. Verify Authorization header is set: `Bearer {{auth_token}}`
@@ -1932,6 +2018,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: `{{salon_id}} not found`
 
 **Solution**:
+
 1. Run prerequisite requests first (e.g., "Get All Salons" to populate `salon_id`)
 2. Manually set variable in environment
 3. Check variable name matches exactly (case-sensitive)
@@ -1941,6 +2028,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: Tests fail with "Response time is less than 1000ms"
 
 **Solution**:
+
 1. Check network connection
 2. Verify correct environment is selected (dev vs prod)
 3. Increase timeout threshold in test script if needed
@@ -1951,6 +2039,7 @@ newman run AURELLE_API_Collection.postman_collection.json \
 **Error**: `400 Bad Request - Invalid data`
 
 **Solution**:
+
 1. Verify request body matches expected schema
 2. Check all required fields are present
 3. Validate data types (string vs number)
@@ -1959,11 +2048,13 @@ newman run AURELLE_API_Collection.postman_collection.json \
 ### Getting Help
 
 **Resources**:
+
 - API Documentation: `API_TESTING_POSTMAN_GUIDE.md`
 - Postman Docs: https://learning.postman.com/
 - Newman Docs: https://github.com/postmanlabs/newman
 
 **Contact**:
+
 - Email: dev@aurelle.uz
 - Slack: #api-testing channel
 - GitHub Issues: https://github.com/aurelle/api/issues
@@ -1974,24 +2065,25 @@ newman run AURELLE_API_Collection.postman_collection.json \
 
 ### HTTP Status Codes Reference
 
-| Code | Meaning | When Used |
-|------|---------|-----------|
-| 200 | OK | Successful GET, PUT, PATCH, DELETE |
-| 201 | Created | Successful POST (resource created) |
-| 204 | No Content | Successful DELETE (no response body) |
-| 400 | Bad Request | Invalid request body/parameters |
-| 401 | Unauthorized | Missing or invalid auth token |
-| 403 | Forbidden | Authenticated but not authorized |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Duplicate resource (e.g., email exists) |
-| 422 | Unprocessable Entity | Validation failed |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server-side error |
-| 503 | Service Unavailable | Server down/maintenance |
+| Code | Meaning               | When Used                               |
+| ---- | --------------------- | --------------------------------------- |
+| 200  | OK                    | Successful GET, PUT, PATCH, DELETE      |
+| 201  | Created               | Successful POST (resource created)      |
+| 204  | No Content            | Successful DELETE (no response body)    |
+| 400  | Bad Request           | Invalid request body/parameters         |
+| 401  | Unauthorized          | Missing or invalid auth token           |
+| 403  | Forbidden             | Authenticated but not authorized        |
+| 404  | Not Found             | Resource doesn't exist                  |
+| 409  | Conflict              | Duplicate resource (e.g., email exists) |
+| 422  | Unprocessable Entity  | Validation failed                       |
+| 429  | Too Many Requests     | Rate limit exceeded                     |
+| 500  | Internal Server Error | Server-side error                       |
+| 503  | Service Unavailable   | Server down/maintenance                 |
 
 ### Common Headers
 
 **Request Headers**:
+
 ```
 Authorization: Bearer <token>
 Content-Type: application/json
@@ -2000,6 +2092,7 @@ X-API-Version: 1.0
 ```
 
 **Response Headers**:
+
 ```
 Content-Type: application/json
 X-RateLimit-Limit: 100

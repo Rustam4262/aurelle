@@ -29,23 +29,23 @@ This guide documents comprehensive security testing of the AURELLE platform, foc
 
 ### Testing Scope
 
-| Vulnerability Type | Endpoints Tested | Priority | Status |
-|-------------------|------------------|----------|--------|
-| **SQL Injection** | Search, filters, API endpoints | Critical | ✅ Complete |
-| **XSS** | Forms, reviews, salon names, profiles | Critical | ✅ Complete |
-| **CSRF** | State-changing operations | High | ✅ Complete |
-| **Rate Limiting** | Login, booking creation, API | High | ✅ Complete |
-| **File Upload** | Avatar, salon photos, portfolio | High | ✅ Complete |
+| Vulnerability Type | Endpoints Tested                      | Priority | Status      |
+| ------------------ | ------------------------------------- | -------- | ----------- |
+| **SQL Injection**  | Search, filters, API endpoints        | Critical | ✅ Complete |
+| **XSS**            | Forms, reviews, salon names, profiles | Critical | ✅ Complete |
+| **CSRF**           | State-changing operations             | High     | ✅ Complete |
+| **Rate Limiting**  | Login, booking creation, API          | High     | ✅ Complete |
+| **File Upload**    | Avatar, salon photos, portfolio       | High     | ✅ Complete |
 
 ### Severity Definitions
 
-| Severity | Impact | Example |
-|----------|--------|---------|
-| **Critical** | Complete system compromise | SQL Injection, RCE |
-| **High** | Data breach, unauthorized access | XSS, Authentication bypass |
-| **Medium** | Limited data exposure | Information disclosure |
-| **Low** | Minor security issue | Verbose errors |
-| **Info** | Best practice violation | Missing security headers |
+| Severity     | Impact                           | Example                    |
+| ------------ | -------------------------------- | -------------------------- |
+| **Critical** | Complete system compromise       | SQL Injection, RCE         |
+| **High**     | Data breach, unauthorized access | XSS, Authentication bypass |
+| **Medium**   | Limited data exposure            | Information disclosure     |
+| **Low**      | Minor security issue             | Verbose errors             |
+| **Info**     | Best practice violation          | Missing security headers   |
 
 ---
 
@@ -112,6 +112,7 @@ curl "http://localhost:5000/api/salons?city=Tashkent'; DROP TABLE salons; --"
 ✅ **Result**: **NOT VULNERABLE**
 
 **Evidence**:
+
 ```json
 {
   "salons": [],
@@ -120,16 +121,16 @@ curl "http://localhost:5000/api/salons?city=Tashkent'; DROP TABLE salons; --"
 ```
 
 **Analysis**:
+
 - Drizzle ORM uses **parameterized queries** by default
 - User input treated as **data, not code**
 - Single quotes properly escaped
 
 **Code Review**:
+
 ```typescript
 // SAFE: Parameterized query (Drizzle ORM)
-const salons = await db.select()
-  .from(salons)
-  .where(eq(salons.city, city)); // ✅ Properly escaped
+const salons = await db.select().from(salons).where(eq(salons.city, city)); // ✅ Properly escaped
 
 // The actual SQL generated:
 // SELECT * FROM salons WHERE city = $1
@@ -165,6 +166,7 @@ curl "http://localhost:5000/api/salons/abc123"
 ✅ **Result**: **NOT VULNERABLE**
 
 **Evidence**:
+
 ```json
 // Invalid ID
 {
@@ -174,28 +176,28 @@ curl "http://localhost:5000/api/salons/abc123"
 ```
 
 **Analysis**:
+
 - ID validated as valid UUID/integer before query
 - Non-numeric IDs rejected at router level
 - No error information disclosure
 
 **Code Review**:
+
 ```typescript
 // SAFE: Type validation before query
-router.get('/salons/:id', async (req, res) => {
+router.get("/salons/:id", async (req, res) => {
   const { id } = req.params;
 
   // Validate ID format (UUID or integer)
   if (!isValidId(id)) {
-    return res.status(400).json({ error: 'Invalid salon ID' });
+    return res.status(400).json({ error: "Invalid salon ID" });
   }
 
   // Parameterized query
-  const [salon] = await db.select()
-    .from(salons)
-    .where(eq(salons.id, id)); // ✅ Safe
+  const [salon] = await db.select().from(salons).where(eq(salons.id, id)); // ✅ Safe
 
   if (!salon) {
-    return res.status(404).json({ error: 'Salon not found' });
+    return res.status(404).json({ error: "Salon not found" });
   }
 
   return res.json(salon);
@@ -243,6 +245,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 ✅ **Result**: **NOT VULNERABLE**
 
 **Evidence**:
+
 ```json
 {
   "error": "Invalid email or password",
@@ -251,36 +254,36 @@ curl -X POST http://localhost:5000/api/auth/login \
 ```
 
 **Analysis**:
+
 - Email validated against regex before query
 - Password comparison uses bcrypt (not SQL)
 - Generic error message (no information disclosure)
 - Parameterized queries used
 
 **Code Review**:
+
 ```typescript
 // SAFE: Authentication logic
-router.post('/auth/login', async (req, res) => {
+router.post("/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
   // Email validation
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
+    return res.status(400).json({ error: "Invalid email format" });
   }
 
   // Parameterized query to fetch user
-  const [user] = await db.select()
-    .from(users)
-    .where(eq(users.email, email)); // ✅ Safe
+  const [user] = await db.select().from(users).where(eq(users.email, email)); // ✅ Safe
 
   if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password' });
+    return res.status(401).json({ error: "Invalid email or password" });
   }
 
   // Password comparison (bcrypt, not SQL)
   const validPassword = await bcrypt.compare(password, user.passwordHash);
 
   if (!validPassword) {
-    return res.status(401).json({ error: 'Invalid email or password' });
+    return res.status(401).json({ error: "Invalid email or password" });
   }
 
   // Generate JWT
@@ -342,12 +345,12 @@ sqlmap -u "http://localhost:5000/api/bookings" \
 
 ### SQL Injection Summary
 
-| Endpoint | Attack Vectors Tested | Result | Severity |
-|----------|----------------------|--------|----------|
-| `/api/salons` (search) | 5 payloads | ✅ Protected | - |
-| `/api/salons/:id` | 4 payloads | ✅ Protected | - |
-| `/api/auth/login` | 3 payloads | ✅ Protected | - |
-| All endpoints (SQLMap) | Automated scan | ✅ Protected | - |
+| Endpoint               | Attack Vectors Tested | Result       | Severity |
+| ---------------------- | --------------------- | ------------ | -------- |
+| `/api/salons` (search) | 5 payloads            | ✅ Protected | -        |
+| `/api/salons/:id`      | 4 payloads            | ✅ Protected | -        |
+| `/api/auth/login`      | 3 payloads            | ✅ Protected | -        |
+| All endpoints (SQLMap) | Automated scan        | ✅ Protected | -        |
 
 **Overall SQL Injection Risk**: ✅ **LOW** - No vulnerabilities found
 
@@ -437,18 +440,18 @@ When viewing the review, the HTML is properly escaped:
 
 ```html
 <!-- Rendered in browser: -->
-<p class="review-comment">
-  &lt;script&gt;alert("XSS")&lt;/script&gt;
-</p>
+<p class="review-comment">&lt;script&gt;alert("XSS")&lt;/script&gt;</p>
 <!-- Script tags are escaped, not executed -->
 ```
 
 **Analysis**:
+
 - React automatically escapes JSX content
 - Review comments rendered as text, not HTML
 - No `dangerouslySetInnerHTML` used
 
 **Code Review**:
+
 ```typescript
 // SAFE: React component (client/src/components/Review.tsx)
 export function ReviewCard({ review }: ReviewCardProps) {
@@ -519,11 +522,10 @@ curl -X POST http://localhost:5000/api/owner/salons \
 ✅ **Result**: **NOT VULNERABLE**
 
 **Evidence**:
+
 ```html
 <!-- Rendered salon name: -->
-<h2 class="text-2xl font-semibold">
-  &lt;script&gt;alert("XSS in salon name")&lt;/script&gt;
-</h2>
+<h2 class="text-2xl font-semibold">&lt;script&gt;alert("XSS in salon name")&lt;/script&gt;</h2>
 ```
 
 **Verdict**: ✅ **PROTECTED** - Salon names properly escaped
@@ -552,11 +554,13 @@ curl "http://localhost:5000/?search=%3Cscript%3Ealert(1)%3C/script%3E"
 ✅ **Result**: **NOT VULNERABLE**
 
 **Evidence**:
+
 - Search parameter displayed as text, not HTML
 - React escapes search results automatically
 - No reflection of raw HTML
 
 **Code Review**:
+
 ```typescript
 // SAFE: Search display component
 export function SearchResults({ query }: Props) {
@@ -584,10 +588,10 @@ export function SearchResults({ query }: Props) {
 // Visit: http://localhost:5000/#<script>alert(1)</script>
 
 // Test: localStorage manipulation
-localStorage.setItem('user_name', '<script>alert(1)</script>');
+localStorage.setItem("user_name", "<script>alert(1)</script>");
 
 // Test: postMessage injection
-window.postMessage('<script>alert(1)</script>', '*');
+window.postMessage("<script>alert(1)</script>", "*");
 ```
 
 #### Expected Behavior (Secure)
@@ -595,11 +599,13 @@ window.postMessage('<script>alert(1)</script>', '*');
 ✅ **Result**: **NOT VULNERABLE**
 
 **Analysis**:
+
 - No unsafe use of `innerHTML`, `eval()`, or `document.write()`
 - URL fragments not directly rendered
 - `localStorage` values escaped before display
 
 **Code Review**:
+
 ```typescript
 // SAFE: Reading from localStorage
 const userName = localStorage.getItem('user_name');
@@ -625,11 +631,13 @@ const userName = localStorage.getItem('user_name');
 
 ```markdown
 # Markdown injection attempts
-[Click me](javascript:alert('XSS'))
-![XSS](javascript:alert('XSS'))
-[XSS](data:text/html,<script>alert('XSS')</script>)
+
+[Click me](<javascript:alert('XSS')>)
+![XSS](<javascript:alert('XSS')>)
+[XSS](<data:text/html,%3Cscript%3Ealert('XSS')%3C/script%3E>)
 
 # HTML in markdown
+
 <a href="javascript:alert(1)">Click</a>
 <img src=x onerror=alert(1)>
 ```
@@ -639,6 +647,7 @@ const userName = localStorage.getItem('user_name');
 ✅ **Result**: **NOT APPLICABLE** - Markdown not implemented
 
 **Analysis**:
+
 - Platform does not support markdown in reviews
 - All user input treated as plain text
 
@@ -648,13 +657,13 @@ const userName = localStorage.getItem('user_name');
 
 ### XSS Testing Summary
 
-| Attack Vector | Payloads Tested | Result | Severity |
-|--------------|----------------|--------|----------|
-| **Stored XSS** (Reviews) | 5 payloads | ✅ Protected | - |
-| **Stored XSS** (Salon Names) | 3 payloads | ✅ Protected | - |
-| **Reflected XSS** (Search) | 3 payloads | ✅ Protected | - |
-| **DOM-Based XSS** | 3 scenarios | ✅ Protected | - |
-| **Markdown XSS** | N/A | ✅ Not Applicable | - |
+| Attack Vector                | Payloads Tested | Result            | Severity |
+| ---------------------------- | --------------- | ----------------- | -------- |
+| **Stored XSS** (Reviews)     | 5 payloads      | ✅ Protected      | -        |
+| **Stored XSS** (Salon Names) | 3 payloads      | ✅ Protected      | -        |
+| **Reflected XSS** (Search)   | 3 payloads      | ✅ Protected      | -        |
+| **DOM-Based XSS**            | 3 scenarios     | ✅ Protected      | -        |
+| **Markdown XSS**             | N/A             | ✅ Not Applicable | -        |
 
 **Overall XSS Risk**: ✅ **LOW** - No vulnerabilities found
 
@@ -684,29 +693,35 @@ Create malicious HTML page to test CSRF:
 <!-- attacker-site.html -->
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Win a Prize!</title>
-</head>
-<body>
-  <h1>Click here to claim your prize!</h1>
-  <form id="csrf-form" action="http://localhost:5000/api/bookings" method="POST" style="display:none;">
-    <input name="salonId" value="salon_001" />
-    <input name="serviceId" value="service_001" />
-    <input name="masterId" value="master_001" />
-    <input name="bookingDate" value="2024-01-25" />
-    <input name="startTime" value="10:00" />
-    <input name="endTime" value="11:00" />
-    <input name="notes" value="CSRF attack test" />
-  </form>
-  <script>
-    // Auto-submit form when page loads
-    document.getElementById('csrf-form').submit();
-  </script>
-</body>
+  <head>
+    <title>Win a Prize!</title>
+  </head>
+  <body>
+    <h1>Click here to claim your prize!</h1>
+    <form
+      id="csrf-form"
+      action="http://localhost:5000/api/bookings"
+      method="POST"
+      style="display:none;"
+    >
+      <input name="salonId" value="salon_001" />
+      <input name="serviceId" value="service_001" />
+      <input name="masterId" value="master_001" />
+      <input name="bookingDate" value="2024-01-25" />
+      <input name="startTime" value="10:00" />
+      <input name="endTime" value="11:00" />
+      <input name="notes" value="CSRF attack test" />
+    </form>
+    <script>
+      // Auto-submit form when page loads
+      document.getElementById("csrf-form").submit();
+    </script>
+  </body>
 </html>
 ```
 
 **Test Steps**:
+
 1. User logs into AURELLE (authentication cookie set)
 2. User visits attacker's malicious site while still logged in
 3. Malicious form auto-submits to create booking
@@ -716,24 +731,26 @@ Create malicious HTML page to test CSRF:
 ⚠️ **Result**: **POTENTIALLY VULNERABLE**
 
 **Evidence**:
+
 ```bash
 # Request succeeds if user is authenticated
 # No CSRF token validation implemented
 ```
 
 **Analysis**:
+
 - Session cookies are HttpOnly (good)
 - No CSRF token validation (bad)
 - SameSite cookie attribute not set (bad)
 
 **Vulnerability Details**:
 
-| Factor | Status | Security Impact |
-|--------|--------|-----------------|
-| Session cookies | ✅ HttpOnly | Good |
-| CSRF tokens | ❌ Not implemented | Vulnerable |
-| SameSite cookies | ❌ Not set | Vulnerable |
-| Origin header check | ❌ Not implemented | Vulnerable |
+| Factor              | Status             | Security Impact |
+| ------------------- | ------------------ | --------------- |
+| Session cookies     | ✅ HttpOnly        | Good            |
+| CSRF tokens         | ❌ Not implemented | Vulnerable      |
+| SameSite cookies    | ❌ Not set         | Vulnerable      |
+| Origin header check | ❌ Not implemented | Vulnerable      |
 
 **Severity**: 🟡 **MEDIUM**
 
@@ -753,15 +770,20 @@ Create malicious HTML page to test CSRF:
 <!-- csrf-profile-change.html -->
 <!DOCTYPE html>
 <html>
-<body>
-  <form id="csrf-form" action="http://localhost:5000/api/users/profile" method="POST" style="display:none;">
-    <input name="email" value="attacker@evil.com" />
-    <input name="phone" value="+1234567890" />
-  </form>
-  <script>
-    document.getElementById('csrf-form').submit();
-  </script>
-</body>
+  <body>
+    <form
+      id="csrf-form"
+      action="http://localhost:5000/api/users/profile"
+      method="POST"
+      style="display:none;"
+    >
+      <input name="email" value="attacker@evil.com" />
+      <input name="phone" value="+1234567890" />
+    </form>
+    <script>
+      document.getElementById("csrf-form").submit();
+    </script>
+  </body>
 </html>
 ```
 
@@ -779,16 +801,17 @@ Create malicious HTML page to test CSRF:
 <!-- csrf-delete-review.html -->
 <!DOCTYPE html>
 <html>
-<body>
-  <img src="http://localhost:5000/api/reviews/review_001?_method=DELETE" style="display:none;">
-  <!-- Attempt to trigger DELETE via GET (if method override enabled) -->
-</body>
+  <body>
+    <img src="http://localhost:5000/api/reviews/review_001?_method=DELETE" style="display:none;" />
+    <!-- Attempt to trigger DELETE via GET (if method override enabled) -->
+  </body>
 </html>
 ```
 
 **Result**: ✅ **PROTECTED** (DELETE requests only, not vulnerable to simple CSRF)
 
 **Analysis**:
+
 - DELETE requests cannot be triggered via `<img>` or `<form>`
 - Requires JavaScript `fetch()` or `XMLHttpRequest`
 - Simple HTML CSRF attack not possible
@@ -800,35 +823,36 @@ Create malicious HTML page to test CSRF:
 #### Option 1: CSRF Tokens (Recommended)
 
 ```javascript
-import csrf from 'csurf';
+import csrf from "csurf";
 
 // Setup CSRF protection
 const csrfProtection = csrf({ cookie: true });
 
 // Add to all state-changing routes
-app.post('/api/bookings', csrfProtection, async (req, res) => {
+app.post("/api/bookings", csrfProtection, async (req, res) => {
   // CSRF token automatically validated
   // ...
 });
 
 // Send CSRF token to client
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 ```
 
 **Client-side**:
+
 ```typescript
 // Fetch CSRF token
-const response = await fetch('/api/csrf-token');
+const response = await fetch("/api/csrf-token");
 const { csrfToken } = await response.json();
 
 // Include in POST requests
-await fetch('/api/bookings', {
-  method: 'POST',
+await fetch("/api/bookings", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-Token': csrfToken,
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken,
   },
   body: JSON.stringify(bookingData),
 });
@@ -840,18 +864,21 @@ await fetch('/api/bookings', {
 
 ```javascript
 // Set SameSite attribute on session cookies
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', // ✅ Prevents CSRF
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // ✅ Prevents CSRF
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  }),
+);
 ```
 
 **SameSite Options**:
+
 - `'strict'` - Most secure, blocks all cross-site requests
 - `'lax'` - Allows GET requests from external sites (recommended)
 - `'none'` - No protection (requires `secure: true`)
@@ -863,23 +890,20 @@ app.use(session({
 ```javascript
 // Middleware to validate Origin header
 function validateOrigin(req, res, next) {
-  const origin = req.get('Origin');
-  const referer = req.get('Referer');
+  const origin = req.get("Origin");
+  const referer = req.get("Referer");
 
-  const allowedOrigins = [
-    'http://localhost:5000',
-    'https://aurelle.uz',
-  ];
+  const allowedOrigins = ["http://localhost:5000", "https://aurelle.uz"];
 
   if (origin && !allowedOrigins.includes(origin)) {
-    return res.status(403).json({ error: 'Forbidden: Invalid origin' });
+    return res.status(403).json({ error: "Forbidden: Invalid origin" });
   }
 
   next();
 }
 
 // Apply to state-changing routes
-app.post('/api/bookings', validateOrigin, async (req, res) => {
+app.post("/api/bookings", validateOrigin, async (req, res) => {
   // ...
 });
 ```
@@ -888,12 +912,12 @@ app.post('/api/bookings', validateOrigin, async (req, res) => {
 
 ### CSRF Summary
 
-| Endpoint | Method | CSRF Protection | Severity |
-|----------|--------|----------------|----------|
-| `/api/bookings` | POST | ❌ None | 🟡 Medium |
-| `/api/users/profile` | PATCH | ❌ None | 🟡 Medium |
-| `/api/reviews` | POST | ❌ None | 🟡 Medium |
-| `/api/reviews/:id` | DELETE | ✅ Safe (DELETE) | - |
+| Endpoint             | Method | CSRF Protection  | Severity  |
+| -------------------- | ------ | ---------------- | --------- |
+| `/api/bookings`      | POST   | ❌ None          | 🟡 Medium |
+| `/api/users/profile` | PATCH  | ❌ None          | 🟡 Medium |
+| `/api/reviews`       | POST   | ❌ None          | 🟡 Medium |
+| `/api/reviews/:id`   | DELETE | ✅ Safe (DELETE) | -         |
 
 **Overall CSRF Risk**: 🟡 **MEDIUM** - No CSRF protection on state-changing POST/PATCH endpoints
 
@@ -937,6 +961,7 @@ wait
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 // After 10 attempts:
 {
@@ -946,30 +971,33 @@ wait
 ```
 
 **Analysis**:
+
 - Rate limiter implemented on login endpoint
 - Limit: 10 attempts per 15 minutes per IP
 - HTTP 429 (Too Many Requests) returned
 
 **Code Review**:
+
 ```typescript
 // server/middleware/rateLimiter.ts
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 requests per windowMs
-  message: 'Too many login attempts. Please try again in 15 minutes.',
+  message: "Too many login attempts. Please try again in 15 minutes.",
   standardHeaders: true, // Return rate limit info in headers
   legacyHeaders: false,
 });
 
 // Applied to login route
-router.post('/auth/login', loginLimiter, async (req, res) => {
+router.post("/auth/login", loginLimiter, async (req, res) => {
   // ...
 });
 ```
 
 **Rate Limit Headers**:
+
 ```
 X-RateLimit-Limit: 10
 X-RateLimit-Remaining: 3
@@ -1011,6 +1039,7 @@ wait
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 // After 20 bookings:
 {
@@ -1020,20 +1049,22 @@ wait
 ```
 
 **Analysis**:
+
 - Rate limiter on booking creation
 - Limit: 20 bookings per hour per user
 - Prevents spam and abuse
 
 **Code Review**:
+
 ```typescript
 export const createLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 20, // 20 bookings per hour
-  message: 'Too many booking requests. Please try again later.',
+  message: "Too many booking requests. Please try again later.",
   keyGenerator: (req) => req.user?.id || req.ip, // Rate limit by user ID
 });
 
-router.post('/bookings', isAuthenticated, createLimiter, async (req, res) => {
+router.post("/bookings", isAuthenticated, createLimiter, async (req, res) => {
   // ...
 });
 ```
@@ -1063,6 +1094,7 @@ wait
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 // After 100 requests:
 {
@@ -1072,22 +1104,24 @@ wait
 ```
 
 **Analysis**:
+
 - Global rate limiter on all API routes
 - Limit: 100 requests per minute per IP
 - Protects against DoS attacks
 
 **Code Review**:
+
 ```typescript
 // server/middleware/rateLimiter.ts
 export const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute
-  message: 'Too many requests from this IP. Please try again later.',
+  message: "Too many requests from this IP. Please try again later.",
   standardHeaders: true,
 });
 
 // Applied globally to all /api routes
-app.use('/api', globalLimiter);
+app.use("/api", globalLimiter);
 ```
 
 **Verdict**: ✅ **PROTECTED** - API flooding prevented
@@ -1121,6 +1155,7 @@ wait
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 // After 10 reviews:
 {
@@ -1130,6 +1165,7 @@ wait
 ```
 
 **Additional Protection**: Business logic validation
+
 - Can only review completed bookings
 - One review per booking
 - Prevents spam even without rate limiting
@@ -1140,16 +1176,17 @@ wait
 
 ### Rate Limiting Summary
 
-| Endpoint | Rate Limit | Window | Status |
-|----------|-----------|--------|--------|
-| **Login** | 10 requests | 15 min | ✅ Protected |
-| **Booking Creation** | 20 requests | 1 hour | ✅ Protected |
-| **Review Submission** | 10 requests | 1 hour | ✅ Protected |
-| **Global API** | 100 requests | 1 min | ✅ Protected |
+| Endpoint              | Rate Limit   | Window | Status       |
+| --------------------- | ------------ | ------ | ------------ |
+| **Login**             | 10 requests  | 15 min | ✅ Protected |
+| **Booking Creation**  | 20 requests  | 1 hour | ✅ Protected |
+| **Review Submission** | 10 requests  | 1 hour | ✅ Protected |
+| **Global API**        | 100 requests | 1 min  | ✅ Protected |
 
 **Overall Rate Limiting**: ✅ **WELL PROTECTED**
 
 **Recommendations**:
+
 - ✅ Current implementation is robust
 - Consider adding distributed rate limiting (Redis) for multi-server setup
 - Monitor rate limit metrics for abuse patterns
@@ -1199,6 +1236,7 @@ curl -X POST http://localhost:5000/api/upload/avatar \
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 {
   "error": "Invalid file type. Only JPEG, PNG, and WebP images allowed.",
@@ -1207,15 +1245,17 @@ curl -X POST http://localhost:5000/api/upload/avatar \
 ```
 
 **Analysis**:
+
 - File type validation based on MIME type AND extension
 - Only image files (JPEG, PNG, WebP) allowed
 - Executable files rejected
 
 **Code Review**:
+
 ```typescript
 // server/upload.ts
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
 
 export function validateImageFile(file: Express.Multer.File): boolean {
   // Check MIME type
@@ -1233,16 +1273,16 @@ export function validateImageFile(file: Express.Multer.File): boolean {
 }
 
 // Upload endpoint
-router.post('/upload/avatar', isAuthenticated, upload.single('file'), async (req, res) => {
+router.post("/upload/avatar", isAuthenticated, upload.single("file"), async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+    return res.status(400).json({ error: "No file uploaded" });
   }
 
   if (!validateImageFile(req.file)) {
     // Delete uploaded file
     fs.unlinkSync(req.file.path);
     return res.status(400).json({
-      error: 'Invalid file type. Only JPEG, PNG, and WebP images allowed.',
+      error: "Invalid file type. Only JPEG, PNG, and WebP images allowed.",
     });
   }
 
@@ -1282,11 +1322,13 @@ curl -X POST http://localhost:5000/api/upload/avatar \
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 - Extension validation uses `.toLowerCase()` (case-insensitive)
 - Checks LAST extension only
 - Null byte not possible in modern Node.js
 
 **Code Review**:
+
 ```typescript
 // Extract last extension only
 const ext = path.extname(file.originalname).toLowerCase(); // '.jpg'
@@ -1299,7 +1341,7 @@ const ext = path.extname(file.originalname).toLowerCase(); // '.jpg'
 
 ```typescript
 // server/upload.ts
-import fileType from 'file-type';
+import fileType from "file-type";
 
 async function validateFileContent(filePath: string): Promise<boolean> {
   const type = await fileType.fromFile(filePath);
@@ -1309,7 +1351,7 @@ async function validateFileContent(filePath: string): Promise<boolean> {
   }
 
   // Validate actual file content (magic numbers)
-  const validMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const validMimeTypes = ["image/jpeg", "image/png", "image/webp"];
   return validMimeTypes.includes(type.mime);
 }
 
@@ -1317,7 +1359,7 @@ async function validateFileContent(filePath: string): Promise<boolean> {
 const isValidContent = await validateFileContent(req.file.path);
 if (!isValidContent) {
   fs.unlinkSync(req.file.path);
-  return res.status(400).json({ error: 'File content validation failed' });
+  return res.status(400).json({ error: "File content validation failed" });
 }
 ```
 
@@ -1350,6 +1392,7 @@ curl -X POST http://localhost:5000/api/upload/salon-photo \
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 ```json
 {
   "error": "File too large. Maximum size is 10MB.",
@@ -1358,17 +1401,19 @@ curl -X POST http://localhost:5000/api/upload/salon-photo \
 ```
 
 **Analysis**:
+
 - File size limit: 10MB
 - Enforced by multer middleware
 - Prevents DoS via large file uploads
 
 **Code Review**:
+
 ```typescript
 // server/upload.ts
-import multer from 'multer';
+import multer from "multer";
 
 const upload = multer({
-  dest: 'uploads/',
+  dest: "uploads/",
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB ✅
   },
@@ -1376,7 +1421,7 @@ const upload = multer({
     // Validate file type before upload
     const ext = path.extname(file.originalname).toLowerCase();
     if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
-      return cb(new Error('Invalid file type'));
+      return cb(new Error("Invalid file type"));
     }
     cb(null, true);
   },
@@ -1385,9 +1430,9 @@ const upload = multer({
 // Error handling for file size
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
+    if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({
-        error: 'File too large. Maximum size is 10MB.',
+        error: "File too large. Maximum size is 10MB.",
       });
     }
   }
@@ -1426,6 +1471,7 @@ curl -X POST http://localhost:5000/api/upload/salon-logo \
 ⚠️ **Result**: **POTENTIALLY VULNERABLE** (if SVG allowed)
 
 **Analysis**:
+
 - SVG files can contain JavaScript
 - If SVG is allowed and served with incorrect MIME type, XSS possible
 
@@ -1435,26 +1481,22 @@ curl -X POST http://localhost:5000/api/upload/salon-logo \
 
 ```typescript
 // Option 1: Don't allow SVG uploads
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 // DO NOT include 'image/svg+xml'
 
 // Option 2: Sanitize SVG files
-import { optimize } from 'svgo';
+import { optimize } from "svgo";
 
 async function sanitizeSVG(content: string): Promise<string> {
   const result = optimize(content, {
-    plugins: [
-      'removeScriptElement',
-      'removeEventHandlers',
-      'removeStyleElement',
-    ],
+    plugins: ["removeScriptElement", "removeEventHandlers", "removeStyleElement"],
   });
   return result.data;
 }
 
 // Option 3: Serve SVG with Content-Security-Policy
-res.setHeader('Content-Security-Policy', "script-src 'none'");
-res.setHeader('Content-Type', 'image/svg+xml');
+res.setHeader("Content-Security-Policy", "script-src 'none'");
+res.setHeader("Content-Type", "image/svg+xml");
 ```
 
 **Verdict**: ✅ **SAFE** (SVG not allowed)
@@ -1489,18 +1531,20 @@ curl -X POST http://localhost:5000/api/upload/avatar \
 ✅ **Result**: **PROTECTED**
 
 **Evidence**:
+
 - Filename is not used directly from user input
 - Files saved with generated UUID names
 - Original filename only stored in database (not used for file paths)
 
 **Code Review**:
+
 ```typescript
 // server/upload.ts
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // ✅ Fixed destination
+    cb(null, "uploads/"); // ✅ Fixed destination
   },
   filename: (req, file, cb) => {
     // Generate safe filename
@@ -1519,17 +1563,18 @@ const storage = multer.diskStorage({
 
 ### File Upload Summary
 
-| Attack Vector | Payload Type | Result | Severity |
-|--------------|-------------|--------|----------|
-| **Executable Upload** | .exe, .php, .sh | ✅ Blocked | - |
-| **Double Extension** | .php.jpg | ✅ Blocked (content validation) | - |
-| **Oversized File** | 100MB, 1GB | ✅ Blocked (10MB limit) | - |
-| **SVG XSS** | Malicious SVG | ✅ Safe (SVG not allowed) | - |
-| **Path Traversal** | ../../etc/passwd | ✅ Protected (UUID filenames) | - |
+| Attack Vector         | Payload Type     | Result                          | Severity |
+| --------------------- | ---------------- | ------------------------------- | -------- |
+| **Executable Upload** | .exe, .php, .sh  | ✅ Blocked                      | -        |
+| **Double Extension**  | .php.jpg         | ✅ Blocked (content validation) | -        |
+| **Oversized File**    | 100MB, 1GB       | ✅ Blocked (10MB limit)         | -        |
+| **SVG XSS**           | Malicious SVG    | ✅ Safe (SVG not allowed)       | -        |
+| **Path Traversal**    | ../../etc/passwd | ✅ Protected (UUID filenames)   | -        |
 
 **Overall File Upload Security**: ✅ **WELL PROTECTED**
 
 **Security Measures**:
+
 - ✅ File type validation (MIME + extension)
 - ✅ File content validation (magic numbers)
 - ✅ File size limit (10MB)
@@ -1559,6 +1604,7 @@ const storage = multer.diskStorage({
 **Severity**: 🟡 **MEDIUM**
 
 **Affected Endpoints**:
+
 - `POST /api/bookings`
 - `PATCH /api/users/profile`
 - `POST /api/reviews`
@@ -1592,6 +1638,7 @@ const storage = multer.diskStorage({
 **Description**: Some security headers are not set on responses
 
 **Missing Headers**:
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
@@ -1599,23 +1646,26 @@ const storage = multer.diskStorage({
 - `Permissions-Policy`
 
 **Remediation**:
-```javascript
-import helmet from 'helmet';
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+```javascript
+import helmet from "helmet";
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
     },
-  },
-  xContentTypeOptions: 'nosniff',
-  xFrameOptions: 'DENY',
-  xXssProtection: '1; mode=block',
-  referrerPolicy: { policy: 'no-referrer-when-downgrade' },
-}));
+    xContentTypeOptions: "nosniff",
+    xFrameOptions: "DENY",
+    xXssProtection: "1; mode=block",
+    referrerPolicy: { policy: "no-referrer-when-downgrade" },
+  }),
+);
 ```
 
 **Priority**: ℹ️ **LOW** - Best practice enhancement
@@ -1624,14 +1674,14 @@ app.use(helmet({
 
 ### Vulnerability Summary Table
 
-| Finding | Severity | Status | Affected Endpoints | Priority |
-|---------|----------|--------|-------------------|----------|
-| **SQL Injection** | Critical | ✅ Not Found | All | - |
-| **XSS** | Critical | ✅ Not Found | All | - |
-| **CSRF** | Medium | ⚠️ Found | POST/PATCH endpoints | Medium |
-| **Rate Limiting** | High | ✅ Protected | All | - |
-| **File Upload** | Critical | ✅ Protected | Upload endpoints | - |
-| **Security Headers** | Info | ⚠️ Missing | All | Low |
+| Finding              | Severity | Status       | Affected Endpoints   | Priority |
+| -------------------- | -------- | ------------ | -------------------- | -------- |
+| **SQL Injection**    | Critical | ✅ Not Found | All                  | -        |
+| **XSS**              | Critical | ✅ Not Found | All                  | -        |
+| **CSRF**             | Medium   | ⚠️ Found     | POST/PATCH endpoints | Medium   |
+| **Rate Limiting**    | High     | ✅ Protected | All                  | -        |
+| **File Upload**      | Critical | ✅ Protected | Upload endpoints     | -        |
+| **Security Headers** | Info     | ⚠️ Missing   | All                  | Low      |
 
 **Overall Security Posture**: ✅ **GOOD** - No critical vulnerabilities, one medium-severity issue to address
 
@@ -1646,37 +1696,42 @@ app.use(helmet({
 **Estimated Time**: 2-3 hours
 
 **Option A: SameSite Cookies (Easier)**:
+
 ```javascript
 // server/index.ts
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', // ✅ Add this
-    maxAge: 24 * 60 * 60 * 1000,
-  },
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // ✅ Add this
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  }),
+);
 ```
 
 **Option B: CSRF Tokens (More Secure)**:
+
 ```javascript
-import csrf from 'csurf';
+import csrf from "csurf";
 
 const csrfProtection = csrf({ cookie: true });
 
 // Add to all state-changing routes
-app.post('/api/bookings', csrfProtection, async (req, res) => {
+app.post("/api/bookings", csrfProtection, async (req, res) => {
   // ...
 });
 
 // Provide token to client
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 ```
 
 **Test After Implementation**:
+
 ```bash
 # Attempt CSRF attack - should fail
 # See CSRF Testing section for test procedure
@@ -1693,25 +1748,28 @@ npm install helmet
 ```
 
 ```javascript
-import helmet from 'helmet';
+import helmet from "helmet";
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      fontSrc: ["'self'", 'https:', 'data:'],
-      connectSrc: ["'self'"],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'", "https:", "data:"],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+      },
     },
-  },
-}));
+  }),
+);
 ```
 
 **Verify**:
+
 ```bash
 curl -I http://localhost:5000
 # Should show security headers
@@ -1726,14 +1784,16 @@ curl -I http://localhost:5000
 **Goal**: Prevent XSS even if sanitization fails
 
 ```javascript
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'nonce-randomvalue'"], // Use nonces for inline scripts
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", 'data:', 'https:'],
-  },
-}));
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'nonce-randomvalue'"], // Use nonces for inline scripts
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  }),
+);
 ```
 
 ---
@@ -1743,9 +1803,11 @@ app.use(helmet.contentSecurityPolicy({
 **Goal**: Verify integrity of external resources
 
 ```html
-<script src="https://cdn.example.com/library.js"
-        integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/ux..."
-        crossorigin="anonymous"></script>
+<script
+  src="https://cdn.example.com/library.js"
+  integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/ux..."
+  crossorigin="anonymous"
+></script>
 ```
 
 ---
@@ -1779,15 +1841,17 @@ app.use(helmet.contentSecurityPolicy({
 #### 1. Input Validation
 
 ✅ **DO**:
+
 ```typescript
 // Validate all user input
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 if (!emailRegex.test(email)) {
-  return res.status(400).json({ error: 'Invalid email format' });
+  return res.status(400).json({ error: "Invalid email format" });
 }
 ```
 
 ❌ **DON'T**:
+
 ```typescript
 // Trust user input directly
 const query = `SELECT * FROM users WHERE email = '${email}'`; // SQL Injection!
@@ -1798,12 +1862,14 @@ const query = `SELECT * FROM users WHERE email = '${email}'`; // SQL Injection!
 #### 2. Output Encoding
 
 ✅ **DO**:
+
 ```typescript
 // Use React (automatic escaping)
 <p>{userInput}</p> // ✅ Safe
 ```
 
 ❌ **DON'T**:
+
 ```typescript
 // Use dangerouslySetInnerHTML without sanitization
 <div dangerouslySetInnerHTML={{ __html: userInput }} /> // ❌ XSS!
@@ -1814,6 +1880,7 @@ const query = `SELECT * FROM users WHERE email = '${email}'`; // SQL Injection!
 #### 3. Authentication & Authorization
 
 ✅ **DO**:
+
 ```typescript
 // Check both authentication AND authorization
 router.delete('/api/bookings/:id', isAuthenticated, async (req, res) => {
@@ -1829,9 +1896,10 @@ router.delete('/api/bookings/:id', isAuthenticated, async (req, res) => {
 ```
 
 ❌ **DON'T**:
+
 ```typescript
 // Only check authentication
-router.delete('/api/bookings/:id', isAuthenticated, async (req, res) => {
+router.delete("/api/bookings/:id", isAuthenticated, async (req, res) => {
   // Delete any booking - INSECURE!
 });
 ```
@@ -1841,21 +1909,23 @@ router.delete('/api/bookings/:id', isAuthenticated, async (req, res) => {
 #### 4. Error Handling
 
 ✅ **DO**:
+
 ```typescript
 // Generic error messages
 if (!user || !validPassword) {
-  return res.status(401).json({ error: 'Invalid email or password' });
+  return res.status(401).json({ error: "Invalid email or password" });
 }
 ```
 
 ❌ **DON'T**:
+
 ```typescript
 // Detailed error messages (information disclosure)
 if (!user) {
-  return res.status(404).json({ error: 'User not found' }); // ❌ Reveals user existence
+  return res.status(404).json({ error: "User not found" }); // ❌ Reveals user existence
 }
 if (!validPassword) {
-  return res.status(401).json({ error: 'Incorrect password' }); // ❌ Confirms user exists
+  return res.status(401).json({ error: "Incorrect password" }); // ❌ Confirms user exists
 }
 ```
 
@@ -1864,6 +1934,7 @@ if (!validPassword) {
 #### 5. Dependency Management
 
 ✅ **DO**:
+
 ```bash
 # Regularly check for vulnerabilities
 npm audit
@@ -1877,6 +1948,7 @@ npm update
 ```
 
 ❌ **DON'T**:
+
 ```json
 {
   "dependencies": {
@@ -1895,14 +1967,14 @@ npm update
 
 ### Key Findings
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| **SQL Injection** | ✅ Excellent | Parameterized queries throughout |
-| **XSS** | ✅ Excellent | React auto-escaping |
-| **CSRF** | ⚠️ Needs Improvement | Add SameSite cookies or CSRF tokens |
-| **Rate Limiting** | ✅ Excellent | Well-implemented |
-| **File Upload** | ✅ Excellent | Multiple validation layers |
-| **Security Headers** | ⚠️ Missing | Add helmet middleware |
+| Category             | Status               | Notes                               |
+| -------------------- | -------------------- | ----------------------------------- |
+| **SQL Injection**    | ✅ Excellent         | Parameterized queries throughout    |
+| **XSS**              | ✅ Excellent         | React auto-escaping                 |
+| **CSRF**             | ⚠️ Needs Improvement | Add SameSite cookies or CSRF tokens |
+| **Rate Limiting**    | ✅ Excellent         | Well-implemented                    |
+| **File Upload**      | ✅ Excellent         | Multiple validation layers          |
+| **Security Headers** | ⚠️ Missing           | Add helmet middleware               |
 
 ### Risk Summary
 
@@ -1917,6 +1989,7 @@ npm update
 ✅ **SAFE FOR PRODUCTION** after addressing CSRF protection (2-3 hour fix)
 
 The platform demonstrates **strong security practices**:
+
 - ✅ Proper use of ORM with parameterized queries
 - ✅ Framework-level XSS protection (React)
 - ✅ Comprehensive rate limiting

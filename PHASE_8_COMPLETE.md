@@ -10,9 +10,11 @@
 ## 📋 What Was Implemented
 
 ### 1. Booking Reschedule Feature
+
 **Endpoint**: `PATCH /api/bookings/:id/reschedule`
 
 **Features**:
+
 - ✅ Change booking date, start time, and end time
 - ✅ Change assigned master (optional)
 - ✅ Conflict detection - prevents double-booking
@@ -21,9 +23,11 @@
 - ✅ Status validation (can't reschedule cancelled/completed bookings)
 
 **Files Added**:
+
 - `client/src/components/booking-reschedule-dialog.tsx` (221 lines)
 
 **API Request**:
+
 ```typescript
 PATCH /api/bookings/:id/reschedule
 {
@@ -36,6 +40,7 @@ PATCH /api/bookings/:id/reschedule
 ```
 
 **Response**:
+
 ```typescript
 {
   id: "booking-uuid",
@@ -60,9 +65,11 @@ PATCH /api/bookings/:id/reschedule
 ```
 
 ### 2. Manual Booking Creation
+
 **Endpoint**: `POST /api/owner/bookings/manual`
 
 **Features**:
+
 - ✅ Owner can create bookings on behalf of clients
 - ✅ Supports guest clients (no account required)
 - ✅ Auto-creates client profile if doesn't exist
@@ -72,9 +79,11 @@ PATCH /api/bookings/:id/reschedule
 - ✅ Audit logging for tracking
 
 **Files Added**:
+
 - `client/src/components/booking-manual-create-dialog.tsx` (336 lines)
 
 **API Request**:
+
 ```typescript
 POST /api/owner/bookings/manual
 {
@@ -91,6 +100,7 @@ POST /api/owner/bookings/manual
 ```
 
 **Features**:
+
 - Guest profile creation if phone number not found
 - Price snapshot from service basePrice
 - Notification sent to master
@@ -99,11 +109,13 @@ POST /api/owner/bookings/manual
 ### 3. Backend Changes
 
 **File**: `server/routes/bookings.routes.ts`
+
 - Added reschedule endpoint with comprehensive validation
 - Conflict checking via SQL time overlap query
 - Modification history appending
 
 **File**: `server/routes/owner.routes.ts`
+
 - Added manual booking creation endpoint
 - Owner permission check (`BOOKINGS:create`)
 - Guest profile support
@@ -111,12 +123,14 @@ POST /api/owner/bookings/manual
 - Audit logging
 
 **Imports Added**:
+
 - `sql` from drizzle-orm (for time overlap queries)
 - `createNewBookingNotification` from notifications
 
 ### 4. Frontend Components
 
 **BookingRescheduleDialog**:
+
 - Calendar date picker (with past date prevention)
 - Time inputs (HTML5 time input)
 - Current booking info display
@@ -126,6 +140,7 @@ POST /api/owner/bookings/manual
 - Error handling with toast notifications
 
 **BookingManualCreateDialog**:
+
 - Salon selector dropdown
 - Service selector (populated after salon selection)
 - Master selector (optional, "Any available master")
@@ -134,7 +149,7 @@ POST /api/owner/bookings/manual
 - Date picker
 - Start/End time inputs
 - Notes textarea (optional)
-- Required field indicators (*)
+- Required field indicators (\*)
 - Validation & conflict error handling
 
 ### 5. i18n Translations
@@ -142,6 +157,7 @@ POST /api/owner/bookings/manual
 Added **45+ new translation keys** across 3 languages:
 
 **English** (`en.json`):
+
 ```json
 "bookings": {
   "reschedule": {
@@ -161,10 +177,12 @@ Added **45+ new translation keys** across 3 languages:
 ```
 
 **Russian** (`ru.json`):
+
 - Complete 1:1 translations for all keys
 - Native Russian terminology
 
 **Uzbek** (`uz.json`):
+
 - Complete 1:1 translations for all keys
 - Native Uzbek terminology
 
@@ -175,6 +193,7 @@ Added **45+ new translation keys** across 3 languages:
 ### Conflict Detection
 
 **Query Logic**:
+
 ```sql
 SELECT * FROM bookings
 WHERE master_id = $masterId
@@ -188,16 +207,20 @@ This prevents overlapping bookings for the same master.
 ### Modification History
 
 **Schema** (existing):
+
 ```typescript
-modificationHistory: jsonb('modification_history').default('[]').$type<Array<{
-  timestamp: string;
-  action: string;
-  changedBy: string;
-  changes?: Record<string, any>;
-}>>()
+modificationHistory: jsonb("modification_history").default("[]").$type<
+  Array<{
+    timestamp: string;
+    action: string;
+    changedBy: string;
+    changes?: Record<string, any>;
+  }>
+>();
 ```
 
 **Example Entry**:
+
 ```json
 {
   "timestamp": "2026-01-17T10:30:00Z",
@@ -214,14 +237,18 @@ modificationHistory: jsonb('modification_history').default('[]').$type<Array<{
 ### Guest Profile Creation
 
 When manual booking is created with unknown phone:
+
 ```typescript
 if (!clientProfile) {
-  const [newProfile] = await db.insert(userProfiles).values({
-    fullName: clientName,
-    phoneNumber: clientPhone,
-    role: "client",
-    // No userId - this is a guest booking
-  }).returning();
+  const [newProfile] = await db
+    .insert(userProfiles)
+    .values({
+      fullName: clientName,
+      phoneNumber: clientPhone,
+      role: "client",
+      // No userId - this is a guest booking
+    })
+    .returning();
   clientProfile = newProfile;
 }
 ```
@@ -233,10 +260,12 @@ This allows walk-in or phone bookings without requiring client registration.
 ## 📊 Files Changed
 
 ### New Files (2):
+
 - `client/src/components/booking-reschedule-dialog.tsx` (221 lines)
 - `client/src/components/booking-manual-create-dialog.tsx` (336 lines)
 
 ### Modified Files (5):
+
 - `server/routes/bookings.routes.ts` (+87 lines)
 - `server/routes/owner.routes.ts` (+140 lines)
 - `client/src/locales/en.json` (+48 keys)
@@ -250,11 +279,13 @@ This allows walk-in or phone bookings without requiring client registration.
 ## 🧪 Testing
 
 ### Automated Tests
+
 - ✅ TypeScript compilation passed
 - ✅ Build successful (36.60s)
 - ✅ No ESLint errors
 
 ### Manual Testing Needed
+
 - [ ] Test reschedule with conflict scenario
 - [ ] Test reschedule with cancelled booking (should fail)
 - [ ] Test manual booking with new client (guest profile)
@@ -266,6 +297,7 @@ This allows walk-in or phone bookings without requiring client registration.
 ### API Testing Examples
 
 **Test Reschedule**:
+
 ```bash
 curl -X PATCH https://aurelle.uz/api/bookings/{id}/reschedule \
   -H "Authorization: Bearer {token}" \
@@ -279,6 +311,7 @@ curl -X PATCH https://aurelle.uz/api/bookings/{id}/reschedule \
 ```
 
 **Test Manual Create**:
+
 ```bash
 curl -X POST https://aurelle.uz/api/owner/bookings/manual \
   -H "Authorization: Bearer {token}" \
@@ -299,6 +332,7 @@ curl -X POST https://aurelle.uz/api/owner/bookings/manual \
 ## 🚀 Deployment
 
 ### Production Deployment
+
 - **Date**: 2026-01-17
 - **Server**: 89.39.94.194
 - **Commit**: e5d7dae9
@@ -307,11 +341,13 @@ curl -X POST https://aurelle.uz/api/owner/bookings/manual \
 - **Status**: ✅ Online
 
 ### Verification
+
 ```bash
 ssh root@89.39.94.194 'pm2 status'
 ```
 
 **Result**:
+
 - Status: online
 - Uptime: 18s
 - Memory: 128.6 MB
@@ -360,12 +396,14 @@ ssh root@89.39.94.194 'pm2 status'
 ## 🔐 Security & Permissions
 
 ### Reschedule
+
 - **Required**: User must be authenticated
 - **Authorization**: User must own the booking (via clientId check)
 - **Validation**: Status check (not cancelled/completed)
 - **Audit**: All changes logged in modification_history
 
 ### Manual Booking
+
 - **Required**: User must be authenticated
 - **Authorization**: Owner must own the salon
 - **Permission**: `BOOKINGS:create` permission required
@@ -381,6 +419,7 @@ ssh root@89.39.94.194 'pm2 status'
 ## 🐛 Known Limitations
 
 ### Current Limitations:
+
 1. **Reschedule Dialog**: Not yet integrated into booking-management.tsx
    - Components are created but need to be imported and triggered
    - Next step: Add action buttons in booking table
@@ -402,12 +441,14 @@ ssh root@89.39.94.194 'pm2 status'
 ## 🔮 Next Steps
 
 ### Immediate (Integration):
+
 1. Add "Reschedule" button to booking table rows
 2. Add "Create Manual Booking" button to toolbar
 3. Test full workflow end-to-end
 4. Create modification history viewer component
 
 ### Phase 9 (Services & Masters):
+
 - Master-service assignment UI
 - Service visibility toggle
 - Bulk enable/disable services
@@ -418,6 +459,7 @@ ssh root@89.39.94.194 'pm2 status'
 ## ✅ Success Criteria
 
 ### Phase 8 Completion:
+
 - [x] Reschedule API endpoint implemented
 - [x] Manual booking API endpoint implemented
 - [x] Frontend dialog components created
@@ -445,6 +487,7 @@ ssh root@89.39.94.194 'pm2 status'
 5. Pass necessary props (booking data, salons list)
 
 **Example Integration**:
+
 ```typescript
 // In booking-management.tsx
 import { BookingRescheduleDialog } from "./booking-reschedule-dialog";

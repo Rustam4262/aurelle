@@ -12,10 +12,12 @@
 ### Причина:
 
 В таблице `users` в базе данных отсутствовали критически важные поля:
+
 - ❌ `provider` - тип провайдера авторизации (local, google, yandex, github)
 - ❌ `provider_id` - ID пользователя от OAuth провайдера
 
 Это приводило к ошибкам при попытке:
+
 - Регистрации через email/password
 - Входа через Google OAuth
 - Входа через Yandex OAuth
@@ -30,14 +32,17 @@
 **Файл:** `shared/models/auth.ts`
 
 **Добавлены поля:**
+
 ```typescript
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   passwordHash: varchar("password_hash"),
   phoneNumber: varchar("phone_number").unique(),
   provider: varchar("provider").default("local"), // ← НОВОЕ
-  providerId: varchar("provider_id"),             // ← НОВОЕ
+  providerId: varchar("provider_id"), // ← НОВОЕ
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -49,6 +54,7 @@ export const users = pgTable("users", {
 ### 2. Применена миграция базы данных
 
 На продакшен сервере выполнено:
+
 ```bash
 cd /var/www/aurelle
 git pull origin main
@@ -58,6 +64,7 @@ docker-compose exec app npm run db:push
 ```
 
 **Результат:**
+
 ```sql
 ALTER TABLE users
   ADD COLUMN provider VARCHAR DEFAULT 'local',
@@ -67,6 +74,7 @@ ALTER TABLE users
 ### 3. Проверена структура таблицы
 
 **До исправления:**
+
 ```sql
  Column            | Type
 -------------------+---------------
@@ -82,6 +90,7 @@ ALTER TABLE users
 ```
 
 **После исправления:**
+
 ```sql
  Column            | Type          | Default
 -------------------+---------------+-------------------------
@@ -164,11 +173,11 @@ ALTER TABLE users
 
 ```json
 {
-  "local": true,     // Email + Password ✅
-  "yandex": true,    // Yandex OAuth ✅ (нужно обновить URIs)
-  "google": true,    // Google OAuth ✅ (нужно обновить URIs)
-  "github": false,   // GitHub OAuth (не настроен)
-  "phone": false     // Phone SMS (не настроен - Twilio)
+  "local": true, // Email + Password ✅
+  "yandex": true, // Yandex OAuth ✅ (нужно обновить URIs)
+  "google": true, // Google OAuth ✅ (нужно обновить URIs)
+  "github": false, // GitHub OAuth (не настроен)
+  "phone": false // Phone SMS (не настроен - Twilio)
 }
 ```
 
@@ -176,44 +185,47 @@ ALTER TABLE users
 
 ```typescript
 type User = {
-  id: string;                  // UUID
-  email?: string;              // Email (опционально для OAuth)
-  passwordHash?: string;       // Хеш пароля (для local auth)
-  phoneNumber?: string;        // Телефон (опционально)
-  provider: string;            // "local" | "google" | "yandex" | "github"
-  providerId?: string;         // ID от OAuth провайдера
-  firstName?: string;          // Имя
-  lastName?: string;           // Фамилия
-  profileImageUrl?: string;    // URL аватарки
-  createdAt: Date;             // Дата создания
-  updatedAt: Date;             // Дата обновления
+  id: string; // UUID
+  email?: string; // Email (опционально для OAuth)
+  passwordHash?: string; // Хеш пароля (для local auth)
+  phoneNumber?: string; // Телефон (опционально)
+  provider: string; // "local" | "google" | "yandex" | "github"
+  providerId?: string; // ID от OAuth провайдера
+  firstName?: string; // Имя
+  lastName?: string; // Фамилия
+  profileImageUrl?: string; // URL аватарки
+  createdAt: Date; // Дата создания
+  updatedAt: Date; // Дата обновления
 };
 ```
 
 ### Логика работы:
 
 **Local auth (Email/Password):**
+
 ```typescript
-provider = "local"
-providerId = null
-email = "user@example.com"
-passwordHash = "$2b$10$..."
+provider = "local";
+providerId = null;
+email = "user@example.com";
+passwordHash = "$2b$10$...";
 ```
 
 **Google OAuth:**
+
 ```typescript
-provider = "google"
-providerId = "123456789012345678901"
-email = "user@gmail.com"
-passwordHash = null
+provider = "google";
+providerId = "123456789012345678901";
+email = "user@gmail.com";
+passwordHash = null;
 ```
 
 **Yandex OAuth:**
+
 ```typescript
-provider = "yandex"
-providerId = "987654321"
-email = "user@yandex.ru"
-passwordHash = null
+provider = "yandex";
+providerId = "987654321";
+email = "user@yandex.ru";
+passwordHash = null;
 ```
 
 ---
@@ -268,6 +280,7 @@ passwordHash = null
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Коммиты:**
+
 - `c547b100` - Add provider and providerId fields to users table for OAuth support
 
 ---

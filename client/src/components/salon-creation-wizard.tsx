@@ -7,8 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -74,15 +87,7 @@ interface WizardData {
   isDraft: boolean;
 }
 
-const DAYS_OF_WEEK = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const DEFAULT_HOURS = "09:00";
 const DEFAULT_CLOSE = "20:00";
@@ -183,7 +188,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
     if (files.length === 0) return;
 
     const newPhotos = [...wizardData.photos, ...files].slice(0, 6); // Max 6 photos
-    const newUrls = newPhotos.map(file => URL.createObjectURL(file));
+    const newUrls = newPhotos.map((file) => URL.createObjectURL(file));
 
     setWizardData({
       ...wizardData,
@@ -200,7 +205,8 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
       ...wizardData,
       photos: newPhotos,
       photoUrls: newUrls,
-      coverPhotoIndex: wizardData.coverPhotoIndex >= newPhotos.length ? 0 : wizardData.coverPhotoIndex,
+      coverPhotoIndex:
+        wizardData.coverPhotoIndex >= newPhotos.length ? 0 : wizardData.coverPhotoIndex,
     });
   };
 
@@ -208,17 +214,23 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
     const formData = new FormData();
 
     // Basic info
-    formData.append("name", JSON.stringify({
-      en: wizardData.nameEn,
-      ru: wizardData.nameRu || wizardData.nameEn,
-      uz: wizardData.nameUz || wizardData.nameEn,
-    }));
+    formData.append(
+      "name",
+      JSON.stringify({
+        en: wizardData.nameEn,
+        ru: wizardData.nameRu || wizardData.nameEn,
+        uz: wizardData.nameUz || wizardData.nameEn,
+      }),
+    );
 
-    formData.append("description", JSON.stringify({
-      en: wizardData.descriptionEn,
-      ru: wizardData.descriptionRu || wizardData.descriptionEn,
-      uz: wizardData.descriptionUz || wizardData.descriptionEn,
-    }));
+    formData.append(
+      "description",
+      JSON.stringify({
+        en: wizardData.descriptionEn,
+        ru: wizardData.descriptionRu || wizardData.descriptionEn,
+        uz: wizardData.descriptionUz || wizardData.descriptionEn,
+      }),
+    );
 
     formData.append("phone", wizardData.phone);
     formData.append("address", wizardData.address);
@@ -235,7 +247,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
     });
 
     // Working hours - only save open days
-    const openHours = wizardData.workingHours.filter(h => h.isOpen);
+    const openHours = wizardData.workingHours.filter((h) => h.isOpen);
     formData.append("workingHours", JSON.stringify(openHours));
 
     // Status - save as draft if not complete
@@ -254,7 +266,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
       case 3:
         return true; // Photos optional
       case 4:
-        return wizardData.workingHours.some(h => h.isOpen);
+        return wizardData.workingHours.some((h) => h.isOpen);
       case 5:
         return true; // Can create draft
       default:
@@ -392,9 +404,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
             </div>
 
             <div className="p-4 bg-muted rounded-md">
-              <p className="text-sm text-muted-foreground">
-                {t("wizard.step2.mapHint")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("wizard.step2.mapHint")}</p>
             </div>
           </div>
         );
@@ -409,9 +419,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
 
             <div className="border-2 border-dashed rounded-lg p-8 text-center">
               <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">
-                {t("wizard.step3.uploadHint")}
-              </p>
+              <p className="text-sm text-muted-foreground mb-4">{t("wizard.step3.uploadHint")}</p>
               <Input
                 type="file"
                 accept="image/*"
@@ -421,7 +429,11 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
                 id="photo-upload"
               />
               <Label htmlFor="photo-upload">
-                <Button type="button" variant="outline" onClick={() => document.getElementById("photo-upload")?.click()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById("photo-upload")?.click()}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   {t("wizard.step3.selectPhotos")}
                 </Button>
@@ -516,16 +528,16 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
                       />
                     </>
                   ) : (
-                    <span className="text-sm text-muted-foreground">{t("wizard.step4.closed")}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t("wizard.step4.closed")}
+                    </span>
                   )}
                 </div>
               ))}
             </div>
 
             <div className="p-4 bg-muted rounded-md">
-              <p className="text-sm text-muted-foreground">
-                {t("wizard.step4.hint")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("wizard.step4.hint")}</p>
             </div>
           </div>
         );
@@ -544,9 +556,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
               <p className="text-sm text-muted-foreground mb-4">
                 {t("wizard.step5.readyDescription")}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {t("wizard.step5.draftNote")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("wizard.step5.draftNote")}</p>
             </div>
 
             <div className="p-4 border border-yellow-500/50 bg-yellow-500/10 rounded-md">
@@ -567,9 +577,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("wizard.title")}</DialogTitle>
-          <DialogDescription>
-            {t("wizard.description")}
-          </DialogDescription>
+          <DialogDescription>{t("wizard.description")}</DialogDescription>
         </DialogHeader>
 
         {/* Progress indicator */}
@@ -581,8 +589,8 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
                   s === step
                     ? "bg-primary text-primary-foreground"
                     : s < step
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
                 }`}
               >
                 {s < step ? <Check className="h-4 w-4" /> : s}
@@ -593,9 +601,7 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
         </div>
 
         {/* Step content */}
-        <div className="min-h-[400px]">
-          {renderStep()}
-        </div>
+        <div className="min-h-[400px]">{renderStep()}</div>
 
         {/* Navigation */}
         <div className="flex items-center justify-between pt-4 border-t">
@@ -614,20 +620,12 @@ export function SalonCreationWizard({ open, onOpenChange, onSuccess }: SalonCrea
           </span>
 
           {step < 5 ? (
-            <Button
-              type="button"
-              onClick={() => setStep(step + 1)}
-              disabled={!canProceed()}
-            >
+            <Button type="button" onClick={() => setStep(step + 1)} disabled={!canProceed()}>
               {t("wizard.next")}
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={createSalonMutation.isPending}
-            >
+            <Button type="button" onClick={handleSubmit} disabled={createSalonMutation.isPending}>
               {createSalonMutation.isPending ? t("common.creating") : t("wizard.createSalon")}
             </Button>
           )}

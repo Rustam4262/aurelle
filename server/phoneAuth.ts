@@ -39,7 +39,9 @@ export function setupPhoneAuth(app: Express) {
       const { phoneNumber } = req.body;
 
       if (!phoneNumber || !/^\+\d{10,15}$/.test(phoneNumber)) {
-        return res.status(400).json({ error: "Invalid phone number format. Use E.164 format (+1234567890)" });
+        return res
+          .status(400)
+          .json({ error: "Invalid phone number format. Use E.164 format (+1234567890)" });
       }
 
       // Generate 6-digit code
@@ -51,12 +53,10 @@ export function setupPhoneAuth(app: Express) {
 
       // Send SMS via Twilio
       try {
-        await twilioConfig.client.verify.v2
-          .services(twilioConfig.serviceSid)
-          .verifications.create({
-            to: phoneNumber,
-            channel: 'sms'
-          });
+        await twilioConfig.client.verify.v2.services(twilioConfig.serviceSid).verifications.create({
+          to: phoneNumber,
+          channel: "sms",
+        });
 
         return res.json({
           success: true,
@@ -100,10 +100,10 @@ export function setupPhoneAuth(app: Express) {
           .services(twilioConfig.serviceSid)
           .verificationChecks.create({
             to: phoneNumber,
-            code: code
+            code: code,
           });
 
-        if (verificationCheck.status !== 'approved') {
+        if (verificationCheck.status !== "approved") {
           return res.status(400).json({ error: "Invalid or expired verification code" });
         }
       } catch (twilioError: any) {
@@ -121,17 +121,20 @@ export function setupPhoneAuth(app: Express) {
       }
 
       // Find or create user
-      const userId = `phone:${phoneNumber.replace(/\+/g, '')}`;
+      const userId = `phone:${phoneNumber.replace(/\+/g, "")}`;
       let [user] = await db.select().from(users).where(eq(users.id, userId));
 
       if (!user) {
         // Create new user
-        [user] = await db.insert(users).values({
-          id: userId,
-          email: null,
-          passwordHash: null,
-          phoneNumber,
-        }).returning();
+        [user] = await db
+          .insert(users)
+          .values({
+            id: userId,
+            email: null,
+            passwordHash: null,
+            phoneNumber,
+          })
+          .returning();
 
         // Create user profile
         await db.insert(userProfiles).values({

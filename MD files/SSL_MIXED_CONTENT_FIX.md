@@ -45,6 +45,7 @@ Safari: Cmd+Option+E
 ### Шаг 3: Проверить замок в адресной строке
 
 **Ожидаем:**
+
 - 🔒 Зелёный замок
 - "Соединение защищено"
 - Без предупреждения "Не защищено"
@@ -82,6 +83,7 @@ Mixed Content: The page was loaded over HTTPS, but requested an insecure resourc
 ```
 
 **Решение:**
+
 1. Найти этот URL в коде
 2. Заменить `http://` на `https://`
 3. Или заменить на протокол-относительный `//example.com/...`
@@ -108,6 +110,7 @@ Yandex Maps API может использовать HTTP без apikey. Уста
 
 1. Получить API ключ: https://developer.tech.yandex.ru/services/
 2. Добавить в `.env`:
+
    ```env
    VITE_YANDEX_MAPS_API_KEY=your_api_key_here
    ```
@@ -141,6 +144,7 @@ grep -r "http://" client/src/ | grep -v node_modules | grep -v ".git"
 ```
 
 Заменить найденные HTTP URL на:
+
 - `https://...` (явно HTTPS)
 - `//...` (протокол-относительный, использует текущий протокол страницы)
 
@@ -201,6 +205,7 @@ ssh root@89.39.94.194 "grep 'Content-Security-Policy' /etc/nginx/sites-available
 ### Где применено
 
 **Файл:** `/etc/nginx/sites-available/aurelle.uz`
+
 ```nginx
 server {
     listen 443 ssl http2;
@@ -244,6 +249,7 @@ curl -I https://aurelle.uz 2>&1 | grep -i content-security
 4. Отправить скриншот или текст ошибок
 
 Пример информации, которая поможет:
+
 ```
 Mixed Content: The page at 'https://aurelle.uz/' was loaded over HTTPS,
 but requested an insecure resource 'http://api-maps.yandex.ru/...'.

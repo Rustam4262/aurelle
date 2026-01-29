@@ -42,7 +42,7 @@ export async function setupAuth(app: Express) {
       store: new PgSession({
         pool: pool,
         tableName: "sessions",
-        createTableIfMissing: false,
+        createTableIfMissing: true,
       }),
       secret: process.env.SESSION_SECRET || "fallback-secret-change-in-production",
       resave: false,
@@ -55,7 +55,7 @@ export async function setupAuth(app: Express) {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         sameSite: "lax", // Always lax for better compatibility
       },
-    })
+    }),
   );
 
   console.log("Auth system initialized (local auth only)");

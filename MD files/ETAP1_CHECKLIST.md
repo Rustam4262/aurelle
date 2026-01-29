@@ -1,6 +1,7 @@
 # ✅ ЭТАП 1 - «Спокойный прод» - ЧЕКЛИСТ
 
 ## 🎯 Цель
+
 Закрыть Этап 1 за 1 день без боли. Все скрипты уже установлены, остались только настройки.
 
 ---
@@ -10,6 +11,7 @@
 ### ☑️ Задача 1: Настроить Telegram алерты (15 минут)
 
 **Шаг 1.1:** Создать Telegram бота
+
 ```
 1. Открыть Telegram → найти @BotFather
 2. Отправить: /newbot
@@ -19,6 +21,7 @@
 ```
 
 **Шаг 1.2:** Получить CHAT_ID
+
 ```
 1. Написать своему боту любое сообщение
 2. Открыть в браузере:
@@ -28,6 +31,7 @@
 ```
 
 **Шаг 1.3:** Настроить на сервере
+
 ```bash
 # Подключиться к серверу
 ssh root@89.39.94.194
@@ -43,6 +47,7 @@ CHAT_ID="ВАШ_РЕАЛЬНЫЙ_CHAT_ID"
 ```
 
 **Шаг 1.4:** Протестировать
+
 ```bash
 source /etc/aurelle/telegram.env
 BOT_TOKEN="$BOT_TOKEN" CHAT_ID="$CHAT_ID" /usr/local/bin/telegram-send.sh "✅ AURELLE: Telegram alerts connected"
@@ -55,10 +60,12 @@ BOT_TOKEN="$BOT_TOKEN" CHAT_ID="$CHAT_ID" /usr/local/bin/telegram-send.sh "✅ A
 ### ☑️ Задача 2: Health endpoints (30 минут, для разработчика)
 
 **Файлы уже созданы:**
+
 - `d:\AURELLE\server\health.routes.ts` ✅
 - `d:\AURELLE\server\routes.ts` (обновлён) ✅
 
 **Что сделать:**
+
 ```bash
 # 1. На локальной машине
 cd d:\AURELLE
@@ -84,6 +91,7 @@ curl https://api.aurelle.uz/api/ready
 ### ☑️ Задача 3: Настроить Backblaze B2 бэкапы (20 минут)
 
 **Шаг 3.1:** Создать аккаунт Backblaze
+
 ```
 1. Перейти: https://www.backblaze.com/b2/sign-up.html
 2. Зарегистрироваться (бесплатно 10GB)
@@ -93,6 +101,7 @@ curl https://api.aurelle.uz/api/ready
 ```
 
 **Шаг 3.2:** Создать Application Key
+
 ```
 1. Account → App Keys → Add a New Application Key
 2. Name: aurelle-server
@@ -104,6 +113,7 @@ curl https://api.aurelle.uz/api/ready
 ```
 
 **Шаг 3.3:** Установить rclone на сервере
+
 ```bash
 ssh root@89.39.94.194
 
@@ -126,6 +136,7 @@ rclone config
 ```
 
 **Шаг 3.4:** Протестировать
+
 ```bash
 # Проверить подключение
 rclone lsd b2-aurelle:
@@ -134,6 +145,7 @@ rclone lsd b2-aurelle:
 ```
 
 **Шаг 3.5:** Включить загрузку в скрипте
+
 ```bash
 nano /opt/aurelle/backup-db.sh
 
@@ -155,6 +167,7 @@ nano /opt/aurelle/backup-db.sh
 ```
 
 **Шаг 3.6:** Протестировать загрузку
+
 ```bash
 # Создать тестовый бэкап
 /opt/aurelle/backup-db.sh
@@ -164,6 +177,7 @@ rclone ls b2-aurelle:aurelle-backups/db
 ```
 
 **Результат:**
+
 - ✅ Бэкапы локально (/opt/aurelle/backups)
 - ✅ Бэкапы в облаке (Backblaze)
 - ✅ Уведомления в Telegram
@@ -187,6 +201,7 @@ ssh root@89.39.94.194
 ```
 
 **Если тест упал:**
+
 ```bash
 # Проверить логи
 tail -50 /var/log/aurelle-restore-test.log
@@ -285,6 +300,7 @@ crontab -l
 ## 🆘 Что делать если что-то не работает
 
 ### Telegram не приходит:
+
 ```bash
 # Проверить токен и chat_id
 cat /etc/aurelle/telegram.env
@@ -296,6 +312,7 @@ curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/sendMessage" \
 ```
 
 ### Бэкап не создаётся:
+
 ```bash
 # Запустить вручную
 /opt/aurelle/backup-db.sh
@@ -308,6 +325,7 @@ docker ps | grep postgres
 ```
 
 ### Rclone ошибка:
+
 ```bash
 # Проверить конфиг
 rclone config show
@@ -317,6 +335,7 @@ rclone about b2-aurelle:
 ```
 
 ### Health endpoints 404:
+
 ```bash
 # Проверить что код задеплоен
 curl http://localhost:8000/api/health
@@ -330,6 +349,7 @@ docker logs aurelle-server | tail -50
 ## 🎯 Что дальше
 
 После выполнения всех задач:
+
 - ✅ Этап 1 закрыт
 - ✅ Инфраструктура production-ready
 - ✅ Мониторинг работает
@@ -337,6 +357,7 @@ docker logs aurelle-server | tail -50
 - ✅ Алерты настроены
 
 **Следующие шаги:**
+
 - Мониторить Telegram на предмет алертов
 - Проверять бэкапы раз в неделю
 - При росте нагрузки → Этап 2 (апгрейд VPS)

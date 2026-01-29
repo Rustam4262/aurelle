@@ -10,6 +10,7 @@
 Яндекс.Карта на главной странице показывала только сообщение "Загрузка карты..." и не отображала интерактивную карту с салонами.
 
 ### Причины:
+
 1. ❌ Скрипт Yandex Maps API загружался, но карта не инициализировалась
 2. ❌ Не было создания экземпляра карты через `ymaps.Map`
 3. ❌ Отсутствовала логика добавления маркеров салонов
@@ -25,6 +26,7 @@
 **Файл:** `client/src/pages/home.tsx` (функция `MapSection`)
 
 **Добавлено:**
+
 - ✅ Инициализация карты через `ymaps.Map`
 - ✅ Автоматическое создание маркеров для всех салонов из БД
 - ✅ Интерактивные всплывающие окна (balloons) с информацией:
@@ -39,12 +41,13 @@
 - ✅ Состояния загрузки с анимацией
 
 **Код:**
+
 ```typescript
 // Создание карты
 map = new window.ymaps.Map(mapContainer, {
   center: [41.2995, 69.2401], // Tashkent
   zoom: 11,
-  controls: ['zoomControl', 'fullscreenControl', 'geolocationControl']
+  controls: ["zoomControl", "fullscreenControl", "geolocationControl"],
 });
 
 // Добавление маркеров для салонов
@@ -54,12 +57,12 @@ salons.forEach((salon) => {
       [Number(salon.latitude), Number(salon.longitude)],
       {
         balloonContent: `...информация о салоне...`,
-        hintContent: salon.name
+        hintContent: salon.name,
       },
       {
-        preset: 'islands#violetDotIconWithCaption',
-        iconColor: '#8b5cf6'
-      }
+        preset: "islands#violetDotIconWithCaption",
+        iconColor: "#8b5cf6",
+      },
     );
     map.geoObjects.add(placemark);
   }
@@ -86,6 +89,7 @@ declare global {
 **Файлы:** `client/src/locales/en.json`, `ru.json`, `uz.json`
 
 Добавлены переводы для:
+
 - Состояния загрузки карты
 - Сообщений об ошибках
 - Подсказок по настройке API ключа
@@ -95,6 +99,7 @@ declare global {
 **Файлы:** `.env.example`, `.env.production.example`
 
 Добавлена переменная:
+
 ```env
 VITE_YANDEX_MAPS_API_KEY=your-yandex-maps-api-key
 ```
@@ -102,6 +107,7 @@ VITE_YANDEX_MAPS_API_KEY=your-yandex-maps-api-key
 ### 5. Создана документация
 
 Созданы файлы:
+
 1. ✅ **YANDEX_MAPS_SETUP.md** - Полная инструкция по настройке (3000+ слов)
 2. ✅ **MAPS_QUICK_SETUP.txt** - Быстрая справка
 3. ✅ **ENABLE_MAPS_ON_SERVER.md** - Пошаговая активация на сервере
@@ -122,6 +128,7 @@ VITE_YANDEX_MAPS_API_KEY=your-yandex-maps-api-key
 ### На продакшен сервере:
 
 **Быстрый вариант (3 команды):**
+
 ```bash
 ssh root@89.39.94.194
 cd /var/www/aurelle && nano docker-compose.yml
@@ -138,11 +145,13 @@ docker-compose down && docker-compose up -d --build
 После активации карта будет:
 
 ✅ **Автоматически показывать:**
+
 - Все салоны из базы данных с координатами
 - Местоположение каждого салона фиолетовым маркером
 - Информацию о салоне при клике на маркер
 
 ✅ **Интерактивные функции:**
+
 - Zoom in/out (колесиком мыши или кнопками)
 - Перетаскивание карты
 - Fullscreen режим
@@ -151,11 +160,13 @@ docker-compose down && docker-compose up -d --build
 - Переход на страницу салона по ссылке
 
 ✅ **Адаптивность:**
+
 - Высота: 500px
 - Адаптивная ширина
 - Работает на мобильных устройствах
 
 ✅ **Мультиязычность:**
+
 - Автоматическое переключение языка карты (EN/RU/UZ)
 - Локализованный контент в маркерах
 
@@ -164,18 +175,21 @@ docker-compose down && docker-compose up -d --build
 ## 🔧 Технические детали
 
 ### Используемые технологии:
+
 - **Yandex Maps JavaScript API 2.1**
 - **React Hooks** (useState, useEffect)
 - **TanStack Query** для загрузки данных о салонах
 - **i18next** для мультиязычности
 
 ### Производительность:
+
 - Карта загружается асинхронно
 - Не блокирует основной поток
 - Автоматическая очистка при размонтировании компонента
 - Оптимизация повторной инициализации
 
 ### Совместимость:
+
 - Работает на всех современных браузерах
 - IE11+ с полифиллами
 - Мобильные браузеры (iOS Safari, Chrome Mobile)
@@ -222,6 +236,7 @@ docker-compose down && docker-compose up -d --build
    - Храните в безопасном месте
 
 ### Бесплатный тариф:
+
 - ✅ 25,000 запросов в день
 - ✅ Безлимитное использование JavaScript API
 - ✅ Достаточно для большинства проектов
@@ -231,6 +246,7 @@ docker-compose down && docker-compose up -d --build
 ## 🎯 Результат
 
 ### Было:
+
 ```
 ┌──────────────────────────────┐
 │  📍 Загрузка карты...        │
@@ -240,6 +256,7 @@ docker-compose down && docker-compose up -d --build
 ```
 
 ### Стало:
+
 ```
 ┌──────────────────────────────┐
 │  🗺️ Интерактивная карта      │
@@ -257,12 +274,14 @@ docker-compose down && docker-compose up -d --build
 ## 📚 Дополнительные ресурсы
 
 ### Документация проекта:
+
 - **YANDEX_MAPS_SETUP.md** - Полная инструкция по настройке
 - **ENABLE_MAPS_ON_SERVER.md** - Активация на сервере
 - **MAPS_QUICK_SETUP.txt** - Быстрая справка
 - **README.md** - Общая информация о проекте
 
 ### Внешние ресурсы:
+
 - **Yandex Maps API:** https://yandex.ru/dev/maps/jsapi/doc/2.1/
 - **Yandex Developer:** https://developer.tech.yandex.ru/
 - **GitHub Repository:** https://github.com/Rustam4262/aurelle
@@ -297,5 +316,6 @@ docker-compose down && docker-compose up -d --build
 **Автор исправлений:** Claude Code
 **Дата:** 26 декабря 2025
 **Коммиты:**
+
 - `30440d44` - Implement Yandex Maps integration
 - `0c255e06` - Add server activation guide

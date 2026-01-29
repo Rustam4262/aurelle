@@ -17,15 +17,9 @@ export interface ImageOptimizationOptions {
 export async function optimizeImage(
   inputPath: string,
   outputPath: string,
-  options: ImageOptimizationOptions = {}
+  options: ImageOptimizationOptions = {},
 ): Promise<string> {
-  const {
-    width,
-    height,
-    quality = 80,
-    format = "webp",
-    fit = "cover",
-  } = options;
+  const { width, height, quality = 80, format = "webp", fit = "cover" } = options;
 
   try {
     let pipeline = sharp(inputPath);
@@ -68,7 +62,7 @@ export async function optimizeImage(
 export async function createImageVariants(
   inputPath: string,
   outputDir: string,
-  baseName: string
+  baseName: string,
 ): Promise<{ thumbnail: string; medium: string; large: string; original: string }> {
   const ext = "webp";
 

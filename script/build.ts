@@ -59,7 +59,7 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
     loader: {
-      '.node': 'copy',
+      ".node": "copy",
     },
   });
 }

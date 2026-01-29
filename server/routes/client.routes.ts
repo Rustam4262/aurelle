@@ -11,7 +11,7 @@ import {
   masters,
   salonSettings,
 } from "@shared/schema";
-import { eq, and, desc, inArray, or, gte, lte, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { sendBookingConfirmation, sendBookingCancellation, isEmailConfigured } from "../email";
@@ -19,9 +19,13 @@ import { sendBookingConfirmation, sendBookingCancellation, isEmailConfigured } f
 const router = Router();
 
 // Helper function to get client profile
-async function getClientFromUser(userId: string): Promise<{ error: string; status: number } | { profile: typeof userProfiles.$inferSelect | null; userId: string }> {
-  const [profile] = await db.select().from(userProfiles)
-    .where(eq(userProfiles.userId, userId));
+async function getClientFromUser(
+  userId: string,
+): Promise<
+  | { error: string; status: number }
+  | { profile: typeof userProfiles.$inferSelect | null; userId: string }
+> {
+  const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
 
   // Any authenticated user can access client dashboard
   return { profile: profile || null, userId };
@@ -37,11 +41,19 @@ async function checkBookingConflict(params: {
   excludeBookingId?: string;
   bufferMinutes?: number;
 }): Promise<{ hasConflict: boolean; conflictingBooking?: any }> {
-  const { masterId, salonId, bookingDate, startTime, endTime, excludeBookingId, bufferMinutes = 10 } = params;
+  const {
+    masterId,
+    salonId,
+    bookingDate,
+    startTime,
+    endTime,
+    excludeBookingId,
+    bufferMinutes = 10,
+  } = params;
 
   // Convert time strings to minutes for easier comparison
   const parseTime = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
@@ -56,17 +68,17 @@ async function checkBookingConflict(params: {
   const formatTime = (totalMinutes: number): string => {
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
   };
 
   const bufferedStartTime = formatTime(Math.max(0, bufferedStart));
   const bufferedEndTime = formatTime(Math.min(1440, bufferedEnd)); // 1440 = 24 hours in minutes
 
   // Build the query conditions
-  let conditions = [
+  const conditions = [
     eq(bookings.bookingDate, bookingDate),
     // Exclude cancelled bookings
-    ne(bookings.status, 'cancelled' as any),
+    ne(bookings.status, "cancelled" as any),
   ];
 
   // If masterId is provided, check master's schedule
@@ -98,7 +110,7 @@ async function checkBookingConflict(params: {
 
     // Check if there's an overlap
     // Overlap occurs if: (start1 < end2) AND (start2 < end1)
-    const hasOverlap = (bufferedStart < existingBufferedEnd) && (existingBufferedStart < bufferedEnd);
+    const hasOverlap = bufferedStart < existingBufferedEnd && existingBufferedStart < bufferedEnd;
 
     if (hasOverlap) {
       return {
@@ -117,7 +129,7 @@ router.get("/profile", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
@@ -134,7 +146,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
@@ -150,7 +162,8 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Invalid profile data", details: parsed.error.errors });
     }
 
-    const [updated] = await db.update(userProfiles)
+    const [updated] = await db
+      .update(userProfiles)
       .set({ ...parsed.data, updatedAt: new Date() })
       .where(eq(userProfiles.userId, userId))
       .returning();
@@ -171,14 +184,16 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     const result = await getClientFromUser(userId);
     console.log("[DEBUG] Profile lookup result:", result);
 
-    if ('error' in result) {
+    if ("error" in result) {
       console.log("[DEBUG] Error in getClientFromUser:", result.error);
       return res.status(result.status).json({ error: result.error });
     }
 
     if (!result.profile) {
       console.log("[DEBUG] No profile found for user:", userId);
-      return res.status(400).json({ error: "Profile not found. Please complete your profile first." });
+      return res
+        .status(400)
+        .json({ error: "Profile not found. Please complete your profile first." });
     }
 
     console.log("[DEBUG] Profile found:", result.profile.id);
@@ -206,7 +221,9 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Verify service exists and belongs to salon
-    const [service] = await db.select().from(services)
+    const [service] = await db
+      .select()
+      .from(services)
       .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
     if (!service) {
       return res.status(404).json({ error: "Service not found" });
@@ -214,7 +231,9 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
 
     // Verify master if provided
     if (masterId) {
-      const [master] = await db.select().from(masters)
+      const [master] = await db
+        .select()
+        .from(masters)
         .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
       if (!master) {
         return res.status(404).json({ error: "Master not found" });
@@ -230,7 +249,10 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     const endTime = `${endHour.toString().padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}`;
 
     // Get salon settings for buffer time
-    const [settings] = await db.select().from(salonSettings).where(eq(salonSettings.salonId, salonId));
+    const [settings] = await db
+      .select()
+      .from(salonSettings)
+      .where(eq(salonSettings.salonId, salonId));
     const bufferMinutes = settings?.bufferMinutes ?? 10; // Default to 10 minutes if no settings
     const allowDoubleBooking = settings?.allowDoubleBooking ?? false;
 
@@ -272,25 +294,29 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       endTime,
     });
 
-    const [newBooking] = await db.insert(bookings).values({
-      clientId: result.profile.id,
-      salonId,
-      serviceId,
-      masterId: masterId || null,
-      bookingDate: new Date(bookingDate),
-      startTime,
-      endTime,
-      status: "pending",
-      priceSnapshot: service.priceMin,
-      notes: notes || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
+    const [newBooking] = await db
+      .insert(bookings)
+      .values({
+        clientId: result.profile.id,
+        salonId,
+        serviceId,
+        masterId: masterId || null,
+        bookingDate: new Date(bookingDate),
+        startTime,
+        endTime,
+        status: "pending",
+        priceSnapshot: service.priceMin,
+        notes: notes || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
 
     console.log("[DEBUG] Booking created successfully:", newBooking);
 
     // Send confirmation email if email is configured
-    if (isEmailConfigured() && result.profile.email) {
+    const userEmail = req.user?.claims?.email;
+    if (isEmailConfigured() && userEmail) {
       try {
         // Get master info if assigned
         let masterName: string | null = null;
@@ -299,31 +325,33 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
           masterName = masterInfo?.name || null;
         }
 
-        // Determine language from user profile or default to 'en'
-        const language = result.profile.preferredLanguage || 'en';
+        // Determine language (default to 'en')
+        const language = "en";
 
         // Format date for email
-        const formattedDate = new Date(bookingDate).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
+        const formattedDate = new Date(bookingDate).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
 
         // Get salon name (assuming it's a JSON object with language keys)
-        const salonName = typeof salon.name === 'object' && salon.name !== null
-          ? (salon.name as any)[language] || (salon.name as any)['en'] || 'Salon'
-          : String(salon.name || 'Salon');
+        const salonName =
+          typeof salon.name === "object" && salon.name !== null
+            ? (salon.name as any)[language] || (salon.name as any)["en"] || "Salon"
+            : String(salon.name || "Salon");
 
         // Get service name
-        const serviceName = typeof service.name === 'object' && service.name !== null
-          ? (service.name as any)[language] || (service.name as any)['en'] || 'Service'
-          : String(service.name || 'Service');
+        const serviceName =
+          typeof service.name === "object" && service.name !== null
+            ? (service.name as any)[language] || (service.name as any)["en"] || "Service"
+            : String(service.name || "Service");
 
         await sendBookingConfirmation(
-          result.profile.email,
+          userEmail,
           {
-            clientName: result.profile.name || 'Client',
+            clientName: result.profile?.fullName || "Client",
             salonName,
             serviceName,
             masterName,
@@ -332,10 +360,10 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
             price: service.priceMin,
             bookingId: newBooking.id,
           },
-          language
+          language,
         );
 
-        console.log(`[EMAIL] Confirmation email sent to ${result.profile.email}`);
+        console.log(`[EMAIL] Confirmation email sent to ${userEmail}`);
       } catch (emailError) {
         // Don't fail the booking if email fails
         console.error("[EMAIL] Failed to send confirmation email:", emailError);
@@ -355,7 +383,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
@@ -363,7 +391,9 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       return res.json([]);
     }
 
-    const clientBookings = await db.select().from(bookings)
+    const clientBookings = await db
+      .select()
+      .from(bookings)
       .where(eq(bookings.clientId, result.profile.id))
       .orderBy(desc(bookings.bookingDate));
 
@@ -372,9 +402,11 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Batch loading
-    const salonIds = Array.from(new Set(clientBookings.map(b => b.salonId)));
-    const serviceIds = Array.from(new Set(clientBookings.map(b => b.serviceId)));
-    const masterIds = Array.from(new Set(clientBookings.map(b => b.masterId).filter((id): id is string => id !== null)));
+    const salonIds = Array.from(new Set(clientBookings.map((b) => b.salonId)));
+    const serviceIds = Array.from(new Set(clientBookings.map((b) => b.serviceId)));
+    const masterIds = Array.from(
+      new Set(clientBookings.map((b) => b.masterId).filter((id): id is string => id !== null)),
+    );
 
     const [salonsData, servicesData, mastersData] = await Promise.all([
       salonIds.length > 0
@@ -388,11 +420,11 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         : Promise.resolve([]),
     ]);
 
-    const salonsMap = new Map(salonsData.map(s => [s.id, s]));
-    const servicesMap = new Map(servicesData.map(s => [s.id, s]));
-    const mastersMap = new Map(mastersData.map(m => [m.id, m]));
+    const salonsMap = new Map(salonsData.map((s) => [s.id, s]));
+    const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
+    const mastersMap = new Map(mastersData.map((m) => [m.id, m]));
 
-    const enrichedBookings = clientBookings.map(booking => ({
+    const enrichedBookings = clientBookings.map((booking) => ({
       ...booking,
       salon: salonsMap.get(booking.salonId),
       service: servicesMap.get(booking.serviceId),
@@ -413,7 +445,7 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
     const { id } = req.params;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
@@ -421,7 +453,9 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    const [booking] = await db.select().from(bookings)
+    const [booking] = await db
+      .select()
+      .from(bookings)
       .where(and(eq(bookings.id, id), eq(bookings.clientId, result.profile.id)));
 
     if (!booking) {
@@ -437,51 +471,58 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Booking is already cancelled or completed" });
     }
 
-    const [updated] = await db.update(bookings)
+    const [updated] = await db
+      .update(bookings)
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(bookings.id, id))
       .returning();
 
     // Send cancellation email if email is configured
-    if (isEmailConfigured() && result.profile.email) {
+    const cancelUserEmail = req.user?.claims?.email;
+    if (isEmailConfigured() && cancelUserEmail) {
       try {
         // Get booking details for email
         const [salon] = await db.select().from(salons).where(eq(salons.id, booking.salonId));
-        const [service] = await db.select().from(services).where(eq(services.id, booking.serviceId));
+        const [service] = await db
+          .select()
+          .from(services)
+          .where(eq(services.id, booking.serviceId));
 
         if (salon && service) {
-          const language = result.profile.preferredLanguage || 'en';
+          const language = "en";
 
           // Format date
-          const formattedDate = new Date(booking.bookingDate).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+          const formattedDate = new Date(booking.bookingDate).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           });
 
           // Get localized names
-          const salonName = typeof salon.name === 'object' && salon.name !== null
-            ? (salon.name as any)[language] || (salon.name as any)['en'] || 'Salon'
-            : String(salon.name || 'Salon');
+          const salonName =
+            typeof salon.name === "object" && salon.name !== null
+              ? (salon.name as any)[language] || (salon.name as any)["en"] || "Salon"
+              : String(salon.name || "Salon");
 
-          const serviceName = typeof service.name === 'object' && service.name !== null
-            ? (service.name as any)[language] || (service.name as any)['en'] || 'Service'
-            : String(service.name || 'Service');
+          const serviceName =
+            typeof service.name === "object" && service.name !== null
+              ? (service.name as any)[language] || (service.name as any)["en"] || "Service"
+              : String(service.name || "Service");
 
           await sendBookingCancellation(
-            result.profile.email,
+            cancelUserEmail,
             {
-              clientName: result.profile.name || 'Client',
+              clientName: result.profile?.fullName || "Client",
               salonName,
               serviceName,
               date: formattedDate,
               time: booking.startTime,
             },
-            language
+            language,
           );
 
-          console.log(`[EMAIL] Cancellation email sent to ${result.profile.email}`);
+          console.log(`[EMAIL] Cancellation email sent to ${cancelUserEmail}`);
         }
       } catch (emailError) {
         // Don't fail the cancellation if email fails
@@ -502,19 +543,23 @@ router.get("/favorites", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
-    const clientFavorites = await db.select().from(favorites)
+    const clientFavorites = await db
+      .select()
+      .from(favorites)
       .where(eq(favorites.userId, userId))
       .orderBy(desc(favorites.createdAt));
 
     // Get salon info for each favorite
-    const enrichedFavorites = await Promise.all(clientFavorites.map(async (fav) => {
-      const [salon] = await db.select().from(salons).where(eq(salons.id, fav.salonId));
-      return { ...fav, salon };
-    }));
+    const enrichedFavorites = await Promise.all(
+      clientFavorites.map(async (fav) => {
+        const [salon] = await db.select().from(salons).where(eq(salons.id, fav.salonId));
+        return { ...fav, salon };
+      }),
+    );
 
     return res.json(enrichedFavorites);
   } catch (error) {
@@ -530,11 +575,12 @@ router.delete("/favorites/:salonId", isAuthenticated, async (req: any, res) => {
     const { salonId } = req.params;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
-    await db.delete(favorites)
+    await db
+      .delete(favorites)
       .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
 
     return res.json({ success: true });
@@ -550,20 +596,28 @@ router.get("/reviews", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
-    const clientReviews = await db.select().from(reviews)
+    const clientReviews = await db
+      .select()
+      .from(reviews)
       .where(eq(reviews.clientId, userId))
       .orderBy(desc(reviews.createdAt));
 
     // Get salon and master info for each review
-    const enrichedReviews = await Promise.all(clientReviews.map(async (review) => {
-      const [salon] = review.salonId ? await db.select().from(salons).where(eq(salons.id, review.salonId)) : [null];
-      const [master] = review.masterId ? await db.select().from(masters).where(eq(masters.id, review.masterId)) : [null];
-      return { ...review, salon, master };
-    }));
+    const enrichedReviews = await Promise.all(
+      clientReviews.map(async (review) => {
+        const [salon] = review.salonId
+          ? await db.select().from(salons).where(eq(salons.id, review.salonId))
+          : [null];
+        const [master] = review.masterId
+          ? await db.select().from(masters).where(eq(masters.id, review.masterId))
+          : [null];
+        return { ...review, salon, master };
+      }),
+    );
 
     return res.json(enrichedReviews);
   } catch (error) {
@@ -579,11 +633,13 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
     const { id } = req.params;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
-    const [review] = await db.select().from(reviews)
+    const [review] = await db
+      .select()
+      .from(reviews)
       .where(and(eq(reviews.id, id), eq(reviews.clientId, userId)));
 
     if (!review) {
@@ -609,7 +665,8 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Invalid review data", details: parsed.error.errors });
     }
 
-    const [updated] = await db.update(reviews)
+    const [updated] = await db
+      .update(reviews)
       .set(parsed.data)
       .where(eq(reviews.id, id))
       .returning();
@@ -636,11 +693,13 @@ router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
     const { id } = req.params;
     const result = await getClientFromUser(userId);
 
-    if ('error' in result) {
+    if ("error" in result) {
       return res.status(result.status).json({ error: result.error });
     }
 
-    const [review] = await db.select().from(reviews)
+    const [review] = await db
+      .select()
+      .from(reviews)
       .where(and(eq(reviews.id, id), eq(reviews.clientId, userId)));
 
     if (!review) {

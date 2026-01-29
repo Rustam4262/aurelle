@@ -23,7 +23,9 @@ export async function setupGoogleAuth(app: Express) {
   const credentials = getGoogleCredentials();
 
   if (!credentials) {
-    console.log("Google OAuth not configured - missing or invalid GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET");
+    console.log(
+      "Google OAuth not configured - missing or invalid GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET",
+    );
     return;
   }
 
@@ -33,7 +35,7 @@ export async function setupGoogleAuth(app: Express) {
     const hostname = req.hostname;
     const strategyName = `google:${hostname}`;
     if (!registeredStrategies.has(strategyName)) {
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol || 'https';
+      const protocol = req.get("X-Forwarded-Proto") || req.protocol || "https";
       const callbackURL = `${protocol}://${hostname}/api/auth/google/callback`;
 
       const strategy = new GoogleStrategy(
@@ -46,7 +48,7 @@ export async function setupGoogleAuth(app: Express) {
           accessToken: string,
           refreshToken: string,
           profile: any,
-          done: (error: any, user?: any) => void
+          done: (error: any, user?: any) => void,
         ) => {
           try {
             const email = profile.emails?.[0]?.value || null;
@@ -79,7 +81,7 @@ export async function setupGoogleAuth(app: Express) {
           } catch (error) {
             done(error);
           }
-        }
+        },
       );
 
       passport.use(strategyName, strategy);
@@ -90,7 +92,7 @@ export async function setupGoogleAuth(app: Express) {
   app.get("/api/auth/google", (req, res, next) => {
     ensureGoogleStrategy(req);
     passport.authenticate(`google:${req.hostname}`, {
-      scope: ['profile', 'email']
+      scope: ["profile", "email"],
     })(req, res, next);
   });
 

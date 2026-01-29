@@ -78,18 +78,14 @@ const ERROR_MESSAGES: Record<string, string> = {
   [ApiErrorCode.INSUFFICIENT_FUNDS]: "Недостаточно средств",
 
   // Rate limiting
-  [ApiErrorCode.RATE_LIMIT_EXCEEDED]:
-    "Слишком много запросов. Попробуйте через несколько минут",
+  [ApiErrorCode.RATE_LIMIT_EXCEEDED]: "Слишком много запросов. Попробуйте через несколько минут",
 
   // Server errors
-  [ApiErrorCode.INTERNAL_SERVER_ERROR]:
-    "Внутренняя ошибка сервера. Мы работаем над исправлением",
-  [ApiErrorCode.SERVICE_UNAVAILABLE]:
-    "Сервис временно недоступен. Попробуйте позже",
+  [ApiErrorCode.INTERNAL_SERVER_ERROR]: "Внутренняя ошибка сервера. Мы работаем над исправлением",
+  [ApiErrorCode.SERVICE_UNAVAILABLE]: "Сервис временно недоступен. Попробуйте позже",
 
   // Network errors
-  [ApiErrorCode.NETWORK_ERROR]:
-    "Ошибка сети. Проверьте подключение к интернету",
+  [ApiErrorCode.NETWORK_ERROR]: "Ошибка сети. Проверьте подключение к интернету",
   [ApiErrorCode.TIMEOUT]: "Превышено время ожидания. Попробуйте снова",
 
   // Default
@@ -187,7 +183,9 @@ function getErrorCodeFromStatus(status: number): ApiErrorCode {
  */
 export function getErrorMessage(error: any): string {
   const apiError = parseApiError(error);
-  return ERROR_MESSAGES[apiError.code] || apiError.message || ERROR_MESSAGES[ApiErrorCode.UNKNOWN_ERROR];
+  return (
+    ERROR_MESSAGES[apiError.code] || apiError.message || ERROR_MESSAGES[ApiErrorCode.UNKNOWN_ERROR]
+  );
 }
 
 /**
@@ -308,7 +306,7 @@ export const errorHandlers = {
  */
 export function withErrorHandler<T extends (...args: any[]) => Promise<any>>(
   fn: T,
-  errorMessage?: string
+  errorMessage?: string,
 ): T {
   return (async (...args: Parameters<T>) => {
     try {

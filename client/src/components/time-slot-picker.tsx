@@ -42,7 +42,11 @@ export function TimeSlotPicker({
   const { t } = useTranslation();
 
   // Fetch availability data
-  const { data: availability, isLoading, refetch } = useQuery<AvailabilityResponse>({
+  const {
+    data: availability,
+    isLoading,
+    refetch,
+  } = useQuery<AvailabilityResponse>({
     queryKey: ["/api/salons/masters", masterId, "availability", { date, serviceId }],
     queryFn: async (): Promise<AvailabilityResponse> => {
       if (!masterId || !date) {
@@ -128,9 +132,7 @@ export function TimeSlotPicker({
       <div className="flex items-center justify-between pb-2 border-b">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">
-            {t("marketplace.salon.availableSlots")}
-          </span>
+          <span className="text-sm font-medium">{t("marketplace.salon.availableSlots")}</span>
         </div>
         <Badge variant="secondary">
           {availability.availableSlots} / {availability.totalSlots}
@@ -175,9 +177,7 @@ export function TimeSlotPicker({
                 {getSlotIcon(slot)}
                 <span className="text-xs font-medium">{slot.startTime}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground">
-                {slot.endTime}
-              </span>
+              <span className="text-[10px] text-muted-foreground">{slot.endTime}</span>
             </Button>
           );
         })}

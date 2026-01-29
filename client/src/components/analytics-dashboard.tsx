@@ -29,10 +29,17 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
-  const { data: stats, isLoading, error } = useQuery<MonthlyStats>({
+  const {
+    data: stats,
+    isLoading,
+    error,
+  } = useQuery<MonthlyStats>({
     queryKey: ["/api/calendar/monthly-stats", { salonId, year, month }],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/calendar/monthly-stats?salonId=${salonId}&year=${year}&month=${month}`);
+      const res = await apiRequest(
+        "GET",
+        `/api/calendar/monthly-stats?salonId=${salonId}&year=${year}&month=${month}`,
+      );
       return res.json();
     },
     enabled: !!salonId,
@@ -122,7 +129,9 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
                   <p className="text-sm text-muted-foreground">{metric.title}</p>
                   <p className="text-2xl font-bold mt-2">{metric.value}</p>
                 </div>
-                <div className={`h-12 w-12 rounded-full ${metric.bgColor} flex items-center justify-center`}>
+                <div
+                  className={`h-12 w-12 rounded-full ${metric.bgColor} flex items-center justify-center`}
+                >
                   <metric.icon className={`h-6 w-6 ${metric.color}`} />
                 </div>
               </div>
@@ -172,7 +181,9 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  tickFormatter={(value) =>
+                    new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  }
                 />
                 <YAxis />
                 <Tooltip />
@@ -196,7 +207,8 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
             <div className="text-center">
               <p className="text-4xl font-bold text-green-600">{stats.completionRate}%</p>
               <p className="text-sm text-muted-foreground mt-2">
-                {stats.completedBookings} {t("analytics.outOf")} {stats.totalBookings} {t("analytics.bookings")}
+                {stats.completedBookings} {t("analytics.outOf")} {stats.totalBookings}{" "}
+                {t("analytics.bookings")}
               </p>
             </div>
           </CardContent>
@@ -213,7 +225,8 @@ export function AnalyticsDashboard({ salonId }: AnalyticsProps) {
             <div className="text-center">
               <p className="text-4xl font-bold text-red-600">{stats.cancellationRate}%</p>
               <p className="text-sm text-muted-foreground mt-2">
-                {stats.cancelledBookings} {t("analytics.outOf")} {stats.totalBookings} {t("analytics.bookings")}
+                {stats.cancelledBookings} {t("analytics.outOf")} {stats.totalBookings}{" "}
+                {t("analytics.bookings")}
               </p>
             </div>
           </CardContent>

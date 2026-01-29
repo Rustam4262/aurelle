@@ -39,11 +39,11 @@ This guide provides comprehensive load testing documentation for the AURELLE pla
 
 ### Test Scenarios
 
-| Scenario | Virtual Users | Duration | Target Endpoint | Expected Load |
-|----------|---------------|----------|-----------------|---------------|
-| **1. Homepage Load** | 100 concurrent | 5 min | `/` (main page) | ~1,500 req/min |
-| **2. Salon Search** | 200 concurrent | 5 min | `/api/salons` | ~3,000 req/min |
-| **3. Booking Flow** | 50 concurrent | 10 min | `/api/bookings` | ~300 bookings/min |
+| Scenario             | Virtual Users  | Duration | Target Endpoint | Expected Load     |
+| -------------------- | -------------- | -------- | --------------- | ----------------- |
+| **1. Homepage Load** | 100 concurrent | 5 min    | `/` (main page) | ~1,500 req/min    |
+| **2. Salon Search**  | 200 concurrent | 5 min    | `/api/salons`   | ~3,000 req/min    |
+| **3. Booking Flow**  | 50 concurrent  | 10 min   | `/api/bookings` | ~300 bookings/min |
 
 ---
 
@@ -51,20 +51,21 @@ This guide provides comprehensive load testing documentation for the AURELLE pla
 
 ### k6 vs Artillery Comparison
 
-| Feature | k6 | Artillery | Winner |
-|---------|----|-----------| -------|
-| **Performance** | Written in Go, very fast | Node.js, slower | ✅ k6 |
-| **Script Language** | JavaScript (ES6+) | JavaScript/YAML | 🤝 Tie |
-| **Developer Experience** | Excellent, clean API | Good, but verbose | ✅ k6 |
-| **Metrics** | Built-in, detailed | Good, extensible | ✅ k6 |
-| **CI/CD Integration** | Excellent | Good | ✅ k6 |
-| **Cloud Support** | k6 Cloud (paid) | Artillery Cloud (paid) | 🤝 Tie |
-| **Local Performance** | Lightweight, fast | Heavier, slower | ✅ k6 |
-| **Community** | Large, active | Smaller | ✅ k6 |
-| **Documentation** | Excellent | Good | ✅ k6 |
-| **Open Source** | ✅ Yes | ✅ Yes | 🤝 Tie |
+| Feature                  | k6                       | Artillery              | Winner |
+| ------------------------ | ------------------------ | ---------------------- | ------ |
+| **Performance**          | Written in Go, very fast | Node.js, slower        | ✅ k6  |
+| **Script Language**      | JavaScript (ES6+)        | JavaScript/YAML        | 🤝 Tie |
+| **Developer Experience** | Excellent, clean API     | Good, but verbose      | ✅ k6  |
+| **Metrics**              | Built-in, detailed       | Good, extensible       | ✅ k6  |
+| **CI/CD Integration**    | Excellent                | Good                   | ✅ k6  |
+| **Cloud Support**        | k6 Cloud (paid)          | Artillery Cloud (paid) | 🤝 Tie |
+| **Local Performance**    | Lightweight, fast        | Heavier, slower        | ✅ k6  |
+| **Community**            | Large, active            | Smaller                | ✅ k6  |
+| **Documentation**        | Excellent                | Good                   | ✅ k6  |
+| **Open Source**          | ✅ Yes                   | ✅ Yes                 | 🤝 Tie |
 
 **Decision**: **k6** is the better choice for AURELLE due to:
+
 - ✅ Superior performance (Go vs Node.js)
 - ✅ Better developer experience
 - ✅ More detailed built-in metrics
@@ -86,11 +87,13 @@ This guide provides comprehensive load testing documentation for the AURELLE pla
 ### Step 1: Install k6
 
 #### macOS (Homebrew)
+
 ```bash
 brew install k6
 ```
 
 #### Linux (Debian/Ubuntu)
+
 ```bash
 sudo gpg -k
 sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
@@ -100,21 +103,25 @@ sudo apt-get install k6
 ```
 
 #### Windows (Chocolatey)
+
 ```bash
 choco install k6
 ```
 
 #### Windows (Scoop)
+
 ```bash
 scoop install k6
 ```
 
 #### Docker
+
 ```bash
 docker pull grafana/k6:latest
 ```
 
 #### Verify Installation
+
 ```bash
 k6 version
 # Expected output: k6 v0.48.0 (2024-11-12)
@@ -160,40 +167,40 @@ Create `load-tests/scenarios/utils/config.js`:
 // k6 Load Testing Configuration
 export const config = {
   // Base URL
-  baseUrl: __ENV.BASE_URL || 'http://localhost:5000',
-  apiBase: __ENV.API_BASE || 'http://localhost:5000/api',
+  baseUrl: __ENV.BASE_URL || "http://localhost:5000",
+  apiBase: __ENV.API_BASE || "http://localhost:5000/api",
 
   // Test users
   testUsers: [
     {
-      email: 'loadtest1@example.com',
-      password: 'LoadTest123!',
+      email: "loadtest1@example.com",
+      password: "LoadTest123!",
     },
     {
-      email: 'loadtest2@example.com',
-      password: 'LoadTest123!',
+      email: "loadtest2@example.com",
+      password: "LoadTest123!",
     },
     {
-      email: 'loadtest3@example.com',
-      password: 'LoadTest123!',
+      email: "loadtest3@example.com",
+      password: "LoadTest123!",
     },
   ],
 
   // Test data
-  testSalonId: __ENV.TEST_SALON_ID || 'salon_001',
-  testMasterId: __ENV.TEST_MASTER_ID || 'master_001',
-  testServiceId: __ENV.TEST_SERVICE_ID || 'service_001',
+  testSalonId: __ENV.TEST_SALON_ID || "salon_001",
+  testMasterId: __ENV.TEST_MASTER_ID || "master_001",
+  testServiceId: __ENV.TEST_SERVICE_ID || "service_001",
 
   // Performance thresholds
   thresholds: {
     // 95% of requests should complete within 500ms
-    http_req_duration: ['p(95)<500'],
+    http_req_duration: ["p(95)<500"],
     // 99% of requests should complete within 1000ms
-    'http_req_duration{type:api}': ['p(99)<1000'],
+    "http_req_duration{type:api}": ["p(99)<1000"],
     // Error rate should be below 1%
-    http_req_failed: ['rate<0.01'],
+    http_req_failed: ["rate<0.01"],
     // 95% of requests should start within 100ms
-    http_req_waiting: ['p(95)<100'],
+    http_req_waiting: ["p(95)<100"],
   },
 
   // Rate limiting
@@ -214,39 +221,39 @@ export default config;
 **File**: `load-tests/scenarios/homepage-load.js`
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
-import config from './utils/config.js';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Rate, Trend, Counter } from "k6/metrics";
+import config from "./utils/config.js";
 
 // Custom metrics
-const errorRate = new Rate('errors');
-const pageLoadTime = new Trend('page_load_time');
-const requestCounter = new Counter('requests_total');
+const errorRate = new Rate("errors");
+const pageLoadTime = new Trend("page_load_time");
+const requestCounter = new Counter("requests_total");
 
 // Test configuration
 export const options = {
   // Stages: Ramp up, sustain, ramp down
   stages: [
-    { duration: '1m', target: 20 },   // Ramp up to 20 users over 1 minute
-    { duration: '2m', target: 100 },  // Ramp up to 100 users over 2 minutes
-    { duration: '3m', target: 100 },  // Stay at 100 users for 3 minutes
-    { duration: '1m', target: 50 },   // Ramp down to 50 users over 1 minute
-    { duration: '1m', target: 0 },    // Ramp down to 0 users over 1 minute
+    { duration: "1m", target: 20 }, // Ramp up to 20 users over 1 minute
+    { duration: "2m", target: 100 }, // Ramp up to 100 users over 2 minutes
+    { duration: "3m", target: 100 }, // Stay at 100 users for 3 minutes
+    { duration: "1m", target: 50 }, // Ramp down to 50 users over 1 minute
+    { duration: "1m", target: 0 }, // Ramp down to 0 users over 1 minute
   ],
 
   // Thresholds (pass/fail criteria)
   thresholds: {
-    errors: ['rate<0.01'], // Error rate must be less than 1%
-    http_req_duration: ['p(95)<1000'], // 95% of requests under 1s
-    http_req_duration: ['p(99)<2000'], // 99% of requests under 2s
-    page_load_time: ['p(95)<1500'], // 95% of page loads under 1.5s
+    errors: ["rate<0.01"], // Error rate must be less than 1%
+    http_req_duration: ["p(95)<1000"], // 95% of requests under 1s
+    http_req_duration: ["p(99)<2000"], // 99% of requests under 2s
+    page_load_time: ["p(95)<1500"], // 95% of page loads under 1.5s
   },
 
   // Test metadata
   tags: {
-    test_name: 'homepage_load_test',
-    environment: __ENV.ENVIRONMENT || 'development',
+    test_name: "homepage_load_test",
+    environment: __ENV.ENVIRONMENT || "development",
   },
 };
 
@@ -257,7 +264,7 @@ export default function () {
 
   // Request homepage
   const response = http.get(config.baseUrl, {
-    tags: { name: 'homepage' },
+    tags: { name: "homepage" },
   });
 
   // Record metrics
@@ -267,9 +274,9 @@ export default function () {
 
   // Assertions
   const checkResult = check(response, {
-    'status is 200': (r) => r.status === 200,
-    'page contains AURELLE': (r) => r.body.includes('AURELLE'),
-    'response time < 2s': (r) => r.timings.duration < 2000,
+    "status is 200": (r) => r.status === 200,
+    "page contains AURELLE": (r) => r.body.includes("AURELLE"),
+    "response time < 2s": (r) => r.timings.duration < 2000,
   });
 
   // Track errors
@@ -281,11 +288,12 @@ export default function () {
 
 // Teardown function (runs once at end)
 export function teardown(data) {
-  console.log('Homepage load test completed');
+  console.log("Homepage load test completed");
 }
 ```
 
 **Expected Behavior**:
+
 - Gradually ramp up from 0 → 100 users over 3 minutes
 - Sustain 100 concurrent users for 3 minutes
 - Measure homepage response times
@@ -300,35 +308,35 @@ export function teardown(data) {
 **File**: `load-tests/scenarios/salon-search.js`
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
-import config from './utils/config.js';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Rate, Trend, Counter } from "k6/metrics";
+import config from "./utils/config.js";
 
 // Custom metrics
-const errorRate = new Rate('api_errors');
-const apiResponseTime = new Trend('api_response_time');
-const salonsReturned = new Trend('salons_count');
-const throughput = new Counter('api_requests');
+const errorRate = new Rate("api_errors");
+const apiResponseTime = new Trend("api_response_time");
+const salonsReturned = new Trend("salons_count");
+const throughput = new Counter("api_requests");
 
 // Test configuration
 export const options = {
   stages: [
-    { duration: '1m', target: 50 },   // Ramp up to 50 users
-    { duration: '2m', target: 200 },  // Ramp up to 200 users
-    { duration: '3m', target: 200 },  // Sustain 200 users
-    { duration: '1m', target: 0 },    // Ramp down
+    { duration: "1m", target: 50 }, // Ramp up to 50 users
+    { duration: "2m", target: 200 }, // Ramp up to 200 users
+    { duration: "3m", target: 200 }, // Sustain 200 users
+    { duration: "1m", target: 0 }, // Ramp down
   ],
 
   thresholds: {
-    api_errors: ['rate<0.01'], // Error rate < 1%
-    http_req_duration: ['p(95)<500', 'p(99)<1000'], // Response time targets
-    api_response_time: ['avg<300', 'p(95)<500'], // API-specific targets
-    'http_req_duration{endpoint:/api/salons}': ['p(95)<400'],
+    api_errors: ["rate<0.01"], // Error rate < 1%
+    http_req_duration: ["p(95)<500", "p(99)<1000"], // Response time targets
+    api_response_time: ["avg<300", "p(95)<500"], // API-specific targets
+    "http_req_duration{endpoint:/api/salons}": ["p(95)<400"],
   },
 
   tags: {
-    test_name: 'salon_search_api_test',
+    test_name: "salon_search_api_test",
   },
 };
 
@@ -343,7 +351,7 @@ export default function () {
     // Scenario B: Search by city
     {
       url: `${config.apiBase}/salons`,
-      params: { city: 'Tashkent' },
+      params: { city: "Tashkent" },
       weight: 30, // 30% of requests
     },
     // Scenario C: Search by bounding box (map view)
@@ -352,8 +360,8 @@ export default function () {
       params: {
         minLat: 41.25,
         maxLat: 41.35,
-        minLng: 69.20,
-        maxLng: 69.30,
+        minLng: 69.2,
+        maxLng: 69.3,
       },
       weight: 20, // 20% of requests
     },
@@ -388,7 +396,7 @@ export default function () {
   // Execute request
   const startTime = Date.now();
   const response = http.get(url, {
-    tags: { endpoint: '/api/salons', scenario: selectedScenario.url },
+    tags: { endpoint: "/api/salons", scenario: selectedScenario.url },
   });
 
   const responseTime = Date.now() - startTime;
@@ -397,10 +405,10 @@ export default function () {
 
   // Assertions
   const checkResult = check(response, {
-    'status is 200': (r) => r.status === 200,
-    'response is JSON': (r) => r.headers['Content-Type']?.includes('application/json'),
-    'response has data': (r) => r.json().length !== undefined || r.json().id !== undefined,
-    'response time < 1s': (r) => r.timings.duration < 1000,
+    "status is 200": (r) => r.status === 200,
+    "response is JSON": (r) => r.headers["Content-Type"]?.includes("application/json"),
+    "response has data": (r) => r.json().length !== undefined || r.json().id !== undefined,
+    "response time < 1s": (r) => r.timings.duration < 1000,
   });
 
   errorRate.add(!checkResult);
@@ -419,13 +427,14 @@ export default function () {
 
 export function handleSummary(data) {
   return {
-    'results/salon-search-results.json': JSON.stringify(data, null, 2),
-    stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    "results/salon-search-results.json": JSON.stringify(data, null, 2),
+    stdout: textSummary(data, { indent: " ", enableColors: true }),
   };
 }
 ```
 
 **Expected Behavior**:
+
 - 200 concurrent users searching for salons
 - Mix of different search patterns (all, city, map, detail)
 - ~3,000 requests per minute at peak
@@ -440,35 +449,35 @@ export function handleSummary(data) {
 **File**: `load-tests/scenarios/booking-flow.js`
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep, group } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
-import config from './utils/config.js';
-import { login, getAuthToken } from './utils/auth.js';
+import http from "k6/http";
+import { check, sleep, group } from "k6";
+import { Rate, Trend, Counter } from "k6/metrics";
+import config from "./utils/config.js";
+import { login, getAuthToken } from "./utils/auth.js";
 
 // Custom metrics
-const bookingErrors = new Rate('booking_errors');
-const bookingDuration = new Trend('booking_complete_duration');
-const bookingsCreated = new Counter('bookings_created');
-const bookingsFailed = new Counter('bookings_failed');
+const bookingErrors = new Rate("booking_errors");
+const bookingDuration = new Trend("booking_complete_duration");
+const bookingsCreated = new Counter("bookings_created");
+const bookingsFailed = new Counter("bookings_failed");
 
 export const options = {
   stages: [
-    { duration: '2m', target: 10 },  // Warm up
-    { duration: '3m', target: 50 },  // Ramp to 50 users
-    { duration: '5m', target: 50 },  // Sustain 50 users
-    { duration: '2m', target: 0 },   // Ramp down
+    { duration: "2m", target: 10 }, // Warm up
+    { duration: "3m", target: 50 }, // Ramp to 50 users
+    { duration: "5m", target: 50 }, // Sustain 50 users
+    { duration: "2m", target: 0 }, // Ramp down
   ],
 
   thresholds: {
-    booking_errors: ['rate<0.05'], // Booking error rate < 5%
-    'http_req_duration{operation:create_booking}': ['p(95)<2000', 'p(99)<3000'],
-    booking_complete_duration: ['p(95)<5000'], // Complete flow < 5s
-    checks: ['rate>0.95'], // 95% of checks should pass
+    booking_errors: ["rate<0.05"], // Booking error rate < 5%
+    "http_req_duration{operation:create_booking}": ["p(95)<2000", "p(99)<3000"],
+    booking_complete_duration: ["p(95)<5000"], // Complete flow < 5s
+    checks: ["rate>0.95"], // 95% of checks should pass
   },
 
   tags: {
-    test_name: 'booking_flow_test',
+    test_name: "booking_flow_test",
   },
 };
 
@@ -490,7 +499,7 @@ export default function (data) {
   const token = data.tokens[Math.floor(Math.random() * data.tokens.length)];
 
   if (!token) {
-    console.error('No auth token available');
+    console.error("No auth token available");
     bookingsFailed.add(1);
     return;
   }
@@ -498,42 +507,39 @@ export default function (data) {
   const flowStartTime = Date.now();
 
   // Group: Complete booking flow
-  group('Complete Booking Flow', function () {
+  group("Complete Booking Flow", function () {
     // Step 1: Get salon details
-    group('1. View Salon', function () {
-      const salonResponse = http.get(
-        `${config.apiBase}/salons/${config.testSalonId}`,
-        {
-          tags: { operation: 'view_salon' },
-        }
-      );
+    group("1. View Salon", function () {
+      const salonResponse = http.get(`${config.apiBase}/salons/${config.testSalonId}`, {
+        tags: { operation: "view_salon" },
+      });
 
       check(salonResponse, {
-        'salon loaded': (r) => r.status === 200,
-        'has services': (r) => r.json().services?.length > 0,
-        'has masters': (r) => r.json().masters?.length > 0,
+        "salon loaded": (r) => r.status === 200,
+        "has services": (r) => r.json().services?.length > 0,
+        "has masters": (r) => r.json().masters?.length > 0,
       });
 
       sleep(1); // User reading salon details
     });
 
     // Step 2: Check master availability
-    group('2. Check Availability', function () {
+    group("2. Check Availability", function () {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const dateStr = tomorrow.toISOString().split('T')[0];
+      const dateStr = tomorrow.toISOString().split("T")[0];
 
       const availResponse = http.get(
         `${config.apiBase}/salons/masters/${config.testMasterId}/availability?date=${dateStr}&serviceId=${config.testServiceId}`,
         {
-          tags: { operation: 'check_availability' },
-        }
+          tags: { operation: "check_availability" },
+        },
       );
 
       const availCheck = check(availResponse, {
-        'availability loaded': (r) => r.status === 200,
-        'has slots': (r) => r.json().slots?.length > 0,
-        'has available slots': (r) => r.json().availableSlots > 0,
+        "availability loaded": (r) => r.status === 200,
+        "has slots": (r) => r.json().slots?.length > 0,
+        "has available slots": (r) => r.json().availableSlots > 0,
       });
 
       if (!availCheck) {
@@ -546,38 +552,33 @@ export default function (data) {
     });
 
     // Step 3: Create booking
-    group('3. Create Booking', function () {
+    group("3. Create Booking", function () {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const dateStr = tomorrow.toISOString().split('T')[0];
+      const dateStr = tomorrow.toISOString().split("T")[0];
 
       const bookingPayload = JSON.stringify({
         salonId: config.testSalonId,
         serviceId: config.testServiceId,
         masterId: config.testMasterId,
         bookingDate: dateStr,
-        startTime: '10:00',
-        endTime: '11:00',
-        notes: 'Load test booking - automated',
+        startTime: "10:00",
+        endTime: "11:00",
+        notes: "Load test booking - automated",
       });
 
-      const bookingResponse = http.post(
-        `${config.apiBase}/bookings`,
-        bookingPayload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          tags: { operation: 'create_booking' },
-        }
-      );
+      const bookingResponse = http.post(`${config.apiBase}/bookings`, bookingPayload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        tags: { operation: "create_booking" },
+      });
 
       const bookingCheck = check(bookingResponse, {
-        'booking created': (r) => r.status === 201,
-        'has booking ID': (r) => r.json().id !== undefined,
-        'status is pending/confirmed': (r) =>
-          ['pending', 'confirmed'].includes(r.json().status),
+        "booking created": (r) => r.status === 201,
+        "has booking ID": (r) => r.json().id !== undefined,
+        "status is pending/confirmed": (r) => ["pending", "confirmed"].includes(r.json().status),
       });
 
       if (bookingCheck) {
@@ -594,17 +595,17 @@ export default function (data) {
     });
 
     // Step 4: Verify booking in list
-    group('4. View My Bookings', function () {
+    group("4. View My Bookings", function () {
       const bookingsResponse = http.get(`${config.apiBase}/bookings`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        tags: { operation: 'view_bookings' },
+        tags: { operation: "view_bookings" },
       });
 
       check(bookingsResponse, {
-        'bookings list loaded': (r) => r.status === 200,
-        'has bookings': (r) => Array.isArray(r.json()) && r.json().length > 0,
+        "bookings list loaded": (r) => r.status === 200,
+        "has bookings": (r) => Array.isArray(r.json()) && r.json().length > 0,
       });
     });
   });
@@ -618,21 +619,22 @@ export default function (data) {
 }
 
 export function handleSummary(data) {
-  console.log('Booking Flow Test Summary:');
+  console.log("Booking Flow Test Summary:");
   console.log(`- Bookings Created: ${bookingsCreated.value}`);
   console.log(`- Bookings Failed: ${bookingsFailed.value}`);
   console.log(
-    `- Success Rate: ${((bookingsCreated.value / (bookingsCreated.value + bookingsFailed.value)) * 100).toFixed(2)}%`
+    `- Success Rate: ${((bookingsCreated.value / (bookingsCreated.value + bookingsFailed.value)) * 100).toFixed(2)}%`,
   );
 
   return {
-    'results/booking-flow-results.json': JSON.stringify(data, null, 2),
-    stdout: textSummary(data, { indent: ' ', enableColors: true }),
+    "results/booking-flow-results.json": JSON.stringify(data, null, 2),
+    stdout: textSummary(data, { indent: " ", enableColors: true }),
   };
 }
 ```
 
 **Expected Behavior**:
+
 - 50 concurrent users creating bookings
 - Complete flow: View salon → Check availability → Create booking → View confirmation
 - ~300 booking attempts per 10 minutes
@@ -645,9 +647,9 @@ export function handleSummary(data) {
 **File**: `load-tests/scenarios/utils/auth.js`
 
 ```javascript
-import http from 'k6/http';
-import { check } from 'k6';
-import config from './config.js';
+import http from "k6/http";
+import { check } from "k6";
+import config from "./config.js";
 
 // Token cache (in-memory for test duration)
 const tokenCache = new Map();
@@ -664,13 +666,13 @@ export function login(email, password) {
   });
 
   const response = http.post(`${config.apiBase}/auth/login`, payload, {
-    headers: { 'Content-Type': 'application/json' },
-    tags: { operation: 'login' },
+    headers: { "Content-Type": "application/json" },
+    tags: { operation: "login" },
   });
 
   const loginCheck = check(response, {
-    'login successful': (r) => r.status === 200,
-    'token received': (r) => r.json().token !== undefined,
+    "login successful": (r) => r.status === 200,
+    "token received": (r) => r.json().token !== undefined,
   });
 
   if (loginCheck) {
@@ -698,56 +700,60 @@ export default { login, getAuthToken };
 
 k6 automatically tracks these metrics:
 
-| Metric | Description | Target |
-|--------|-------------|--------|
-| **http_req_duration** | Total request time (send + wait + receive) | P95 < 500ms |
-| **http_req_waiting** | Time to first byte (TTFB) | P95 < 100ms |
-| **http_req_connecting** | Time to establish TCP connection | P95 < 50ms |
-| **http_req_tls_handshaking** | Time for TLS handshake | P95 < 100ms |
-| **http_req_sending** | Time to send request | P95 < 10ms |
-| **http_req_receiving** | Time to receive response | P95 < 50ms |
-| **http_req_blocked** | Time blocked before request starts | P95 < 10ms |
-| **http_req_failed** | Percentage of failed requests | < 1% |
-| **http_reqs** | Total number of requests | - |
-| **vus** | Current number of active virtual users | - |
-| **vus_max** | Max virtual users reached | - |
-| **iterations** | Total completed iterations | - |
-| **iteration_duration** | Time for complete iteration | P95 < 10s |
+| Metric                       | Description                                | Target      |
+| ---------------------------- | ------------------------------------------ | ----------- |
+| **http_req_duration**        | Total request time (send + wait + receive) | P95 < 500ms |
+| **http_req_waiting**         | Time to first byte (TTFB)                  | P95 < 100ms |
+| **http_req_connecting**      | Time to establish TCP connection           | P95 < 50ms  |
+| **http_req_tls_handshaking** | Time for TLS handshake                     | P95 < 100ms |
+| **http_req_sending**         | Time to send request                       | P95 < 10ms  |
+| **http_req_receiving**       | Time to receive response                   | P95 < 50ms  |
+| **http_req_blocked**         | Time blocked before request starts         | P95 < 10ms  |
+| **http_req_failed**          | Percentage of failed requests              | < 1%        |
+| **http_reqs**                | Total number of requests                   | -           |
+| **vus**                      | Current number of active virtual users     | -           |
+| **vus_max**                  | Max virtual users reached                  | -           |
+| **iterations**               | Total completed iterations                 | -           |
+| **iteration_duration**       | Time for complete iteration                | P95 < 10s   |
 
 ---
 
 ### Custom Metrics
 
 #### Counters
-```javascript
-import { Counter } from 'k6/metrics';
 
-const bookingsCreated = new Counter('bookings_created');
+```javascript
+import { Counter } from "k6/metrics";
+
+const bookingsCreated = new Counter("bookings_created");
 bookingsCreated.add(1); // Increment
 ```
 
 #### Rates
-```javascript
-import { Rate } from 'k6/metrics';
 
-const errorRate = new Rate('errors');
-errorRate.add(true);  // Count as error
+```javascript
+import { Rate } from "k6/metrics";
+
+const errorRate = new Rate("errors");
+errorRate.add(true); // Count as error
 errorRate.add(false); // Count as success
 ```
 
 #### Trends (Histograms)
-```javascript
-import { Trend } from 'k6/metrics';
 
-const pageLoadTime = new Trend('page_load_time');
+```javascript
+import { Trend } from "k6/metrics";
+
+const pageLoadTime = new Trend("page_load_time");
 pageLoadTime.add(1234); // Add value in milliseconds
 ```
 
 #### Gauges
-```javascript
-import { Gauge } from 'k6/metrics';
 
-const activeConnections = new Gauge('active_connections');
+```javascript
+import { Gauge } from "k6/metrics";
+
+const activeConnections = new Gauge("active_connections");
 activeConnections.add(42); // Set current value
 ```
 
@@ -761,26 +767,27 @@ Thresholds define pass/fail criteria:
 export const options = {
   thresholds: {
     // HTTP request duration
-    'http_req_duration': ['p(95)<500', 'p(99)<1000'],
+    http_req_duration: ["p(95)<500", "p(99)<1000"],
 
     // Error rate
-    'http_req_failed': ['rate<0.01'], // < 1% errors
+    http_req_failed: ["rate<0.01"], // < 1% errors
 
     // Specific endpoint thresholds
-    'http_req_duration{endpoint:/api/salons}': ['p(95)<400'],
-    'http_req_duration{endpoint:/api/bookings}': ['p(95)<800'],
+    "http_req_duration{endpoint:/api/salons}": ["p(95)<400"],
+    "http_req_duration{endpoint:/api/bookings}": ["p(95)<800"],
 
     // Custom metrics
-    'booking_errors': ['rate<0.05'], // < 5% booking errors
-    'page_load_time': ['p(95)<1500'], // 95% under 1.5s
+    booking_errors: ["rate<0.05"], // < 5% booking errors
+    page_load_time: ["p(95)<1500"], // 95% under 1.5s
 
     // Check success rate
-    'checks': ['rate>0.95'], // 95% of checks must pass
+    checks: ["rate>0.95"], // 95% of checks must pass
   },
 };
 ```
 
 **Threshold Operators**:
+
 - `p(95)<500` - 95th percentile must be below 500ms
 - `avg<300` - Average must be below 300ms
 - `max<2000` - Maximum value must be below 2000ms
@@ -796,6 +803,7 @@ export const options = {
 ### Running Individual Tests
 
 #### Scenario 1: Homepage Load Test
+
 ```bash
 cd load-tests
 k6 run scenarios/homepage-load.js
@@ -812,6 +820,7 @@ k6 run \
 ```
 
 **Expected Output**:
+
 ```
           /\      |‾‾| /‾‾/   /‾‾/
      /\  /  \     |  |/  /   /  /
@@ -856,6 +865,7 @@ default ✓ [======================================] 000/100 VUs  8m0s
 ```
 
 **Interpretation**:
+
 - ✅ **100% checks passed** - All assertions successful
 - ✅ **P95: 456ms** - 95% of requests under 456ms (threshold: 1000ms) ✓
 - ✅ **P99: 678ms** - 99% of requests under 678ms (threshold: 2000ms) ✓
@@ -865,6 +875,7 @@ default ✓ [======================================] 000/100 VUs  8m0s
 ---
 
 #### Scenario 2: Salon Search API Test
+
 ```bash
 k6 run scenarios/salon-search.js
 
@@ -878,6 +889,7 @@ k6 run \
 ---
 
 #### Scenario 3: Booking Flow Test
+
 ```bash
 # Must set test data first
 k6 run \
@@ -949,6 +961,7 @@ echo "📈 Results saved to results/ directory"
 ```
 
 **Run**:
+
 ```bash
 chmod +x scripts/run-all-tests.sh
 ./scripts/run-all-tests.sh development http://localhost:5000
@@ -986,6 +999,7 @@ docker run --rm -i \
 ```
      checks.........................: 100.00% ✓ 16296      ✗ 0
 ```
+
 - **100%** checks passed
 - **16,296** successful checks
 - **0** failed checks
@@ -993,6 +1007,7 @@ docker run --rm -i \
 ```
      http_req_duration..............: avg=234ms    min=87ms     med=215ms    max=987ms    p(95)=456ms    p(99)=678ms
 ```
+
 - **avg**: Average request duration (234ms)
 - **min**: Fastest request (87ms)
 - **med**: Median request duration (215ms)
@@ -1003,12 +1018,14 @@ docker run --rm -i \
 ```
      http_req_failed................: 0.00%   ✓ 0          ✗ 5432
 ```
+
 - **0%** failed requests
 - **5,432** successful requests
 
 ```
      http_reqs......................: 5432    11.32/s
 ```
+
 - **5,432** total requests
 - **11.32 req/s** throughput
 
@@ -1016,6 +1033,7 @@ docker run --rm -i \
      vus............................: 4       min=4        max=100
      vus_max........................: 100     min=100      max=100
 ```
+
 - **4** active VUs at end
 - **100** max VUs reached during test
 
@@ -1023,13 +1041,13 @@ docker run --rm -i \
 
 ### Performance Targets
 
-| Metric | Target | Good | Acceptable | Poor |
-|--------|--------|------|------------|------|
-| **P50 (Median)** | <200ms | <300ms | <500ms | >500ms |
-| **P95** | <500ms | <800ms | <1000ms | >1000ms |
-| **P99** | <1000ms | <1500ms | <2000ms | >2000ms |
-| **Error Rate** | <0.1% | <1% | <5% | >5% |
-| **Throughput** | >10 req/s | >5 req/s | >1 req/s | <1 req/s |
+| Metric           | Target    | Good     | Acceptable | Poor     |
+| ---------------- | --------- | -------- | ---------- | -------- |
+| **P50 (Median)** | <200ms    | <300ms   | <500ms     | >500ms   |
+| **P95**          | <500ms    | <800ms   | <1000ms    | >1000ms  |
+| **P99**          | <1000ms   | <1500ms  | <2000ms    | >2000ms  |
+| **Error Rate**   | <0.1%     | <1%      | <5%        | >5%      |
+| **Throughput**   | >10 req/s | >5 req/s | >1 req/s   | <1 req/s |
 
 ---
 
@@ -1039,17 +1057,17 @@ docker run --rm -i \
 
 ```javascript
 // Node.js script to analyze results
-const fs = require('fs');
+const fs = require("fs");
 
 // Load results
-const results = JSON.parse(fs.readFileSync('results/homepage-load-results.json'));
+const results = JSON.parse(fs.readFileSync("results/homepage-load-results.json"));
 
 // Extract metrics
 const metrics = results.metrics;
 
 // Response time analysis
 const httpReqDuration = metrics.http_req_duration.values;
-console.log('Response Time Analysis:');
+console.log("Response Time Analysis:");
 console.log(`- P50: ${httpReqDuration.p50.toFixed(2)}ms`);
 console.log(`- P95: ${httpReqDuration.p95.toFixed(2)}ms`);
 console.log(`- P99: ${httpReqDuration.p99.toFixed(2)}ms`);
@@ -1077,11 +1095,13 @@ console.log(`Check Success Rate: ${(checkRate * 100).toFixed(2)}%`);
 #### 1. Database Query Performance
 
 **Symptom**:
+
 - High P95/P99 response times
 - Increasing response time as load increases
 - Database CPU at 100%
 
 **Investigation**:
+
 ```sql
 -- Check slow queries (PostgreSQL)
 SELECT
@@ -1095,6 +1115,7 @@ LIMIT 10;
 ```
 
 **Solutions**:
+
 - Add database indexes
 - Optimize N+1 queries
 - Implement query result caching
@@ -1106,10 +1127,12 @@ LIMIT 10;
 #### 2. Missing Indexes
 
 **Symptom**:
+
 - `/api/salons` slow with filters
 - Sequential scans in EXPLAIN output
 
 **Investigation**:
+
 ```sql
 -- Analyze query plan
 EXPLAIN ANALYZE
@@ -1119,6 +1142,7 @@ AND is_active = true;
 ```
 
 **Solution**:
+
 ```sql
 -- Add composite index
 CREATE INDEX idx_salons_city_active
@@ -1130,11 +1154,13 @@ ON salons (city, is_active);
 #### 3. Memory Leaks
 
 **Symptom**:
+
 - Response time increases over duration
 - Server memory usage growing
 - OOM errors at high load
 
 **Investigation**:
+
 ```bash
 # Monitor Node.js memory
 node --max-old-space-size=4096 --expose-gc server/index.js
@@ -1144,6 +1170,7 @@ npx clinic doctor -- node server/index.js
 ```
 
 **Solutions**:
+
 - Fix memory leaks in code
 - Implement proper resource cleanup
 - Use streaming for large responses
@@ -1154,18 +1181,21 @@ npx clinic doctor -- node server/index.js
 #### 4. Connection Pool Exhaustion
 
 **Symptom**:
+
 - Errors: "Timeout acquiring client from pool"
 - High connection wait times
 
 **Investigation**:
+
 ```javascript
 // Check pool stats
-console.log('Pool size:', db.pool.totalCount);
-console.log('Idle connections:', db.pool.idleCount);
-console.log('Waiting clients:', db.pool.waitingCount);
+console.log("Pool size:", db.pool.totalCount);
+console.log("Idle connections:", db.pool.idleCount);
+console.log("Waiting clients:", db.pool.waitingCount);
 ```
 
 **Solution**:
+
 ```javascript
 // Increase pool size
 const pool = new Pool({
@@ -1180,22 +1210,25 @@ const pool = new Pool({
 #### 5. Rate Limiting Too Aggressive
 
 **Symptom**:
+
 - High 429 (Too Many Requests) error rate
 - Legitimate traffic blocked
 
 **Investigation**:
+
 ```javascript
 // Check rate limiter configuration
-console.log('Rate limit:', rateLimiter.points, 'per', rateLimiter.duration);
+console.log("Rate limit:", rateLimiter.points, "per", rateLimiter.duration);
 ```
 
 **Solution**:
+
 ```javascript
 // Adjust rate limits for load testing
 const rateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 1000, // Increase from 100
-  message: 'Too many requests',
+  message: "Too many requests",
 });
 ```
 
@@ -1232,6 +1265,7 @@ htop
 5. **PM2 Monitoring** - Node.js process manager
 
 **PM2 Example**:
+
 ```bash
 # Install PM2
 npm install -g pm2
@@ -1279,10 +1313,10 @@ CREATE INDEX idx_bookings_master_date_status ON bookings (master_id, booking_dat
 **Action**: Implement Redis caching for frequently accessed data
 
 ```javascript
-import Redis from 'ioredis';
+import Redis from "ioredis";
 
 const redis = new Redis({
-  host: 'localhost',
+  host: "localhost",
   port: 6379,
   maxRetriesPerRequest: 3,
 });
@@ -1316,8 +1350,8 @@ async function getSalons(city) {
 **Action**: Optimize Drizzle ORM connection pool
 
 ```javascript
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 
 const pool = new pg.Pool({
   host: process.env.DB_HOST,
@@ -1345,18 +1379,20 @@ export const db = drizzle(pool);
 **Action**: Enable gzip compression
 
 ```javascript
-import compression from 'compression';
+import compression from "compression";
 
-app.use(compression({
-  level: 6, // Compression level (0-9)
-  threshold: 1024, // Min size to compress (1KB)
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    return compression.filter(req, res);
-  },
-}));
+app.use(
+  compression({
+    level: 6, // Compression level (0-9)
+    threshold: 1024, // Min size to compress (1KB)
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  }),
+);
 ```
 
 **Expected Impact**: 60-70% reduction in response size, faster transfers
@@ -1368,6 +1404,7 @@ app.use(compression({
 **Action**: Optimize N+1 queries
 
 **Before** (N+1 problem):
+
 ```javascript
 // BAD: N+1 queries
 const salons = await db.select().from(salons);
@@ -1377,6 +1414,7 @@ for (const salon of salons) {
 ```
 
 **After** (Single query with joins):
+
 ```javascript
 // GOOD: Single query with join
 const salons = await db
@@ -1418,21 +1456,21 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to test'
+        description: "Environment to test"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
         options:
           - development
           - staging
       vus:
-        description: 'Virtual users'
+        description: "Virtual users"
         required: false
-        default: '50'
+        default: "50"
 
   # Run weekly on staging
   schedule:
-    - cron: '0 2 * * 1' # Every Monday at 2 AM
+    - cron: "0 2 * * 1" # Every Monday at 2 AM
 
 jobs:
   load-test:
@@ -1461,7 +1499,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm ci
@@ -1610,6 +1648,7 @@ This load testing guide provides:
 ✅ **CI/CD integration** - GitHub Actions and GitLab CI workflows
 
 **Next Steps**:
+
 1. Run baseline load tests on current system
 2. Identify and fix performance bottlenecks
 3. Implement optimization recommendations

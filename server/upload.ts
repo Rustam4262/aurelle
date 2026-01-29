@@ -16,7 +16,8 @@ const storage = multer.diskStorage({
     // Генерируем уникальное имя файла
     const uniqueSuffix = crypto.randomBytes(8).toString("hex");
     const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext)
+    const name = path
+      .basename(file.originalname, ext)
       .replace(/[^a-zA-Z0-9]/g, "_")
       .substring(0, 20);
     cb(null, `${name}_${uniqueSuffix}${ext}`);
@@ -58,11 +59,11 @@ export async function optimizeImage(
     width?: number;
     height?: number;
     quality?: number;
-  } = {}
+  } = {},
 ): Promise<Buffer> {
   const { width = 1200, height, quality = 85 } = options;
 
-  let transformer = sharp(inputPath).resize(width, height, {
+  const transformer = sharp(inputPath).resize(width, height, {
     fit: "inside",
     withoutEnlargement: true,
   });

@@ -1,9 +1,5 @@
 import { eq } from "drizzle-orm";
-import { 
-  masters, 
-  notifications, 
-  newBookingNotificationSchema 
-} from "@shared/schema";
+import { masters, notifications, newBookingNotificationSchema } from "@shared/schema";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "@shared/schema";
 
@@ -12,7 +8,7 @@ export async function createNewBookingNotification(
   masterId: string,
   bookingDate: string,
   startTime: string,
-  relatedId: string
+  relatedId: string,
 ): Promise<typeof notifications.$inferSelect | null> {
   const [master] = await db.select().from(masters).where(eq(masters.id, masterId));
   if (!master || !master.userId) {

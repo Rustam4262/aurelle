@@ -23,6 +23,7 @@
 ## 🌟 Возможности
 
 ### Для клиентов:
+
 - 🔍 Поиск салонов по городу и услугам
 - 📅 Онлайн бронирование записей
 - ⭐ Отзывы и рейтинги салонов
@@ -30,6 +31,7 @@
 - 📱 Адаптивный дизайн для всех устройств
 
 ### Для владельцев салонов:
+
 - 🏪 Регистрация и управление салонами
 - 👥 Управление командой мастеров
 - 📊 Календарь записей
@@ -37,6 +39,7 @@
 - 📈 Аналитика и статистика
 
 ### Технические возможности:
+
 - 🔐 **Множественные методы авторизации**:
   - Email + Password
   - Google OAuth
@@ -57,6 +60,7 @@
 ### Локальная разработка
 
 #### 1. Требования
+
 - Node.js >= 18.0.0
 - PostgreSQL >= 14
 - npm или yarn
@@ -110,6 +114,7 @@ npm run dev
 **Готов к деплою!** Проект полностью настроен и загружен в GitHub.
 
 #### Быстрый старт:
+
 ```bash
 # 1. Подключитесь к серверу
 ssh root@your-server-ip
@@ -122,19 +127,23 @@ cd aurelle
 ```
 
 #### Документация по деплою:
+
 - 📘 **[DEPLOY_FROM_GITHUB.md](./DEPLOY_FROM_GITHUB.md)** - ⭐ Деплой с GitHub (НАЧНИТЕ ОТСЮДА!)
 - 📗 **[QUICK_DEPLOY_COMMANDS.txt](./QUICK_DEPLOY_COMMANDS.txt)** - Все команды в одном файле
 - 📙 **[READY_TO_DEPLOY.md](./READY_TO_DEPLOY.md)** - Полная информация о готовности
 
 ### Альтернативные методы деплоя:
+
 - **[DEPLOY_QUICK_START.md](./DEPLOY_QUICK_START.md)** - Быстрый деплой (архив)
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Детальная документация
 - **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Чек-лист на 100+ пунктов
 
 ### Настройка OAuth для продакшена:
+
 - **[OAUTH_SETUP_PRODUCTION.md](./OAUTH_SETUP_PRODUCTION.md)** - Обновление Redirect URIs
 
 ### Настройка Яндекс.Карт:
+
 - **[YANDEX_MAPS_SETUP.md](./YANDEX_MAPS_SETUP.md)** - ⭐ Настройка интерактивной карты салонов
 
 ---
@@ -144,11 +153,13 @@ cd aurelle
 Платформа поддерживает 5 методов авторизации. Все провайдеры опциональны.
 
 ### Подробная инструкция
+
 См. **[AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md)**
 
 ### Быстрая настройка OAuth
 
 #### Google OAuth:
+
 1. [Google Cloud Console](https://console.cloud.google.com/)
 2. Создайте OAuth Client ID
 3. Добавьте redirect URI: `http://localhost:5000/api/auth/google/callback`
@@ -159,6 +170,7 @@ cd aurelle
    ```
 
 #### Yandex OAuth:
+
 1. [Яндекс OAuth](https://oauth.yandex.ru/)
 2. Создайте приложение
 3. Добавьте callback URI: `http://localhost:5000/api/auth/yandex/callback`
@@ -169,6 +181,7 @@ cd aurelle
    ```
 
 #### Yandex Maps API (для карты на главной странице):
+
 1. [Yandex Developer](https://developer.tech.yandex.ru/)
 2. Получите API ключ для JavaScript API
 3. Добавьте в `.env`:
@@ -225,6 +238,7 @@ npm start               # Запуск production сервера
 ### Технологический стек
 
 **Frontend:**
+
 - React 18
 - TypeScript
 - Vite
@@ -235,6 +249,7 @@ npm start               # Запуск production сервера
 - i18next (переводы)
 
 **Backend:**
+
 - Node.js
 - Express
 - TypeScript
@@ -244,6 +259,7 @@ npm start               # Запуск production сервера
 - Express Session
 
 **DevOps:**
+
 - PM2 (process manager)
 - Nginx (reverse proxy)
 - Let's Encrypt (SSL)
@@ -265,16 +281,19 @@ npm start               # Запуск production сервера
 ## 📝 Скрипты деплоя
 
 ### Автоматический деплой
+
 ```bash
 ./deploy.sh
 ```
 
 ### Автоматический бэкап БД
+
 ```bash
 ./backup.sh
 ```
 
 Настройте cron для автоматического бэкапа:
+
 ```bash
 crontab -e
 # Добавьте: 0 2 * * * /var/www/aurelle/backup.sh
@@ -285,6 +304,7 @@ crontab -e
 ## 🌍 Мультиязычность
 
 Поддерживаемые языки:
+
 - 🇬🇧 English
 - 🇷🇺 Русский
 - 🇺🇿 O'zbek
@@ -296,6 +316,7 @@ crontab -e
 ## 📊 API Endpoints
 
 ### Авторизация
+
 ```
 GET  /api/auth/providers        # Статус провайдеров
 POST /api/auth/register         # Регистрация (email)
@@ -310,12 +331,14 @@ POST /api/auth/phone/verify     # Проверка SMS кода
 ```
 
 ### Профиль
+
 ```
 GET  /api/profile               # Профиль пользователя
 POST /api/profile               # Создание/обновление профиля
 ```
 
 ### Салоны
+
 ```
 GET    /api/salons              # Список салонов
 GET    /api/salons/:id          # Детали салона
@@ -325,6 +348,7 @@ DELETE /api/salons/:id          # Удаление салона
 ```
 
 ### Записи
+
 ```
 GET    /api/bookings            # Список записей
 POST   /api/bookings            # Создание записи
@@ -395,7 +419,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [GitHub](https://github.com/your-username)
+- **Your Name** - _Initial work_ - [GitHub](https://github.com/your-username)
 
 ---
 

@@ -71,6 +71,7 @@ docker logs aurelle-server | grep -i email
 Email-напоминания за 24 часа до визита требуют cron job.
 
 **Файлы для создания:**
+
 - `server/routes/internal.routes.ts` - endpoint для отправки напоминаний
 - `/opt/aurelle/send-reminders.sh` - скрипт для cron
 
@@ -88,6 +89,7 @@ Gmail имеет лимит 500 писем/день. Для production лучш�
 ### 3. Настроить домен (для deliverability)
 
 Для лучшей доставляемости настроить:
+
 - SPF запись
 - DKIM подпись
 - DMARC policy
@@ -143,22 +145,26 @@ docker compose restart server
 ## 📊 Текущие шаблоны
 
 ### 1. Booking Confirmation (подтверждение записи)
+
 - Градиент: Purple → Pink
 - Детали: Салон, Услуга, Мастер, Дата, Время, Цена
 - Кнопка: "View Booking" → `https://aurelle.uz/profile`
 
 ### 2. Booking Cancellation (отмена записи)
+
 - Градиент: Pink → Orange
 - Детали: Салон, Услуга, Дата, Время
 - Кнопка: "Book Again" → `https://aurelle.uz`
 
 ### 3. Booking Reminder (напоминание)
+
 - Градиент: Pink → Yellow
 - Показывает "через X часов"
 - Детали: Салон, Услуга, Мастер, Дата, Время
 - 2 кнопки: "View Booking" + "Need to cancel?"
 
 **Все шаблоны:**
+
 - Responsive design
 - Dark mode friendly
 - Multi-language (EN, RU, UZ)

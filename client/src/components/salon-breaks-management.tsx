@@ -187,15 +187,17 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
   };
 
   const handleDelete = (breakId: string) => {
-    if (confirm(t("workingHours.breaks.confirmDelete", "Are you sure you want to delete this break?"))) {
+    if (
+      confirm(t("workingHours.breaks.confirmDelete", "Are you sure you want to delete this break?"))
+    ) {
       deleteMutation.mutate(breakId);
     }
   };
 
   // Group breaks by day of week
-  const breaksByDay = DAYS_OF_WEEK.map(day => ({
+  const breaksByDay = DAYS_OF_WEEK.map((day) => ({
     ...day,
-    breaks: breaks.filter(b => b.dayOfWeek === day.value),
+    breaks: breaks.filter((b) => b.dayOfWeek === day.value),
   }));
 
   if (isLoading) {
@@ -208,7 +210,10 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
         <div>
           <h3 className="text-lg font-medium">{t("workingHours.breaks.title", "Break Times")}</h3>
           <p className="text-sm text-muted-foreground">
-            {t("workingHours.breaks.description", "Define break periods when the salon is not accepting bookings")}
+            {t(
+              "workingHours.breaks.description",
+              "Define break periods when the salon is not accepting bookings",
+            )}
           </p>
         </div>
         <Button onClick={() => handleOpenDialog()} size="sm">
@@ -218,7 +223,7 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
       </div>
 
       <div className="grid gap-4">
-        {breaksByDay.map(day => (
+        {breaksByDay.map((day) => (
           <Card key={day.value}>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{day.label[currentLang]}</CardTitle>
@@ -230,7 +235,7 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {day.breaks.map(breakItem => (
+                  {day.breaks.map((breakItem) => (
                     <div
                       key={breakItem.id}
                       className="flex items-center justify-between p-2 rounded-md border"
@@ -279,7 +284,10 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
                 : t("workingHours.breaks.addBreak", "Add Break")}
             </DialogTitle>
             <DialogDescription>
-              {t("workingHours.breaks.dialogDescription", "Set the time period when the salon will not accept bookings")}
+              {t(
+                "workingHours.breaks.dialogDescription",
+                "Set the time period when the salon will not accept bookings",
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -295,7 +303,7 @@ export function SalonBreaksManagement({ salonId }: SalonBreaksManagementProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DAYS_OF_WEEK.map(day => (
+                  {DAYS_OF_WEEK.map((day) => (
                     <SelectItem key={day.value} value={day.value.toString()}>
                       {day.label[currentLang]}
                     </SelectItem>

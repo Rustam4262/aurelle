@@ -12,12 +12,12 @@ export function StarRating({
   rating,
   onRatingChange,
   readonly = false,
-  size = "md"
+  size = "md",
 }: StarRatingProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-5 w-5",
-    lg: "h-6 w-6"
+    lg: "h-6 w-6",
   };
 
   const stars = [1, 2, 3, 4, 5];
@@ -33,15 +33,13 @@ export function StarRating({
           className={cn(
             "transition-all",
             !readonly && "hover:scale-110 cursor-pointer",
-            readonly && "cursor-default"
+            readonly && "cursor-default",
           )}
         >
           <Star
             className={cn(
               sizeClasses[size],
-              star <= rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "fill-gray-200 text-gray-200"
+              star <= rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-200 text-gray-200",
             )}
           />
         </button>

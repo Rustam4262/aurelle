@@ -17,6 +17,7 @@
 5. **Нажмите Execute** (или F5)
 
 Этот скрипт:
+
 - ✅ Создаст базу данных `aurelle` (если нужно)
 - ✅ Создаст все таблицы
 - ✅ Создаст 9 тестовых пользователей
@@ -35,6 +36,7 @@ DATABASE_URL=postgresql://postgres:ВАШ_ПАРОЛЬ@localhost:5432/aurelle
 ```
 
 **Как узнать пароль?**
+
 - Откройте настройки подключения в Database Client
 - Скопируйте пароль оттуда
 
@@ -54,17 +56,17 @@ npm run dev
 
 **Пароль для ВСЕХ**: `password123`
 
-| Email | Роль |
-|-------|------|
-| admin@aurelle.uz | Администратор |
-| salon1@aurelle.uz | Владелец салона #1 (Beauty Lounge) |
-| salon2@aurelle.uz | Владелец салона #2 (Elegant Salon) |
-| specialist1@aurelle.uz | Специалист (Maria Ivanova) |
-| specialist2@aurelle.uz | Специалист (Anna Petrova) |
-| specialist3@aurelle.uz | Специалист (Elena Sidorova) |
-| client1@aurelle.uz | Клиент (John Doe) |
-| client2@aurelle.uz | Клиент (Jane Smith) |
-| client3@aurelle.uz | Клиент (Alice Johnson) |
+| Email                  | Роль                               |
+| ---------------------- | ---------------------------------- |
+| admin@aurelle.uz       | Администратор                      |
+| salon1@aurelle.uz      | Владелец салона #1 (Beauty Lounge) |
+| salon2@aurelle.uz      | Владелец салона #2 (Elegant Salon) |
+| specialist1@aurelle.uz | Специалист (Maria Ivanova)         |
+| specialist2@aurelle.uz | Специалист (Anna Petrova)          |
+| specialist3@aurelle.uz | Специалист (Elena Sidorova)        |
+| client1@aurelle.uz     | Клиент (John Doe)                  |
+| client2@aurelle.uz     | Клиент (Jane Smith)                |
+| client3@aurelle.uz     | Клиент (Alice Johnson)             |
 
 ---
 
@@ -82,15 +84,18 @@ npm run dev
 ## ❌ Если не работает
 
 **Ошибка при выполнении SQL:**
+
 - Убедитесь, что вы подключены к PostgreSQL
 - Проверьте, что база `aurelle` создана
 - Если база существует, скрипт просто добавит данные
 
 **Не могу подключиться к БД:**
+
 - Проверьте, что PostgreSQL запущен
 - Обновите пароль в `.env`
 
 **Сервер не запускается:**
+
 - Проверьте логи в консоли
 - Убедитесь, что порт 5000 свободен
 

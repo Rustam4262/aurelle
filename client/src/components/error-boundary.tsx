@@ -109,8 +109,8 @@ export class ErrorBoundary extends Component<Props, State> {
             </h1>
 
             <p className="text-muted-foreground mb-6">
-              Приложение столкнулось с неожиданной ошибкой. Пожалуйста, попробуйте
-              перезагрузить страницу или вернитесь на главную.
+              Приложение столкнулось с неожиданной ошибкой. Пожалуйста, попробуйте перезагрузить
+              страницу или вернитесь на главную.
             </p>
 
             {/* Show error details in development */}
@@ -120,9 +120,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   Технические детали (только в dev режиме)
                 </summary>
                 <div className="bg-muted p-4 rounded-md text-xs overflow-auto max-h-48">
-                  <p className="font-mono text-destructive mb-2">
-                    {this.state.error.toString()}
-                  </p>
+                  <p className="font-mono text-destructive mb-2">{this.state.error.toString()}</p>
                   {this.state.errorInfo && (
                     <pre className="text-muted-foreground whitespace-pre-wrap">
                       {this.state.errorInfo.componentStack}
@@ -133,11 +131,7 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={this.handleReset}
-                variant="outline"
-                className="gap-2"
-              >
+              <Button onClick={this.handleReset} variant="outline" className="gap-2">
                 <RefreshCcw className="h-4 w-4" />
                 Попробовать снова
               </Button>
@@ -175,20 +169,12 @@ export function useErrorHandler() {
 /**
  * Compact ErrorFallback for smaller sections
  */
-export function ErrorFallback({
-  error,
-  resetError,
-}: {
-  error: Error;
-  resetError: () => void;
-}) {
+export function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
   return (
     <Card className="p-6 text-center">
       <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
       <h3 className="font-medium text-foreground mb-2">Ошибка загрузки</h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        {error.message || "Что-то пошло не так"}
-      </p>
+      <p className="text-sm text-muted-foreground mb-4">{error.message || "Что-то пошло не так"}</p>
       <Button size="sm" variant="outline" onClick={resetError}>
         <RefreshCcw className="h-4 w-4 mr-2" />
         Повторить

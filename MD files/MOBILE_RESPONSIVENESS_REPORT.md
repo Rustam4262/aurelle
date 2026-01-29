@@ -9,6 +9,7 @@
 ## 📊 Executive Summary
 
 ### Выполнено:
+
 - ✅ **10 специализированных skeleton loaders** созданы
 - ✅ **Audit всех страниц** завершён
 - ✅ **Mobile breakpoints** оптимизированы
@@ -25,6 +26,7 @@
 Создано **10 специализированных компонентов**:
 
 #### 1. SalonCardSkeleton
+
 ```typescript
 // Использование: Home page, Search results
 // Размеры: aspect-[4/3] image + 4 текстовых строки
@@ -32,6 +34,7 @@
 ```
 
 #### 2. BookingCalendarSkeleton
+
 ```typescript
 // Использование: Owner dashboard, Master page
 // Layout: 2-column grid (calendar + timeslots)
@@ -39,6 +42,7 @@
 ```
 
 #### 3. ReviewsSkeleton
+
 ```typescript
 // Использование: Salon page reviews tab
 // Показывает 3 skeleton карточки отзывов
@@ -46,24 +50,28 @@
 ```
 
 #### 4. ServiceCardSkeleton
+
 ```typescript
 // Использование: Salon page services tab
 <ServiceCardSkeleton />
 ```
 
 #### 5. MasterCardSkeleton
+
 ```typescript
 // Использование: Salon page team tab
 <MasterCardSkeleton />
 ```
 
 #### 6. BookingCardSkeleton
+
 ```typescript
 // Использование: Profile page bookings
 <BookingCardSkeleton />
 ```
 
 #### 7. SalonHeaderSkeleton
+
 ```typescript
 // Использование: Salon page header
 // Responsive: h-64 md:h-80
@@ -71,12 +79,14 @@
 ```
 
 #### 8. ProfileHeaderSkeleton
+
 ```typescript
 // Использование: Profile page header
 <ProfileHeaderSkeleton />
 ```
 
 #### 9. DashboardStatsSkeleton
+
 ```typescript
 // Использование: Admin/Owner analytics
 // Grid: 1 md:2 lg:3 columns
@@ -84,6 +94,7 @@
 ```
 
 #### 10. OwnerSalonCardSkeleton
+
 ```typescript
 // Использование: Owner dashboard
 <OwnerSalonCardSkeleton />
@@ -92,12 +103,14 @@
 ### Utility Components
 
 #### LoadingSpinner
+
 ```typescript
 // Inline loading indicator
 <LoadingSpinner size="sm" | "default" | "lg" />
 ```
 
 #### PageLoader
+
 ```typescript
 // Full-page loading state
 <PageLoader />
@@ -109,14 +122,14 @@
 
 ### Device Breakpoints Tested
 
-| Device | Width | Status | Notes |
-|--------|-------|--------|-------|
-| iPhone SE | 375px | ✅ | Smallest mobile target |
-| iPhone 12/13 | 390px | ✅ | Modern iPhone standard |
-| Android (Small) | 360px | ✅ | Common Android size |
-| Android (Medium) | 412px | ✅ | Pixel 5/6 size |
-| Tablet (Portrait) | 768px | ✅ | iPad mini/Air |
-| Tablet (Landscape) | 1024px | ✅ | iPad Pro |
+| Device             | Width  | Status | Notes                  |
+| ------------------ | ------ | ------ | ---------------------- |
+| iPhone SE          | 375px  | ✅     | Smallest mobile target |
+| iPhone 12/13       | 390px  | ✅     | Modern iPhone standard |
+| Android (Small)    | 360px  | ✅     | Common Android size    |
+| Android (Medium)   | 412px  | ✅     | Pixel 5/6 size         |
+| Tablet (Portrait)  | 768px  | ✅     | iPad mini/Air          |
+| Tablet (Landscape) | 1024px | ✅     | iPad Pro               |
 
 ### Tailwind Breakpoints Used
 
@@ -138,6 +151,7 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Excellent**
 
 **Что уже адаптировано:**
+
 - ✅ Hero section: `h-[60vh] min-h-[500px]`
 - ✅ Navigation: Mobile menu with hamburger (line 184-207)
 - ✅ Search bar: `flex-col sm:flex-row` (line 246)
@@ -149,15 +163,18 @@ xl: 1280px  /* Desktops */
 - ✅ Footer: `grid-cols-1 md:grid-cols-4` (line 743)
 
 **Loading States:**
+
 - ✅ Salons loading: Skeleton cards (line 426-437)
 - ✅ Map loading: Loading indicator (line 641-653)
 
 **Touch Targets:**
+
 - ✅ Buttons: min h-14 (hero search), h-10 default
 - ✅ Category pills: h-10 with padding
 - ✅ Navigation icons: h-5 w-5 in size="icon" (44×44px wrapper)
 
 **Рекомендации:**
+
 - 💡 Replace skeleton cards with `<SalonCardSkeleton />` для consistency
 
 ---
@@ -167,6 +184,7 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Good**
 
 **Что уже адаптировано:**
+
 - ✅ Header image: `h-64 md:h-80` (line 53)
 - ✅ Tabs: Horizontal scroll на mobile (TabsList по умолчанию)
 - ✅ Grid layout: `grid-cols-1 lg:grid-cols-3` (line 387)
@@ -175,15 +193,18 @@ xl: 1280px  /* Desktops */
 - ✅ Dialog: Full-screen на mobile (DialogContent default behavior)
 
 **Loading States:**
+
 - ✅ Page loading: Basic skeleton (line 351-362)
 - 💡 **Improvement:** Replace with specialized skeletons
 
 **Touch Targets:**
+
 - ✅ Back button: size="icon" (44×44px)
 - ✅ Share/Favorite: size="icon"
 - ✅ Book buttons: h-10 default
 
 **Issues Found:**
+
 - ⚠️ **Service cards**: Может быть тесно на 360px
 - ⚠️ **Master cards**: Аватар + текст + кнопка нуждаются в better wrapping
 - ⚠️ **Gallery**: 3 columns могут быть слишком узкие на mobile
@@ -211,19 +232,23 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Good**
 
 **Что уже адаптировано:**
+
 - ✅ Grid layout: `grid-cols-1 lg:grid-cols-2` (line 119)
 - ✅ Time slots: Scrollable area `h-[320px]` (line 172)
 - ✅ Badges: `flex-wrap` for mobile (line 159)
 
 **Loading States:**
+
 - ✅ Has loading state (line 110-116)
 - 💡 **Improvement:** Replace with `<BookingCalendarSkeleton />`
 
 **Touch Targets:**
+
 - ✅ Time slots: p-2 (sufficient)
 - ✅ Calendar dates: TouchableOpacity built-in
 
 **Issues Found:**
+
 - ⚠️ **Time slot badges**: Могут wrapping плохо на 360px
 - ⚠️ **Service names**: line-clamp нужен
 
@@ -248,20 +273,24 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Good**
 
 **Что уже адаптировано:**
+
 - ✅ Header: Responsive flex (line 92-105)
 - ✅ Tabs: Icon + text responsive `hidden sm:inline` (line 130)
 - ✅ Booking cards: Flexbox с gap (line 141-218)
 
 **Loading States:**
+
 - ✅ Has loading state (line 65-71)
 - 💡 **Improvement:** Replace with `<PageLoader />`
 
 **Touch Targets:**
+
 - ✅ Back/Logout buttons: size="icon" (44×44px)
 - ✅ Cancel button: h-9 (sufficient)
 - ✅ Tab triggers: h-10
 
 **Issues Found:**
+
 - ⚠️ **Booking card service/master**: Может wrap плохо
 - ⚠️ **Long salon names**: Нужен line-clamp
 
@@ -286,21 +315,25 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Good**
 
 **Что уже адаптировано:**
+
 - ✅ Tabs: `grid grid-cols-3` responsive icons (line 181-194)
 - ✅ Form: `grid-cols-1 md:grid-cols-2/3` (line 209-283)
 - ✅ Salon cards: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3` (line 319)
 - ✅ Stats grid: 2 columns on mobile (line 339)
 
 **Loading States:**
+
 - ✅ Has loading state (line 115-121)
 - ✅ Salons loading skeleton (line 310-317)
 - 💡 **Improvement:** Use `<OwnerSalonCardSkeleton />`
 
 **Touch Targets:**
+
 - ✅ All buttons: h-10 default
 - ✅ Tab triggers: h-10
 
 **Issues Found:**
+
 - ⚠️ **Create salon form**: Длинная форма на mobile
 - ⚠️ **Tab icons**: Text hidden на mobile - OK
 
@@ -325,17 +358,21 @@ xl: 1280px  /* Desktops */
 #### Current Mobile Support: ✅ **Good**
 
 **Что уже адаптировано:**
+
 - ✅ Stats grid: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3` (line 117)
 - ✅ Skeleton loading: Built-in (line 36-52)
 
 **Loading States:**
+
 - ✅ Has skeleton loading
 - 💡 **Improvement:** Use `<DashboardStatsSkeleton />`
 
 **Touch Targets:**
+
 - ✅ Cards: Sufficient padding
 
 **Issues Found:**
+
 - ⚠️ **Sidebar navigation**: Нужна mobile drawer version
 - ⚠️ **Tables**: Могут overflow на mobile
 
@@ -344,9 +381,7 @@ xl: 1280px  /* Desktops */
 ```tsx
 // Admin tables должны быть responsive с horizontal scroll
 <div className="overflow-x-auto -mx-4 sm:mx-0">
-  <Table className="min-w-[600px]">
-    {/* Table content */}
-  </Table>
+  <Table className="min-w-[600px]">{/* Table content */}</Table>
 </div>
 ```
 
@@ -358,12 +393,12 @@ xl: 1280px  /* Desktops */
 
 #### Button Sizes in Shadcn/ui:
 
-| Variant | Height | Padding | Total Size | Status |
-|---------|--------|---------|------------|--------|
-| `size="default"` | h-10 (40px) | px-4 py-2 | 40×64px | ⚠️ Slightly small |
-| `size="sm"` | h-9 (36px) | px-3 | 36×48px | ❌ Too small |
-| `size="lg"` | h-11 (44px) | px-8 | 44×96px | ✅ Perfect |
-| `size="icon"` | h-10 w-10 | - | 40×40px | ⚠️ Slightly small |
+| Variant          | Height      | Padding   | Total Size | Status            |
+| ---------------- | ----------- | --------- | ---------- | ----------------- |
+| `size="default"` | h-10 (40px) | px-4 py-2 | 40×64px    | ⚠️ Slightly small |
+| `size="sm"`      | h-9 (36px)  | px-3      | 36×48px    | ❌ Too small      |
+| `size="lg"`      | h-11 (44px) | px-8      | 44×96px    | ✅ Perfect        |
+| `size="icon"`    | h-10 w-10   | -         | 40×40px    | ⚠️ Slightly small |
 
 #### Recommendations:
 
@@ -405,15 +440,15 @@ xl: 1280px  /* Desktops */
 
 ### Current Status
 
-| Page/Component | Has Loading | Uses Skeleton | Status |
-|---------------|-------------|---------------|--------|
-| Home - Salons | ✅ | ⚠️ Basic | Upgrade to SalonCardSkeleton |
-| Home - Map | ✅ | ⚠️ Basic | OK (map-specific) |
-| Salon Page | ✅ | ⚠️ Basic | Upgrade to specialized |
-| Booking Calendar | ✅ | ⚠️ Basic text | Upgrade to BookingCalendarSkeleton |
-| Profile Page | ✅ | ⚠️ Basic text | Upgrade to PageLoader |
-| Owner Dashboard | ✅ | ⚠️ Basic | Upgrade to OwnerSalonCardSkeleton |
-| Admin Dashboard | ✅ | ⚠️ Basic | Upgrade to DashboardStatsSkeleton |
+| Page/Component   | Has Loading | Uses Skeleton | Status                             |
+| ---------------- | ----------- | ------------- | ---------------------------------- |
+| Home - Salons    | ✅          | ⚠️ Basic      | Upgrade to SalonCardSkeleton       |
+| Home - Map       | ✅          | ⚠️ Basic      | OK (map-specific)                  |
+| Salon Page       | ✅          | ⚠️ Basic      | Upgrade to specialized             |
+| Booking Calendar | ✅          | ⚠️ Basic text | Upgrade to BookingCalendarSkeleton |
+| Profile Page     | ✅          | ⚠️ Basic text | Upgrade to PageLoader              |
+| Owner Dashboard  | ✅          | ⚠️ Basic      | Upgrade to OwnerSalonCardSkeleton  |
+| Admin Dashboard  | ✅          | ⚠️ Basic      | Upgrade to DashboardStatsSkeleton  |
 
 ### Implementation Pattern
 

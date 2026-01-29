@@ -42,16 +42,15 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
     }
 
     // Check if subscription already exists
-    const [existingSubscription] = await db.select()
+    const [existingSubscription] = await db
+      .select()
       .from(pushSubscriptions)
-      .where(and(
-        eq(pushSubscriptions.userId, userId),
-        eq(pushSubscriptions.endpoint, endpoint)
-      ));
+      .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint)));
 
     if (existingSubscription) {
       // Update existing subscription
-      const [updated] = await db.update(pushSubscriptions)
+      const [updated] = await db
+        .update(pushSubscriptions)
         .set({
           p256dh: keys.p256dh,
           auth: keys.auth,
@@ -75,14 +74,20 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
     });
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid subscription data", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Invalid subscription data", details: parsed.error.errors });
     }
 
-    const [subscription] = await db.insert(pushSubscriptions)
+    const [subscription] = await db
+      .insert(pushSubscriptions)
       .values([parsed.data as any])
       .returning();
 
-    console.log("[PUSH] New subscription created:", { userId, endpoint: endpoint.substring(0, 50) });
+    console.log("[PUSH] New subscription created:", {
+      userId,
+      endpoint: endpoint.substring(0, 50),
+    });
     return res.status(201).json(subscription);
   } catch (error) {
     console.error("Subscribe to push error:", error);
@@ -100,11 +105,9 @@ router.post("/unsubscribe", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Endpoint is required" });
     }
 
-    const deleted = await db.delete(pushSubscriptions)
-      .where(and(
-        eq(pushSubscriptions.userId, userId),
-        eq(pushSubscriptions.endpoint, endpoint)
-      ))
+    const deleted = await db
+      .delete(pushSubscriptions)
+      .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint)))
       .returning();
 
     if (deleted.length === 0) {
@@ -124,7 +127,8 @@ router.get("/subscriptions", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 
-    const userSubscriptions = await db.select()
+    const userSubscriptions = await db
+      .select()
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
 
@@ -145,7 +149,8 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
 
     // Get user's subscriptions
-    const userSubscriptions = await db.select()
+    const userSubscriptions = await db
+      .select()
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
 
@@ -171,7 +176,7 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
                 auth: sub.auth,
               },
             },
-            payload
+            payload,
           );
           return { success: true, subscriptionId: sub.id };
         } catch (error: any) {
@@ -182,7 +187,7 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
           }
           throw error;
         }
-      })
+      }),
     );
 
     const successful = results.filter((r) => r.status === "fulfilled").length;
@@ -211,7 +216,7 @@ export async function sendPushToUser(
     icon?: string;
     badge?: string;
     data?: any;
-  }
+  },
 ) {
   try {
     if (!vapidPublicKey || !vapidPrivateKey) {
@@ -219,7 +224,8 @@ export async function sendPushToUser(
       return { sent: 0, failed: 0 };
     }
 
-    const userSubscriptions = await db.select()
+    const userSubscriptions = await db
+      .select()
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
 
@@ -239,7 +245,7 @@ export async function sendPushToUser(
                 auth: sub.auth,
               },
             },
-            payloadStr
+            payloadStr,
           );
         } catch (error: any) {
           // If subscription is invalid (410 Gone), delete it
@@ -249,7 +255,7 @@ export async function sendPushToUser(
           }
           throw error;
         }
-      })
+      }),
     );
 
     const sent = results.filter((r) => r.status === "fulfilled").length;
@@ -273,7 +279,7 @@ export async function sendNewBookingNotification(
     serviceName: string;
     date: string;
     time: string;
-  }
+  },
 ) {
   return sendPushToUser(salonOwnerId, {
     title: "New Booking!",
@@ -297,7 +303,7 @@ export async function sendBookingReminderNotification(
     serviceName: string;
     date: string;
     time: string;
-  }
+  },
 ) {
   return sendPushToUser(clientId, {
     title: "Booking Reminder",

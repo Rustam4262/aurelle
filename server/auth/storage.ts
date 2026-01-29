@@ -15,7 +15,8 @@ export const authStorage = {
 
     if (existingUser.length > 0) {
       // Update existing user
-      await db.update(users)
+      await db
+        .update(users)
         .set({
           email: userData.email,
           firstName: userData.firstName || null,
@@ -35,14 +36,17 @@ export const authStorage = {
     }
 
     // Check and create/update user profile
-    const existingProfile = await db.select().from(userProfiles)
-      .where(eq(userProfiles.userId, userData.id)).limit(1);
+    const existingProfile = await db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userData.id))
+      .limit(1);
 
     if (existingProfile.length === 0) {
       // Create profile for new user
       await db.insert(userProfiles).values({
         userId: userData.id,
-        fullName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || null,
+        fullName: `${userData.firstName || ""} ${userData.lastName || ""}`.trim() || null,
         role: "client", // Default role
         isProfileComplete: false,
       });

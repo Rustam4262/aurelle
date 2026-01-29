@@ -51,8 +51,8 @@ router.get("/auth/user", async (req: any, res) => {
             and(
               eq(adminUsers.userId, userId),
               eq(adminUsers.isActive, true),
-              eq(adminRoles.isActive, true)
-            )
+              eq(adminRoles.isActive, true),
+            ),
           )
           .limit(1);
 

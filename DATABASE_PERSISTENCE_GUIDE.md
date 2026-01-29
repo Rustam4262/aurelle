@@ -27,6 +27,7 @@ Status: Running and persistent
 Данные PostgreSQL хранятся **внутри Docker контейнера** в директории `/var/lib/postgresql/data`.
 
 Эта директория сохраняется, даже когда вы:
+
 - Обновляете код приложения
 - Перезапускаете PM2
 - Делаете `git pull` новых изменений
@@ -90,6 +91,7 @@ docker exec aurelle-postgres psql -U aurelle_user -d aurelle_db -c "\dt"
 ### Когда нужна миграция
 
 Миграция требуется только когда:
+
 - Добавляются новые таблицы
 - Изменяется структура существующих таблиц
 - Добавляются новые колонки
@@ -97,6 +99,7 @@ docker exec aurelle-postgres psql -U aurelle_user -d aurelle_db -c "\dt"
 ### Как применить миграцию
 
 Миграции уже применены для Phase 1:
+
 - ✅ Колонки в `services`: booking_count, last_booked_at, display_order
 - ✅ Колонки в `bookings`: modified_by, modification_history
 - ✅ Таблицы: master_statistics, booking_history
@@ -135,6 +138,7 @@ gunzip < backup_20260116.sql.gz | docker exec -i aurelle-postgres psql -U aurell
 ## Текущие пользователи
 
 На данный момент в системе зарегистрировано **2 пользователя**:
+
 1. xulkarraziyeva@gmail.com (Owner)
 2. roziyev18r@gmail.com (Новый пользователь)
 
@@ -145,6 +149,7 @@ gunzip < backup_20260116.sql.gz | docker exec -i aurelle-postgres psql -U aurell
 ## Что происходит при обновлении
 
 ### ❌ НЕ изменяется:
+
 - База данных PostgreSQL
 - Все пользователи
 - Все салоны
@@ -153,6 +158,7 @@ gunzip < backup_20260116.sql.gz | docker exec -i aurelle-postgres psql -U aurell
 - История и статистика
 
 ### ✅ Обновляется только:
+
 - JavaScript код приложения
 - React компоненты (frontend)
 - API endpoints (backend)
@@ -173,6 +179,7 @@ gunzip < backup_20260116.sql.gz | docker exec -i aurelle-postgres psql -U aurell
 ### Данные салона сохранятся навсегда
 
 После создания салона:
+
 - Информация о салоне → **сохранится в PostgreSQL**
 - Мастера → **сохранятся в PostgreSQL**
 - Услуги → **сохранятся в PostgreSQL**

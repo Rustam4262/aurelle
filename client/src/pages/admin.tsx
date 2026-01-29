@@ -40,9 +40,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-serif font-semibold text-foreground">
-            AURELLE
-          </h1>
+          <h1 className="text-2xl font-serif font-semibold text-foreground">AURELLE</h1>
           <p className="text-sm text-muted-foreground mt-1">Admin Panel</p>
         </div>
 
@@ -76,17 +74,10 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-medium text-foreground truncate">
                 {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Admin"}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full gap-2"
-            onClick={() => logout()}
-          >
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => logout()}>
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
@@ -95,9 +86,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-8">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto p-8">{children}</div>
       </main>
     </div>
   );

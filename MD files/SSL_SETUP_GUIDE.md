@@ -130,6 +130,7 @@ sudo bash scripts/install-certbot.sh
 ```
 
 **What it does:**
+
 1. Updates package list
 2. Installs snapd (recommended method)
 3. Removes old Certbot installations
@@ -139,6 +140,7 @@ sudo bash scripts/install-certbot.sh
 7. Verifies installation
 
 **Verification:**
+
 ```bash
 certbot --version
 # Should output: certbot 2.x.x
@@ -149,6 +151,7 @@ certbot --version
 **Script:** `scripts/setup-ssl.sh`
 
 **Before running:**
+
 - Ensure DNS is configured
 - Nginx is running
 - Ports 80 and 443 are open
@@ -185,6 +188,7 @@ sudo bash scripts/setup-ssl.sh
 7. **Verification:** Tests certificate renewal
 
 **Manual Certificate Request:**
+
 ```bash
 # Production
 sudo certbot certonly --nginx \
@@ -199,6 +203,7 @@ sudo certbot certonly --nginx \
 ```
 
 **Certificate Locations:**
+
 ```
 /etc/letsencrypt/live/aurelle.uz/
   ├── fullchain.pem   (Certificate + Chain)
@@ -343,6 +348,7 @@ sudo bash scripts/setup-ssl-renewal.sh
    - Sends Telegram notifications (if configured)
 
 2. **Cron Jobs:**
+
    ```cron
    # Renewal check (twice daily: 3 AM and 3 PM)
    0 3,15 * * * /usr/local/bin/certbot-renew-aurelle
@@ -484,6 +490,7 @@ curl -I https://aurelle.uz | grep -i "content-security-policy"
 **Target Rating:** A+
 
 **Criteria for A+:**
+
 - ✅ TLS 1.2 and 1.3 supported
 - ✅ TLS 1.0 and 1.1 disabled
 - ✅ Strong ciphers only
@@ -496,6 +503,7 @@ curl -I https://aurelle.uz | grep -i "content-security-policy"
 **URL:** https://observatory.mozilla.org/analyze/aurelle.uz
 
 Tests:
+
 - Security headers
 - Content Security Policy
 - Cookie security
@@ -520,6 +528,7 @@ Tests all security headers.
 Once your site is stable with HTTPS, consider adding it to HSTS preload list:
 
 1. **Verify HSTS header:**
+
    ```nginx
    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
    ```
@@ -541,7 +550,7 @@ For mobile apps, consider certificate pinning:
 ```typescript
 // Example for React Native
 const certificatePin = {
-  'aurelle.uz': ['SHA256_HASH_HERE']
+  "aurelle.uz": ["SHA256_HASH_HERE"],
 };
 ```
 
@@ -552,12 +561,14 @@ Integrate with existing monitoring (P2 Task #45):
 **File:** `scripts/monitor-ssl.sh` (already created)
 **Schedule:** Daily at 9 AM
 **Alerts:**
+
 - 🔴 Critical: Certificate expired
 - 🟡 Warning: Certificate expires in < 30 days
 
 ### Regular Audits
 
 **Weekly:**
+
 ```bash
 # Run verification
 sudo bash scripts/verify-ssl.sh
@@ -567,6 +578,7 @@ sudo /usr/local/bin/check-ssl-expiration
 ```
 
 **Monthly:**
+
 ```bash
 # Test on SSL Labs
 # https://www.ssllabs.com/ssltest/analyze.html?d=aurelle.uz
@@ -586,12 +598,14 @@ sudo nginx -T | grep ssl_ciphers
 **Solutions:**
 
 1. **Check DNS resolution:**
+
    ```bash
    dig aurelle.uz +short
    nslookup aurelle.uz
    ```
 
 2. **Check firewall:**
+
    ```bash
    sudo ufw status
    sudo ufw allow 80/tcp
@@ -599,12 +613,14 @@ sudo nginx -T | grep ssl_ciphers
    ```
 
 3. **Check Nginx is running:**
+
    ```bash
    sudo systemctl status nginx
    sudo systemctl start nginx
    ```
 
 4. **Verify webroot is accessible:**
+
    ```bash
    ls -la /var/www/html
    sudo mkdir -p /var/www/html/.well-known/acme-challenge
@@ -623,8 +639,10 @@ sudo nginx -T | grep ssl_ciphers
 **Cause:** HTTP resources loaded on HTTPS page
 
 **Solution:**
+
 1. Check browser console for mixed content warnings
 2. Update all HTTP URLs to HTTPS:
+
    ```javascript
    // Bad
    <script src="http://example.com/script.js"></script>
@@ -643,23 +661,27 @@ sudo nginx -T | grep ssl_ciphers
 **Debug:**
 
 1. **Test renewal manually:**
+
    ```bash
    sudo certbot renew --dry-run
    sudo certbot renew --verbose
    ```
 
 2. **Check if domain still points to server:**
+
    ```bash
    dig aurelle.uz +short
    ```
 
 3. **Check Nginx configuration:**
+
    ```bash
    sudo nginx -t
    sudo systemctl status nginx
    ```
 
 4. **Check webroot permissions:**
+
    ```bash
    sudo chown -R www-data:www-data /var/www/html
    ```
@@ -698,21 +720,25 @@ sudo nginx -T | grep ssl_ciphers
 **Debug:**
 
 1. **Test configuration:**
+
    ```bash
    sudo nginx -t
    ```
 
 2. **Check certificate paths:**
+
    ```bash
    sudo ls -la /etc/letsencrypt/live/aurelle.uz/
    ```
 
 3. **Verify DH parameters:**
+
    ```bash
    sudo ls -la /etc/nginx/dhparam.pem
    ```
 
 4. **Check error logs:**
+
    ```bash
    sudo tail -100 /var/log/nginx/error.log
    ```
@@ -797,6 +823,7 @@ Nginx and Certbot logs are automatically rotated by logrotate.
 **Configuration:** `/etc/logrotate.d/nginx` and `/etc/logrotate.d/certbot`
 
 **Manual rotation:**
+
 ```bash
 sudo logrotate -f /etc/logrotate.d/nginx
 sudo logrotate -f /etc/logrotate.d/certbot

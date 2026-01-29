@@ -3,18 +3,21 @@
 ## Что развёртываем
 
 ### Phase 5: P0 Critical Bug Fixes ✅
+
 - Улучшенная обработка ошибок dashboard
 - Исправления i18n (analytics.title, узбекские переводы)
 - Динамические рабочие часы вместо hardcoded 9-20
 - i18n validation script
 
 ### Phase 6: Feature Flags Infrastructure ✅
+
 - Система feature flags (10 флагов)
 - API endpoint `/api/feature-flags`
 - React hooks для frontend
 - Полная документация
 
 ### Phase 7: Analytics Enhancements ✅
+
 - 5 новых API endpoints для аналитики
 - Date range picker component
 - Salon switcher component
@@ -173,6 +176,7 @@ pm2 logs aurelle --lines 100
 1. Open: https://aurelle.uz/api/feature-flags
 2. Verify all flags return `false`
 3. Response should be:
+
 ```json
 {
   "ENHANCED_ANALYTICS": false,
@@ -377,6 +381,7 @@ tail -f /path/to/logs/error.log
 ## Support Contacts
 
 If issues arise:
+
 - Check logs: `pm2 logs`
 - Review this guide: `docs/FEATURE_FLAGS.md`
 - Rollback if critical: See "Rollback Procedure" above

@@ -3,10 +3,12 @@
 ## What's Being Fixed
 
 ### ✅ Fix #1: Booking Creation Error (500)
+
 **Problem:** Clients couldn't book services - "booking failed 500" error
 **Solution:** Made `master_id` optional in database (allows booking without selecting specific master)
 
 ### ✅ Fix #2: Photo Upload Failure
+
 **Problem:** "Upload failed" error when uploading photos
 **Solution:** Automatically create upload directories on server startup
 
@@ -23,6 +25,7 @@ bash deploy_booking_fix.sh
 ```
 
 That's it! The script will:
+
 1. Pull latest code from GitHub ✓
 2. Copy updated files to Docker container ✓
 3. Apply database schema changes ✓
@@ -68,6 +71,7 @@ docker logs --tail=20 aurelle_app_1
 ## ✅ Testing After Deployment
 
 ### Test Booking Fix:
+
 1. Go to https://aurelle.uz
 2. Log in as a client
 3. Select any salon
@@ -78,6 +82,7 @@ docker logs --tail=20 aurelle_app_1
 8. ✅ Should succeed without 500 error
 
 ### Test Photo Upload:
+
 1. Log in as salon owner at https://aurelle.uz/owner
 2. Click "Фотографии" (Photos)
 3. Click "Добавить фото" (Add photo)
@@ -85,6 +90,7 @@ docker logs --tail=20 aurelle_app_1
 5. ✅ Should upload successfully
 
 Or test as master:
+
 1. Log in as master at https://aurelle.uz/master
 2. Go to "Мое портфолио" (My Portfolio)
 3. Click "Добавить фото"
@@ -129,14 +135,17 @@ docker restart aurelle_app_1
 If you encounter any issues:
 
 1. **Check logs:**
+
    ```bash
    docker logs -f aurelle_app_1
    ```
 
 2. **Check database:**
+
    ```bash
    docker exec aurelle_postgres_1 psql -U aurelle_user -d aurelle -c "\d bookings" | grep master_id
    ```
+
    Should show: `master_id | varchar | | |` (no "not null")
 
 3. **Check upload directories:**
@@ -150,14 +159,17 @@ If you encounter any issues:
 ## 🎯 All Three Fixes Complete!
 
 ### ✅ Fix #1: Booking Creation (master_id nullable)
+
 - Clients can now book without selecting specific master
 - Database constraint removed
 
 ### ✅ Fix #2: Photo Upload (directory initialization)
+
 - Upload directories auto-created on server startup
 - Master portfolio and salon photos work
 
 ### ✅ Fix #3: Geolocation Feature (NEW!)
+
 - Salon owners can set location via Yandex Maps
 - Clients see salon location on interactive map
 - Copy address and open in Yandex Maps buttons
@@ -169,6 +181,7 @@ If you encounter any issues:
 
 **Deployment prepared:** January 5, 2026
 **Files updated:**
+
 - `shared/schema.ts` (master_id nullable)
 - `server/initUploads.ts` (new file - upload dirs)
 - `server/index.ts` (initialize uploads)

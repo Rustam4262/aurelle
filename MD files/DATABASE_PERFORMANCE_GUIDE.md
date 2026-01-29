@@ -88,6 +88,7 @@ bash scripts/tune-postgres.sh
 ```
 
 **What it does:**
+
 - Detects system RAM and CPU cores
 - Calculates optimal settings
 - Creates `/etc/postgresql/14/main/conf.d/aurelle-tuning.conf`
@@ -181,6 +182,7 @@ bash scripts/setup-pg-stat-statements.sh
 ```
 
 **What it creates:**
+
 - Extension in database
 - Helper views: `slow_queries`, `frequent_queries`, `expensive_queries`
 - Query statistics tracking
@@ -255,6 +257,7 @@ CREATE INDEX idx_bookings_active
 ```
 
 **Why:** These indexes optimize:
+
 - Calendar availability queries
 - Master scheduling
 - Conflict detection
@@ -273,6 +276,7 @@ CREATE INDEX idx_reviews_master_rating_created
 ```
 
 **Why:** Optimizes:
+
 - Review listings sorted by date
 - Average rating calculations
 - Filtered reviews (e.g., 5-star only)
@@ -344,6 +348,7 @@ bash scripts/setup-pgbouncer.sh
 ```
 
 **What it does:**
+
 - Installs PgBouncer
 - Configures connection pooling (transaction mode)
 - Sets pool size to 25 connections
@@ -371,11 +376,13 @@ min_pool_size = 5
 ### Update Application
 
 **Before PgBouncer:**
+
 ```bash
 DATABASE_URL=postgresql://user:pass@localhost:5432/aurelle
 ```
 
 **After PgBouncer:**
+
 ```bash
 DATABASE_URL=postgresql://user:pass@localhost:6432/aurelle
 ```
@@ -406,6 +413,7 @@ bash scripts/setup-vacuum-automation.sh
 ```
 
 **Schedule:**
+
 - **Daily VACUUM ANALYZE:** Every day at 2 AM
 - **Weekly VACUUM FULL:** Every Sunday at 3 AM
 - **Monthly REINDEX:** First day of month at 4 AM
@@ -441,6 +449,7 @@ ORDER BY n_dead_tup DESC;
 ```
 
 **Action Required When:**
+
 - `dead_pct` > 10%: Run VACUUM ANALYZE
 - `dead_pct` > 20%: Run VACUUM FULL (during maintenance window)
 
@@ -456,6 +465,7 @@ bash scripts/analyze-slow-queries.sh
 ```
 
 **What it analyzes:**
+
 1. Slowest queries (by average time)
 2. Most time-consuming queries (by total time)
 3. Most frequently called queries
@@ -487,6 +497,7 @@ FROM pg_statio_user_tables;
 ```
 
 **If < 99%:**
+
 - Increase `shared_buffers`
 - Increase `effective_cache_size`
 - Add missing indexes
@@ -506,6 +517,7 @@ WHERE salon_id = 'some-id'
 ```
 
 **Look for:**
+
 - **Seq Scan** → Add index
 - **High cost** → Optimize query or add index
 - **Many rows** → Add WHERE filters
@@ -642,6 +654,7 @@ The infrastructure monitoring system (Task #45) includes database monitoring:
 ```
 
 **Telegram alerts sent for:**
+
 - Database connection failures
 - Slow health endpoint responses
 - Connection pool exhaustion
@@ -712,13 +725,13 @@ sudo -u postgres psql -c "SELECT count(*) FROM pg_stat_activity;"
 
 ### Target Metrics
 
-| Metric | Target | Critical |
-|--------|--------|----------|
-| Query Response (p95) | < 50ms | < 100ms |
-| Cache Hit Ratio | > 99% | > 95% |
-| Database Connections | < 30 | < 80 |
-| Dead Tuples | < 10% | < 20% |
-| Index Usage | > 90% | > 70% |
+| Metric               | Target | Critical |
+| -------------------- | ------ | -------- |
+| Query Response (p95) | < 50ms | < 100ms  |
+| Cache Hit Ratio      | > 99%  | > 95%    |
+| Database Connections | < 30   | < 80     |
+| Dead Tuples          | < 10%  | < 20%    |
+| Index Usage          | > 90%  | > 70%    |
 
 ### Testing Query Performance
 

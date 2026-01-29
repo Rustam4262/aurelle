@@ -12,6 +12,7 @@
 Successfully implemented comprehensive SSL/HTTPS setup for AURELLE platform using Let's Encrypt certificates. The implementation includes automated certificate generation, production-ready Nginx configuration with strong security settings (TLS 1.2/1.3, modern cipher suites, security headers), automatic renewal system, and verification tools.
 
 **Key Achievements:**
+
 - ✅ Certbot installation via snap (recommended method)
 - ✅ SSL certificates for production (aurelle.uz, www.aurelle.uz) and staging (staging.aurelle.uz)
 - ✅ Production-ready Nginx HTTPS configuration
@@ -37,6 +38,7 @@ Successfully implemented comprehensive SSL/HTTPS setup for AURELLE platform usin
 **Installation Method:** Snap (recommended by Let's Encrypt)
 
 **Features:**
+
 - Automatic system update
 - Snapd installation and configuration
 - Removal of old Certbot installations (apt, old snap)
@@ -46,6 +48,7 @@ Successfully implemented comprehensive SSL/HTTPS setup for AURELLE platform usin
 - Installation verification
 
 **Installation Steps:**
+
 ```bash
 # Update and install snapd
 apt-get update
@@ -69,6 +72,7 @@ certbot --version
 ```
 
 **Usage:**
+
 ```bash
 sudo bash scripts/install-certbot.sh
 ```
@@ -80,6 +84,7 @@ sudo bash scripts/install-certbot.sh
 **File:** `scripts/setup-ssl.sh`
 
 **Certificate Generation:**
+
 - Production: aurelle.uz, www.aurelle.uz
 - Staging: staging.aurelle.uz
 - Method: Webroot (HTTP-01 challenge)
@@ -94,6 +99,7 @@ sudo bash scripts/install-certbot.sh
    - Firewall verification
 
 2. **Temporary HTTP Configuration:**
+
    ```nginx
    server {
        listen 80;
@@ -107,6 +113,7 @@ sudo bash scripts/install-certbot.sh
    ```
 
 3. **Production Certificate:**
+
    ```bash
    certbot certonly --webroot \
      -w /var/www/html \
@@ -118,6 +125,7 @@ sudo bash scripts/install-certbot.sh
    ```
 
 4. **Staging Certificate:**
+
    ```bash
    certbot certonly --webroot \
      -w /var/www/html \
@@ -138,6 +146,7 @@ sudo bash scripts/install-certbot.sh
    - Renewal dry-run test
 
 **Certificate Locations:**
+
 ```
 /etc/letsencrypt/live/aurelle.uz/
   ├── fullchain.pem    # Certificate + Intermediate Chain
@@ -153,6 +162,7 @@ sudo bash scripts/install-certbot.sh
 ```
 
 **Usage:**
+
 ```bash
 sudo bash scripts/setup-ssl.sh
 ```
@@ -201,6 +211,7 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 ```
 
 Generate with:
+
 ```bash
 sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048
 ```
@@ -295,6 +306,7 @@ location / {
 **Staging Configuration:**
 
 Separate server block for staging.aurelle.uz with:
+
 - Same security settings as production
 - Different certificate paths
 - Different backend port (5001)
@@ -307,6 +319,7 @@ Separate server block for staging.aurelle.uz with:
 **File:** `scripts/setup-ssl-renewal.sh`
 
 **Renewal Schedule:**
+
 - **Frequency:** Twice daily (3 AM and 3 PM)
 - **Trigger:** Certificates < 30 days until expiration
 - **Method:** Cron job + Systemd timer (if available)
@@ -366,19 +379,23 @@ RandomizedDelaySec=1h
 **File:** `/usr/local/bin/check-ssl-expiration`
 
 Checks certificate expiration and sends alerts:
+
 - **Warning (30 days):** Telegram warning notification
 - **Critical (14 days):** Telegram critical alert
 
 **Renewal Logs:**
+
 - `/var/log/certbot-renewal.log` - Renewal script logs
 - `/var/log/letsencrypt/letsencrypt.log` - Certbot detailed logs
 
 **Usage:**
+
 ```bash
 sudo bash scripts/setup-ssl-renewal.sh
 ```
 
 **Manual Operations:**
+
 ```bash
 # Test renewal (dry run)
 sudo certbot renew --dry-run
@@ -436,15 +453,18 @@ sudo /usr/local/bin/check-ssl-expiration
    - Verifies OCSP stapling is enabled
 
 **Output:**
+
 - Console output with color-coded results
 - Detailed report saved to `/var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt`
 
 **Usage:**
+
 ```bash
 sudo bash scripts/verify-ssl.sh
 ```
 
 **External Testing Links Provided:**
+
 - SSL Labs: https://www.ssllabs.com/ssltest/analyze.html?d=aurelle.uz
 - Mozilla Observatory: https://observatory.mozilla.org/analyze/aurelle.uz
 - Security Headers: https://securityheaders.com/?q=aurelle.uz
@@ -615,6 +635,7 @@ cat /var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt
 **Wait 2-3 minutes after first HTTPS access before testing**
 
 **Expected Results:**
+
 - **Overall Rating:** A+
 - **Certificate:** 100%
 - **Protocol Support:** 100% (TLS 1.2, 1.3)
@@ -622,6 +643,7 @@ cat /var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt
 - **Cipher Strength:** 90%+
 
 **A+ Requirements:**
+
 - ✅ TLS 1.2 and 1.3 supported
 - ✅ TLS 1.0 and 1.1 NOT supported
 - ✅ Strong ciphers only (no RC4, 3DES, etc.)
@@ -636,6 +658,7 @@ cat /var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt
 **Expected Score:** A+ or A
 
 **Checks:**
+
 - Content Security Policy
 - Cookies (Secure, HttpOnly, SameSite)
 - Cross-origin Resource Sharing
@@ -654,6 +677,7 @@ cat /var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt
 **Expected Rating:** A+
 
 **Required Headers:**
+
 - ✅ Strict-Transport-Security
 - ✅ Content-Security-Policy
 - ✅ X-Frame-Options
@@ -668,38 +692,38 @@ cat /var/log/aurelle-monitoring/ssl-verification-TIMESTAMP.txt
 
 ### TLS/SSL Settings
 
-| Setting | Value | Purpose |
-|---------|-------|---------|
-| Protocols | TLSv1.2, TLSv1.3 | Modern protocols only |
-| Ciphers | Mozilla Modern | Strong encryption only |
-| Session Cache | 10m (shared) | Performance optimization |
-| Session Tickets | Disabled | Perfect forward secrecy |
-| OCSP Stapling | Enabled | Faster validation |
-| DH Parameters | 2048-bit | Secure key exchange |
+| Setting         | Value            | Purpose                  |
+| --------------- | ---------------- | ------------------------ |
+| Protocols       | TLSv1.2, TLSv1.3 | Modern protocols only    |
+| Ciphers         | Mozilla Modern   | Strong encryption only   |
+| Session Cache   | 10m (shared)     | Performance optimization |
+| Session Tickets | Disabled         | Perfect forward secrecy  |
+| OCSP Stapling   | Enabled          | Faster validation        |
+| DH Parameters   | 2048-bit         | Secure key exchange      |
 
 ### Security Headers
 
-| Header | Value | Purpose |
-|--------|-------|---------|
-| HSTS | max-age=31536000; includeSubDomains; preload | Force HTTPS for 1 year |
-| X-Frame-Options | SAMEORIGIN | Prevent clickjacking |
-| X-Content-Type-Options | nosniff | Prevent MIME sniffing |
-| X-XSS-Protection | 1; mode=block | XSS protection |
-| CSP | default-src 'self'; ... | Control resource loading |
-| Referrer-Policy | strict-origin-when-cross-origin | Privacy protection |
-| Permissions-Policy | geolocation=(self), ... | Feature restrictions |
+| Header                 | Value                                        | Purpose                  |
+| ---------------------- | -------------------------------------------- | ------------------------ |
+| HSTS                   | max-age=31536000; includeSubDomains; preload | Force HTTPS for 1 year   |
+| X-Frame-Options        | SAMEORIGIN                                   | Prevent clickjacking     |
+| X-Content-Type-Options | nosniff                                      | Prevent MIME sniffing    |
+| X-XSS-Protection       | 1; mode=block                                | XSS protection           |
+| CSP                    | default-src 'self'; ...                      | Control resource loading |
+| Referrer-Policy        | strict-origin-when-cross-origin              | Privacy protection       |
+| Permissions-Policy     | geolocation=(self), ...                      | Feature restrictions     |
 
 ### Certificate Details
 
-| Attribute | Value |
-|-----------|-------|
-| Issuer | Let's Encrypt |
-| Type | DV (Domain Validated) |
-| Validity | 90 days |
-| Key Type | RSA 2048-bit |
-| Signature | SHA256 with RSA |
-| Renewal | Automatic (< 30 days) |
-| Domains | aurelle.uz, www.aurelle.uz, staging.aurelle.uz |
+| Attribute | Value                                          |
+| --------- | ---------------------------------------------- |
+| Issuer    | Let's Encrypt                                  |
+| Type      | DV (Domain Validated)                          |
+| Validity  | 90 days                                        |
+| Key Type  | RSA 2048-bit                                   |
+| Signature | SHA256 with RSA                                |
+| Renewal   | Automatic (< 30 days)                          |
+| Domains   | aurelle.uz, www.aurelle.uz, staging.aurelle.uz |
 
 ---
 
@@ -783,11 +807,13 @@ The infrastructure monitoring system (P2 Task #45) includes SSL monitoring:
 **Monitoring Script:** `scripts/monitor-ssl.sh`
 **Frequency:** Daily at 9 AM (via cron)
 **Checks:**
+
 - Certificate expiration
 - Certificate validity
 - HTTPS accessibility
 
 **Telegram Alerts:**
+
 - 🔴 **Critical:** Certificate expired
 - 🟡 **Warning:** Certificate expires in < 30 days
 - 🟢 **Info:** Certificate expiring in < 60 days
@@ -797,10 +823,12 @@ The infrastructure monitoring system (P2 Task #45) includes SSL monitoring:
 **File:** `/usr/local/bin/certbot-renew-aurelle`
 
 **Notifications:**
+
 - 🟢 **Success:** Certificate renewed successfully
 - 🔴 **Critical:** Certificate renewal failed
 
 **Logs:**
+
 - `/var/log/certbot-renewal.log`
 - `/var/log/letsencrypt/letsencrypt.log`
 
@@ -829,10 +857,12 @@ tail -100 /var/log/certbot-renewal.log
 #### 1. Certificate Not Obtained
 
 **Symptoms:**
+
 - Certbot fails with "Failed authorization procedure"
 - DNS resolution errors
 
 **Solutions:**
+
 ```bash
 # Check DNS
 dig aurelle.uz +short
@@ -858,10 +888,12 @@ sudo tail -100 /var/log/letsencrypt/letsencrypt.log
 #### 2. Renewal Fails
 
 **Symptoms:**
+
 - Auto-renewal logs show errors
 - Certificate expires
 
 **Solutions:**
+
 ```bash
 # Test renewal manually
 sudo certbot renew --dry-run --verbose
@@ -882,6 +914,7 @@ sudo certbot renew --force-renewal
 #### 3. SSL Labs Rating Below A+
 
 **Check Configuration:**
+
 ```bash
 # Verify TLS versions
 sudo nginx -T | grep ssl_protocols
@@ -903,10 +936,12 @@ sudo ls -la /etc/nginx/dhparam.pem
 #### 4. Mixed Content Warnings
 
 **Symptoms:**
+
 - Browser shows "Not Secure" despite HTTPS
 - Console shows mixed content errors
 
 **Solutions:**
+
 1. Check browser console for mixed content URLs
 2. Update all HTTP resources to HTTPS
 3. Use protocol-relative URLs where possible (`//example.com/resource`)
@@ -916,23 +951,23 @@ sudo ls -la /etc/nginx/dhparam.pem
 
 ## Acceptance Criteria
 
-| Criteria | Status |
-|----------|--------|
-| ✅ Certbot installed | COMPLETED |
-| ✅ SSL certificate for aurelle.uz | COMPLETED |
-| ✅ SSL certificate for www.aurelle.uz | COMPLETED |
-| ✅ SSL certificate for staging.aurelle.uz | COMPLETED |
-| ✅ HTTP → HTTPS redirect | COMPLETED |
-| ✅ TLS 1.2 and 1.3 only | COMPLETED |
-| ✅ Strong ciphers (Mozilla Modern) | COMPLETED |
-| ✅ HSTS header with preload | COMPLETED |
-| ✅ Security headers configured | COMPLETED |
-| ✅ OCSP stapling enabled | COMPLETED |
-| ✅ Auto-renewal setup (cron + systemd) | COMPLETED |
-| ✅ Certificate expiration monitoring | COMPLETED |
-| ✅ SSL verification script | COMPLETED |
-| ✅ Comprehensive documentation | COMPLETED |
-| ✅ **SSL Labs rating A or A+** | **ACHIEVABLE** |
+| Criteria                                  | Status         |
+| ----------------------------------------- | -------------- |
+| ✅ Certbot installed                      | COMPLETED      |
+| ✅ SSL certificate for aurelle.uz         | COMPLETED      |
+| ✅ SSL certificate for www.aurelle.uz     | COMPLETED      |
+| ✅ SSL certificate for staging.aurelle.uz | COMPLETED      |
+| ✅ HTTP → HTTPS redirect                  | COMPLETED      |
+| ✅ TLS 1.2 and 1.3 only                   | COMPLETED      |
+| ✅ Strong ciphers (Mozilla Modern)        | COMPLETED      |
+| ✅ HSTS header with preload               | COMPLETED      |
+| ✅ Security headers configured            | COMPLETED      |
+| ✅ OCSP stapling enabled                  | COMPLETED      |
+| ✅ Auto-renewal setup (cron + systemd)    | COMPLETED      |
+| ✅ Certificate expiration monitoring      | COMPLETED      |
+| ✅ SSL verification script                | COMPLETED      |
+| ✅ Comprehensive documentation            | COMPLETED      |
+| ✅ **SSL Labs rating A or A+**            | **ACHIEVABLE** |
 
 ---
 

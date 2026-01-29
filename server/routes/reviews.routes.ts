@@ -2,7 +2,14 @@ import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
-import { reviews, insertReviewSchema, bookings, userProfiles, salons, masters } from "@shared/schema";
+import {
+  reviews,
+  insertReviewSchema,
+  bookings,
+  userProfiles,
+  salons,
+  masters,
+} from "@shared/schema";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { eq, desc } from "drizzle-orm";
 
@@ -14,7 +21,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
 
     // Get user profile to get clientId
-    const [userProfile] = await db.select()
+    const [userProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, userId));
 
@@ -30,7 +38,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     // If bookingId provided, verify the booking exists, is completed, and belongs to this client
     if (parsed.data.bookingId) {
-      const [booking] = await db.select()
+      const [booking] = await db
+        .select()
         .from(bookings)
         .where(eq(bookings.id, parsed.data.bookingId));
 
@@ -47,7 +56,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       }
 
       // Check if review already exists for this booking
-      const [existingReview] = await db.select()
+      const [existingReview] = await db
+        .select()
         .from(reviews)
         .where(eq(reviews.bookingId, parsed.data.bookingId));
 
@@ -56,7 +66,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       }
     }
 
-    const [review] = await db.insert(reviews).values([parsed.data as any]).returning();
+    const [review] = await db
+      .insert(reviews)
+      .values([parsed.data as any])
+      .returning();
 
     // Update salon/master average rating
     if (parsed.data.salonId) {
@@ -81,19 +94,20 @@ router.get("/salon/:salonId", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const salonReviews = await db.select({
-      id: reviews.id,
-      clientId: reviews.clientId,
-      salonId: reviews.salonId,
-      masterId: reviews.masterId,
-      bookingId: reviews.bookingId,
-      rating: reviews.rating,
-      comment: reviews.comment,
-      ownerResponse: reviews.ownerResponse,
-      createdAt: reviews.createdAt,
-      clientName: userProfiles.fullName,
-      masterName: masters.name,
-    })
+    const salonReviews = await db
+      .select({
+        id: reviews.id,
+        clientId: reviews.clientId,
+        salonId: reviews.salonId,
+        masterId: reviews.masterId,
+        bookingId: reviews.bookingId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        ownerResponse: reviews.ownerResponse,
+        createdAt: reviews.createdAt,
+        clientName: userProfiles.fullName,
+        masterName: masters.name,
+      })
       .from(reviews)
       .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
       .leftJoin(masters, eq(reviews.masterId, masters.id))
@@ -116,18 +130,19 @@ router.get("/master/:masterId", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const masterReviews = await db.select({
-      id: reviews.id,
-      clientId: reviews.clientId,
-      salonId: reviews.salonId,
-      masterId: reviews.masterId,
-      bookingId: reviews.bookingId,
-      rating: reviews.rating,
-      comment: reviews.comment,
-      ownerResponse: reviews.ownerResponse,
-      createdAt: reviews.createdAt,
-      clientName: userProfiles.fullName,
-    })
+    const masterReviews = await db
+      .select({
+        id: reviews.id,
+        clientId: reviews.clientId,
+        salonId: reviews.salonId,
+        masterId: reviews.masterId,
+        bookingId: reviews.bookingId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        ownerResponse: reviews.ownerResponse,
+        createdAt: reviews.createdAt,
+        clientName: userProfiles.fullName,
+      })
       .from(reviews)
       .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
       .where(eq(reviews.masterId, masterId))
@@ -147,7 +162,8 @@ router.get("/my-reviews", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 
-    const [userProfile] = await db.select()
+    const [userProfile] = await db
+      .select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, userId));
 
@@ -155,19 +171,20 @@ router.get("/my-reviews", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const clientReviews = await db.select({
-      id: reviews.id,
-      clientId: reviews.clientId,
-      salonId: reviews.salonId,
-      masterId: reviews.masterId,
-      bookingId: reviews.bookingId,
-      rating: reviews.rating,
-      comment: reviews.comment,
-      ownerResponse: reviews.ownerResponse,
-      createdAt: reviews.createdAt,
-      salonName: salons.name,
-      masterName: masters.name,
-    })
+    const clientReviews = await db
+      .select({
+        id: reviews.id,
+        clientId: reviews.clientId,
+        salonId: reviews.salonId,
+        masterId: reviews.masterId,
+        bookingId: reviews.bookingId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        ownerResponse: reviews.ownerResponse,
+        createdAt: reviews.createdAt,
+        salonName: salons.name,
+        masterName: masters.name,
+      })
       .from(reviews)
       .leftJoin(salons, eq(reviews.salonId, salons.id))
       .leftJoin(masters, eq(reviews.masterId, masters.id))
@@ -193,9 +210,7 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
     }
 
     // Get review
-    const [review] = await db.select()
-      .from(reviews)
-      .where(eq(reviews.id, reviewId));
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, reviewId));
 
     if (!review) {
       return res.status(404).json({ error: "Review not found" });
@@ -206,16 +221,15 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
     }
 
     // Verify user is owner of the salon
-    const [salon] = await db.select()
-      .from(salons)
-      .where(eq(salons.id, review.salonId));
+    const [salon] = await db.select().from(salons).where(eq(salons.id, review.salonId));
 
     if (!salon || salon.ownerId !== userId) {
       return res.status(403).json({ error: "You can only respond to reviews for your own salon" });
     }
 
     // Update review with owner response
-    const [updatedReview] = await db.update(reviews)
+    const [updatedReview] = await db
+      .update(reviews)
       .set({ ownerResponse })
       .where(eq(reviews.id, reviewId))
       .returning();

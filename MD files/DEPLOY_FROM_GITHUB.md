@@ -4,7 +4,7 @@
 **Сервер**: 89.39.94.194
 **Домены**: aurelle.uz, www.aurelle.uz
 **Логин**: root
-**Пароль**: w2@nT*6D
+**Пароль**: w2@nT\*6D
 
 ---
 
@@ -13,6 +13,7 @@
 Коммит: `Add multiple authentication methods and prepare for production deployment`
 
 Изменения:
+
 - ✅ 78 файлов изменено
 - ✅ 10,668 строк добавлено
 - ✅ 2,251 строка удалено
@@ -276,6 +277,7 @@ curl http://89.39.94.194
 ```
 
 Откройте в браузере:
+
 - http://aurelle.uz
 - http://www.aurelle.uz
 - http://89.39.94.194
@@ -287,6 +289,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 ```
 
 Следуйте инструкциям Certbot:
+
 1. Введите ваш email
 2. Согласитесь с условиями
 3. Выберите опцию 2 (redirect HTTP to HTTPS)
@@ -294,6 +297,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 ### Шаг 15: Обновите OAuth Redirect URIs
 
 #### Google OAuth Console:
+
 1. Откройте https://console.cloud.google.com/
 2. Перейдите в **APIs & Services** → **Credentials**
 3. Найдите OAuth Client ID: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com`
@@ -304,6 +308,7 @@ certbot --nginx -d aurelle.uz -d www.aurelle.uz
 6. Сохраните
 
 #### Yandex OAuth:
+
 1. Откройте https://oauth.yandex.ru/
 2. Найдите ваше приложение (Client ID: `3b79a753092d49bb977ce1ec5b3017ec`)
 3. Нажмите **Редактировать**

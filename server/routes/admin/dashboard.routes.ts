@@ -11,21 +11,13 @@ const router = Router();
 router.get("/", requirePermission("analytics.read"), async (req, res) => {
   try {
     // Total counts
-    const [totalUsers] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users);
+    const [totalUsers] = await db.select({ count: sql<number>`count(*)` }).from(users);
 
-    const [totalSalons] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(salons);
+    const [totalSalons] = await db.select({ count: sql<number>`count(*)` }).from(salons);
 
-    const [totalMasters] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(masters);
+    const [totalMasters] = await db.select({ count: sql<number>`count(*)` }).from(masters);
 
-    const [totalBookings] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings);
+    const [totalBookings] = await db.select({ count: sql<number>`count(*)` }).from(bookings);
 
     // Active complaints
     const [openComplaints] = await db

@@ -15,9 +15,11 @@ Phase 10 Frontend adds comprehensive UI for managing salon breaks and date-speci
 ### 1. New Components
 
 #### SalonBreaksManagement Component
+
 **File**: `client/src/components/salon-breaks-management.tsx` (360 lines)
 
 **Features**:
+
 - Groups breaks by day of week (Sunday-Saturday)
 - Create/Edit/Delete break periods
 - Time validation (end time must be after start time)
@@ -27,6 +29,7 @@ Phase 10 Frontend adds comprehensive UI for managing salon breaks and date-speci
 - Toast notifications for all operations
 
 **UI Structure**:
+
 ```
 Break Times
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -44,12 +47,14 @@ Break Times
 ```
 
 **API Integration**:
+
 - `GET /api/owner/salons/:id/breaks` - Fetch all breaks
 - `POST /api/owner/salons/:id/breaks` - Create new break
 - `PATCH /api/owner/salons/:salonId/breaks/:breakId` - Update break
 - `DELETE /api/owner/salons/:salonId/breaks/:breakId` - Delete break
 
 **React Query Usage**:
+
 ```typescript
 const { data: breaks = [] } = useQuery<SalonBreak[]>({
   queryKey: [`/api/owner/salons/${salonId}/breaks`],
@@ -60,11 +65,10 @@ const { data: breaks = [] } = useQuery<SalonBreak[]>({
 });
 
 const createMutation = useMutation({
-  mutationFn: async (data) =>
-    apiRequest("POST", `/api/owner/salons/${salonId}/breaks`, data),
+  mutationFn: async (data) => apiRequest("POST", `/api/owner/salons/${salonId}/breaks`, data),
   onSuccess: () => {
     queryClient.invalidateQueries({
-      queryKey: [`/api/owner/salons/${salonId}/breaks`]
+      queryKey: [`/api/owner/salons/${salonId}/breaks`],
     });
     toast({ title: t("workingHours.breaks.createSuccess") });
   },
@@ -72,6 +76,7 @@ const createMutation = useMutation({
 ```
 
 **Validation**:
+
 - Start time must be before end time
 - Required fields: dayOfWeek, startTime, endTime
 - Optional: label
@@ -79,9 +84,11 @@ const createMutation = useMutation({
 ---
 
 #### SalonExceptionsManagement Component
+
 **File**: `client/src/components/salon-exceptions-management.tsx` (401 lines)
 
 **Features**:
+
 - Calendar-based date picker (Shadcn Calendar)
 - Date range filtering (shows next 6 months)
 - Support for two exception types:
@@ -93,6 +100,7 @@ const createMutation = useMutation({
 - Multi-language support (EN/RU/UZ)
 
 **UI Structure**:
+
 ```
 Exceptions & Holidays
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -115,6 +123,7 @@ Exceptions & Holidays
 ```
 
 **Dialog Form**:
+
 ```
 Add Exception
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -134,12 +143,14 @@ Reason: (Optional)
 ```
 
 **API Integration**:
+
 - `GET /api/owner/salons/:id/exceptions?from=YYYY-MM-DD&to=YYYY-MM-DD`
 - `POST /api/owner/salons/:id/exceptions`
 - `PATCH /api/owner/salons/:salonId/exceptions/:exceptionId`
 - `DELETE /api/owner/salons/:salonId/exceptions/:exceptionId`
 
 **Date Filtering**:
+
 ```typescript
 const today = new Date();
 const sixMonthsLater = new Date(today);
@@ -152,7 +163,7 @@ const { data: exceptions = [] } = useQuery<SalonException[]>({
     const to = format(sixMonthsLater, "yyyy-MM-dd");
     const res = await apiRequest(
       "GET",
-      `/api/owner/salons/${salonId}/exceptions?from=${from}&to=${to}`
+      `/api/owner/salons/${salonId}/exceptions?from=${from}&to=${to}`,
     );
     return res.json();
   },
@@ -160,6 +171,7 @@ const { data: exceptions = [] } = useQuery<SalonException[]>({
 ```
 
 **Validation**:
+
 - Date must not be in the past
 - If not closed, openTime and closeTime required
 - If not closed, closeTime must be after openTime
@@ -172,12 +184,14 @@ const { data: exceptions = [] } = useQuery<SalonException[]>({
 **File**: `client/src/pages/owner-salon.tsx` (+12 lines)
 
 **Changes**:
+
 - Added imports for both new components
 - Integrated into "Working Hours" tab
 - Positioned after existing working hours UI
 - Maintains existing layout and styling
 
 **Integration Code**:
+
 ```typescript
 import { SalonBreaksManagement } from "@/components/salon-breaks-management";
 import { SalonExceptionsManagement } from "@/components/salon-exceptions-management";
@@ -208,6 +222,7 @@ import { SalonExceptionsManagement } from "@/components/salon-exceptions-managem
 **Added**: 54 keys × 3 languages = **162 translation entries**
 
 #### English (en.json)
+
 ```json
 "workingHours": {
   "dayOfWeek": "Day of Week",
@@ -263,13 +278,17 @@ import { SalonExceptionsManagement } from "@/components/salon-exceptions-managem
 ```
 
 #### Russian (ru.json) - **+51 lines**
+
 Full Russian translations including:
+
 - "Перерывы", "Исключения и праздники"
 - "Обеденный перерыв", "Время начала", "Время окончания"
 - Error messages and confirmations in Russian
 
 #### Uzbek (uz.json) - **+51 lines**
+
 Full Uzbek translations including:
+
 - "Tanaffus vaqtlari", "Istisnolar va bayramlar"
 - "Tushlik tanaffusi", "Boshlanish vaqti", "Tugash vaqti"
 - Error messages and confirmations in Uzbek
@@ -279,13 +298,16 @@ Full Uzbek translations including:
 ## 📊 Files Modified
 
 **Frontend Components** (NEW):
+
 - `client/src/components/salon-breaks-management.tsx` (360 lines)
 - `client/src/components/salon-exceptions-management.tsx` (401 lines)
 
 **Pages** (Modified):
+
 - `client/src/pages/owner-salon.tsx` (+12 lines)
 
 **i18n** (Modified):
+
 - `client/src/locales/en.json` (+51 lines)
 - `client/src/locales/ru.json` (+51 lines)
 - `client/src/locales/uz.json` (+51 lines)
@@ -297,12 +319,14 @@ Full Uzbek translations including:
 ## 🎨 UI/UX Features
 
 ### Design Consistency
+
 - Uses Shadcn/ui components (Dialog, Card, Button, Calendar, etc.)
 - Matches existing AURELLE design system
 - Responsive layout (mobile-friendly)
 - Consistent spacing and typography
 
 ### User Experience
+
 - **Intuitive Workflows**: Simple create/edit/delete flows
 - **Visual Feedback**: Toast notifications for all actions
 - **Error Handling**: Clear error messages and validation
@@ -311,6 +335,7 @@ Full Uzbek translations including:
 - **Confirmation Dialogs**: Prevents accidental deletions
 
 ### Form Controls
+
 - **Date Picker**: Calendar popup with date selection
 - **Time Inputs**: Native HTML5 time inputs (HH:MM format)
 - **Checkbox**: Toggle for full closure vs custom hours
@@ -322,6 +347,7 @@ Full Uzbek translations including:
 ## 🔄 Data Flow
 
 ### Break Management Flow
+
 ```
 User Action → Component State → Mutation → API Call → Backend
                                   ↓
@@ -333,6 +359,7 @@ User Action → Component State → Mutation → API Call → Backend
 ```
 
 ### Exception Management Flow
+
 ```
 Calendar Selection → Selected Date State
                            ↓
@@ -352,6 +379,7 @@ Calendar Selection → Selected Date State
 ## 🚀 Deployment
 
 ### Production Deployment
+
 - **Date**: 2026-01-17 at 13:40 (GMT+5)
 - **Server**: 89.39.94.194
 - **Commit**: 582a3139
@@ -362,6 +390,7 @@ Calendar Selection → Selected Date State
 - **Memory**: 6.9 MB (initial), stable
 
 ### Deployment Commands
+
 ```bash
 # Pull latest code
 git pull origin main
@@ -383,6 +412,7 @@ pm2 logs aurelle-production --lines 30
 ## ✅ Success Criteria
 
 ### Phase 10 Frontend Completion
+
 - [x] Breaks management UI component created
 - [x] Exceptions management UI component created
 - [x] Both components integrated into Working Hours tab
@@ -403,12 +433,14 @@ pm2 logs aurelle-production --lines 30
 ## 🔮 Next Steps
 
 ### Immediate (Slot Calculation Update)
+
 The most critical next step is updating the slot calculation logic to respect breaks and exceptions.
 
 **File to Modify**: `server/routes/salons.routes.ts` (lines 134-260)
 
 **Current Issue**: Hardcoded 9:00-20:00 hours
 **Required Fix**:
+
 1. Query `salon_working_hours` for the day's open/close times
 2. Query `salon_breaks` for the day's break periods
 3. Query `salon_exceptions` for the specific date
@@ -419,24 +451,21 @@ The most critical next step is updating the slot calculation logic to respect br
    - Use actual working hours instead of hardcoded times
 
 **Example Slot Calculation Logic**:
+
 ```typescript
 // Get working hours for the day
 const dayOfWeek = new Date(date).getDay();
-const workingHours = await db.select()
+const workingHours = await db
+  .select()
   .from(salonWorkingHours)
-  .where(and(
-    eq(salonWorkingHours.salonId, salonId),
-    eq(salonWorkingHours.dayOfWeek, dayOfWeek)
-  ))
+  .where(and(eq(salonWorkingHours.salonId, salonId), eq(salonWorkingHours.dayOfWeek, dayOfWeek)))
   .limit(1);
 
 // Check for exceptions
-const exception = await db.select()
+const exception = await db
+  .select()
   .from(salonExceptions)
-  .where(and(
-    eq(salonExceptions.salonId, salonId),
-    eq(salonExceptions.exceptionDate, date)
-  ))
+  .where(and(eq(salonExceptions.salonId, salonId), eq(salonExceptions.exceptionDate, date)))
   .limit(1);
 
 if (exception && exception.isClosed) {
@@ -448,18 +477,17 @@ const openTime = exception?.openTime || workingHours?.openTime || "09:00";
 const closeTime = exception?.closeTime || workingHours?.closeTime || "20:00";
 
 // Get breaks for the day
-const breaks = await db.select()
+const breaks = await db
+  .select()
   .from(salonBreaks)
-  .where(and(
-    eq(salonBreaks.salonId, salonId),
-    eq(salonBreaks.dayOfWeek, dayOfWeek)
-  ));
+  .where(and(eq(salonBreaks.salonId, salonId), eq(salonBreaks.dayOfWeek, dayOfWeek)));
 
 // Generate slots excluding breaks
 const slots = generateTimeSlots(openTime, closeTime, duration, breaks);
 ```
 
 ### Testing Checklist
+
 - [ ] Create break for Monday 13:00-14:00
 - [ ] Verify slots don't include 13:00-14:00 period
 - [ ] Create exception for specific date (closed)
@@ -472,6 +500,7 @@ const slots = generateTimeSlots(openTime, closeTime, duration, breaks);
 - [ ] Test all 3 languages (EN/RU/UZ)
 
 ### Future Enhancements
+
 - **Week View Calendar**: Show breaks and exceptions in calendar view
 - **Master-Specific Breaks**: Different breaks per master
 - **Recurring Exceptions**: Template for yearly holidays
@@ -485,23 +514,27 @@ const slots = generateTimeSlots(openTime, closeTime, duration, breaks);
 ## 📝 Code Quality
 
 ### TypeScript
+
 - Full TypeScript coverage
 - Type-safe API calls with Zod schemas
 - No `any` types (except in existing patterns)
 
 ### React Best Practices
+
 - Functional components with hooks
 - React Query for server state management
 - Proper memoization (implicit via React Query)
 - No prop drilling (uses React Query cache)
 
 ### Performance
+
 - Lazy loading (components loaded on demand)
 - Optimistic updates (via React Query)
 - Efficient re-renders (React Query caching)
 - Minimal bundle size impact (+44KB gzipped)
 
 ### Accessibility
+
 - Semantic HTML
 - ARIA labels on interactive elements
 - Keyboard navigation support
@@ -512,9 +545,11 @@ const slots = generateTimeSlots(openTime, closeTime, duration, breaks);
 ## 🐛 Known Issues
 
 ### None Currently
+
 All features working as expected in production.
 
 ### Potential Edge Cases to Monitor
+
 1. **Timezone Handling**: All times stored as strings (HH:MM), no timezone conversion
 2. **Date Selection**: Only prevents past dates, not date conflicts
 3. **Break Overlap**: No backend validation for overlapping breaks
@@ -527,6 +562,7 @@ All features working as expected in production.
 ### Component Props
 
 **SalonBreaksManagement**:
+
 ```typescript
 interface SalonBreaksManagementProps {
   salonId: string; // UUID of the salon
@@ -534,6 +570,7 @@ interface SalonBreaksManagementProps {
 ```
 
 **SalonExceptionsManagement**:
+
 ```typescript
 interface SalonExceptionsManagementProps {
   salonId: string; // UUID of the salon
@@ -543,26 +580,28 @@ interface SalonExceptionsManagementProps {
 ### Data Types
 
 **SalonBreak**:
+
 ```typescript
 interface SalonBreak {
   id: string;
   salonId: string;
   dayOfWeek: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
   startTime: string; // "HH:MM" format (e.g., "13:00")
-  endTime: string;   // "HH:MM" format (e.g., "14:00")
+  endTime: string; // "HH:MM" format (e.g., "14:00")
   label: string | null; // Optional label
   createdAt: string;
 }
 ```
 
 **SalonException**:
+
 ```typescript
 interface SalonException {
   id: string;
   salonId: string;
   exceptionDate: string; // "YYYY-MM-DD" format
   isClosed: boolean;
-  openTime: string | null;  // If not closed
+  openTime: string | null; // If not closed
   closeTime: string | null; // If not closed
   reason: string | null;
   createdAt: string;

@@ -5,6 +5,7 @@
 ## Обзор
 
 Реализованы две критичные фичи для улучшения UX и вовлечённости:
+
 1. **Reviews System** - система отзывов для салонов и мастеров
 2. **Push Notifications** - браузерные уведомления о важных событиях
 
@@ -15,12 +16,14 @@
 ### Проблема
 
 **До реализации:**
+
 - Таблица reviews существовала, но не было API и UI
 - Клиенты не могли оставлять отзывы
 - Нет социального подтверждения качества салонов/мастеров
 - Владельцы не могли отвечать на отзывы
 
 **После реализации:**
+
 - Клиенты оставляют отзывы после завершённых бронирований
 - Рейтинг автоматически обновляется для салонов и мастеров
 - Владельцы могут отвечать на отзывы
@@ -33,6 +36,7 @@
 #### Endpoints:
 
 **1. POST /api/reviews** - Создать отзыв
+
 - Требует авторизации
 - Проверяет что бронирование завершено (status=completed)
 - Проверяет что бронирование принадлежит клиенту
@@ -40,6 +44,7 @@
 - Автоматически обновляет averageRating для салона/мастера
 
 **Валидация:**
+
 ```typescript
 {
   bookingId: string (optional),
@@ -51,23 +56,27 @@
 ```
 
 **2. GET /api/reviews/salon/:salonId** - Получить отзывы салона
+
 - Публичный endpoint
 - Поддерживает pagination (limit, offset)
 - Возвращает имя клиента и мастера
 - Сортировка по createdAt DESC
 
 **3. GET /api/reviews/master/:masterId** - Получить отзывы мастера
+
 - Публичный endpoint
 - Поддерживает pagination
 - Возвращает имя клиента
 - Сортировка по createdAt DESC
 
 **4. GET /api/reviews/my-reviews** - Получить свои отзывы
+
 - Требует авторизации
 - Возвращает все отзывы текущего клиента
 - Включает информацию о салоне и мастере
 
 **5. PATCH /api/reviews/:reviewId/respond** - Ответить на отзыв (только владелец)
+
 - Требует авторизации
 - Проверяет что пользователь - владелец салона
 - Добавляет ownerResponse к отзыву
@@ -75,6 +84,7 @@
 #### Автоматическое обновление рейтинга:
 
 Используются helper функции из `server/helpers/ratings.ts`:
+
 - `updateSalonRating(salonId)` - пересчитывает средний рейтинг салона
 - `updateMasterRating(masterId)` - пересчитывает средний рейтинг мастера
 
@@ -87,6 +97,7 @@
 **Файл**: `client/src/components/review-form.tsx`
 
 **Функциональность:**
+
 - Форма для создания отзыва
 - Star rating selector (1-5 звёзд)
 - Текстовое поле для комментария
@@ -96,6 +107,7 @@
 - Автоматический refetch отзывов после создания
 
 **Props:**
+
 ```typescript
 interface ReviewFormProps {
   bookingId: string;
@@ -110,6 +122,7 @@ interface ReviewFormProps {
 **Файл**: `client/src/components/reviews-list.tsx`
 
 **Функциональность:**
+
 - Отображение списка отзывов
 - Фильтрация по salon/master
 - Pagination (load more)
@@ -122,6 +135,7 @@ interface ReviewFormProps {
 - Owner response form (только для владельца салона)
 
 **Props:**
+
 ```typescript
 interface ReviewsListProps {
   salonId?: string;
@@ -135,24 +149,27 @@ interface ReviewsListProps {
 **Файл**: `client/src/components/star-rating.tsx`
 
 **Функциональность:**
+
 - Отображение рейтинга звёздами (1-5)
 - Два режима: readonly и editable
 - Hover effect для редактируемого режима
 - Цвета: жёлтый для заполненных, серый для пустых
 
 **Props:**
+
 ```typescript
 interface StarRatingProps {
   rating: number;
   onRatingChange?: (rating: number) => void;
   readonly?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
 }
 ```
 
 ### Интеграция
 
 **Файлы для изменения:**
+
 1. `client/src/pages/salon.tsx` - добавить ReviewsList и ReviewForm
 2. `client/src/pages/client-bookings.tsx` - добавить кнопку "Leave Review" для completed bookings
 3. `server/index.ts` - зарегистрировать reviews routes
@@ -191,11 +208,13 @@ interface StarRatingProps {
 ### Проблема
 
 **До реализации:**
+
 - Мастер не знает о новых бронированиях пока не обновит страницу
 - Клиент не получает напоминания перед визитом
 - Плохая real-time коммуникация
 
 **После реализации:**
+
 - Браузерные push уведомления о важных событиях
 - Мастер получает уведомление о новой брони
 - Клиент получает напоминание за 1 час до визита
@@ -206,6 +225,7 @@ interface StarRatingProps {
 **Технология**: Web Push API (встроенный в браузер, не требует внешних сервисов)
 
 **Компоненты:**
+
 1. Service Worker для фоновых уведомлений
 2. Backend API для отправки push уведомлений
 3. Frontend UI для запроса разрешений
@@ -215,6 +235,7 @@ interface StarRatingProps {
 **Файл**: `server/push/push-service.ts`
 
 **Функциональность:**
+
 - Хранение push subscriptions в БД
 - Отправка уведомлений через web-push library
 - Автоматическая отправка при событиях:
@@ -223,11 +244,13 @@ interface StarRatingProps {
   - Изменение статуса брони → уведомление клиенту
 
 **Endpoints:**
+
 - `POST /api/push/subscribe` - Сохранить push subscription
 - `POST /api/push/unsubscribe` - Удалить push subscription
 - `POST /api/push/send` - Отправить тестовое уведомление
 
 **Схема БД**:
+
 ```sql
 CREATE TABLE push_subscriptions (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -242,24 +265,21 @@ CREATE TABLE push_subscriptions (
 ### Frontend
 
 **Файлы:**
+
 1. `client/public/service-worker.js` - Service Worker для обработки push
 2. `client/src/hooks/usePushNotifications.ts` - React hook для управления push
 3. `client/src/components/push-permission-banner.tsx` - UI для запроса разрешения
 
 **usePushNotifications Hook:**
+
 ```typescript
-const {
-  isSupported,
-  isSubscribed,
-  permission,
-  subscribe,
-  unsubscribe
-} = usePushNotifications();
+const { isSupported, isSubscribed, permission, subscribe, unsubscribe } = usePushNotifications();
 ```
 
 **Использование:**
+
 ```tsx
-import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 function MasterDashboard() {
   const { isSubscribed, subscribe } = usePushNotifications();
@@ -277,6 +297,7 @@ function MasterDashboard() {
 ### Типы уведомлений
 
 **1. NEW_BOOKING** - Новое бронирование
+
 ```json
 {
   "title": "New Booking",
@@ -292,6 +313,7 @@ function MasterDashboard() {
 ```
 
 **2. BOOKING_REMINDER** - Напоминание о брони
+
 ```json
 {
   "title": "Upcoming Appointment",
@@ -306,6 +328,7 @@ function MasterDashboard() {
 ```
 
 **3. STATUS_CHANGE** - Изменение статуса
+
 ```json
 {
   "title": "Booking Confirmed",
@@ -322,6 +345,7 @@ function MasterDashboard() {
 ### Environment Variables
 
 Добавить в `.env`:
+
 ```bash
 # Web Push (generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=BNxZh3...
@@ -341,22 +365,23 @@ web-push generate-vapid-keys
 **Файл**: `server/cron/booking-reminders.ts`
 
 ```typescript
-import cron from 'node-cron';
-import { sendBookingReminder } from '../push/push-service';
+import cron from "node-cron";
+import { sendBookingReminder } from "../push/push-service";
 
 // Run every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule("*/5 * * * *", async () => {
   const now = new Date();
   const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
 
-  const upcomingBookings = await db.select()
+  const upcomingBookings = await db
+    .select()
     .from(bookings)
     .where(
       and(
-        eq(bookings.status, 'confirmed'),
+        eq(bookings.status, "confirmed"),
         gte(bookings.bookingDate, now),
-        lte(bookings.bookingDate, oneHourLater)
-      )
+        lte(bookings.bookingDate, oneHourLater),
+      ),
     );
 
   for (const booking of upcomingBookings) {
@@ -372,6 +397,7 @@ cron.schedule('*/5 * * * *', async () => {
 ### Reviews System
 
 **Test 1: Создание отзыва**
+
 1. Завершить бронирование (status=completed)
 2. Открыть страницу салона
 3. Нажать "Write a Review"
@@ -380,10 +406,12 @@ cron.schedule('*/5 * * * *', async () => {
 6. **Ожидаемо**: Отзыв создан, рейтинг салона обновлён
 
 **Test 2: Дублирование отзыва**
+
 1. Попытаться оставить второй отзыв на то же бронирование
 2. **Ожидаемо**: Ошибка "You have already reviewed this booking"
 
 **Test 3: Ответ владельца**
+
 1. Войти как владелец салона
 2. Открыть отзыв
 3. Нажать "Respond"
@@ -393,18 +421,21 @@ cron.schedule('*/5 * * * *', async () => {
 ### Push Notifications
 
 **Test 1: Подписка на уведомления**
+
 1. Открыть сайт как мастер
 2. **Ожидаемо**: Всплывает запрос разрешения push уведомлений
 3. Нажать "Allow"
 4. **Ожидаемо**: Subscription сохранён в БД
 
 **Test 2: Уведомление о новой брони**
+
 1. Создать новое бронирование к мастеру
 2. **Ожидаемо**: Мастер получает браузерное уведомление
 3. Кликнуть на уведомление
 4. **Ожидаемо**: Открывается страница с бронированиями
 
 **Test 3: Напоминание клиенту**
+
 1. Создать бронирование на время через 1 час
 2. Подождать (или изменить системное время)
 3. **Ожидаемо**: Клиент получает уведомление-напоминание
@@ -470,17 +501,20 @@ docker restart aurelle_app_1
 🚧 **В РАЗРАБОТКЕ**
 
 ### Готово:
+
 - ✅ Reviews API (backend)
 - ✅ Схема БД для reviews
 - ✅ Helper функции для обновления рейтинга
 
 ### В процессе:
+
 - 🔄 Reviews UI компоненты (ReviewForm, ReviewsList, StarRating)
 - 🔄 Push Notifications API
 - 🔄 Push Notifications Service Worker
 - 🔄 Push Notifications React Hook
 
 ### Осталось:
+
 - ⏳ Интеграция reviews в страницы
 - ⏳ Переводы для reviews
 - ⏳ Cron для booking reminders
@@ -505,12 +539,14 @@ docker restart aurelle_app_1
 ## Файлы для создания
 
 ### Reviews System:
+
 - ✅ `server/routes/reviews.routes.ts` (расширен)
 - ⏳ `client/src/components/review-form.tsx`
 - ⏳ `client/src/components/reviews-list.tsx`
 - ⏳ `client/src/components/star-rating.tsx`
 
 ### Push Notifications:
+
 - ⏳ `server/push/push-service.ts`
 - ⏳ `server/push/push.routes.ts`
 - ⏳ `server/cron/booking-reminders.ts`

@@ -32,7 +32,7 @@ export function SalonSwitcher({
   value,
   onChange,
   className,
-  showAllOption = true
+  showAllOption = true,
 }: SalonSwitcherProps) {
   const { t } = useTranslation();
 
@@ -49,9 +49,7 @@ export function SalonSwitcher({
       </SelectTrigger>
       <SelectContent>
         {showAllOption && (
-          <SelectItem value="all">
-            {t("dashboard.allSalons", "All Salons")}
-          </SelectItem>
+          <SelectItem value="all">{t("dashboard.allSalons", "All Salons")}</SelectItem>
         )}
         {salons.map((salon) => (
           <SelectItem key={salon.id} value={salon.id}>

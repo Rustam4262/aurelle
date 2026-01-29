@@ -95,7 +95,9 @@ export function MasterManagement() {
 
   const [editingMaster, setEditingMaster] = useState<Master | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
-  const [workingHours, setWorkingHours] = useState<Record<string, { start: string; end: string; isWorking: boolean }>>({});
+  const [workingHours, setWorkingHours] = useState<
+    Record<string, { start: string; end: string; isWorking: boolean }>
+  >({});
   const [portfolioUrl, setPortfolioUrl] = useState("");
 
   // Fetch masters
@@ -109,7 +111,15 @@ export function MasterManagement() {
 
   // Update master mutation
   const updateMasterMutation = useMutation({
-    mutationFn: async ({ salonId, masterId, data }: { salonId: string; masterId: string; data: any }) => {
+    mutationFn: async ({
+      salonId,
+      masterId,
+      data,
+    }: {
+      salonId: string;
+      masterId: string;
+      data: any;
+    }) => {
       const res = await apiRequest("PUT", `/api/owner/salons/${salonId}/masters/${masterId}`, data);
       return res.json();
     },
@@ -133,7 +143,9 @@ export function MasterManagement() {
   // Upload portfolio mutation
   const uploadPortfolioMutation = useMutation({
     mutationFn: async ({ masterId, imageUrl }: { masterId: string; imageUrl: string }) => {
-      const res = await apiRequest("POST", `/api/owner/masters/${masterId}/portfolio`, { imageUrl });
+      const res = await apiRequest("POST", `/api/owner/masters/${masterId}/portfolio`, {
+        imageUrl,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -155,7 +167,10 @@ export function MasterManagement() {
   // Delete portfolio mutation
   const deletePortfolioMutation = useMutation({
     mutationFn: async ({ masterId, imageIndex }: { masterId: string; imageIndex: number }) => {
-      const res = await apiRequest("DELETE", `/api/owner/masters/${masterId}/portfolio/${imageIndex}`);
+      const res = await apiRequest(
+        "DELETE",
+        `/api/owner/masters/${masterId}/portfolio/${imageIndex}`,
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -248,7 +263,10 @@ export function MasterManagement() {
         <CardHeader>
           <CardTitle>{t("masters.management", "Master Management")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {t("masters.manageDescription", "Manage your masters, view their performance, and update their profiles.")}
+            {t(
+              "masters.manageDescription",
+              "Manage your masters, view their performance, and update their profiles.",
+            )}
           </p>
         </CardHeader>
         <CardContent>
@@ -263,9 +281,10 @@ export function MasterManagement() {
               {masters.map((master) => {
                 const masterName = master.name?.[currentLang] || master.name?.en || "Unknown";
                 const masterBio = master.bio?.[currentLang] || master.bio?.en || "";
-                const completionRate = master.totalBookings > 0
-                  ? Math.round((master.completedBookings / master.totalBookings) * 100)
-                  : 0;
+                const completionRate =
+                  master.totalBookings > 0
+                    ? Math.round((master.completedBookings / master.totalBookings) * 100)
+                    : 0;
 
                 return (
                   <Card key={master.id} className={!master.isActive ? "opacity-60" : ""}>
@@ -273,25 +292,33 @@ export function MasterManagement() {
                       <div className="flex items-start gap-4 mb-4">
                         <Avatar className="h-16 w-16">
                           <AvatarImage src={master.portfolio?.[0]} />
-                          <AvatarFallback>{masterName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>
+                            {masterName.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <h3 className="font-semibold text-lg truncate">{masterName}</h3>
                             <Badge variant={master.isActive ? "default" : "secondary"}>
-                              {master.isActive ? t("masters.active", "Active") : t("masters.inactive", "Inactive")}
+                              {master.isActive
+                                ? t("masters.active", "Active")
+                                : t("masters.inactive", "Inactive")}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">{master.salonName}</p>
                           {master.specialization && (
-                            <p className="text-sm text-muted-foreground capitalize">{master.specialization}</p>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {master.specialization}
+                            </p>
                           )}
                         </div>
                       </div>
 
                       {masterBio && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{masterBio}</p>
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {masterBio}
+                        </p>
                       )}
 
                       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -303,12 +330,16 @@ export function MasterManagement() {
 
                         <div className="flex items-center gap-2 text-sm">
                           <TrendingUp className="h-4 w-4 text-blue-600" />
-                          <span>{master.totalBookings} {t("masters.bookings", "bookings")}</span>
+                          <span>
+                            {master.totalBookings} {t("masters.bookings", "bookings")}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          <span>{completionRate}% {t("masters.completed", "completed")}</span>
+                          <span>
+                            {completionRate}% {t("masters.completed", "completed")}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm">
@@ -352,7 +383,11 @@ export function MasterManagement() {
                           size="sm"
                           onClick={() => handleToggleActive(master)}
                         >
-                          {master.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {master.isActive ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </CardContent>
@@ -469,9 +504,7 @@ export function MasterManagement() {
                   <Label>{t("masters.phone", "Phone")}</Label>
                   <Input
                     value={editFormData.phone}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, phone: e.target.value })
-                    }
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
                   />
                 </div>
               </TabsContent>
@@ -584,7 +617,9 @@ export function MasterManagement() {
               {t("common.cancel", "Cancel")}
             </Button>
             <Button onClick={handleSaveEdit} disabled={updateMasterMutation.isPending}>
-              {updateMasterMutation.isPending ? t("common.saving", "Saving...") : t("common.save", "Save")}
+              {updateMasterMutation.isPending
+                ? t("common.saving", "Saving...")
+                : t("common.save", "Save")}
             </Button>
           </DialogFooter>
         </DialogContent>

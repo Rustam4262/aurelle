@@ -34,23 +34,27 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
   const [selectedSalonId, setSelectedSalonId] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
-    to: new Date()
+    to: new Date(),
   });
 
   // Fetch custom range analytics
-  const { data: customRangeData, isLoading: isLoadingRange, refetch: refetchRange } = useQuery({
+  const {
+    data: customRangeData,
+    isLoading: isLoadingRange,
+    refetch: refetchRange,
+  } = useQuery({
     queryKey: ["/api/owner/analytics/custom-range", dateRange, selectedSalonId],
     queryFn: async () => {
       const params = new URLSearchParams({
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
-        salonId: selectedSalonId
+        salonId: selectedSalonId,
       });
       const response = await fetch(`/api/owner/analytics/custom-range?${params}`);
       if (!response.ok) throw new Error("Failed to fetch analytics");
       return response.json();
     },
-    enabled: isEnabled
+    enabled: isEnabled,
   });
 
   // Fetch comparison analytics
@@ -60,13 +64,13 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
       const params = new URLSearchParams({
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
-        salonId: selectedSalonId
+        salonId: selectedSalonId,
       });
       const response = await fetch(`/api/owner/analytics/comparison?${params}`);
       if (!response.ok) throw new Error("Failed to fetch comparison");
       return response.json();
     },
-    enabled: isEnabled
+    enabled: isEnabled,
   });
 
   // Fetch master performance
@@ -76,13 +80,13 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
       const params = new URLSearchParams({
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
-        salonId: selectedSalonId
+        salonId: selectedSalonId,
       });
       const response = await fetch(`/api/owner/analytics/master-performance?${params}`);
       if (!response.ok) throw new Error("Failed to fetch master performance");
       return response.json();
     },
-    enabled: isEnabled
+    enabled: isEnabled,
   });
 
   // Fetch service performance
@@ -92,13 +96,13 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
       const params = new URLSearchParams({
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
-        salonId: selectedSalonId
+        salonId: selectedSalonId,
       });
       const response = await fetch(`/api/owner/analytics/service-performance?${params}`);
       if (!response.ok) throw new Error("Failed to fetch service performance");
       return response.json();
     },
-    enabled: isEnabled
+    enabled: isEnabled,
   });
 
   // Fetch peak hours
@@ -108,13 +112,13 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
       const params = new URLSearchParams({
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
-        salonId: selectedSalonId
+        salonId: selectedSalonId,
       });
       const response = await fetch(`/api/owner/analytics/peak-hours?${params}`);
       if (!response.ok) throw new Error("Failed to fetch peak hours");
       return response.json();
     },
-    enabled: isEnabled
+    enabled: isEnabled,
   });
 
   if (!isEnabled) {
@@ -122,10 +126,10 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'UZS',
-      minimumFractionDigits: 0
+    return new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "UZS",
+      minimumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -140,11 +144,7 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex gap-2">
-          <DateRangePicker
-            value={dateRange}
-            onChange={setDateRange}
-            className="w-[280px]"
-          />
+          <DateRangePicker value={dateRange} onChange={setDateRange} className="w-[280px]" />
           {salons.length > 1 && (
             <SalonSwitcher
               salons={salons}
@@ -154,13 +154,8 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
             />
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           {t("analytics.refreshData", "Refresh Data")}
         </Button>
       </div>
@@ -174,9 +169,7 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {customRangeData?.totalBookings || 0}
-            </div>
+            <div className="text-2xl font-bold">{customRangeData?.totalBookings || 0}</div>
             {comparisonData && (
               <p className="text-xs text-muted-foreground flex items-center">
                 {comparisonData.changes.bookings > 0 ? (
@@ -184,7 +177,8 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
                 ) : (
                   <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                 )}
-                {Math.abs(comparisonData.changes.bookings)}% {t("analytics.vsLastPeriod", "vs last period")}
+                {Math.abs(comparisonData.changes.bookings)}%{" "}
+                {t("analytics.vsLastPeriod", "vs last period")}
               </p>
             )}
           </CardContent>
@@ -207,7 +201,8 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
                 ) : (
                   <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                 )}
-                {Math.abs(comparisonData.changes.revenue).toFixed(1)}% {t("analytics.vsLastPeriod", "vs last period")}
+                {Math.abs(comparisonData.changes.revenue).toFixed(1)}%{" "}
+                {t("analytics.vsLastPeriod", "vs last period")}
               </p>
             )}
           </CardContent>
@@ -220,9 +215,7 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {customRangeData?.completionRate || 0}%
-            </div>
+            <div className="text-2xl font-bold">{customRangeData?.completionRate || 0}%</div>
             {comparisonData && (
               <p className="text-xs text-muted-foreground flex items-center">
                 {comparisonData.changes.completionRate > 0 ? (
@@ -230,7 +223,8 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
                 ) : (
                   <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
                 )}
-                {Math.abs(comparisonData.changes.completionRate).toFixed(1)}% {t("analytics.change", "change")}
+                {Math.abs(comparisonData.changes.completionRate).toFixed(1)}%{" "}
+                {t("analytics.change", "change")}
               </p>
             )}
           </CardContent>
@@ -278,11 +272,16 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
               {isLoadingMasters ? (
                 <p className="text-muted-foreground">{t("common.loading", "Loading...")}</p>
               ) : !masterPerformance || masterPerformance.length === 0 ? (
-                <p className="text-muted-foreground">{t("analytics.noData", "No data available")}</p>
+                <p className="text-muted-foreground">
+                  {t("analytics.noData", "No data available")}
+                </p>
               ) : (
                 <div className="space-y-4">
                   {masterPerformance.slice(0, 10).map((master: any) => (
-                    <div key={master.masterId} className="flex items-center justify-between border-b pb-2">
+                    <div
+                      key={master.masterId}
+                      className="flex items-center justify-between border-b pb-2"
+                    >
                       <div>
                         <p className="font-medium">{master.masterName}</p>
                         <p className="text-sm text-muted-foreground">
@@ -310,11 +309,16 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
               {isLoadingServices ? (
                 <p className="text-muted-foreground">{t("common.loading", "Loading...")}</p>
               ) : !servicePerformance || servicePerformance.length === 0 ? (
-                <p className="text-muted-foreground">{t("analytics.noData", "No data available")}</p>
+                <p className="text-muted-foreground">
+                  {t("analytics.noData", "No data available")}
+                </p>
               ) : (
                 <div className="space-y-4">
                   {servicePerformance.slice(0, 10).map((service: any) => (
-                    <div key={service.serviceId} className="flex items-center justify-between border-b pb-2">
+                    <div
+                      key={service.serviceId}
+                      className="flex items-center justify-between border-b pb-2"
+                    >
                       <div>
                         <p className="font-medium">{service.serviceName}</p>
                         <p className="text-sm text-muted-foreground">
@@ -342,7 +346,9 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
               {isLoadingPeakHours ? (
                 <p className="text-muted-foreground">{t("common.loading", "Loading...")}</p>
               ) : !peakHours || peakHours.length === 0 ? (
-                <p className="text-muted-foreground">{t("analytics.noData", "No data available")}</p>
+                <p className="text-muted-foreground">
+                  {t("analytics.noData", "No data available")}
+                </p>
               ) : (
                 <div className="space-y-2">
                   {peakHours.slice(0, 10).map((hour: any) => (
@@ -353,7 +359,7 @@ export function AnalyticsEnhanced({ salons }: AnalyticsEnhancedProps) {
                           <div
                             className="h-full bg-primary rounded-md"
                             style={{
-                              width: `${(hour.bookings / peakHours[0].bookings) * 100}%`
+                              width: `${(hour.bookings / peakHours[0].bookings) * 100}%`,
                             }}
                           />
                         </div>

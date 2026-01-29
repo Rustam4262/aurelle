@@ -10,6 +10,7 @@
 На продакшен сервере (https://aurelle.uz) не работала регистрация и вход в систему.
 
 ### Симптомы:
+
 - ❌ Регистрация выдавала ошибку "Invalid input"
 - ❌ Network логи показывали 400, 429, 500 ошибки
 - ❌ Невозможно войти в кабинеты пользователей
@@ -45,6 +46,7 @@
 **Что добавлено:**
 
 #### a) Импорты для работы с сессиями:
+
 ```typescript
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -54,6 +56,7 @@ const PgSession = connectPgSimple(session);
 ```
 
 #### b) TypeScript типизация для сессий:
+
 ```typescript
 // Extend Express Request type to include session
 declare module "express-serve-static-core" {
@@ -68,6 +71,7 @@ declare module "express-serve-static-core" {
 ```
 
 #### c) Конфигурация Trust Proxy:
+
 ```typescript
 export async function setupAuth(app: Express) {
   // Trust proxy - важно для работы за Nginx
@@ -78,6 +82,7 @@ export async function setupAuth(app: Express) {
 ```
 
 #### d) Конфигурация Express-Session с PostgreSQL:
+
 ```typescript
 app.use(
   session({
@@ -95,11 +100,12 @@ app.use(
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
     },
-  })
+  }),
 );
 ```
 
 **Зачем это нужно:**
+
 - ✅ Сессии сохраняются в PostgreSQL (persistent storage)
 - ✅ Пользователи остаются залогиненными даже после перезагрузки сервера
 - ✅ Безопасные cookies (httpOnly, secure в production)
@@ -115,6 +121,7 @@ app.use(
 #### Изменения в Password Input:
 
 **Было:**
+
 ```typescript
 <Input
   type="password"
@@ -124,6 +131,7 @@ app.use(
 ```
 
 **Стало:**
+
 ```typescript
 <Input
   type="password"
@@ -140,6 +148,7 @@ app.use(
 #### Улучшена обработка ошибок:
 
 **Было:**
+
 ```typescript
 if (!response.ok) {
   const error = await response.json();
@@ -148,6 +157,7 @@ if (!response.ok) {
 ```
 
 **Стало:**
+
 ```typescript
 if (!response.ok) {
   const error = await response.json();
@@ -161,6 +171,7 @@ if (!response.ok) {
 ```
 
 **Зачем это нужно:**
+
 - ✅ Пользователи видят понятные ошибки валидации
 - ✅ Клиент и сервер синхронизированы (оба требуют 8+ символов)
 - ✅ Подсказка "Минимум 8 символов" помогает избежать ошибок
@@ -173,12 +184,14 @@ if (!response.ok) {
 
 ```typescript
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   passwordHash: varchar("password_hash"),
   phoneNumber: varchar("phone_number").unique(),
   provider: varchar("provider").default("local"), // ← ДОБАВЛЕНО
-  providerId: varchar("provider_id"),             // ← ДОБАВЛЕНО
+  providerId: varchar("provider_id"), // ← ДОБАВЛЕНО
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -188,6 +201,7 @@ export const users = pgTable("users", {
 ```
 
 **Применена миграция на сервере:**
+
 ```bash
 docker-compose exec app npm run db:push
 ```
@@ -257,17 +271,17 @@ docker-compose exec app npm run db:push
 
 ### Конфигурация сессий:
 
-| Параметр | Значение | Описание |
-|----------|----------|----------|
-| **store** | PostgreSQL | Persistent хранилище сессий |
-| **tableName** | sessions | Таблица в БД |
-| **secret** | SESSION_SECRET | Секретный ключ для подписи cookies |
-| **resave** | false | Не пересохранять неизмененные сессии |
-| **saveUninitialized** | false | Не сохранять пустые сессии |
-| **cookie.secure** | true (prod) | HTTPS only в production |
-| **cookie.httpOnly** | true | Защита от XSS |
-| **cookie.maxAge** | 30 days | Длительность сессии |
-| **cookie.sameSite** | lax | CSRF защита |
+| Параметр              | Значение       | Описание                             |
+| --------------------- | -------------- | ------------------------------------ |
+| **store**             | PostgreSQL     | Persistent хранилище сессий          |
+| **tableName**         | sessions       | Таблица в БД                         |
+| **secret**            | SESSION_SECRET | Секретный ключ для подписи cookies   |
+| **resave**            | false          | Не пересохранять неизмененные сессии |
+| **saveUninitialized** | false          | Не сохранять пустые сессии           |
+| **cookie.secure**     | true (prod)    | HTTPS only в production              |
+| **cookie.httpOnly**   | true           | Защита от XSS                        |
+| **cookie.maxAge**     | 30 days        | Длительность сессии                  |
+| **cookie.sameSite**   | lax            | CSRF защита                          |
 
 ### Rate Limiting:
 
@@ -299,6 +313,7 @@ docker-compose exec app npm run db:push
 ### Проблема: "this[#e].query is not a function"
 
 После первого деплоя обнаружилась критическая ошибка:
+
 ```
 Failed to prune sessions: TypeError: this[#e].query is not a function
 ```
@@ -313,17 +328,17 @@ Failed to prune sessions: TypeError: this[#e].query is not a function
 import { db } from "../db";
 // ...
 store: new PgSession({
-  pool: db as any,  // Drizzle ORM объект
+  pool: db as any, // Drizzle ORM объект
   // ...
-})
+});
 
 // ✅ СТАЛО (правильно):
 import { pool } from "../db";
 // ...
 store: new PgSession({
-  pool: pool,  // Нативный pg.Pool
+  pool: pool, // Нативный pg.Pool
   // ...
-})
+});
 ```
 
 **Файл:** `server/auth/index.ts`
@@ -331,6 +346,7 @@ store: new PgSession({
 **Коммит:** `e7fa92cb` - Fix PostgreSQL session store configuration
 
 **Результат:**
+
 - ✅ Ошибки "Failed to prune sessions" полностью исчезли
 - ✅ Сессии корректно сохраняются в PostgreSQL
 - ✅ Платформа работает стабильно
@@ -359,6 +375,7 @@ store: new PgSession({
 **GitHub Repository:** https://github.com/Rustam4262/aurelle
 
 **Коммиты:**
+
 - `c547b100` - Add provider and providerId fields to users table
 - `2a20ca36` - Fix password validation mismatch and improve error handling
 - `e173a6ca` - Add express-session configuration with PostgreSQL store

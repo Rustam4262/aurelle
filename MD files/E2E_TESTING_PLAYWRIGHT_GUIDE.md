@@ -12,6 +12,7 @@
 This document provides a complete end-to-end testing suite using Playwright to automate critical user flows in AURELLE. The suite covers 5+ critical paths with screenshots on failure and CI/CD integration.
 
 **Goals**:
+
 - Automate critical user flows
 - Catch regressions before production
 - Enable continuous testing in CI/CD
@@ -51,11 +52,11 @@ npx playwright install-deps
 **File**: `playwright.config.ts`
 
 ```typescript
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   // Test directory
-  testDir: './e2e',
+  testDir: "./e2e",
 
   // Maximum time one test can run
   timeout: 60 * 1000,
@@ -71,24 +72,24 @@ export default defineConfig({
 
   // Reporters
   reporter: [
-    ['html'],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ["html"],
+    ["json", { outputFile: "test-results/results.json" }],
+    ["junit", { outputFile: "test-results/junit.xml" }],
   ],
 
   // Shared settings for all projects
   use: {
     // Base URL
-    baseURL: process.env.BASE_URL || 'http://localhost:5000',
+    baseURL: process.env.BASE_URL || "http://localhost:5000",
 
     // Collect trace when retrying the failed test
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
 
     // Screenshot on failure
-    screenshot: 'only-on-failure',
+    screenshot: "only-on-failure",
 
     // Video on failure
-    video: 'retain-on-failure',
+    video: "retain-on-failure",
 
     // Default timeout for actions
     actionTimeout: 10 * 1000,
@@ -100,32 +101,32 @@ export default defineConfig({
   // Configure projects for major browsers
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
     },
 
     // Mobile viewports
     {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      name: "Mobile Chrome",
+      use: { ...devices["Pixel 5"] },
     },
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 13'] },
+      name: "Mobile Safari",
+      use: { ...devices["iPhone 13"] },
     },
   ],
 
   // Run local dev server before starting tests
   webServer: {
-    command: 'npm run dev',
+    command: "npm run dev",
     port: 5000,
     reuseExistingServer: !process.env.CI,
   },
@@ -139,7 +140,7 @@ export default defineConfig({
 **File**: `e2e/utils/test-helpers.ts`
 
 ```typescript
-import { Page, expect } from '@playwright/test';
+import { Page, expect } from "@playwright/test";
 
 export class TestHelpers {
   constructor(private page: Page) {}
@@ -153,8 +154,8 @@ export class TestHelpers {
     phone: string;
     password: string;
   }) {
-    await this.page.goto('/auth');
-    await this.page.click('text=Sign Up');
+    await this.page.goto("/auth");
+    await this.page.click("text=Sign Up");
 
     await this.page.fill('input[name="fullName"]', userData.fullName);
     await this.page.fill('input[name="email"]', userData.email);
@@ -166,14 +167,14 @@ export class TestHelpers {
     await this.page.click('button:has-text("Create Account")');
 
     // Wait for success redirect
-    await this.page.waitForURL('/');
+    await this.page.waitForURL("/");
   }
 
   /**
    * Login with email and password
    */
   async loginUser(email: string, password: string) {
-    await this.page.goto('/auth');
+    await this.page.goto("/auth");
 
     await this.page.fill('input[name="email"]', email);
     await this.page.fill('input[name="password"]', password);
@@ -181,7 +182,7 @@ export class TestHelpers {
     await this.page.click('button:has-text("Sign In")');
 
     // Wait for successful login
-    await this.page.waitForURL('/');
+    await this.page.waitForURL("/");
     await expect(this.page.locator('[data-testid="user-avatar"]')).toBeVisible();
   }
 
@@ -190,9 +191,9 @@ export class TestHelpers {
    */
   async logoutUser() {
     await this.page.click('[data-testid="user-avatar"]');
-    await this.page.click('text=Log Out');
+    await this.page.click("text=Log Out");
     await this.page.click('button:has-text("Confirm")'); // Confirmation dialog
-    await this.page.waitForURL('/');
+    await this.page.waitForURL("/");
   }
 
   /**
@@ -200,7 +201,7 @@ export class TestHelpers {
    */
   async goToSalon(salonId: string) {
     await this.page.goto(`/salon/${salonId}`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
@@ -220,7 +221,7 @@ export class TestHelpers {
 
     // Step 2: Select master (or "Any Available")
     if (masterIndex === -1) {
-      await this.page.click('text=Any Available Master');
+      await this.page.click("text=Any Available Master");
     } else {
       await this.page.click(`[data-testid="master-card-${masterIndex}"]`);
     }
@@ -241,14 +242,14 @@ export class TestHelpers {
     await this.page.click('button:has-text("Confirm Booking")');
 
     // Wait for success screen
-    await expect(this.page.locator('text=Booking Confirmed')).toBeVisible();
+    await expect(this.page.locator("text=Booking Confirmed")).toBeVisible();
   }
 
   /**
    * Wait for toast notification
    */
   async waitForToast(message: string) {
-    await expect(this.page.locator('.toast', { hasText: message })).toBeVisible();
+    await expect(this.page.locator(".toast", { hasText: message })).toBeVisible();
   }
 
   /**
@@ -269,52 +270,52 @@ export class TestHelpers {
 ```typescript
 export const testUsers = {
   client: {
-    fullName: 'Test Client',
-    email: 'testclient@playwright.test',
-    phone: '+998901234567',
-    password: 'TestPass123!',
+    fullName: "Test Client",
+    email: "testclient@playwright.test",
+    phone: "+998901234567",
+    password: "TestPass123!",
   },
   owner: {
-    fullName: 'Test Owner',
-    email: 'testowner@playwright.test',
-    phone: '+998909876543',
-    password: 'OwnerPass123!',
+    fullName: "Test Owner",
+    email: "testowner@playwright.test",
+    phone: "+998909876543",
+    password: "OwnerPass123!",
   },
   admin: {
-    email: 'testadmin@playwright.test',
-    password: 'AdminPass123!',
+    email: "testadmin@playwright.test",
+    password: "AdminPass123!",
   },
 };
 
 export const testSalon = {
   name: {
-    en: 'Playwright Test Salon',
-    ru: 'Тестовый салон Playwright',
-    uz: 'Playwright test saloni',
+    en: "Playwright Test Salon",
+    ru: "Тестовый салон Playwright",
+    uz: "Playwright test saloni",
   },
   description: {
-    en: 'A test salon for E2E testing',
-    ru: 'Тестовый салон для E2E тестирования',
-    uz: 'E2E test uchun test saloni',
+    en: "A test salon for E2E testing",
+    ru: "Тестовый салон для E2E тестирования",
+    uz: "E2E test uchun test saloni",
   },
-  address: '123 Test Street, Tashkent',
-  city: 'Tashkent',
-  phone: '+998901111111',
-  email: 'testsalon@playwright.test',
+  address: "123 Test Street, Tashkent",
+  city: "Tashkent",
+  phone: "+998901111111",
+  email: "testsalon@playwright.test",
 };
 
 export const testService = {
   name: {
     en: "Women's Haircut",
-    ru: 'Женская стрижка',
-    uz: 'Ayollar soch turmaklash',
+    ru: "Женская стрижка",
+    uz: "Ayollar soch turmaklash",
   },
   description: {
-    en: 'Professional haircut for women',
-    ru: 'Профессиональная стрижка для женщин',
-    uz: 'Ayollar uchun professional soch turmaklash',
+    en: "Professional haircut for women",
+    ru: "Профессиональная стрижка для женщин",
+    uz: "Ayollar uchun professional soch turmaklash",
   },
-  category: 'Haircuts',
+  category: "Haircuts",
   duration: 45,
   priceMin: 25000,
   priceMax: 50000,
@@ -353,18 +354,18 @@ package.json
 **File**: `e2e/specs/user-registration.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../utils/test-helpers';
-import { testUsers } from '../fixtures/test-data';
+import { test, expect } from "@playwright/test";
+import { TestHelpers } from "../utils/test-helpers";
+import { testUsers } from "../fixtures/test-data";
 
-test.describe('User Registration & Login', () => {
+test.describe("User Registration & Login", () => {
   let helpers: TestHelpers;
 
   test.beforeEach(async ({ page }) => {
     helpers = new TestHelpers(page);
   });
 
-  test('should register a new user with email/password', async ({ page }) => {
+  test("should register a new user with email/password", async ({ page }) => {
     // Generate unique email for this test run
     const timestamp = Date.now();
     const userData = {
@@ -373,8 +374,8 @@ test.describe('User Registration & Login', () => {
     };
 
     // Navigate to auth page
-    await page.goto('/auth');
-    await page.click('text=Sign Up');
+    await page.goto("/auth");
+    await page.click("text=Sign Up");
 
     // Fill registration form
     await page.fill('input[name="fullName"]', userData.fullName);
@@ -390,44 +391,44 @@ test.describe('User Registration & Login', () => {
     await page.click('button:has-text("Create Account")');
 
     // Verify redirect to home page
-    await page.waitForURL('/');
+    await page.waitForURL("/");
 
     // Verify user is logged in (avatar visible)
     await expect(page.locator('[data-testid="user-avatar"]')).toBeVisible();
 
     // Verify success toast
-    await helpers.waitForToast('Account created successfully');
+    await helpers.waitForToast("Account created successfully");
   });
 
-  test('should login with existing credentials', async ({ page }) => {
+  test("should login with existing credentials", async ({ page }) => {
     // Assume user already registered (use seeded test user)
     const { email, password } = testUsers.client;
 
     await helpers.loginUser(email, password);
 
     // Verify user is on home page
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
 
     // Verify user avatar is visible
     await expect(page.locator('[data-testid="user-avatar"]')).toBeVisible();
   });
 
-  test('should show error for invalid credentials', async ({ page }) => {
-    await page.goto('/auth');
+  test("should show error for invalid credentials", async ({ page }) => {
+    await page.goto("/auth");
 
-    await page.fill('input[name="email"]', 'invalid@example.com');
-    await page.fill('input[name="password"]', 'WrongPassword');
+    await page.fill('input[name="email"]', "invalid@example.com");
+    await page.fill('input[name="password"]', "WrongPassword");
 
     await page.click('button:has-text("Sign In")');
 
     // Verify error message
-    await expect(page.locator('text=Invalid email or password')).toBeVisible();
+    await expect(page.locator("text=Invalid email or password")).toBeVisible();
 
     // Verify still on auth page
-    await expect(page).toHaveURL('/auth');
+    await expect(page).toHaveURL("/auth");
   });
 
-  test('should logout successfully', async ({ page }) => {
+  test("should logout successfully", async ({ page }) => {
     // Login first
     await helpers.loginUser(testUsers.client.email, testUsers.client.password);
 
@@ -435,29 +436,27 @@ test.describe('User Registration & Login', () => {
     await helpers.logoutUser();
 
     // Verify on home page
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
 
     // Verify avatar not visible
     await expect(page.locator('[data-testid="user-avatar"]')).not.toBeVisible();
 
     // Verify "Sign In" button is visible
-    await expect(page.locator('text=Sign In')).toBeVisible();
+    await expect(page.locator("text=Sign In")).toBeVisible();
   });
 
-  test('should validate password strength', async ({ page }) => {
-    await page.goto('/auth');
-    await page.click('text=Sign Up');
+  test("should validate password strength", async ({ page }) => {
+    await page.goto("/auth");
+    await page.click("text=Sign Up");
 
     // Try weak password
-    await page.fill('input[name="password"]', '123');
+    await page.fill('input[name="password"]', "123");
 
     // Verify error message
-    await expect(
-      page.locator('text=Password must be at least 8 characters')
-    ).toBeVisible();
+    await expect(page.locator("text=Password must be at least 8 characters")).toBeVisible();
 
     // Verify password strength indicator shows "Weak"
-    await expect(page.locator('text=Weak')).toBeVisible();
+    await expect(page.locator("text=Weak")).toBeVisible();
   });
 });
 ```
@@ -469,11 +468,11 @@ test.describe('User Registration & Login', () => {
 **File**: `e2e/specs/booking-flow.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../utils/test-helpers';
-import { testUsers } from '../fixtures/test-data';
+import { test, expect } from "@playwright/test";
+import { TestHelpers } from "../utils/test-helpers";
+import { testUsers } from "../fixtures/test-data";
 
-test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
+test.describe("Booking Flow (Search → Select → Book → Confirm)", () => {
   let helpers: TestHelpers;
 
   test.beforeEach(async ({ page }) => {
@@ -482,10 +481,10 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
     await helpers.loginUser(testUsers.client.email, testUsers.client.password);
   });
 
-  test('should complete full booking flow', async ({ page }) => {
+  test("should complete full booking flow", async ({ page }) => {
     // Step 1: Search for salons
-    await page.goto('/');
-    await page.fill('[data-testid="input-search-hero"]', 'haircut');
+    await page.goto("/");
+    await page.fill('[data-testid="input-search-hero"]', "haircut");
     await page.click('[data-testid="button-search-hero"]');
 
     // Verify search results
@@ -504,19 +503,19 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
     await page.click('[data-testid^="card-service-"]:first-child button:has-text("Book")');
 
     // Verify booking dialog opened
-    await expect(page.locator('text=Select Service')).toBeVisible();
+    await expect(page.locator("text=Select Service")).toBeVisible();
 
     // Continue to master selection
     await page.click('button:has-text("Continue")');
 
     // Step 5: Select "Any Available Master"
-    await page.click('text=Any Available Master');
+    await page.click("text=Any Available Master");
     await page.click('button:has-text("Continue")');
 
     // Step 6: Select date (tomorrow)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = tomorrow.toISOString().split('T')[0];
+    const dateStr = tomorrow.toISOString().split("T")[0];
 
     await page.click(`[data-date="${dateStr}"]`);
     await page.click('button:has-text("Continue")');
@@ -526,20 +525,20 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
     await page.click('button:has-text("Continue")');
 
     // Step 8: Add notes and confirm
-    await page.fill('textarea[name="notes"]', 'E2E test booking');
+    await page.fill('textarea[name="notes"]', "E2E test booking");
     await page.click('button:has-text("Confirm Booking")');
 
     // Verify success screen
-    await expect(page.locator('text=Booking Confirmed')).toBeVisible();
+    await expect(page.locator("text=Booking Confirmed")).toBeVisible();
     await expect(page.locator('[data-testid="booking-number"]')).toBeVisible();
 
     // Verify confirmation email message
-    await expect(page.locator('text=Confirmation sent to')).toBeVisible();
+    await expect(page.locator("text=Confirmation sent to")).toBeVisible();
   });
 
-  test('should prevent booking past dates', async ({ page }) => {
+  test("should prevent booking past dates", async ({ page }) => {
     // Go to salon detail
-    await page.goto('/salon/test-salon-id');
+    await page.goto("/salon/test-salon-id");
 
     // Start booking
     await page.click('button:has-text("Book Now")');
@@ -549,22 +548,22 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
     await page.click('button:has-text("Continue")');
 
     // Select master
-    await page.click('text=Any Available Master');
+    await page.click("text=Any Available Master");
     await page.click('button:has-text("Continue")');
 
     // Try to select yesterday's date
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const dateStr = yesterday.toISOString().split('T')[0];
+    const dateStr = yesterday.toISOString().split("T")[0];
 
     // Verify past date is disabled
     const pastDateButton = page.locator(`[data-date="${dateStr}"]`);
     await expect(pastDateButton).toBeDisabled();
   });
 
-  test('should show unavailable time slots as disabled', async ({ page }) => {
+  test("should show unavailable time slots as disabled", async ({ page }) => {
     // Navigate to salon with known booked slot
-    await page.goto('/salon/test-salon-id');
+    await page.goto("/salon/test-salon-id");
 
     // Start booking flow
     await page.click('button:has-text("Book Now")');
@@ -573,47 +572,47 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
     // ... (select service, master, date)
 
     // Verify some time slots are disabled (already booked)
-    const disabledSlots = page.locator('button[data-slot]:disabled');
+    const disabledSlots = page.locator("button[data-slot]:disabled");
     await expect(disabledSlots).toHaveCount.greaterThan(0);
   });
 
-  test('should allow canceling booking', async ({ page }) => {
+  test("should allow canceling booking", async ({ page }) => {
     // First, create a booking (use helper)
-    await page.goto('/salon/test-salon-id');
+    await page.goto("/salon/test-salon-id");
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = tomorrow.toISOString().split('T')[0];
+    const dateStr = tomorrow.toISOString().split("T")[0];
 
     await helpers.createBooking({
       serviceIndex: 0,
       masterIndex: -1, // Any available
       date: dateStr,
-      time: '14:00',
-      notes: 'Test booking for cancellation',
+      time: "14:00",
+      notes: "Test booking for cancellation",
     });
 
     // Navigate to "My Bookings"
-    await page.goto('/client');
-    await page.click('text=My Bookings');
+    await page.goto("/client");
+    await page.click("text=My Bookings");
 
     // Find the booking we just created
-    await expect(page.locator('text=Test booking for cancellation')).toBeVisible();
+    await expect(page.locator("text=Test booking for cancellation")).toBeVisible();
 
     // Click "Cancel Booking"
     await page.click('button:has-text("Cancel Booking"):first');
 
     // Select cancellation reason
-    await page.selectOption('select[name="reason"]', 'Schedule conflict');
+    await page.selectOption('select[name="reason"]', "Schedule conflict");
 
     // Confirm cancellation
     await page.click('button:has-text("Confirm Cancellation")');
 
     // Verify success
-    await helpers.waitForToast('Booking cancelled successfully');
+    await helpers.waitForToast("Booking cancelled successfully");
 
     // Verify booking status changed to "Cancelled"
-    await expect(page.locator('text=Cancelled')).toBeVisible();
+    await expect(page.locator("text=Cancelled")).toBeVisible();
   });
 });
 ```
@@ -625,11 +624,11 @@ test.describe('Booking Flow (Search → Select → Book → Confirm)', () => {
 **File**: `e2e/specs/owner-onboarding.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../utils/test-helpers';
-import { testUsers, testSalon, testService } from '../fixtures/test-data';
+import { test, expect } from "@playwright/test";
+import { TestHelpers } from "../utils/test-helpers";
+import { testUsers, testSalon, testService } from "../fixtures/test-data";
 
-test.describe('Owner Onboarding (Create Salon → Add Service → Receive Booking)', () => {
+test.describe("Owner Onboarding (Create Salon → Add Service → Receive Booking)", () => {
   let helpers: TestHelpers;
 
   test.beforeEach(async ({ page }) => {
@@ -638,9 +637,9 @@ test.describe('Owner Onboarding (Create Salon → Add Service → Receive Bookin
     await helpers.loginUser(testUsers.owner.email, testUsers.owner.password);
   });
 
-  test('should complete owner onboarding flow', async ({ page }) => {
+  test("should complete owner onboarding flow", async ({ page }) => {
     // Step 1: Create salon
-    await page.goto('/owner');
+    await page.goto("/owner");
     await page.click('button:has-text("Create New Salon")');
 
     // Fill salon form
@@ -662,16 +661,16 @@ test.describe('Owner Onboarding (Create Salon → Add Service → Receive Bookin
 
     // Upload photos (3 images)
     await page.setInputFiles('input[type="file"][name="photos"]', [
-      './e2e/fixtures/images/salon1.jpg',
-      './e2e/fixtures/images/salon2.jpg',
-      './e2e/fixtures/images/salon3.jpg',
+      "./e2e/fixtures/images/salon1.jpg",
+      "./e2e/fixtures/images/salon2.jpg",
+      "./e2e/fixtures/images/salon3.jpg",
     ]);
 
     // Submit salon creation
     await page.click('button:has-text("Create Salon")');
 
     // Verify success
-    await helpers.waitForToast('Salon created successfully');
+    await helpers.waitForToast("Salon created successfully");
 
     // Verify redirected to salon management page
     await expect(page).toHaveURL(/\/owner\/salon\/[a-z0-9-]+/);
@@ -695,7 +694,7 @@ test.describe('Owner Onboarding (Create Salon → Add Service → Receive Bookin
     await page.click('button:has-text("Add Service")');
 
     // Verify success
-    await helpers.waitForToast('Service added successfully');
+    await helpers.waitForToast("Service added successfully");
 
     // Verify service appears in service list
     await expect(page.locator(`text=${testService.name.en}`)).toBeVisible();
@@ -704,26 +703,26 @@ test.describe('Owner Onboarding (Create Salon → Add Service → Receive Bookin
     // (In real E2E, this would involve a second user booking, but we'll check the booking notification)
 
     // Navigate to bookings tab
-    await page.click('text=Bookings');
+    await page.click("text=Bookings");
 
     // Verify bookings page loads
-    await expect(page.locator('text=Upcoming Bookings')).toBeVisible();
+    await expect(page.locator("text=Upcoming Bookings")).toBeVisible();
 
     // Note: Actual booking would require running booking flow from client perspective
     // This test verifies owner can create salon and service successfully
   });
 
-  test('should validate salon creation form', async ({ page }) => {
-    await page.goto('/owner');
+  test("should validate salon creation form", async ({ page }) => {
+    await page.goto("/owner");
     await page.click('button:has-text("Create New Salon")');
 
     // Try to submit empty form
     await page.click('button:has-text("Create Salon")');
 
     // Verify validation errors appear
-    await expect(page.locator('text=Name is required')).toBeVisible();
-    await expect(page.locator('text=Address is required')).toBeVisible();
-    await expect(page.locator('text=Phone is required')).toBeVisible();
+    await expect(page.locator("text=Name is required")).toBeVisible();
+    await expect(page.locator("text=Address is required")).toBeVisible();
+    await expect(page.locator("text=Phone is required")).toBeVisible();
   });
 });
 ```
@@ -735,22 +734,22 @@ test.describe('Owner Onboarding (Create Salon → Add Service → Receive Bookin
 **File**: `e2e/specs/review-flow.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../utils/test-helpers';
-import { testUsers } from '../fixtures/test-data';
+import { test, expect } from "@playwright/test";
+import { TestHelpers } from "../utils/test-helpers";
+import { testUsers } from "../fixtures/test-data";
 
-test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
+test.describe("Review Flow (Client Leaves Review → Owner Responds)", () => {
   let helpers: TestHelpers;
 
-  test('should allow client to leave review and owner to respond', async ({ page, browser }) => {
+  test("should allow client to leave review and owner to respond", async ({ page, browser }) => {
     // Part 1: Client leaves review
 
     helpers = new TestHelpers(page);
     await helpers.loginUser(testUsers.client.email, testUsers.client.password);
 
     // Navigate to past bookings
-    await page.goto('/client');
-    await page.click('text=Past Bookings');
+    await page.goto("/client");
+    await page.click("text=Past Bookings");
 
     // Find completed booking (assume seeded test data has one)
     const completedBooking = page.locator('[data-testid="booking-card-completed"]:first');
@@ -767,19 +766,19 @@ test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
     await page.click('[data-testid="star-rating-master"] button:nth-child(5)');
 
     // Write comment
-    await page.fill('textarea[name="comment"]', 'Excellent service! Highly recommend.');
+    await page.fill('textarea[name="comment"]', "Excellent service! Highly recommend.");
 
     // Upload photos (2 images)
     await page.setInputFiles('input[type="file"][name="photos"]', [
-      './e2e/fixtures/images/review1.jpg',
-      './e2e/fixtures/images/review2.jpg',
+      "./e2e/fixtures/images/review1.jpg",
+      "./e2e/fixtures/images/review2.jpg",
     ]);
 
     // Submit review
     await page.click('button:has-text("Submit Review")');
 
     // Verify success
-    await helpers.waitForToast('Review submitted successfully');
+    await helpers.waitForToast("Review submitted successfully");
 
     // Logout client
     await helpers.logoutUser();
@@ -794,11 +793,11 @@ test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
     await ownerHelpers.loginUser(testUsers.owner.email, testUsers.owner.password);
 
     // Navigate to salon reviews
-    await ownerPage.goto('/owner/salon/test-salon-id');
-    await ownerPage.click('text=Reviews');
+    await ownerPage.goto("/owner/salon/test-salon-id");
+    await ownerPage.click("text=Reviews");
 
     // Find the review we just submitted
-    await expect(ownerPage.locator('text=Excellent service! Highly recommend.')).toBeVisible();
+    await expect(ownerPage.locator("text=Excellent service! Highly recommend.")).toBeVisible();
 
     // Click "Respond"
     await ownerPage.click('button:has-text("Respond")');
@@ -806,31 +805,29 @@ test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
     // Write response
     await ownerPage.fill(
       'textarea[name="response"]',
-      'Thank you for your kind words! We look forward to seeing you again.'
+      "Thank you for your kind words! We look forward to seeing you again.",
     );
 
     // Submit response
     await ownerPage.click('button:has-text("Submit Response")');
 
     // Verify success
-    await ownerHelpers.waitForToast('Response submitted successfully');
+    await ownerHelpers.waitForToast("Response submitted successfully");
 
     // Verify response appears below review
-    await expect(
-      ownerPage.locator('text=Thank you for your kind words!')
-    ).toBeVisible();
+    await expect(ownerPage.locator("text=Thank you for your kind words!")).toBeVisible();
 
     // Cleanup
     await ownerPage.close();
   });
 
-  test('should prevent duplicate reviews', async ({ page }) => {
+  test("should prevent duplicate reviews", async ({ page }) => {
     helpers = new TestHelpers(page);
     await helpers.loginUser(testUsers.client.email, testUsers.client.password);
 
     // Navigate to past bookings
-    await page.goto('/client');
-    await page.click('text=Past Bookings');
+    await page.goto("/client");
+    await page.click("text=Past Bookings");
 
     // Find already-reviewed booking
     const reviewedBooking = page.locator('[data-testid="booking-card-reviewed"]:first');
@@ -839,10 +836,10 @@ test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
     await expect(reviewedBooking.locator('button:has-text("Leave Review")')).not.toBeVisible();
 
     // Verify "You already reviewed this" message
-    await expect(reviewedBooking.locator('text=You already reviewed this')).toBeVisible();
+    await expect(reviewedBooking.locator("text=You already reviewed this")).toBeVisible();
 
     // Verify "Edit Review" link is visible instead
-    await expect(reviewedBooking.locator('text=Edit Review')).toBeVisible();
+    await expect(reviewedBooking.locator("text=Edit Review")).toBeVisible();
   });
 });
 ```
@@ -854,11 +851,11 @@ test.describe('Review Flow (Client Leaves Review → Owner Responds)', () => {
 **File**: `e2e/specs/admin-moderation.spec.ts`
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../utils/test-helpers';
-import { testUsers } from '../fixtures/test-data';
+import { test, expect } from "@playwright/test";
+import { TestHelpers } from "../utils/test-helpers";
+import { testUsers } from "../fixtures/test-data";
 
-test.describe('Admin Moderation (Block User, Handle Complaints)', () => {
+test.describe("Admin Moderation (Block User, Handle Complaints)", () => {
   let helpers: TestHelpers;
 
   test.beforeEach(async ({ page }) => {
@@ -867,9 +864,9 @@ test.describe('Admin Moderation (Block User, Handle Complaints)', () => {
     await helpers.loginUser(testUsers.admin.email, testUsers.admin.password);
   });
 
-  test('should allow admin to block a user', async ({ page }) => {
+  test("should allow admin to block a user", async ({ page }) => {
     // Navigate to admin users page
-    await page.goto('/admin/users');
+    await page.goto("/admin/users");
 
     // Search for test user
     await page.fill('[data-testid="search-users"]', testUsers.client.email);
@@ -882,65 +879,63 @@ test.describe('Admin Moderation (Block User, Handle Complaints)', () => {
     await page.click('[data-testid="user-actions-dropdown"]');
 
     // Click "Block User"
-    await page.click('text=Block User');
+    await page.click("text=Block User");
 
     // Fill block reason
-    await page.selectOption('select[name="reason"]', 'Spam');
+    await page.selectOption('select[name="reason"]', "Spam");
 
     // Set duration
-    await page.selectOption('select[name="duration"]', 'permanent');
+    await page.selectOption('select[name="duration"]', "permanent");
 
     // Submit
     await page.click('button:has-text("Confirm Block")');
 
     // Verify success
-    await helpers.waitForToast('User blocked successfully');
+    await helpers.waitForToast("User blocked successfully");
 
     // Verify user status changed to "Blocked"
-    await expect(page.locator('text=Blocked')).toBeVisible();
+    await expect(page.locator("text=Blocked")).toBeVisible();
 
     // Verify audit log entry created (check audit tab)
-    await page.click('text=Audit Log');
-    await expect(
-      page.locator(`text=Blocked user ${testUsers.client.email}`)
-    ).toBeVisible();
+    await page.click("text=Audit Log");
+    await expect(page.locator(`text=Blocked user ${testUsers.client.email}`)).toBeVisible();
   });
 
-  test('should allow admin to handle complaint', async ({ page }) => {
+  test("should allow admin to handle complaint", async ({ page }) => {
     // Navigate to complaints page
-    await page.goto('/admin/complaints');
+    await page.goto("/admin/complaints");
 
     // Verify complaints list loads
-    await expect(page.locator('text=Complaints')).toBeVisible();
+    await expect(page.locator("text=Complaints")).toBeVisible();
 
     // Open first complaint
     await page.click('[data-testid="complaint-card"]:first');
 
     // Verify complaint details modal opens
-    await expect(page.locator('text=Complaint Details')).toBeVisible();
+    await expect(page.locator("text=Complaint Details")).toBeVisible();
 
     // Assign to moderator
-    await page.selectOption('select[name="assignedTo"]', 'moderator-id-123');
+    await page.selectOption('select[name="assignedTo"]', "moderator-id-123");
 
     // Update status
-    await page.selectOption('select[name="status"]', 'in_progress');
+    await page.selectOption('select[name="status"]', "in_progress");
 
     // Add internal note
-    await page.fill('textarea[name="note"]', 'Investigating this complaint');
+    await page.fill('textarea[name="note"]', "Investigating this complaint");
 
     // Save changes
     await page.click('button:has-text("Save Changes")');
 
     // Verify success
-    await helpers.waitForToast('Complaint updated successfully');
+    await helpers.waitForToast("Complaint updated successfully");
 
     // Verify status updated in list
-    await expect(page.locator('text=In Progress')).toBeVisible();
+    await expect(page.locator("text=In Progress")).toBeVisible();
   });
 
-  test('should allow admin to apply sanction', async ({ page }) => {
+  test("should allow admin to apply sanction", async ({ page }) => {
     // Navigate to sanctions page
-    await page.goto('/admin/sanctions');
+    await page.goto("/admin/sanctions");
 
     // Click "New Sanction"
     await page.click('button:has-text("New Sanction")');
@@ -950,38 +945,33 @@ test.describe('Admin Moderation (Block User, Handle Complaints)', () => {
     await page.click(`text=${testUsers.client.email}`);
 
     // Select sanction type
-    await page.selectOption('select[name="type"]', 'warning');
+    await page.selectOption('select[name="type"]', "warning");
 
     // Enter reason
-    await page.fill(
-      'textarea[name="reason"]',
-      'Posted inappropriate review content'
-    );
+    await page.fill('textarea[name="reason"]', "Posted inappropriate review content");
 
     // Submit
     await page.click('button:has-text("Apply Sanction")');
 
     // Verify success
-    await helpers.waitForToast('Sanction applied successfully');
+    await helpers.waitForToast("Sanction applied successfully");
 
     // Verify sanction appears in list
-    await expect(
-      page.locator('text=Posted inappropriate review content')
-    ).toBeVisible();
+    await expect(page.locator("text=Posted inappropriate review content")).toBeVisible();
 
     // Verify user received notification (check notification icon)
     // This would require checking email or in-app notifications
   });
 
-  test('should allow admin to view analytics dashboard', async ({ page }) => {
+  test("should allow admin to view analytics dashboard", async ({ page }) => {
     // Navigate to admin dashboard
-    await page.goto('/admin');
+    await page.goto("/admin");
 
     // Verify key metrics are visible
-    await expect(page.locator('text=Total Users')).toBeVisible();
-    await expect(page.locator('text=Total Bookings')).toBeVisible();
-    await expect(page.locator('text=Total Revenue')).toBeVisible();
-    await expect(page.locator('text=Active Salons')).toBeVisible();
+    await expect(page.locator("text=Total Users")).toBeVisible();
+    await expect(page.locator("text=Total Bookings")).toBeVisible();
+    await expect(page.locator("text=Total Revenue")).toBeVisible();
+    await expect(page.locator("text=Active Salons")).toBeVisible();
 
     // Verify charts render
     await expect(page.locator('[data-testid="bookings-chart"]')).toBeVisible();
@@ -989,7 +979,7 @@ test.describe('Admin Moderation (Block User, Handle Complaints)', () => {
 
     // Filter by date range
     await page.click('[data-testid="date-range-picker"]');
-    await page.click('text=Last 30 Days');
+    await page.click("text=Last 30 Days");
 
     // Verify charts update (check for loading state then data)
     await expect(page.locator('[data-testid="chart-loading"]')).toBeVisible();
@@ -1040,8 +1030,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -1141,7 +1131,7 @@ test.afterEach(async ({ page }) => {
   // Clean up test data
   await page.evaluate(() => {
     // Delete test bookings, reviews, etc.
-    fetch('/api/test/cleanup', { method: 'POST' });
+    fetch("/api/test/cleanup", { method: "POST" });
   });
 });
 ```
@@ -1169,8 +1159,8 @@ await page.click('[data-testid="button-book-main"]');
 ### 3. Wait for Network Idle
 
 ```typescript
-await page.goto('/salon/123');
-await page.waitForLoadState('networkidle');
+await page.goto("/salon/123");
+await page.waitForLoadState("networkidle");
 ```
 
 **Why**: Ensures all API calls complete before interacting with page
@@ -1185,7 +1175,7 @@ const { email, password } = testUsers.client;
 await helpers.loginUser(email, password);
 
 // Bad: Hardcode in tests
-await page.fill('input[name="email"]', 'test@example.com');
+await page.fill('input[name="email"]', "test@example.com");
 ```
 
 ---
@@ -1195,7 +1185,7 @@ await page.fill('input[name="email"]', 'test@example.com');
 Already configured in `playwright.config.ts`:
 
 ```typescript
-screenshot: 'only-on-failure';
+screenshot: "only-on-failure";
 ```
 
 Screenshots saved to `screenshots/` directory
@@ -1305,6 +1295,7 @@ npx playwright show-trace test-results/trace.zip
 This comprehensive Playwright E2E test suite provides automated testing for all critical user flows in AURELLE. With 5+ test files covering 17+ scenarios, CI/CD integration, and automatic screenshot/video capture on failure, the team can confidently deploy knowing regressions will be caught early.
 
 **Next Steps**:
+
 1. Run tests locally to verify setup
 2. Push to CI/CD pipeline
 3. Monitor test results

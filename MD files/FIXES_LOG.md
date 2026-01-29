@@ -3,9 +3,11 @@
 ## Fix #1: Booking Creation Failing (500 Error)
 
 ### Problem
+
 **Error:** `null value in column "master_id" of relation "bookings" violates not-null constraint`
 
 **Symptoms:**
+
 - Clients unable to book services
 - 500 Internal Server Error when submitting booking form
 - Error shown in UI: "marketplace.salon.bookingFailed 500: {"error":"Failed to create booking"}"
@@ -14,16 +16,19 @@
 The database schema had `master_id` column defined as NOT NULL, but the application logic allowed clients to book without selecting a specific master (passing `null` value). This created a constraint violation.
 
 ### Solution
+
 Made `master_id` column nullable in the bookings table schema.
 
 **Changed File:** `shared/schema.ts` (line 166)
 
 **Before:**
+
 ```typescript
 masterId: varchar("master_id").notNull(),
 ```
 
 **After:**
+
 ```typescript
 masterId: varchar("master_id"), // Optional - allows booking without specific master
 ```
@@ -32,12 +37,14 @@ masterId: varchar("master_id"), // Optional - allows booking without specific ma
 
 **Option A: Automated (Recommended)**
 SSH to production server and run:
+
 ```bash
 cd /var/www/aurelle
 bash deploy_booking_fix.sh
 ```
 
 **Option B: Manual Steps**
+
 ```bash
 # 1. Pull code
 cd /var/www/aurelle
@@ -58,12 +65,14 @@ docker restart aurelle_app_1
 ```
 
 **Verification:**
+
 1. Log in as a client
 2. Select a salon and service
 3. Try booking WITHOUT selecting a master
 4. Booking should succeed
 
 ### Commit
+
 - **Commit Hash:** `51f07c2b`
 - **Message:** "Fix booking creation: make master_id nullable in bookings table"
 - **Date:** January 5, 2026
@@ -73,9 +82,11 @@ docker restart aurelle_app_1
 ## Fix #2: Photo Upload Failing (FIXED)
 
 ### Problem
+
 **Error:** "Upload failed. Failed to upload image. Please try again."
 
 **Symptoms:**
+
 - Master portfolio photo upload fails
 - Salon photo upload fails
 - ImageUpload component shows error toast
@@ -84,9 +95,11 @@ docker restart aurelle_app_1
 Upload directories didn't exist on the production server. When multer tried to save uploaded files to `server/uploads/{salons|masters|portfolio|avatars}/`, the directories were missing, causing the upload to fail silently.
 
 ### Solution
+
 Created automatic directory initialization on server startup.
 
 **New File:** `server/initUploads.ts`
+
 ```typescript
 export function initializeUploadDirectories() {
   const uploadsBasePath = path.join(process.cwd(), "server", "uploads");
@@ -110,15 +123,18 @@ export function initializeUploadDirectories() {
 **Added:** `.gitkeep` files in each upload subdirectory to track structure in git
 
 ### Deployment
+
 Will be deployed together with booking fix using the deployment script.
 
 ### Verification
+
 1. Upload a photo to master portfolio
 2. Upload a photo to salon photos
 3. Check that files are saved to `server/uploads/` directory
 4. Verify images are accessible via `/uploads/{type}/{filename}` URL
 
 ### Commit
+
 - **Commit Hash:** `fd05f5e4`
 - **Message:** "Fix photo upload: initialize upload directories on server startup"
 - **Date:** January 5, 2026
@@ -128,12 +144,14 @@ Will be deployed together with booking fix using the deployment script.
 ## Fix #3: Geolocation Feature (COMPLETED)
 
 ### Problem
+
 Salon owners couldn't set their salon's geolocation via Yandex Maps. Clients couldn't see salon location on a map.
 
 **User Request:**
 "в платформе нет возможность для владелца салона указать геолокацию через yandex своего салона, у клиентов допольнытельный возможность, при выборе салона должен показыть где он находится по геолокацию и адрес чтобы клиенты просто скопировали"
 
 ### Solution
+
 Implemented comprehensive geolocation feature using Yandex Maps API.
 
 **New Components:**
@@ -154,6 +172,7 @@ Implemented comprehensive geolocation feature using Yandex Maps API.
 **Integration:**
 
 For Salon Owners ([owner-salon.tsx:450-458](client/src/pages/owner-salon.tsx#L450-L458)):
+
 - "Edit Location" button in salon info tab
 - Opens dialog with interactive map
 - Click on map or drag marker to set location
@@ -161,21 +180,25 @@ For Salon Owners ([owner-salon.tsx:450-458](client/src/pages/owner-salon.tsx#L45
 - Save updates salon address, latitude, longitude
 
 For Clients ([salon.tsx:432-440](client/src/pages/salon.tsx#L432-L440)):
+
 - Location map in "About" tab
 - Shows salon with red marker
 - Copy address button
 - Open in Yandex Maps for navigation
 
 **Dependencies:**
+
 - Installed `@pbe/react-yandex-maps` library
 
 **Translations:**
 Added keys in all 3 languages (en, ru, uz):
+
 - editLocation / Изменить местоположение / Manzilni o'zgartirish
 - locationUpdated / Местоположение обновлено / Manzil yangilandi
 - saveLocation / Сохранить местоположение / Manzilni saqlash
 
 ### Verification
+
 1. Log in as salon owner
 2. Go to salon dashboard → Info tab
 3. Click "Изменить местоположение"
@@ -186,6 +209,7 @@ Added keys in all 3 languages (en, ru, uz):
 8. See location on map with copy/open buttons
 
 ### Commit
+
 - **Commit Hash:** `460230a6`
 - **Message:** "Add Yandex Maps geolocation feature for salons"
 - **Date:** January 5, 2026
@@ -209,6 +233,7 @@ Added keys in all 3 languages (en, ru, uz):
 ## Deployment Checklist
 
 Before deploying any fix:
+
 - [ ] Create database backup
 - [ ] Test locally
 - [ ] Commit changes to git
@@ -222,6 +247,7 @@ Before deploying any fix:
 ## Rollback Procedure
 
 If deployment fails:
+
 ```bash
 # 1. Restore database
 docker exec -i aurelle_postgres_1 psql -U aurelle_user -d aurelle < /root/backups/[BACKUP_FILE]

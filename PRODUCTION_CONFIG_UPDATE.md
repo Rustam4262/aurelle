@@ -36,16 +36,19 @@
 ## 📊 Текущие данные в БД
 
 ### Салоны (4 шт):
+
 1. **Люкс Салон Красоты** (Ташкент) - рейтинг 4.8, 24 отзыва
 2. **Релакс СПА** (Ташкент) - рейтинг 4.9, 18 отзывов
 3. **Стиль и Красота** (Самарканд) - рейтинг 4.7, 31 отзыв
 4. **haircut** (Ташкент) - создан вручную пользователем
 
 ### Мастера (3 шт):
+
 - Создано seed скриптом
 - Привязаны к салонам
 
 ### Услуги (5 шт):
+
 - Создано seed скриптом
 - Связаны с мастерами
 
@@ -56,6 +59,7 @@
 ### Критичные (P0):
 
 #### 1. Email уведомления
+
 **Статус**: ❌ Не настроено
 **Причина**: Нет SMTP credentials
 
@@ -69,6 +73,7 @@
 4. Скопировать API key
 
 Добавить в `.env` на сервере:
+
 ```env
 # Email notifications
 SMTP_HOST=smtp.sendgrid.net
@@ -80,6 +85,7 @@ EMAIL_FROM=AURELLE <noreply@aurelle.uz>
 ```
 
 Перезапустить:
+
 ```bash
 pm2 restart aurelle-production --update-env
 ```
@@ -87,6 +93,7 @@ pm2 restart aurelle-production --update-env
 ---
 
 #### 2. OAuth (Google + Yandex)
+
 **Статус**: ❌ Не настроено
 **Причина**: Нет Client ID и Secret
 
@@ -110,6 +117,7 @@ pm2 restart aurelle-production --update-env
 6. Copy ID and Password
 
 Добавить в `.env`:
+
 ```env
 # OAuth
 GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
@@ -121,6 +129,7 @@ YANDEX_CLIENT_SECRET=xyz456
 ---
 
 #### 3. Яндекс.Карты API
+
 **Статус**: ❌ Не настроено
 **Причина**: Нет API ключа
 
@@ -134,11 +143,13 @@ YANDEX_CLIENT_SECRET=xyz456
 **⚠️ Важно**: Это для **frontend**!
 
 Создать на сервере:
+
 ```bash
 echo "VITE_YANDEX_MAPS_API_KEY=your-api-key-here" > /var/www/aurelle/current/client/.env
 ```
 
 Пересобрать фронтенд:
+
 ```bash
 cd /var/www/aurelle/current
 npm run build
@@ -150,6 +161,7 @@ pm2 restart aurelle-production
 ### Важные (P1):
 
 #### 4. Sentry мониторинг (опционально)
+
 **Статус**: ❌ Не настроено
 
 1. https://sentry.io/signup
@@ -158,6 +170,7 @@ pm2 restart aurelle-production
 4. Copy DSN
 
 Добавить в `.env`:
+
 ```env
 SENTRY_DSN=https://abc@o123.ingest.sentry.io/456
 SENTRY_ENVIRONMENT=production
@@ -217,6 +230,7 @@ YANDEX_CLIENT_SECRET=
 ## 🚀 Быстрый чеклист
 
 ### Сделано ✅:
+
 - [x] Тестовые данные созданы (3 салона, 3 мастера, 5 услуг)
 - [x] Redis подключен и работает
 - [x] Push уведомления настроены (VAPID ключи)
@@ -224,6 +238,7 @@ YANDEX_CLIENT_SECRET=
 - [x] Приложение перезапущено
 
 ### Осталось сделать ❌:
+
 - [ ] Настроить Email (SendGrid) - **15 минут**
 - [ ] Получить Google OAuth credentials - **5 минут**
 - [ ] Получить Yandex OAuth credentials - **5 минут**
@@ -237,22 +252,26 @@ YANDEX_CLIENT_SECRET=
 ## 🎯 Что изменится после настройки
 
 ### После Email:
+
 ✅ Пользователи получают письмо при регистрации
 ✅ Подтверждение бронирования по email
 ✅ Напоминания за 24 часа до записи
 ✅ Уведомление об отмене бронирования
 
 ### После OAuth:
+
 ✅ Вход через Google (кнопка появится)
 ✅ Вход через Яндекс (кнопка появится)
 ✅ Быстрая регистрация без пароля
 
 ### После Яндекс.Карты:
+
 ✅ Карта с салонами на главной странице
 ✅ Карта на странице салона
 ✅ Выбор местоположения при создании салона
 
 ### После Sentry:
+
 ✅ Автоматическое отслеживание ошибок
 ✅ Email уведомления об ошибках
 ✅ Performance monitoring
@@ -264,24 +283,28 @@ YANDEX_CLIENT_SECRET=
 ### Проверка текущих функций:
 
 **1. Салоны:**
+
 ```bash
 curl https://aurelle.uz/api/salons
 # Должно вернуть 4 салона (3 seed + 1 вручную)
 ```
 
 **2. Push уведомления:**
+
 ```bash
 pm2 logs aurelle-production | grep PUSH
 # [PUSH] ✅ Web Push configured with VAPID keys
 ```
 
 **3. Redis:**
+
 ```bash
 docker exec aurelle-redis redis-cli ping
 # PONG
 ```
 
 **4. Seed данные:**
+
 - https://aurelle.uz - должны отображаться 4 салона
 - Рейтинги: 4.7-4.9
 - Города: Ташкент, Самарканд
@@ -291,6 +314,7 @@ docker exec aurelle-redis redis-cli ping
 ## 🔗 Полезные ссылки
 
 ### Для настройки:
+
 - SendGrid: https://signup.sendgrid.com
 - Google OAuth: https://console.cloud.google.com/apis/credentials
 - Yandex OAuth: https://oauth.yandex.ru
@@ -298,6 +322,7 @@ docker exec aurelle-redis redis-cli ping
 - Sentry: https://sentry.io/signup
 
 ### Документация:
+
 - [PRODUCTION_MISSING_CONFIG.md](./PRODUCTION_MISSING_CONFIG.md) - Полное описание проблем
 - [PRODUCTION_DEPLOYMENT_GUIDE.md](./MD%20files/PRODUCTION_DEPLOYMENT_GUIDE.md) - Руководство по деплою
 - [PRODUCTION_QUICK_COMMANDS.md](./PRODUCTION_QUICK_COMMANDS.md) - Быстрые команды
