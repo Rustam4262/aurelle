@@ -14,8 +14,14 @@ import {
   addDays,
   isSameDay as isSameDayFns,
 } from "date-fns";
-import { Clock, User, Store, Scissors, CalendarDays } from "lucide-react";
+import { Clock, User, Store, Scissors, CalendarDays, Flame, Sparkles, TrendingUp } from "lucide-react";
 import type { Booking, Service, Master, Salon } from "@shared/schema";
+import {
+  analyzeTimeSlot,
+  getPeriodLabel,
+  getDayQualityIcon,
+  type TimeSlotAnalysis,
+} from "@/lib/slot-insights";
 
 interface EnrichedBooking extends Booking {
   salon?: Salon;
@@ -32,8 +38,8 @@ interface BookingCalendarProps {
   showMaster?: boolean;
   showSalon?: boolean;
   isLoading?: boolean;
-  maxAdvanceBookingDays?: number; // Maximum days in advance for booking
-  disablePastDates?: boolean; // Block past dates
+  maxAdvanceBookingDays?: number;
+  disablePastDates?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,14 +58,25 @@ function getLocalizedText(
   return obj[langKey] || obj.en || "";
 }
 
-function generateTimeSlots(start: string, end: string): string[] {
-  const slots: string[] = [];
+interface TimeSlotData {
+  time: string;
+  period: TimeSlotAnalysis["period"];
+  isPrimeTime: boolean;
+}
+
+function generateTimeSlots(start: string, end: string): TimeSlotData[] {
+  const slots: TimeSlotData[] = [];
   const [startHour] = start.split(":").map(Number);
   const [endHour] = end.split(":").map(Number);
 
   for (let hour = startHour; hour < endHour; hour++) {
-    slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    slots.push(`${hour.toString().padStart(2, "0")}:30`);
+    const time1 = `${hour.toString().padStart(2, "0")}:00`;
+    const time2 = `${hour.toString().padStart(2, "0")}:30`;
+    const analysis1 = analyzeTimeSlot(time1);
+    const analysis2 = analyzeTimeSlot(time2);
+
+    slots.push({ time: time1, period: analysis1.period, isPrimeTime: analysis1.isPrimeTime });
+    slots.push({ time: time2, period: analysis2.period, isPrimeTime: analysis2.isPrimeTime });
   }
   return slots;
 }
@@ -82,6 +99,21 @@ function isTimeSlotBooked(slot: string, bookings: EnrichedBooking[]): EnrichedBo
   return null;
 }
 
+function groupSlotsByPeriod(slots: TimeSlotData[]): Record<TimeSlotAnalysis["period"], TimeSlotData[]> {
+  const groups: Record<TimeSlotAnalysis["period"], TimeSlotData[]> = {
+    morning: [],
+    midday: [],
+    afternoon: [],
+    evening: [],
+  };
+
+  for (const slot of slots) {
+    groups[slot.period].push(slot);
+  }
+
+  return groups;
+}
+
 export function BookingCalendar({
   bookings,
   workingHoursStart = "09:00",
@@ -90,8 +122,8 @@ export function BookingCalendar({
   showMaster = false,
   showSalon = false,
   isLoading = false,
-  maxAdvanceBookingDays = 90, // Default: 90 days in advance
-  disablePastDates = true, // Default: block past dates
+  maxAdvanceBookingDays = 90,
+  disablePastDates = true,
 }: BookingCalendarProps) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
@@ -126,14 +158,61 @@ export function BookingCalendar({
     return generateTimeSlots(workingHoursStart, workingHoursEnd);
   }, [workingHoursStart, workingHoursEnd]);
 
+  const groupedSlots = useMemo(() => {
+    return groupSlotsByPeriod(timeSlots);
+  }, [timeSlots]);
+
   const activeBookings = selectedDateBookings.filter((b) => b.status !== "cancelled");
 
-  // Handle "Today" button click
+  // Calculate day insights
+  const dayInsights = useMemo(() => {
+    const freeSlots = timeSlots.filter((slot) => {
+      return !isTimeSlotBooked(slot.time, selectedDateBookings);
+    });
+
+    const primeTimeFree = freeSlots.filter((s) => s.isPrimeTime).length;
+    const totalFree = freeSlots.length;
+    const totalSlots = timeSlots.length;
+
+    let quality: "excellent" | "good" | "limited" | "full" = "excellent";
+    const ratio = totalFree / totalSlots;
+    if (ratio === 0) quality = "full";
+    else if (ratio < 0.2) quality = "limited";
+    else if (ratio < 0.5) quality = "good";
+
+    const recommendations: Record<string, Record<typeof quality, string>> = {
+      ru: {
+        excellent: "Отличный день для записи",
+        good: "Хороший выбор времени",
+        limited: "Осталось мало свободных слотов",
+        full: "Все слоты заняты",
+      },
+      en: {
+        excellent: "Great day for booking",
+        good: "Good time selection",
+        limited: "Few slots remaining",
+        full: "Fully booked",
+      },
+      uz: {
+        excellent: "Yozilish uchun ajoyib kun",
+        good: "Yaxshi vaqt tanlovi",
+        limited: "Kam bo'sh slotlar qoldi",
+        full: "To'liq band",
+      },
+    };
+
+    return {
+      totalFree,
+      primeTimeFree,
+      quality,
+      recommendation: recommendations[currentLang]?.[quality] || recommendations.en[quality],
+    };
+  }, [timeSlots, selectedDateBookings, currentLang]);
+
   const handleTodayClick = () => {
     setSelectedDate(new Date());
   };
 
-  // Check if date should be disabled
   const isDateDisabled = (date: Date) => {
     if (disablePastDates && isBefore(startOfDay(date), today)) {
       return true;
@@ -151,6 +230,107 @@ export function BookingCalendar({
       </div>
     );
   }
+
+  // Render slot group with smart styling
+  const renderSlotGroup = (
+    period: TimeSlotAnalysis["period"],
+    slots: TimeSlotData[],
+    icon: string,
+  ) => {
+    if (slots.length === 0) return null;
+
+    const periodBookings = slots.filter((s) => isTimeSlotBooked(s.time, selectedDateBookings));
+    const periodFree = slots.length - periodBookings.length;
+    const hasPrimeTime = slots.some((s) => s.isPrimeTime);
+
+    return (
+      <div key={period} className="space-y-1">
+        <div className="flex items-center justify-between text-xs sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
+          <div className="flex items-center gap-2">
+            <span>{icon}</span>
+            <span className="font-medium text-muted-foreground">
+              {getPeriodLabel(period, currentLang)}
+            </span>
+            {hasPrimeTime && period !== "morning" && period !== "evening" && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                <Flame className="h-2.5 w-2.5 mr-0.5 text-orange-500" />
+                {t("marketplace.calendar.popular", "Popular")}
+              </Badge>
+            )}
+          </div>
+          <span className="text-muted-foreground">
+            {periodFree}/{slots.length} {t("marketplace.calendar.free", "free")}
+          </span>
+        </div>
+
+        {slots.map((slotData) => {
+          const booking = isTimeSlotBooked(slotData.time, selectedDateBookings);
+          const isFree = !booking;
+
+          return (
+            <div
+              key={slotData.time}
+              className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
+                isFree
+                  ? slotData.isPrimeTime
+                    ? "bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-950/50 border-l-2 border-orange-400"
+                    : "bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50"
+                  : booking?.status === "cancelled"
+                    ? "bg-muted/30"
+                    : "bg-muted"
+              }`}
+              data-testid={`timeslot-${slotData.time}`}
+            >
+              <span className="text-sm font-mono w-12 text-muted-foreground">{slotData.time}</span>
+              {isFree ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    {t("marketplace.calendar.free")}
+                  </span>
+                  {slotData.isPrimeTime && (
+                    <Flame className="h-3 w-3 text-orange-500" />
+                  )}
+                </div>
+              ) : (
+                booking && (
+                  <div className="flex-1 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={STATUS_COLORS[booking.status || "pending"]}>
+                        {t(`marketplace.bookings.status.${booking.status || "pending"}`)}
+                      </Badge>
+                      {showSalon && booking.salon && (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Store className="h-3 w-3" />
+                          {getLocalizedText(booking.salon.name as any, currentLang)}
+                        </span>
+                      )}
+                      {showMaster && booking.master && (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Scissors className="h-3 w-3" />
+                          {booking.master.name}
+                        </span>
+                      )}
+                      {showClient && (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {booking.clientName || `#${booking.clientId.slice(-6)}`}
+                        </span>
+                      )}
+                    </div>
+                    {booking.service && (
+                      <span className="text-xs text-muted-foreground">
+                        {getLocalizedText(booking.service.name as any, currentLang)}
+                      </span>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -231,92 +411,59 @@ export function BookingCalendar({
 
         {selectedDate && (
           <>
-            <div className="mb-4 flex items-center gap-4 flex-wrap">
-              <Badge variant="outline">
-                {activeBookings.length} {t("marketplace.calendar.bookings")}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={activeBookings.length > 0 ? "bg-green-100 dark:bg-green-900" : ""}
-              >
-                {timeSlots.length -
-                  activeBookings.reduce((acc, b) => {
-                    const startMinutes =
-                      parseInt(b.startTime.split(":")[0]) * 60 +
-                      parseInt(b.startTime.split(":")[1]);
-                    const endMinutes =
-                      parseInt(b.endTime.split(":")[0]) * 60 + parseInt(b.endTime.split(":")[1]);
-                    return acc + Math.ceil((endMinutes - startMinutes) / 30);
-                  }, 0)}{" "}
-                {t("marketplace.calendar.freeSlots")}
-              </Badge>
-              {selectedDate && isSameDayFns(selectedDate, today) && (
-                <Badge className="bg-accent text-accent-foreground">
-                  {t("marketplace.calendar.today")}
+            {/* Smart Header with Day Insights */}
+            <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{getDayQualityIcon(dayInsights.quality)}</span>
+                  <span className="font-medium text-sm">{dayInsights.recommendation}</span>
+                </div>
+                {selectedDate && isSameDayFns(selectedDate, today) && (
+                  <Badge className="bg-accent text-accent-foreground">
+                    {t("marketplace.calendar.today")}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-3 text-xs">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {activeBookings.length} {t("marketplace.calendar.bookings")}
                 </Badge>
-              )}
+                <Badge
+                  variant="outline"
+                  className={dayInsights.totalFree > 0 ? "bg-green-100 dark:bg-green-900" : ""}
+                >
+                  {dayInsights.totalFree} {t("marketplace.calendar.freeSlots")}
+                </Badge>
+                {dayInsights.primeTimeFree > 0 && (
+                  <Badge variant="outline" className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900">
+                    <Flame className="h-3 w-3 text-orange-500" />
+                    {dayInsights.primeTimeFree} {t("marketplace.calendar.primeTimeSlots", "prime")}
+                  </Badge>
+                )}
+              </div>
             </div>
 
-            <ScrollArea className="h-[320px]">
-              <div className="space-y-1 pr-4">
-                {timeSlots.map((slot) => {
-                  const booking = isTimeSlotBooked(slot, selectedDateBookings);
-                  const isFree = !booking;
+            {/* Mini Insights */}
+            <div className="mb-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-amber-500" />
+                {t("marketplace.calendar.peakHoursHint", "Peak: 12:00-16:00")}
+              </span>
+              <span className="flex items-center gap-1">
+                <Flame className="h-3 w-3 text-orange-500" />
+                {t("marketplace.calendar.primeTimeHint", "Prime time = most popular")}
+              </span>
+            </div>
 
-                  return (
-                    <div
-                      key={slot}
-                      className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
-                        isFree
-                          ? "bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50"
-                          : booking?.status === "cancelled"
-                            ? "bg-muted/30"
-                            : "bg-muted"
-                      }`}
-                      data-testid={`timeslot-${slot}`}
-                    >
-                      <span className="text-sm font-mono w-12 text-muted-foreground">{slot}</span>
-                      {isFree ? (
-                        <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                          {t("marketplace.calendar.free")}
-                        </span>
-                      ) : (
-                        booking && (
-                          <div className="flex-1 flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={STATUS_COLORS[booking.status || "pending"]}>
-                                {t(`marketplace.bookings.status.${booking.status || "pending"}`)}
-                              </Badge>
-                              {showSalon && booking.salon && (
-                                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <Store className="h-3 w-3" />
-                                  {getLocalizedText(booking.salon.name as any, currentLang)}
-                                </span>
-                              )}
-                              {showMaster && booking.master && (
-                                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <Scissors className="h-3 w-3" />
-                                  {booking.master.name}
-                                </span>
-                              )}
-                              {showClient && (
-                                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {booking.clientName || `#${booking.clientId.slice(-6)}`}
-                                </span>
-                              )}
-                            </div>
-                            {booking.service && (
-                              <span className="text-xs text-muted-foreground">
-                                {getLocalizedText(booking.service.name as any, currentLang)}
-                              </span>
-                            )}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  );
-                })}
+            {/* Grouped Slots by Time Period */}
+            <ScrollArea className="h-[360px]">
+              <div className="space-y-4 pr-4">
+                {renderSlotGroup("morning", groupedSlots.morning, "🌅")}
+                {renderSlotGroup("midday", groupedSlots.midday, "☀️")}
+                {renderSlotGroup("afternoon", groupedSlots.afternoon, "🌤️")}
+                {renderSlotGroup("evening", groupedSlots.evening, "🌙")}
               </div>
             </ScrollArea>
           </>
