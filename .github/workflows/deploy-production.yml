@@ -98,25 +98,11 @@ jobs:
           path: deploy.tar.gz
           retention-days: 30
 
-  # Job 2: Manual approval gate
-  approve-deployment:
-    name: Approve Production Deployment
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: production-approval
-
-    steps:
-      - name: Approval checkpoint
-        run: |
-          echo "✅ Deployment approved by ${{ github.actor }}"
-          echo "Proceeding with production deployment..."
-
-  # Job 3: Deploy to production
+  # Job 2: Deploy to production (auto-deploy without approval)
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: approve-deployment
+    needs: build
     environment:
       name: production
       url: https://aurelle.uz
