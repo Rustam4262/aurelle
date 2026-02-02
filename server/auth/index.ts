@@ -1,17 +1,15 @@
-import type { Express, RequestHandler } from "express";
+import type { Express, RequestHandler, Request } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "../db";
 
 const PgSession = connectPgSimple(session);
 
-// Extend Express Request type to include session
-declare module "express-serve-static-core" {
-  interface Request {
-    session: session.Session & {
-      passport?: {
-        user: any;
-      };
+// Extend session to include passport user
+declare module "express-session" {
+  interface SessionData {
+    passport?: {
+      user: any;
     };
   }
 }
