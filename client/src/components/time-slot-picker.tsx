@@ -176,11 +176,7 @@ export function TimeSlotPicker({
   };
 
   // Render slot group
-  const renderSlotGroup = (
-    period: TimeSlotAnalysis["period"],
-    slots: TimeSlot[],
-    icon: string,
-  ) => {
+  const renderSlotGroup = (period: TimeSlotAnalysis["period"], slots: TimeSlot[], icon: string) => {
     if (slots.length === 0) return null;
 
     const availableCount = slots.filter((s) => s.isAvailable).length;

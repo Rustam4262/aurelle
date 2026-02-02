@@ -14,7 +14,16 @@ import {
   addDays,
   isSameDay as isSameDayFns,
 } from "date-fns";
-import { Clock, User, Store, Scissors, CalendarDays, Flame, Sparkles, TrendingUp } from "lucide-react";
+import {
+  Clock,
+  User,
+  Store,
+  Scissors,
+  CalendarDays,
+  Flame,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import type { Booking, Service, Master, Salon } from "@shared/schema";
 import {
   analyzeTimeSlot,
@@ -99,7 +108,9 @@ function isTimeSlotBooked(slot: string, bookings: EnrichedBooking[]): EnrichedBo
   return null;
 }
 
-function groupSlotsByPeriod(slots: TimeSlotData[]): Record<TimeSlotAnalysis["period"], TimeSlotData[]> {
+function groupSlotsByPeriod(
+  slots: TimeSlotData[],
+): Record<TimeSlotAnalysis["period"], TimeSlotData[]> {
   const groups: Record<TimeSlotAnalysis["period"], TimeSlotData[]> = {
     morning: [],
     midday: [],
@@ -287,9 +298,7 @@ export function BookingCalendar({
                   <span className="text-sm text-green-600 dark:text-green-400 font-medium">
                     {t("marketplace.calendar.free")}
                   </span>
-                  {slotData.isPrimeTime && (
-                    <Flame className="h-3 w-3 text-orange-500" />
-                  )}
+                  {slotData.isPrimeTime && <Flame className="h-3 w-3 text-orange-500" />}
                 </div>
               ) : (
                 booking && (
@@ -437,7 +446,10 @@ export function BookingCalendar({
                   {dayInsights.totalFree} {t("marketplace.calendar.freeSlots")}
                 </Badge>
                 {dayInsights.primeTimeFree > 0 && (
-                  <Badge variant="outline" className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900">
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900"
+                  >
                     <Flame className="h-3 w-3 text-orange-500" />
                     {dayInsights.primeTimeFree} {t("marketplace.calendar.primeTimeSlots", "prime")}
                   </Badge>

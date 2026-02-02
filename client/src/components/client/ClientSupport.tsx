@@ -109,7 +109,9 @@ export function ClientSupport() {
       return apiRequest("POST", `/api/client/support/tickets/${ticketId}/messages`, { message });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client/support/tickets", selectedTicketId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/client/support/tickets", selectedTicketId],
+      });
       setReplyMessage("");
     },
     onError: () => {
@@ -123,7 +125,9 @@ export function ClientSupport() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client/support/tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/client/support/tickets", selectedTicketId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/client/support/tickets", selectedTicketId],
+      });
       toast({ title: t("marketplace.client.support.ticketClosed") });
     },
     onError: () => {
@@ -132,10 +136,30 @@ export function ClientSupport() {
   });
 
   const quickCategories = [
-    { id: "bug", icon: Bug, label: t("marketplace.client.support.types.bug"), color: categoryColors.bug },
-    { id: "payment", icon: CreditCard, label: t("marketplace.client.support.types.payment"), color: categoryColors.payment },
-    { id: "question", icon: HelpCircle, label: t("marketplace.client.support.types.question"), color: categoryColors.question },
-    { id: "suggestion", icon: Lightbulb, label: t("marketplace.client.support.types.suggestion"), color: categoryColors.suggestion },
+    {
+      id: "bug",
+      icon: Bug,
+      label: t("marketplace.client.support.types.bug"),
+      color: categoryColors.bug,
+    },
+    {
+      id: "payment",
+      icon: CreditCard,
+      label: t("marketplace.client.support.types.payment"),
+      color: categoryColors.payment,
+    },
+    {
+      id: "question",
+      icon: HelpCircle,
+      label: t("marketplace.client.support.types.question"),
+      color: categoryColors.question,
+    },
+    {
+      id: "suggestion",
+      icon: Lightbulb,
+      label: t("marketplace.client.support.types.suggestion"),
+      color: categoryColors.suggestion,
+    },
   ];
 
   const handleCreateTicket = () => {
@@ -157,13 +181,14 @@ export function ClientSupport() {
     const d = new Date(date);
     return d.toLocaleDateString(
       i18n.language === "ru" ? "ru-RU" : i18n.language === "uz" ? "uz-UZ" : "en-US",
-      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }
+      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" },
     );
   };
 
   // Ticket detail view
   if (selectedTicketId && selectedTicket) {
-    const CategoryIcon = categoryIcons[selectedTicket.category as keyof typeof categoryIcons] || HelpCircle;
+    const CategoryIcon =
+      categoryIcons[selectedTicket.category as keyof typeof categoryIcons] || HelpCircle;
 
     return (
       <div className="space-y-4">
@@ -178,7 +203,9 @@ export function ClientSupport() {
               <Badge className={statusColors[selectedTicket.status as keyof typeof statusColors]}>
                 {t(`marketplace.client.support.status.${selectedTicket.status}`)}
               </Badge>
-              <span className="text-sm text-muted-foreground">{formatDate(selectedTicket.createdAt)}</span>
+              <span className="text-sm text-muted-foreground">
+                {formatDate(selectedTicket.createdAt)}
+              </span>
             </div>
           </div>
           {selectedTicket.status !== "closed" && (
@@ -204,7 +231,11 @@ export function ClientSupport() {
                   className={`flex gap-3 ${message.senderType === "user" ? "flex-row-reverse" : ""}`}
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback className={message.senderType === "admin" ? "bg-primary text-primary-foreground" : ""}>
+                    <AvatarFallback
+                      className={
+                        message.senderType === "admin" ? "bg-primary text-primary-foreground" : ""
+                      }
+                    >
                       {message.senderType === "admin" ? "S" : "Y"}
                     </AvatarFallback>
                   </Avatar>
@@ -216,7 +247,9 @@ export function ClientSupport() {
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                    <p className={`text-xs mt-1 ${message.senderType === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    <p
+                      className={`text-xs mt-1 ${message.senderType === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                    >
                       {formatDate(message.createdAt)}
                     </p>
                   </div>
@@ -288,7 +321,9 @@ export function ClientSupport() {
         ) : !tickets || tickets.length === 0 ? (
           <Card className="p-8 text-center">
             <MessageCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="font-medium text-lg mb-2">{t("marketplace.client.support.noTickets")}</h3>
+            <h3 className="font-medium text-lg mb-2">
+              {t("marketplace.client.support.noTickets")}
+            </h3>
             <p className="text-muted-foreground mb-4">
               {t("marketplace.client.support.noTicketsDesc")}
             </p>
@@ -296,7 +331,8 @@ export function ClientSupport() {
         ) : (
           <div className="space-y-3">
             {tickets.map((ticket) => {
-              const CategoryIcon = categoryIcons[ticket.category as keyof typeof categoryIcons] || HelpCircle;
+              const CategoryIcon =
+                categoryIcons[ticket.category as keyof typeof categoryIcons] || HelpCircle;
 
               return (
                 <Card
@@ -305,7 +341,9 @@ export function ClientSupport() {
                   onClick={() => setSelectedTicketId(ticket.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-full ${categoryColors[ticket.category as keyof typeof categoryColors]}`}>
+                    <div
+                      className={`p-2 rounded-full ${categoryColors[ticket.category as keyof typeof categoryColors]}`}
+                    >
                       <CategoryIcon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -318,10 +356,15 @@ export function ClientSupport() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge className={statusColors[ticket.status as keyof typeof statusColors]} variant="secondary">
+                        <Badge
+                          className={statusColors[ticket.status as keyof typeof statusColors]}
+                          variant="secondary"
+                        >
                           {t(`marketplace.client.support.status.${ticket.status}`)}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(ticket.updatedAt)}
+                        </span>
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -355,7 +398,9 @@ export function ClientSupport() {
                     }`}
                     onClick={() => setNewTicketCategory(cat.id)}
                   >
-                    <cat.icon className={`h-5 w-5 mx-auto ${newTicketCategory === cat.id ? "text-primary" : ""}`} />
+                    <cat.icon
+                      className={`h-5 w-5 mx-auto ${newTicketCategory === cat.id ? "text-primary" : ""}`}
+                    />
                   </button>
                 ))}
               </div>
@@ -388,7 +433,12 @@ export function ClientSupport() {
             </Button>
             <Button
               onClick={handleCreateTicket}
-              disabled={!newTicketCategory || !newTicketSubject.trim() || !newTicketMessage.trim() || createTicketMutation.isPending}
+              disabled={
+                !newTicketCategory ||
+                !newTicketSubject.trim() ||
+                !newTicketMessage.trim() ||
+                createTicketMutation.isPending
+              }
             >
               {createTicketMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

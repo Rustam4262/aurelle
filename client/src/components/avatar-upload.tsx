@@ -24,10 +24,7 @@ interface AvatarUploadProps {
 }
 
 // Helper function to create cropped image
-async function getCroppedImg(
-  imageSrc: string,
-  pixelCrop: Area
-): Promise<Blob> {
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -50,7 +47,7 @@ async function getCroppedImg(
     0,
     0,
     pixelCrop.width,
-    pixelCrop.height
+    pixelCrop.height,
   );
 
   // Return as blob
@@ -64,7 +61,7 @@ async function getCroppedImg(
         }
       },
       "image/jpeg",
-      0.9
+      0.9,
     );
   });
 }
@@ -337,9 +334,7 @@ export function AvatarUpload({
             <Button variant="outline" onClick={handleCropCancel}>
               {t("common.cancel")}
             </Button>
-            <Button onClick={handleCropConfirm}>
-              {t("common.save")}
-            </Button>
+            <Button onClick={handleCropConfirm}>{t("common.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -227,13 +227,16 @@ export function ClientDashboard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
-                    {getLocalizedName(booking.service?.name, i18n.language) || t("marketplace.client.unknownService")}
+                    {getLocalizedName(booking.service?.name, i18n.language) ||
+                      t("marketplace.client.unknownService")}
                   </p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     {booking.salon && (
                       <>
                         <MapPin className="h-3 w-3" />
-                        <span className="truncate">{getLocalizedName(booking.salon.name, i18n.language)}</span>
+                        <span className="truncate">
+                          {getLocalizedName(booking.salon.name, i18n.language)}
+                        </span>
                       </>
                     )}
                     {booking.master && (
@@ -300,7 +303,8 @@ export function ClientDashboard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">
-                    {getLocalizedName(booking.service?.name, i18n.language) || t("marketplace.client.unknownService")}
+                    {getLocalizedName(booking.service?.name, i18n.language) ||
+                      t("marketplace.client.unknownService")}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {getLocalizedName(booking.salon?.name, i18n.language)}
@@ -335,9 +339,7 @@ export function ClientDashboard({
                   <div className="text-center p-3 rounded-lg hover:bg-accent/50 transition-colors">
                     <Avatar className="h-14 w-14 mx-auto mb-2">
                       <AvatarImage src={fav.salon?.photos?.[0] || undefined} />
-                      <AvatarFallback className="text-sm">
-                        {salonName?.[0] || "S"}
-                      </AvatarFallback>
+                      <AvatarFallback className="text-sm">{salonName?.[0] || "S"}</AvatarFallback>
                     </Avatar>
                     <p className="text-sm font-medium truncate">{salonName}</p>
                     {fav.salon?.averageRating && Number(fav.salon.averageRating) > 0 && (

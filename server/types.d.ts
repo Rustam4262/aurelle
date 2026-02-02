@@ -1,40 +1,13 @@
-// Type declarations for untyped modules
-declare module "express-session" {
-  import { RequestHandler } from "express";
+// Extend express-session SessionData to include passport
+import "express-session";
 
+declare module "express-session" {
   interface SessionData {
     passport?: {
       user: any;
     };
     [key: string]: any;
   }
-
-  interface Session extends SessionData {
-    id: string;
-    regenerate(callback: (err?: any) => void): void;
-    destroy(callback: (err?: any) => void): void;
-    reload(callback: (err?: any) => void): void;
-    save(callback: (err?: any) => void): void;
-    touch(): void;
-    cookie: any;
-  }
-
-  interface SessionOptions {
-    secret: string | string[];
-    name?: string;
-    store?: any;
-    cookie?: any;
-    genid?: (req: any) => string;
-    rolling?: boolean;
-    resave?: boolean;
-    proxy?: boolean;
-    saveUninitialized?: boolean;
-    unset?: "destroy" | "keep";
-  }
-
-  function session(options?: SessionOptions): RequestHandler;
-
-  export = session;
 }
 
 declare module "connect-pg-simple" {
@@ -49,7 +22,9 @@ declare module "connect-pg-simple" {
     errorLog?: (...args: any[]) => void;
   }
 
-  function connectPgSimple(session: typeof import("express-session")): new (options?: PgSessionOptions) => any;
+  function connectPgSimple(
+    session: typeof import("express-session"),
+  ): new (options?: PgSessionOptions) => any;
 
   export = connectPgSimple;
 }
@@ -128,6 +103,7 @@ declare module "multer" {
   namespace multer {
     function diskStorage(options: DiskStorageOptions): StorageEngine;
     function memoryStorage(): StorageEngine;
+    type FileFilterCallback = (error: Error | null, acceptFile?: boolean) => void;
   }
 
   export = multer;
@@ -164,7 +140,11 @@ declare module "web-push" {
 
   export function setVapidDetails(subject: string, publicKey: string, privateKey: string): void;
   export function generateVAPIDKeys(): VapidKeys;
-  export function sendNotification(subscription: PushSubscription, payload?: string | Buffer, options?: RequestOptions): Promise<any>;
+  export function sendNotification(
+    subscription: PushSubscription,
+    payload?: string | Buffer,
+    options?: RequestOptions,
+  ): Promise<any>;
 }
 
 // Extend Express Request to include session and file

@@ -169,7 +169,10 @@ export default function SoloMasterPage() {
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <AlertCircle className="h-5 w-5" />
               <span className="text-sm">
-                {t("soloMaster.draftWarning", "Your profile is in draft mode. Add services and activate to start accepting bookings.")}
+                {t(
+                  "soloMaster.draftWarning",
+                  "Your profile is in draft mode. Add services and activate to start accepting bookings.",
+                )}
               </span>
             </div>
           </div>
@@ -251,7 +254,9 @@ export default function SoloMasterPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">{stats?.pendingBookings || 0}</div>
+                  <div className="text-2xl font-bold text-amber-600">
+                    {stats?.pendingBookings || 0}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -326,7 +331,10 @@ export default function SoloMasterPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12 text-muted-foreground">
-                  {t("soloMaster.noServices", "No services added yet. Add your first service to start accepting bookings.")}
+                  {t(
+                    "soloMaster.noServices",
+                    "No services added yet. Add your first service to start accepting bookings.",
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -348,7 +356,10 @@ export default function SoloMasterPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12 text-muted-foreground">
-                  {t("soloMaster.noPortfolio", "No portfolio items yet. Add photos to showcase your work.")}
+                  {t(
+                    "soloMaster.noPortfolio",
+                    "No portfolio items yet. Add photos to showcase your work.",
+                  )}
                 </div>
               </CardContent>
             </Card>

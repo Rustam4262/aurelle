@@ -673,10 +673,7 @@ router.post("/master-favorites", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Master already in favorites" });
     }
 
-    const [newFavorite] = await db
-      .insert(masterFavorites)
-      .values({ userId, masterId })
-      .returning();
+    const [newFavorite] = await db.insert(masterFavorites).values({ userId, masterId }).returning();
 
     return res.status(201).json(newFavorite);
   } catch (error) {
@@ -948,12 +945,10 @@ router.get("/support/tickets", isAuthenticated, async (req: any, res) => {
           .from(supportMessages)
           .where(eq(supportMessages.ticketId, ticket.id));
 
-        const unreadCount = messages.filter(
-          (m) => m.senderType === "admin" && !m.isRead
-        ).length;
+        const unreadCount = messages.filter((m) => m.senderType === "admin" && !m.isRead).length;
 
         return { ...ticket, messageCount: messages.length, unreadCount };
-      })
+      }),
     );
 
     return res.json(ticketsWithCounts);
@@ -1035,8 +1030,8 @@ router.get("/support/tickets/:id", isAuthenticated, async (req: any, res) => {
         and(
           eq(supportMessages.ticketId, id),
           eq(supportMessages.senderType, "admin"),
-          eq(supportMessages.isRead, false)
-        )
+          eq(supportMessages.isRead, false),
+        ),
       );
 
     return res.json({ ...ticket, messages });
@@ -1086,10 +1081,7 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
       .returning();
 
     // Update ticket timestamp
-    await db
-      .update(supportTickets)
-      .set({ updatedAt: new Date() })
-      .where(eq(supportTickets.id, id));
+    await db.update(supportTickets).set({ updatedAt: new Date() }).where(eq(supportTickets.id, id));
 
     return res.status(201).json(newMessage);
   } catch (error) {

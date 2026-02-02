@@ -3,9 +3,6 @@ import { upload, setUploadType, optimizeImage, getFileUrl } from "./upload";
 import { isAuthenticated } from "./auth";
 import path from "path";
 import fs from "fs/promises";
-import { db } from "./db";
-import { salons, masters, masterPortfolio, userProfiles } from "@shared/schema";
-import { eq } from "drizzle-orm";
 
 export function registerUploadRoutes(app: Express) {
   // ============ UPLOAD ENDPOINTS ============

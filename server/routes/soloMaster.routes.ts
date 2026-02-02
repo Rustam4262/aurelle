@@ -144,12 +144,7 @@ router.get("/check-slug", isAuthenticated, async (req: any, res) => {
     const [existing] = await db
       .select()
       .from(masters)
-      .where(
-        and(
-          eq(masters.slug, slug),
-          master ? sql`${masters.id} != ${master.id}` : sql`1=1`,
-        ),
-      );
+      .where(and(eq(masters.slug, slug), master ? sql`${masters.id} != ${master.id}` : sql`1=1`));
 
     return res.json({ available: !existing });
   } catch (error) {
@@ -617,7 +612,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     const { status, from, to } = req.query;
 
-    let query = db.select().from(bookings).where(eq(bookings.masterId, master.id));
+    const query = db.select().from(bookings).where(eq(bookings.masterId, master.id));
 
     // Note: Additional filtering would need to be done with a query builder
     // For now, we get all and filter in JS (simplified)

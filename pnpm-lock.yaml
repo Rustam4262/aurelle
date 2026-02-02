@@ -322,7 +322,7 @@ importers:
         specifier: ^20.19.27
         version: 20.19.30
       '@types/nodemailer':
-        specifier: ^7.0.4
+        specifier: ^7.0.9
         version: 7.0.9
       '@types/passport':
         specifier: ^1.0.17
@@ -340,7 +340,7 @@ importers:
         specifier: ^18.3.1
         version: 18.3.7(@types/react@18.3.27)
       '@types/web-push':
-        specifier: ^3.6.3
+        specifier: ^3.6.4
         version: 3.6.4
       '@types/ws':
         specifier: ^8.5.13
@@ -394,7 +394,7 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: 5.6.3
+        specifier: ^5.6.3
         version: 5.6.3
       vite:
         specifier: ^7.3.1

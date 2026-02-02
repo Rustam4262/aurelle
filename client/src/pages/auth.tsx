@@ -359,7 +359,9 @@ export default function AuthPage() {
                   {t("marketplace.auth.selectRole")}
                 </p>
 
-                <div className={`grid grid-cols-1 gap-4 ${soloMasterEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+                <div
+                  className={`grid grid-cols-1 gap-4 ${soloMasterEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+                >
                   <button
                     type="button"
                     onClick={() => setSelectedRole("client")}
@@ -383,16 +385,23 @@ export default function AuthPage() {
                       type="button"
                       onClick={() => setSelectedRole("solo_master")}
                       className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
-                        selectedRole === "solo_master" ? "border-primary bg-primary/5" : "border-border"
+                        selectedRole === "solo_master"
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
                       }`}
                       data-testid="button-role-solo-master"
                     >
                       <Briefcase
                         className={`h-8 w-8 ${selectedRole === "solo_master" ? "text-primary" : "text-muted-foreground"}`}
                       />
-                      <span className="font-medium text-sm">{t("marketplace.auth.roleSoloMaster", "Solo Master")}</span>
+                      <span className="font-medium text-sm">
+                        {t("marketplace.auth.roleSoloMaster", "Solo Master")}
+                      </span>
                       <span className="text-xs text-muted-foreground text-center">
-                        {t("marketplace.auth.roleSoloMasterDesc", "Independent beauty professional")}
+                        {t(
+                          "marketplace.auth.roleSoloMasterDesc",
+                          "Independent beauty professional",
+                        )}
                       </span>
                       {selectedRole === "solo_master" && <Check className="h-4 w-4 text-primary" />}
                     </button>

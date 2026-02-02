@@ -39,5 +39,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Register all modular API routes
   app.use("/api", apiRoutes);
 
+  console.log("All routes registered successfully");
   return httpServer;
 }

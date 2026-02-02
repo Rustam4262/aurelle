@@ -8,35 +8,29 @@ export default defineConfig({
   plugins: [
     react(),
     runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) => m.cartographer()),
-          await import("@replit/vite-plugin-dev-banner").then((m) => m.devBanner()),
-        ]
-      : []),
     // Sentry plugin for source maps upload (only in production builds)
     ...(process.env.NODE_ENV === "production" && process.env.SENTRY_AUTH_TOKEN
       ? [
-          sentryVitePlugin({
-            org: process.env.SENTRY_ORG,
-            project: process.env.SENTRY_PROJECT,
-            authToken: process.env.SENTRY_AUTH_TOKEN,
-            release: {
-              name:
-                process.env.SENTRY_RELEASE ||
-                `aurelle@${process.env.npm_package_version || "1.0.0"}`,
-              uploadLegacySourcemaps: {
-                paths: ["dist/public"],
-              },
+        sentryVitePlugin({
+          org: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+          release: {
+            name:
+              process.env.SENTRY_RELEASE ||
+              `aurelle@${process.env.npm_package_version || "1.0.0"}`,
+            uploadLegacySourcemaps: {
+              paths: ["dist/public"],
             },
-            sourcemaps: {
-              assets: ["dist/public/**"],
-              ignore: ["node_modules"],
-              filesToDeleteAfterUpload: ["dist/public/**/*.map"],
-            },
-            telemetry: false,
-          }),
-        ]
+          },
+          sourcemaps: {
+            assets: ["dist/public/**"],
+            ignore: ["node_modules"],
+            filesToDeleteAfterUpload: ["dist/public/**/*.map"],
+          },
+          telemetry: false,
+        }),
+      ]
       : []),
   ],
   resolve: {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { toast } from "@/hooks/use-toast";
 
 /**
@@ -5,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
  * These should match the error codes from the backend
  */
 export enum ApiErrorCode {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   // Authentication errors
   UNAUTHORIZED = "UNAUTHORIZED",
   FORBIDDEN = "FORBIDDEN",

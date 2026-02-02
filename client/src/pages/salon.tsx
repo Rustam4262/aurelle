@@ -190,7 +190,10 @@ export default function SalonPage() {
                     </h4>
                     <div className="flex items-center gap-2 text-foreground text-sm font-medium">
                       <Phone className="h-4 w-4 text-primary" />
-                      <a href={`tel:${salon.phone}`} className="hover:text-primary transition-colors">
+                      <a
+                        href={`tel:${salon.phone}`}
+                        className="hover:text-primary transition-colors"
+                      >
                         {salon.phone}
                       </a>
                     </div>

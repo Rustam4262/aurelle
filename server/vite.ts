@@ -1,3 +1,4 @@
+console.log("Loading vite.ts...");
 import { type Express } from "express";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
@@ -15,6 +16,8 @@ export async function setupVite(server: Server, app: Express) {
     allowedHosts: true as const,
   };
 
+  console.log("Creating Vite server with config...");
+
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -28,8 +31,10 @@ export async function setupVite(server: Server, app: Express) {
     server: serverOptions,
     appType: "custom",
   });
+  console.log("Vite server created successfully");
 
   app.use(vite.middlewares);
+  console.log("Vite middlewares attached");
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;

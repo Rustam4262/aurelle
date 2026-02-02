@@ -96,7 +96,7 @@ export function setupLocalAuth(app: Express) {
       console.error("[Registration] Critical error:", error);
       res.status(500).json({
         message: "Registration failed",
-        error: process.env.NODE_ENV === "development" ? error.message : undefined
+        error: process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   });

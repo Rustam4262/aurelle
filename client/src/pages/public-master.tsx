@@ -144,7 +144,11 @@ export default function PublicMasterPage() {
 
   // Fetch availability for selected date
   const { data: availability, isLoading: availabilityLoading } = useQuery<AvailabilityData>({
-    queryKey: [`/api/masters/${slug}/availability`, selectedDate?.toISOString(), selectedService?.id],
+    queryKey: [
+      `/api/masters/${slug}/availability`,
+      selectedDate?.toISOString(),
+      selectedService?.id,
+    ],
     queryFn: async () => {
       const res = await apiRequest(
         "GET",
@@ -176,7 +180,8 @@ export default function PublicMasterPage() {
         bookingDate: selectedDate.toISOString(),
         startTime: selectedTime,
         endTime,
-        priceSnapshot: selectedService.priceMin + (isMobileBooking ? (selectedService.mobileExtraCharge || 0) : 0),
+        priceSnapshot:
+          selectedService.priceMin + (isMobileBooking ? selectedService.mobileExtraCharge || 0 : 0),
         notes: bookingNotes || null,
         isMobileBooking,
       });
@@ -191,7 +196,10 @@ export default function PublicMasterPage() {
     onSuccess: () => {
       toast({
         title: t("publicMaster.bookingSuccess", "Booking Created"),
-        description: t("publicMaster.bookingSuccessDesc", "Your booking has been submitted for confirmation."),
+        description: t(
+          "publicMaster.bookingSuccessDesc",
+          "Your booking has been submitted for confirmation.",
+        ),
       });
       setBookingDialogOpen(false);
       setSelectedService(null);
@@ -392,7 +400,11 @@ export default function PublicMasterPage() {
                                   <span> - {formatCurrency(service.priceMax)}</span>
                                 )}
                               </div>
-                              <Button size="sm" className="mt-2" onClick={() => handleBookService(service)}>
+                              <Button
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => handleBookService(service)}
+                              >
                                 <CalendarIcon className="h-4 w-4 mr-1" />
                                 {t("publicMaster.book", "Book")}
                               </Button>
@@ -419,7 +431,11 @@ export default function PublicMasterPage() {
                       >
                         <img
                           src={item.imageUrl}
-                          alt={item.description ? getLocalizedText(item.description, currentLang) : "Portfolio"}
+                          alt={
+                            item.description
+                              ? getLocalizedText(item.description, currentLang)
+                              : "Portfolio"
+                          }
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
                       </div>
@@ -455,7 +471,9 @@ export default function PublicMasterPage() {
                               </div>
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {format(new Date(review.createdAt), "PP", { locale: getDateLocale() })}
+                              {format(new Date(review.createdAt), "PP", {
+                                locale: getDateLocale(),
+                              })}
                             </div>
                           </div>
                           {review.comment && (
@@ -508,7 +526,10 @@ export default function PublicMasterPage() {
                     </h4>
                     <div className="flex items-center gap-2 text-foreground text-sm">
                       <Phone className="h-4 w-4 text-primary" />
-                      <a href={`tel:${master.phone}`} className="hover:text-primary transition-colors">
+                      <a
+                        href={`tel:${master.phone}`}
+                        className="hover:text-primary transition-colors"
+                      >
                         {master.phone}
                       </a>
                     </div>
@@ -528,8 +549,7 @@ export default function PublicMasterPage() {
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm hover:text-primary transition-colors"
                         >
-                          <Instagram className="h-4 w-4" />
-                          @{master.instagram}
+                          <Instagram className="h-4 w-4" />@{master.instagram}
                         </a>
                       )}
                       {master.telegram && (
@@ -539,8 +559,7 @@ export default function PublicMasterPage() {
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm hover:text-primary transition-colors"
                         >
-                          <Send className="h-4 w-4" />
-                          @{master.telegram}
+                          <Send className="h-4 w-4" />@{master.telegram}
                         </a>
                       )}
                     </div>
@@ -561,7 +580,9 @@ export default function PublicMasterPage() {
                       <span className="text-muted-foreground">{dayNames[h.dayOfWeek]}</span>
                       <span>
                         {h.isClosed ? (
-                          <span className="text-muted-foreground">{t("common.closed", "Closed")}</span>
+                          <span className="text-muted-foreground">
+                            {t("common.closed", "Closed")}
+                          </span>
                         ) : (
                           `${h.openTime} - ${h.closeTime}`
                         )}
@@ -612,11 +633,12 @@ export default function PublicMasterPage() {
                     >
                       <Car className="h-4 w-4 mr-1" />
                       {t("publicMaster.mobileService", "Mobile service")}
-                      {selectedService.mobileExtraCharge && selectedService.mobileExtraCharge > 0 && (
-                        <span className="ml-1 text-xs">
-                          (+{formatCurrency(selectedService.mobileExtraCharge)})
-                        </span>
-                      )}
+                      {selectedService.mobileExtraCharge &&
+                        selectedService.mobileExtraCharge > 0 && (
+                          <span className="ml-1 text-xs">
+                            (+{formatCurrency(selectedService.mobileExtraCharge)})
+                          </span>
+                        )}
                     </Button>
                   </div>
                 </div>
@@ -693,7 +715,9 @@ export default function PublicMasterPage() {
             {selectedService && selectedDate && selectedTime && (
               <Card className="bg-muted/50">
                 <CardContent className="p-4">
-                  <h4 className="font-semibold mb-2">{t("publicMaster.summary", "Booking Summary")}</h4>
+                  <h4 className="font-semibold mb-2">
+                    {t("publicMaster.summary", "Booking Summary")}
+                  </h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span>{t("publicMaster.service", "Service")}:</span>
@@ -709,14 +733,16 @@ export default function PublicMasterPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>{t("publicMaster.duration", "Duration")}:</span>
-                      <span>{selectedService.duration} {t("common.min", "min")}</span>
+                      <span>
+                        {selectedService.duration} {t("common.min", "min")}
+                      </span>
                     </div>
                     <div className="flex justify-between font-semibold pt-2 border-t">
                       <span>{t("publicMaster.total", "Total")}:</span>
                       <span>
                         {formatCurrency(
                           selectedService.priceMin +
-                            (isMobileBooking ? (selectedService.mobileExtraCharge || 0) : 0),
+                            (isMobileBooking ? selectedService.mobileExtraCharge || 0 : 0),
                         )}
                       </span>
                     </div>

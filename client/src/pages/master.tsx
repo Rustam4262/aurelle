@@ -201,7 +201,10 @@ export default function MasterPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <TabsContent
+            value="overview"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <MasterOverview
               master={master}
               salon={salon}
@@ -211,7 +214,10 @@ export default function MasterPage() {
             />
           </TabsContent>
 
-          <TabsContent value="schedule" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <TabsContent
+            value="schedule"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <MasterSchedule
               initialSchedule={scheduleQuery.data}
               onSave={(s) => saveScheduleMutation.mutate(s)}
@@ -220,12 +226,19 @@ export default function MasterPage() {
             />
           </TabsContent>
 
-          <TabsContent value="bookings" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <TabsContent
+            value="bookings"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <MasterBookings
               bookings={bookingsQuery.data || []}
               isLoading={bookingsQuery.isLoading}
-              onConfirm={(id) => updateBookingStatusMutation.mutate({ bookingId: id, status: "confirmed" })}
-              onComplete={(id) => updateBookingStatusMutation.mutate({ bookingId: id, status: "completed" })}
+              onConfirm={(id) =>
+                updateBookingStatusMutation.mutate({ bookingId: id, status: "confirmed" })
+              }
+              onComplete={(id) =>
+                updateBookingStatusMutation.mutate({ bookingId: id, status: "completed" })
+              }
               onCancel={(id) => {
                 setCancelBookingId(id);
                 setCancelDialogOpen(true);
@@ -234,14 +247,20 @@ export default function MasterPage() {
             />
           </TabsContent>
 
-          <TabsContent value="calendar" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <TabsContent
+            value="calendar"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <MasterCalendarTab
               bookings={bookingsQuery.data || []}
               isLoading={bookingsQuery.isLoading}
             />
           </TabsContent>
 
-          <TabsContent value="portfolio" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <TabsContent
+            value="portfolio"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
             <MasterPortfolioTab
               masterId={user.id}
               masterName={master.name}
@@ -251,11 +270,11 @@ export default function MasterPage() {
             />
           </TabsContent>
 
-          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <MasterAnalytics
-              stats={statsQuery.data}
-              isLoading={statsQuery.isLoading}
-            />
+          <TabsContent
+            value="analytics"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
+            <MasterAnalytics stats={statsQuery.data} isLoading={statsQuery.isLoading} />
           </TabsContent>
         </Tabs>
       </div>

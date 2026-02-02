@@ -106,10 +106,15 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (process.env.NODE_ENV === "production") {
+    console.log("Serving static files in production mode");
     serveStatic(app);
   } else {
+    console.log(`Initializing Vite in development mode... (REPL_ID: ${process.env.REPL_ID})`);
+    console.log("Importing ./vite...");
     const { setupVite } = await import("./vite");
+    console.log("Imported ./vite successfully. Calling setupVite...");
     await setupVite(httpServer, app);
+    console.log("Vite initialized successfully");
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT

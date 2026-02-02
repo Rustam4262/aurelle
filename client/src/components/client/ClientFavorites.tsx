@@ -94,7 +94,10 @@ export function ClientFavorites({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {favorites.map((favorite) => {
           const salonName = getLocalizedText(favorite.salon?.name as any, currentLang);
-          const salonDescription = getLocalizedText(favorite.salon?.description as any, currentLang);
+          const salonDescription = getLocalizedText(
+            favorite.salon?.description as any,
+            currentLang,
+          );
           const coverImage = favorite.salon?.photos?.[0];
 
           return (
@@ -229,7 +232,12 @@ export function ClientFavorites({
                       </h3>
                       {favorite.master?.specialties && (
                         <p className="text-sm text-muted-foreground truncate">
-                          {getLocalizedText(favorite.master.specialties as any, currentLang)?.split(",")[0]}
+                          {
+                            getLocalizedText(
+                              favorite.master.specialties as any,
+                              currentLang,
+                            )?.split(",")[0]
+                          }
                         </p>
                       )}
                     </div>

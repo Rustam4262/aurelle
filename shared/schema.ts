@@ -598,9 +598,7 @@ export const supportMessages = pgTable(
     isRead: boolean("is_read").default(false),
     createdAt: timestamp("created_at").defaultNow(),
   },
-  (table) => [
-    index("idx_support_messages_ticket").on(table.ticketId),
-  ],
+  (table) => [index("idx_support_messages_ticket").on(table.ticketId)],
 );
 
 export type SupportTicket = typeof supportTickets.$inferSelect;

@@ -31,7 +31,12 @@ import { ClientReviews } from "@/components/client/ClientReviews";
 import { ClientFavorites } from "@/components/client/ClientFavorites";
 import { ClientSupport } from "@/components/client/ClientSupport";
 import { WriteReviewDialog } from "@/components/client/WriteReviewDialog";
-import type { EnrichedBooking, EnrichedFavorite, EnrichedMasterFavorite, EnrichedReview } from "@/components/client/types";
+import type {
+  EnrichedBooking,
+  EnrichedFavorite,
+  EnrichedMasterFavorite,
+  EnrichedReview,
+} from "@/components/client/types";
 
 export default function ClientPage() {
   const { t, i18n } = useTranslation();
@@ -62,7 +67,9 @@ export default function ClientPage() {
     enabled: !!user,
   });
 
-  const { data: masterFavoritesData, isLoading: masterFavoritesLoading } = useQuery<EnrichedMasterFavorite[]>({
+  const { data: masterFavoritesData, isLoading: masterFavoritesLoading } = useQuery<
+    EnrichedMasterFavorite[]
+  >({
     queryKey: ["/api/client/master-favorites"],
     enabled: !!user,
   });
@@ -139,7 +146,7 @@ export default function ClientPage() {
 
   // Get completed bookings that don't have a review yet
   const pendingReviewBookings = bookingsData?.filter(
-    (b) => b.status === "completed" && !hasReviewForBooking(b.id)
+    (b) => b.status === "completed" && !hasReviewForBooking(b.id),
   );
 
   if (authLoading || profileLoading) {

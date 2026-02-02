@@ -740,21 +740,24 @@ router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
 
     // Get booking counts for each master
     const masterIds = allMasters.map((m) => m.id);
-    const bookingCounts = masterIds.length > 0 ? await db
-      .select({
-        masterId: bookings.masterId,
-        totalBookings: sql<number>`count(*)::int`,
-        completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
-        totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
-      })
-      .from(bookings)
-      .where(
-        and(
-          sql`${bookings.masterId} = ANY(${masterIds})`,
-          gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
-        ),
-      )
-      .groupBy(bookings.masterId) : [];
+    const bookingCounts =
+      masterIds.length > 0
+        ? await db
+            .select({
+              masterId: bookings.masterId,
+              totalBookings: sql<number>`count(*)::int`,
+              completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
+              totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+            })
+            .from(bookings)
+            .where(
+              and(
+                sql`${bookings.masterId} = ANY(${masterIds})`,
+                gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
+              ),
+            )
+            .groupBy(bookings.masterId)
+        : [];
 
     // Merge booking stats with masters
     const mastersWithStats = allMasters.map((master) => {
@@ -877,48 +880,41 @@ router.post("/masters/:masterId/portfolio", isAuthenticated, async (req: any, re
 });
 
 // Delete portfolio image
-router.delete(
-  "/masters/:masterId/portfolio/:imageId",
-  isAuthenticated,
-  async (req: any, res) => {
-    try {
-      const { masterId, imageId } = req.params;
-      const ownerId = req.user.claims.sub;
+router.delete("/masters/:masterId/portfolio/:imageId", isAuthenticated, async (req: any, res) => {
+  try {
+    const { masterId, imageId } = req.params;
+    const ownerId = req.user.claims.sub;
 
-      // Verify master belongs to owner's salon
-      const [master] = await db
-        .select({
-          masterId: masters.id,
-          salonOwnerId: salons.ownerId,
-        })
-        .from(masters)
-        .leftJoin(salons, eq(masters.salonId, salons.id))
-        .where(eq(masters.id, masterId));
+    // Verify master belongs to owner's salon
+    const [master] = await db
+      .select({
+        masterId: masters.id,
+        salonOwnerId: salons.ownerId,
+      })
+      .from(masters)
+      .leftJoin(salons, eq(masters.salonId, salons.id))
+      .where(eq(masters.id, masterId));
 
-      if (!master || master.salonOwnerId !== ownerId) {
-        return res.status(403).json({ error: "Not authorized" });
-      }
-
-      // Delete image from portfolio table
-      const [deleted] = await db
-        .delete(masterPortfolio)
-        .where(and(
-          eq(masterPortfolio.id, imageId),
-          eq(masterPortfolio.masterId, masterId)
-        ))
-        .returning();
-
-      if (!deleted) {
-        return res.status(404).json({ error: "Portfolio image not found" });
-      }
-
-      return res.json({ success: true, deleted });
-    } catch (error) {
-      console.error("Delete portfolio error:", error);
-      return res.status(500).json({ error: "Failed to delete portfolio image" });
+    if (!master || master.salonOwnerId !== ownerId) {
+      return res.status(403).json({ error: "Not authorized" });
     }
-  },
-);
+
+    // Delete image from portfolio table
+    const [deleted] = await db
+      .delete(masterPortfolio)
+      .where(and(eq(masterPortfolio.id, imageId), eq(masterPortfolio.masterId, masterId)))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Portfolio image not found" });
+    }
+
+    return res.json({ success: true, deleted });
+  } catch (error) {
+    console.error("Delete portfolio error:", error);
+    return res.status(500).json({ error: "Failed to delete portfolio image" });
+  }
+});
 
 // ============ SERVICE MANAGEMENT ENDPOINTS (Phase 1 - P0-3) ============
 
@@ -1463,7 +1459,8 @@ router.get(
           (b) =>
             b.clientName?.toLowerCase().includes(searchLower) ||
             b.clientEmail?.toLowerCase().includes(searchLower) ||
-            (typeof b.salonName === 'object' && b.salonName?.en?.toLowerCase().includes(searchLower)) ||
+            (typeof b.salonName === "object" &&
+              b.salonName?.en?.toLowerCase().includes(searchLower)) ||
             b.masterName?.toLowerCase().includes(searchLower),
         );
       }
@@ -1681,9 +1678,9 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
       b.bookingDate instanceof Date ? b.bookingDate.toISOString().split("T")[0] : "",
       b.startTime || "",
       b.clientName || "",
-      typeof b.salonName === 'object' && b.salonName ? b.salonName.en : "",
+      typeof b.salonName === "object" && b.salonName ? b.salonName.en : "",
       b.masterName || "",
-      typeof b.serviceName === 'object' && b.serviceName ? b.serviceName.en : "",
+      typeof b.serviceName === "object" && b.serviceName ? b.serviceName.en : "",
       b.status || "",
       b.priceSnapshot?.toString() || "0",
     ]);

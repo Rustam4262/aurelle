@@ -92,7 +92,9 @@ router.get("/:slug/services", async (req, res) => {
     const [master] = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")));
+      .where(
+        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+      );
 
     if (!master) {
       return res.status(404).json({ error: "Master not found" });
@@ -119,7 +121,9 @@ router.get("/:slug/reviews", async (req, res) => {
     const [master] = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")));
+      .where(
+        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+      );
 
     if (!master) {
       return res.status(404).json({ error: "Master not found" });
@@ -178,7 +182,9 @@ router.get("/:slug/availability", async (req, res) => {
     const [master] = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")));
+      .where(
+        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+      );
 
     if (!master) {
       return res.status(404).json({ error: "Master not found" });
@@ -191,7 +197,12 @@ router.get("/:slug/availability", async (req, res) => {
     const [hours] = await db
       .select()
       .from(masterWorkingHours)
-      .where(and(eq(masterWorkingHours.masterId, master.id), eq(masterWorkingHours.dayOfWeek, dayOfWeek)));
+      .where(
+        and(
+          eq(masterWorkingHours.masterId, master.id),
+          eq(masterWorkingHours.dayOfWeek, dayOfWeek),
+        ),
+      );
 
     if (!hours || hours.isClosed) {
       return res.json({ available: false, slots: [], message: "Closed on this day" });
@@ -294,7 +305,9 @@ router.post("/:slug/check-distance", async (req, res) => {
     const [master] = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")));
+      .where(
+        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+      );
 
     if (!master) {
       return res.status(404).json({ error: "Master not found" });

@@ -20,7 +20,10 @@ router.get("/availability", isAuthenticated, async (req: any, res) => {
     }
 
     // Build query conditions
-    const conditions = [gte(bookings.bookingDate, new Date(startDate as string)), lte(bookings.bookingDate, new Date(endDate as string))];
+    const conditions = [
+      gte(bookings.bookingDate, new Date(startDate as string)),
+      lte(bookings.bookingDate, new Date(endDate as string)),
+    ];
 
     if (salonId) {
       conditions.push(eq(bookings.salonId, salonId));
@@ -49,9 +52,10 @@ router.get("/availability", isAuthenticated, async (req: any, res) => {
     // Group bookings by date
     const bookingsByDate: Record<string, any[]> = {};
     for (const booking of rangeBookings) {
-      const dateStr = booking.bookingDate instanceof Date
-        ? booking.bookingDate.toISOString().split('T')[0]
-        : String(booking.bookingDate);
+      const dateStr =
+        booking.bookingDate instanceof Date
+          ? booking.bookingDate.toISOString().split("T")[0]
+          : String(booking.bookingDate);
       if (!bookingsByDate[dateStr]) {
         bookingsByDate[dateStr] = [];
       }
@@ -199,17 +203,15 @@ router.get("/monthly-stats", isAuthenticated, async (req: any, res) => {
 
     // Calculate revenue (only from completed bookings)
     const completedWithPrices = monthBookings.filter((b) => b.status === "completed");
-    const totalRevenue = completedWithPrices.reduce(
-      (sum, b) => sum + (b.priceSnapshot || 0),
-      0,
-    );
+    const totalRevenue = completedWithPrices.reduce((sum, b) => sum + (b.priceSnapshot || 0), 0);
 
     // Get busiest days
     const bookingsByDate: Record<string, number> = {};
     monthBookings.forEach((booking) => {
-      const dateStr = booking.bookingDate instanceof Date
-        ? booking.bookingDate.toISOString().split('T')[0]
-        : String(booking.bookingDate);
+      const dateStr =
+        booking.bookingDate instanceof Date
+          ? booking.bookingDate.toISOString().split("T")[0]
+          : String(booking.bookingDate);
       bookingsByDate[dateStr] = (bookingsByDate[dateStr] || 0) + 1;
     });
 

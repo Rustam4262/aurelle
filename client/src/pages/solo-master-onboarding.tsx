@@ -166,7 +166,10 @@ export default function SoloMasterOnboarding() {
     onSuccess: () => {
       toast({
         title: t("soloMaster.onboarding.complete", "Setup Complete!"),
-        description: t("soloMaster.onboarding.completeDesc", "Your profile is ready. Add services to start accepting bookings."),
+        description: t(
+          "soloMaster.onboarding.completeDesc",
+          "Your profile is ready. Add services to start accepting bookings.",
+        ),
       });
       navigate("/solo-master");
     },
@@ -187,7 +190,10 @@ export default function SoloMasterOnboarding() {
     }
     setCheckingSlug(true);
     try {
-      const res = await apiRequest("GET", `/api/solo-master/check-slug?slug=${encodeURIComponent(slug)}`);
+      const res = await apiRequest(
+        "GET",
+        `/api/solo-master/check-slug?slug=${encodeURIComponent(slug)}`,
+      );
       const data = await res.json();
       setSlugAvailable(data.available);
     } catch {
@@ -280,7 +286,9 @@ export default function SoloMasterOnboarding() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <User className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-xl font-semibold">{t("soloMaster.onboarding.step1Title", "Basic Information")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("soloMaster.onboarding.step1Title", "Basic Information")}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {t("soloMaster.onboarding.step1Desc", "Tell us about yourself")}
         </p>
@@ -314,7 +322,10 @@ export default function SoloMasterOnboarding() {
             id="bio"
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-            placeholder={t("soloMaster.onboarding.bioPlaceholder", "Tell clients about your experience and specialties...")}
+            placeholder={t(
+              "soloMaster.onboarding.bioPlaceholder",
+              "Tell clients about your experience and specialties...",
+            )}
             rows={4}
           />
         </div>
@@ -326,7 +337,9 @@ export default function SoloMasterOnboarding() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <MapPin className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-xl font-semibold">{t("soloMaster.onboarding.step2Title", "Your Location")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("soloMaster.onboarding.step2Title", "Your Location")}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {t("soloMaster.onboarding.step2Desc", "Where do you provide services?")}
         </p>
@@ -349,7 +362,10 @@ export default function SoloMasterOnboarding() {
             id="address"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder={t("soloMaster.onboarding.addressPlaceholder", "Your work address (shown to clients after booking)")}
+            placeholder={t(
+              "soloMaster.onboarding.addressPlaceholder",
+              "Your work address (shown to clients after booking)",
+            )}
             rows={2}
           />
         </div>
@@ -378,7 +394,9 @@ export default function SoloMasterOnboarding() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <Briefcase className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-xl font-semibold">{t("soloMaster.onboarding.step3Title", "Service Mode")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("soloMaster.onboarding.step3Title", "Service Mode")}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {t("soloMaster.onboarding.step3Desc", "How do you provide services?")}
         </p>
@@ -386,7 +404,9 @@ export default function SoloMasterOnboarding() {
 
       <RadioGroup
         value={formData.serviceMode}
-        onValueChange={(value) => setFormData({ ...formData, serviceMode: value as "at_master" | "mobile" | "both" })}
+        onValueChange={(value) =>
+          setFormData({ ...formData, serviceMode: value as "at_master" | "mobile" | "both" })
+        }
         className="space-y-3"
       >
         <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
@@ -394,7 +414,9 @@ export default function SoloMasterOnboarding() {
           <Label htmlFor="at_master" className="flex-1 cursor-pointer">
             <div className="flex items-center gap-2">
               <HomeIcon className="h-5 w-5 text-primary" />
-              <span className="font-medium">{t("soloMaster.serviceMode.atMaster", "At My Place")}</span>
+              <span className="font-medium">
+                {t("soloMaster.serviceMode.atMaster", "At My Place")}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {t("soloMaster.serviceMode.atMasterDesc", "Clients come to your location")}
@@ -432,7 +454,9 @@ export default function SoloMasterOnboarding() {
       {(formData.serviceMode === "mobile" || formData.serviceMode === "both") && (
         <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
           <div className="space-y-2">
-            <Label>{t("soloMaster.workRadius", "Work Radius")}: {formData.workRadius} km</Label>
+            <Label>
+              {t("soloMaster.workRadius", "Work Radius")}: {formData.workRadius} km
+            </Label>
             <Slider
               value={[formData.workRadius]}
               onValueChange={([value]) => setFormData({ ...formData, workRadius: value })}
@@ -453,7 +477,9 @@ export default function SoloMasterOnboarding() {
               id="mobileCharge"
               type="number"
               value={formData.mobileExtraCharge}
-              onChange={(e) => setFormData({ ...formData, mobileExtraCharge: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                setFormData({ ...formData, mobileExtraCharge: parseInt(e.target.value) || 0 })
+              }
               placeholder="0"
             />
             <p className="text-xs text-muted-foreground">
@@ -469,7 +495,9 @@ export default function SoloMasterOnboarding() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <Globe className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-xl font-semibold">{t("soloMaster.onboarding.step4Title", "Your Public Page")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("soloMaster.onboarding.step4Title", "Your Public Page")}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {t("soloMaster.onboarding.step4Desc", "Choose your unique URL")}
         </p>
@@ -501,10 +529,14 @@ export default function SoloMasterOnboarding() {
             ) : slugAvailable === true ? (
               <>
                 <Check className="h-4 w-4 text-green-500" />
-                <span className="text-green-600">{t("soloMaster.slugAvailable", "URL available")}</span>
+                <span className="text-green-600">
+                  {t("soloMaster.slugAvailable", "URL available")}
+                </span>
               </>
             ) : slugAvailable === false ? (
-              <span className="text-destructive">{t("soloMaster.slugTaken", "URL already taken")}</span>
+              <span className="text-destructive">
+                {t("soloMaster.slugTaken", "URL already taken")}
+              </span>
             ) : null}
           </div>
         )}
@@ -524,7 +556,9 @@ export default function SoloMasterOnboarding() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <Clock className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-xl font-semibold">{t("soloMaster.onboarding.step5Title", "Working Hours")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("soloMaster.onboarding.step5Title", "Working Hours")}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {t("soloMaster.onboarding.step5Desc", "When are you available?")}
         </p>
@@ -547,7 +581,9 @@ export default function SoloMasterOnboarding() {
                 }}
                 className="h-4 w-4"
               />
-              <span className="text-sm">{day.isOpen ? t("common.open", "Open") : t("common.closed", "Closed")}</span>
+              <span className="text-sm">
+                {day.isOpen ? t("common.open", "Open") : t("common.closed", "Closed")}
+              </span>
             </label>
             {day.isOpen && (
               <div className="flex items-center gap-2 ml-auto">
@@ -589,7 +625,10 @@ export default function SoloMasterOnboarding() {
               {t("soloMaster.onboarding.title", "Set Up Your Profile")}
             </CardTitle>
             <CardDescription>
-              {t("soloMaster.onboarding.subtitle", "Complete these steps to start accepting bookings")}
+              {t(
+                "soloMaster.onboarding.subtitle",
+                "Complete these steps to start accepting bookings",
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>

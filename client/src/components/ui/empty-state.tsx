@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Database, Search } from "lucide-react";
 import { Button } from "./button";
 import { Card, CardContent } from "./card";
 
@@ -70,7 +70,7 @@ export function NoDataEmptyState({
   description?: string;
   onRetry?: () => void;
 }) {
-  const Icon = require("lucide-react").Database;
+  const Icon = Database;
 
   return (
     <EmptyState
@@ -99,7 +99,7 @@ export function NoResultsEmptyState({
   description?: string;
   onClearFilters?: () => void;
 }) {
-  const Icon = require("lucide-react").Search;
+  const Icon = Search;
 
   return (
     <EmptyState

@@ -6,15 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  ArrowLeft,
-  Camera,
-  Clock,
-  Users,
-  Scissors,
-  Calendar,
-  UserCog,
-} from "lucide-react";
+import { ArrowLeft, Camera, Clock, Users, Scissors, Calendar, UserCog } from "lucide-react";
 import type { Salon } from "@shared/schema";
 import { OwnerSalonInfo } from "@/components/owner/OwnerSalonInfo";
 import { OwnerSalonServices } from "@/components/owner/OwnerSalonServices";

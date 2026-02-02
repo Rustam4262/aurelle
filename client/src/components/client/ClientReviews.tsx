@@ -35,7 +35,12 @@ interface ClientReviewsProps {
   onWriteReview?: (booking: EnrichedBooking) => void;
 }
 
-export function ClientReviews({ reviews, isLoading, pendingReviewBookings, onWriteReview }: ClientReviewsProps) {
+export function ClientReviews({
+  reviews,
+  isLoading,
+  pendingReviewBookings,
+  onWriteReview,
+}: ClientReviewsProps) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const { toast } = useToast();
