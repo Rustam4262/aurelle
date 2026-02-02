@@ -176,12 +176,23 @@ router.get("/masters/:id/availability", async (req, res) => {
       return res.status(404).json({ error: "Master not found" });
     }
 
-    // Get salon settings for buffer time
-    const [settings] = await db
-      .select()
-      .from(salonSettings)
-      .where(eq(salonSettings.salonId, master.salonId));
-    const bufferMinutes = settings?.bufferMinutes ?? 10;
+    // Get settings for buffer time (from salon or solo master settings)
+    let bufferMinutes = 10; // Default
+    if (master.salonId) {
+      const [settings] = await db
+        .select()
+        .from(salonSettings)
+        .where(eq(salonSettings.salonId, master.salonId));
+      bufferMinutes = settings?.bufferMinutes ?? 10;
+    } else if (master.isSoloMaster) {
+      // Solo master - use solo master settings
+      const { soloMasterSettings } = await import("@shared/schema");
+      const [soloSettings] = await db
+        .select()
+        .from(soloMasterSettings)
+        .where(eq(soloMasterSettings.masterId, master.id));
+      bufferMinutes = soloSettings?.bufferMinutes ?? 10;
+    }
 
     // Get service duration if serviceId provided
     let serviceDuration = 60; // Default 1 hour
@@ -197,16 +208,20 @@ router.get("/masters/:id/availability", async (req, res) => {
     const dayOfWeek = bookingDate.getDay(); // 0=Sunday, 1=Monday, etc.
     const dateString = bookingDate.toISOString().split("T")[0]; // YYYY-MM-DD format
 
-    // Check for salon exceptions first (holidays, special hours, closures)
-    const [exception] = await db
-      .select()
-      .from(salonExceptions)
-      .where(
-        and(
-          eq(salonExceptions.salonId, master.salonId),
-          eq(salonExceptions.exceptionDate, dateString),
-        ),
-      );
+    // Check for salon exceptions first (holidays, special hours, closures) - only for salon-based masters
+    let exception: any = null;
+    if (master.salonId) {
+      const [salonException] = await db
+        .select()
+        .from(salonExceptions)
+        .where(
+          and(
+            eq(salonExceptions.salonId, master.salonId),
+            eq(salonExceptions.exceptionDate, dateString),
+          ),
+        );
+      exception = salonException;
+    }
 
     // If exception exists and salon is closed, return empty slots
     if (exception && exception.isClosed) {
@@ -230,9 +245,9 @@ router.get("/masters/:id/availability", async (req, res) => {
       .from(masterWorkingHours)
       .where(and(eq(masterWorkingHours.masterId, id), eq(masterWorkingHours.dayOfWeek, dayOfWeek)));
 
-    // If no master-specific hours, fall back to salon working hours
+    // If no master-specific hours, fall back to salon working hours (for salon-based masters only)
     let workingHours: any = masterHours;
-    if (!workingHours) {
+    if (!workingHours && master.salonId) {
       const [salonHours] = await db
         .select()
         .from(salonWorkingHours)
@@ -269,11 +284,13 @@ router.get("/masters/:id/availability", async (req, res) => {
       });
     }
 
-    // Get salon breaks for this day
-    const salonBreaksForDay = await db
-      .select()
-      .from(salonBreaks)
-      .where(and(eq(salonBreaks.salonId, master.salonId), eq(salonBreaks.dayOfWeek, dayOfWeek)));
+    // Get salon breaks for this day (only for salon-based masters)
+    const salonBreaksForDay = master.salonId
+      ? await db
+          .select()
+          .from(salonBreaks)
+          .where(and(eq(salonBreaks.salonId, master.salonId), eq(salonBreaks.dayOfWeek, dayOfWeek)))
+      : [];
 
     // Get all bookings for this master on this date (excluding cancelled)
     const existingBookings = await db

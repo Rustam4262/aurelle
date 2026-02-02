@@ -18,6 +18,7 @@ interface FeatureFlags {
   SALON_MANAGER_ROLE: boolean;
   EXPORT_EXCEL: boolean;
   EXPORT_PDF: boolean;
+  SOLO_MASTER: boolean;
 }
 
 /**

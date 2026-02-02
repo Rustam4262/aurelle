@@ -33,7 +33,7 @@ router.post("/profile", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
 
     const profilePayloadSchema = z.object({
-      role: z.enum(["client", "owner"]),
+      role: z.enum(["client", "owner", "solo_master"]),
       fullName: z.string().min(1, "Full name is required").max(200).trim(),
       phone: z.string().min(1, "Phone number is required").max(20).trim(),
       city: z.string().min(1, "City is required").max(100).trim(),
@@ -76,6 +76,43 @@ router.post("/profile", isAuthenticated, async (req: any, res) => {
           },
         ])
         .returning();
+
+      // For solo_master role, create the master record and settings
+      if (role === "solo_master") {
+        const { masters, soloMasterSettings } = await import("@shared/schema");
+
+        // Generate a unique slug from name
+        const baseSlug = fullName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .substring(0, 50);
+        const uniqueSlug = `${baseSlug}-${Date.now().toString(36)}`;
+
+        // Create master record
+        const [master] = await db
+          .insert(masters)
+          .values([
+            {
+              userId,
+              name: fullName,
+              phone,
+              city,
+              isSoloMaster: true,
+              slug: uniqueSlug,
+              status: "draft",
+            },
+          ])
+          .returning();
+
+        // Create solo master settings with defaults
+        await db.insert(soloMasterSettings).values([
+          {
+            masterId: master.id,
+          },
+        ]);
+      }
+
       return res.status(201).json(created);
     }
   } catch (error) {

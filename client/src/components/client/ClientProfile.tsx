@@ -31,7 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ImageUpload } from "@/components/image-upload";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { Loader2, User, Calendar, Bell } from "lucide-react";
 import type { UserProfile } from "@shared/schema";
 
@@ -136,14 +136,11 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
                   <FormItem>
                     <FormLabel>{t("marketplace.client.avatar")}</FormLabel>
                     <FormControl>
-                      <ImageUpload
+                      <AvatarUpload
                         value={field.value || ""}
                         onChange={(url) => field.onChange(url)}
                         onRemove={() => field.onChange("")}
-                        uploadType="avatars"
                         maxSize={5}
-                        preview={false}
-                        label=""
                       />
                     </FormControl>
                     <FormMessage />

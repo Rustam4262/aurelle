@@ -519,8 +519,10 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
       return res.json([]);
     }
 
-    // Batch loading for services and clients
-    const serviceIds = Array.from(new Set(salonBookings.map((b) => b.serviceId)));
+    // Batch loading for services and clients (filter out nulls for nullable serviceId)
+    const serviceIds = Array.from(
+      new Set(salonBookings.map((b) => b.serviceId).filter((id): id is string => id !== null)),
+    );
     const clientIds = Array.from(new Set(salonBookings.map((b) => b.clientId)));
 
     const [servicesData, clientsData] = await Promise.all([
@@ -537,7 +539,7 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
 
     const enrichedBookings = salonBookings.map((booking) => ({
       ...booking,
-      service: servicesMap.get(booking.serviceId),
+      service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
       client: clientsMap.get(booking.clientId),
     }));
 
@@ -573,8 +575,10 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       return res.json([]);
     }
 
-    // Enrich with salon, service, and master data
-    const serviceIds = Array.from(new Set(allBookings.map((b) => b.serviceId)));
+    // Enrich with salon, service, and master data (filter out nulls for nullable foreign keys)
+    const serviceIds = Array.from(
+      new Set(allBookings.map((b) => b.serviceId).filter((id): id is string => id !== null)),
+    );
     const masterIds = Array.from(
       new Set(allBookings.filter((b) => b.masterId).map((b) => b.masterId!)),
     );
@@ -592,8 +596,8 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     const enrichedBookings = allBookings.map((booking) => ({
       ...booking,
-      salon: salonsMap.get(booking.salonId) || null,
-      service: servicesMap.get(booking.serviceId) || null,
+      salon: booking.salonId ? salonsMap.get(booking.salonId) || null : null,
+      service: booking.serviceId ? servicesMap.get(booking.serviceId) || null : null,
       master: booking.masterId ? mastersMap.get(booking.masterId) || null : null,
     }));
 
@@ -615,6 +619,11 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
     const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Solo master bookings (salonId is null) cannot be managed by salon owners
+    if (!booking.salonId) {
+      return res.status(403).json({ error: "Not authorized - this is a solo master booking" });
     }
 
     const [salon] = await db
@@ -650,6 +659,11 @@ router.patch("/bookings/:id/assign-master", isAuthenticated, async (req: any, re
     const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Solo master bookings (salonId is null) cannot be managed by salon owners
+    if (!booking.salonId) {
+      return res.status(403).json({ error: "Not authorized - this is a solo master booking" });
     }
 
     const [salon] = await db
@@ -1550,7 +1564,7 @@ router.post(
         action: "booking.bulk_update",
         entityType: "booking",
         entityId: bookingIds.join(","),
-        salonId: bookingsToUpdate[0]?.salonId,
+        salonId: bookingsToUpdate[0]?.salonId || undefined,
         details: {
           bookingCount: bookingIds.length,
           status: { to: status },
@@ -1764,15 +1778,17 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
       .filter((b) => b.status === "completed")
       .reduce((sum, b) => sum + b.priceSnapshot, 0);
 
-    // Top services
+    // Top services (filter out bookings without serviceId - solo master bookings)
     const serviceStats = new Map<string, { count: number; revenue: number }>();
-    monthBookings.forEach((b) => {
-      const current = serviceStats.get(b.serviceId) || { count: 0, revenue: 0 };
-      serviceStats.set(b.serviceId, {
-        count: current.count + 1,
-        revenue: current.revenue + (b.status === "completed" ? b.priceSnapshot : 0),
+    monthBookings
+      .filter((b) => b.serviceId !== null)
+      .forEach((b) => {
+        const current = serviceStats.get(b.serviceId!) || { count: 0, revenue: 0 };
+        serviceStats.set(b.serviceId!, {
+          count: current.count + 1,
+          revenue: current.revenue + (b.status === "completed" ? b.priceSnapshot : 0),
+        });
       });
-    });
 
     const topServiceIds = Array.from(serviceStats.entries())
       .sort((a, b) => b[1].count - a[1].count)

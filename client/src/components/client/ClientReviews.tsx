@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +15,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { MessageSquare, Star, Edit, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, Star, Edit, Trash2, Loader2, Clock, PenLine } from "lucide-react";
 import { ClientReviewSkeleton } from "@/components/skeletons";
-import type { EnrichedReview } from "./types";
+import type { EnrichedReview, EnrichedBooking } from "./types";
 
 function getLocalizedText(
   obj: { en?: string; ru?: string; uz?: string } | null | undefined,
@@ -30,9 +31,11 @@ function getLocalizedText(
 interface ClientReviewsProps {
   reviews: EnrichedReview[] | undefined;
   isLoading: boolean;
+  pendingReviewBookings?: EnrichedBooking[];
+  onWriteReview?: (booking: EnrichedBooking) => void;
 }
 
-export function ClientReviews({ reviews, isLoading }: ClientReviewsProps) {
+export function ClientReviews({ reviews, isLoading, pendingReviewBookings, onWriteReview }: ClientReviewsProps) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const { toast } = useToast();
@@ -85,8 +88,8 @@ export function ClientReviews({ reviews, isLoading }: ClientReviewsProps) {
     if (!review.createdAt) return false;
     const reviewDate = new Date(review.createdAt);
     const now = new Date();
-    const hoursSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
-    return hoursSinceReview <= 24;
+    const minutesSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60);
+    return minutesSinceReview <= 30;
   };
 
   const openEditReviewDialog = (review: EnrichedReview) => {
@@ -137,7 +140,54 @@ export function ClientReviews({ reviews, isLoading }: ClientReviewsProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Pending Reviews Section */}
+      {pendingReviewBookings && pendingReviewBookings.length > 0 && (
+        <Card className="p-4 border-dashed border-primary/50 bg-primary/5">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5 text-primary" />
+            <h3 className="font-medium">{t("marketplace.client.pendingReviews")}</h3>
+            <Badge variant="secondary" className="ml-auto">
+              {pendingReviewBookings.length}
+            </Badge>
+          </div>
+          <div className="space-y-3">
+            {pendingReviewBookings.map((booking) => {
+              const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+              const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
+              return (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between gap-4 p-3 rounded-lg bg-background"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{serviceName}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {salonName}
+                      {booking.master && ` • ${booking.master.name}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(booking.bookingDate).toLocaleDateString(
+                        currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+                      )}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => onWriteReview?.(booking)}
+                    className="flex-shrink-0"
+                  >
+                    <PenLine className="h-4 w-4 mr-2" />
+                    {t("marketplace.client.writeReview")}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Existing Reviews */}
       {reviews.map((review) => {
         const salonName = getLocalizedText(review.salon?.name as any, currentLang);
         const canEdit = canEditReview(review);

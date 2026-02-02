@@ -111,7 +111,7 @@ export const masters = pgTable(
     id: varchar("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    salonId: varchar("salon_id").notNull(),
+    salonId: varchar("salon_id"), // Nullable for solo masters
     userId: varchar("user_id"), // Link to user account for login
     email: varchar("email", { length: 255 }), // Login email
     name: varchar("name", { length: 200 }).notNull(),
@@ -123,10 +123,27 @@ export const masters = pgTable(
     reviewCount: integer("review_count").default(0),
     isActive: boolean("is_active").default(true),
     createdAt: timestamp("created_at").defaultNow(),
+    // Solo master fields
+    isSoloMaster: boolean("is_solo_master").default(false),
+    slug: varchar("slug", { length: 100 }).unique(), // Public URL: /master/:slug
+    address: varchar("address", { length: 500 }),
+    city: varchar("city", { length: 100 }),
+    latitude: decimal("latitude", { precision: 10, scale: 7 }),
+    longitude: decimal("longitude", { precision: 10, scale: 7 }),
+    serviceMode: varchar("service_mode", { length: 20 }).default("at_master"), // at_master, mobile, both
+    workRadius: integer("work_radius").default(10), // km for mobile services
+    mobileExtraCharge: integer("mobile_extra_charge").default(0), // UZS
+    phone: varchar("phone", { length: 20 }),
+    instagram: varchar("instagram", { length: 100 }),
+    telegram: varchar("telegram", { length: 100 }),
+    status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused
   },
   (table) => [
     index("idx_masters_salon").on(table.salonId),
     index("idx_masters_user").on(table.userId),
+    index("idx_masters_solo").on(table.isSoloMaster),
+    index("idx_masters_slug").on(table.slug),
+    index("idx_masters_location").on(table.latitude, table.longitude),
   ],
 );
 
@@ -260,6 +277,63 @@ export const masterServices = pgTable("master_services", {
   serviceId: varchar("service_id").notNull(),
 });
 
+// ============ SOLO MASTER SERVICES ============
+export const soloMasterServices = pgTable(
+  "solo_master_services",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    masterId: varchar("master_id").notNull(),
+    name: jsonb("name").notNull().$type<{ en: string; ru: string; uz: string }>(),
+    description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
+    category: varchar("category", { length: 100 }).notNull(),
+    priceMin: integer("price_min").notNull(), // in UZS
+    priceMax: integer("price_max"), // in UZS, optional for fixed price
+    duration: integer("duration").notNull(), // in minutes
+    serviceMode: varchar("service_mode", { length: 20 }).default("both"), // at_master | mobile | both
+    mobileExtraCharge: integer("mobile_extra_charge"), // extra charge for mobile service
+    isActive: boolean("is_active").default(true),
+    displayOrder: integer("display_order").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_solo_master_services_master").on(table.masterId),
+    index("idx_solo_master_services_category").on(table.category),
+    index("idx_solo_master_services_display_order").on(table.displayOrder),
+  ],
+);
+
+export const insertSoloMasterServiceSchema = createInsertSchema(soloMasterServices).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSoloMasterService = z.infer<typeof insertSoloMasterServiceSchema>;
+export type SoloMasterService = typeof soloMasterServices.$inferSelect;
+
+// ============ SOLO MASTER SETTINGS ============
+export const soloMasterSettings = pgTable("solo_master_settings", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  masterId: varchar("master_id").notNull().unique(),
+  bufferMinutes: integer("buffer_minutes").default(10), // buffer between appointments
+  travelBufferMinutes: integer("travel_buffer_minutes").default(30), // extra buffer for mobile bookings
+  autoConfirmBookings: boolean("auto_confirm_bookings").default(false),
+  maxAdvanceBookingDays: integer("max_advance_booking_days").default(30),
+  minAdvanceBookingHours: integer("min_advance_booking_hours").default(2),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSoloMasterSettingsSchema = createInsertSchema(soloMasterSettings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSoloMasterSettings = z.infer<typeof insertSoloMasterSettingsSchema>;
+export type SoloMasterSettings = typeof soloMasterSettings.$inferSelect;
+
 // ============ BOOKINGS ============
 export const bookings = pgTable(
   "bookings",
@@ -268,9 +342,10 @@ export const bookings = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     clientId: varchar("client_id").notNull(),
-    salonId: varchar("salon_id").notNull(),
+    salonId: varchar("salon_id"), // Nullable for solo master bookings
     masterId: varchar("master_id"), // Optional - allows booking without specific master
-    serviceId: varchar("service_id").notNull(),
+    serviceId: varchar("service_id"), // Nullable for solo master bookings (uses soloMasterServiceId)
+    soloMasterServiceId: varchar("solo_master_service_id"), // For solo master bookings
     bookingDate: timestamp("booking_date").notNull(),
     startTime: varchar("start_time", { length: 5 }).notNull(), // "14:00"
     endTime: varchar("end_time", { length: 5 }).notNull(), // "15:00"
@@ -287,6 +362,13 @@ export const bookings = pgTable(
         changes?: Record<string, any>;
       }>
     >(), // Phase 1: Audit trail
+    // Mobile booking fields for solo masters
+    isMobileBooking: boolean("is_mobile_booking").default(false),
+    clientAddress: varchar("client_address", { length: 500 }),
+    clientLatitude: decimal("client_latitude", { precision: 10, scale: 7 }),
+    clientLongitude: decimal("client_longitude", { precision: 10, scale: 7 }),
+    estimatedTravelTime: integer("estimated_travel_time"), // in minutes
+    mobileExtraCharge: integer("mobile_extra_charge").default(0), // extra charge for mobile service
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -299,6 +381,8 @@ export const bookings = pgTable(
     // Composite indexes for conflict checking optimization
     index("idx_bookings_master_date_status").on(table.masterId, table.bookingDate, table.status),
     index("idx_bookings_salon_date_status").on(table.salonId, table.bookingDate, table.status),
+    index("idx_bookings_solo_master_service").on(table.soloMasterServiceId),
+    index("idx_bookings_mobile").on(table.isMobileBooking),
   ],
 );
 
@@ -458,6 +542,69 @@ export const favorites = pgTable(
   },
   (table) => [index("idx_favorites_user").on(table.userId)],
 );
+
+export const masterFavorites = pgTable(
+  "master_favorites",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    masterId: varchar("master_id").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_master_favorites_user").on(table.userId),
+    index("idx_master_favorites_master").on(table.masterId),
+  ],
+);
+
+export type MasterFavorite = typeof masterFavorites.$inferSelect;
+
+// ============ SUPPORT TICKETS ============
+export const supportTickets = pgTable(
+  "support_tickets",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    subject: varchar("subject", { length: 255 }).notNull(),
+    category: varchar("category", { length: 50 }).notNull(), // bug, payment, question, suggestion
+    status: varchar("status", { length: 20 }).default("open"), // open, in_progress, resolved, closed
+    priority: varchar("priority", { length: 20 }).default("normal"), // low, normal, high, urgent
+    assignedTo: varchar("assigned_to"), // Admin user ID
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    resolvedAt: timestamp("resolved_at"),
+  },
+  (table) => [
+    index("idx_support_tickets_user").on(table.userId),
+    index("idx_support_tickets_status").on(table.status),
+  ],
+);
+
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    ticketId: varchar("ticket_id").notNull(),
+    senderId: varchar("sender_id").notNull(),
+    senderType: varchar("sender_type", { length: 20 }).notNull(), // user, admin
+    message: text("message").notNull(),
+    attachments: text("attachments").array(), // URLs to attached files
+    isRead: boolean("is_read").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_support_messages_ticket").on(table.ticketId),
+  ],
+);
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type SupportMessage = typeof supportMessages.$inferSelect;
 
 // ============ NOTIFICATIONS ============
 export const notifications = pgTable(

@@ -5,11 +5,14 @@ import {
   userProfiles,
   bookings,
   favorites,
+  masterFavorites,
   reviews,
   salons,
   services,
   masters,
   salonSettings,
+  supportTickets,
+  supportMessages,
 } from "@shared/schema";
 import { eq, and, desc, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
@@ -401,9 +404,13 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       return res.json([]);
     }
 
-    // Batch loading
-    const salonIds = Array.from(new Set(clientBookings.map((b) => b.salonId)));
-    const serviceIds = Array.from(new Set(clientBookings.map((b) => b.serviceId)));
+    // Batch loading - filter out null values for nullable foreign keys
+    const salonIds = Array.from(
+      new Set(clientBookings.map((b) => b.salonId).filter((id): id is string => id !== null)),
+    );
+    const serviceIds = Array.from(
+      new Set(clientBookings.map((b) => b.serviceId).filter((id): id is string => id !== null)),
+    );
     const masterIds = Array.from(
       new Set(clientBookings.map((b) => b.masterId).filter((id): id is string => id !== null)),
     );
@@ -426,8 +433,8 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     const enrichedBookings = clientBookings.map((booking) => ({
       ...booking,
-      salon: salonsMap.get(booking.salonId),
-      service: servicesMap.get(booking.serviceId),
+      salon: booking.salonId ? salonsMap.get(booking.salonId) : null,
+      service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
       master: booking.masterId ? mastersMap.get(booking.masterId) : null,
     }));
 
@@ -479,9 +486,9 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
 
     // Send cancellation email if email is configured
     const cancelUserEmail = req.user?.claims?.email;
-    if (isEmailConfigured() && cancelUserEmail) {
+    if (isEmailConfigured() && cancelUserEmail && booking.salonId && booking.serviceId) {
       try {
-        // Get booking details for email
+        // Get booking details for email (only for salon bookings, not solo master bookings)
         const [salon] = await db.select().from(salons).where(eq(salons.id, booking.salonId));
         const [service] = await db
           .select()
@@ -590,6 +597,116 @@ router.delete("/favorites/:salonId", isAuthenticated, async (req: any, res) => {
   }
 });
 
+// ============ MASTER FAVORITES ============
+
+// Get client master favorites
+router.get("/master-favorites", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const result = await getClientFromUser(userId);
+
+    if ("error" in result) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    const clientMasterFavorites = await db
+      .select()
+      .from(masterFavorites)
+      .where(eq(masterFavorites.userId, userId))
+      .orderBy(desc(masterFavorites.createdAt));
+
+    // Get master info for each favorite
+    const enrichedFavorites = await Promise.all(
+      clientMasterFavorites.map(async (fav) => {
+        const [master] = await db.select().from(masters).where(eq(masters.id, fav.masterId));
+        // Get salon info if master belongs to one
+        let salon = null;
+        if (master?.salonId) {
+          const [salonData] = await db.select().from(salons).where(eq(salons.id, master.salonId));
+          salon = salonData;
+        }
+        return { ...fav, master, salon };
+      }),
+    );
+
+    return res.json(enrichedFavorites);
+  } catch (error) {
+    console.error("Get client master favorites error:", error);
+    return res.status(500).json({ error: "Failed to get master favorites" });
+  }
+});
+
+// Add master to favorites
+router.post("/master-favorites", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const result = await getClientFromUser(userId);
+
+    if ("error" in result) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    const schema = z.object({
+      masterId: z.string().uuid(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const { masterId } = parsed.data;
+
+    // Check if master exists
+    const [master] = await db.select().from(masters).where(eq(masters.id, masterId));
+    if (!master) {
+      return res.status(404).json({ error: "Master not found" });
+    }
+
+    // Check if already favorited
+    const [existing] = await db
+      .select()
+      .from(masterFavorites)
+      .where(and(eq(masterFavorites.userId, userId), eq(masterFavorites.masterId, masterId)));
+
+    if (existing) {
+      return res.status(400).json({ error: "Master already in favorites" });
+    }
+
+    const [newFavorite] = await db
+      .insert(masterFavorites)
+      .values({ userId, masterId })
+      .returning();
+
+    return res.status(201).json(newFavorite);
+  } catch (error) {
+    console.error("Add master favorite error:", error);
+    return res.status(500).json({ error: "Failed to add master to favorites" });
+  }
+});
+
+// Remove master from favorites
+router.delete("/master-favorites/:masterId", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { masterId } = req.params;
+    const result = await getClientFromUser(userId);
+
+    if ("error" in result) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    await db
+      .delete(masterFavorites)
+      .where(and(eq(masterFavorites.userId, userId), eq(masterFavorites.masterId, masterId)));
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Remove master favorite error:", error);
+    return res.status(500).json({ error: "Failed to remove master from favorites" });
+  }
+});
+
 // Get client reviews
 router.get("/reviews", isAuthenticated, async (req: any, res) => {
   try {
@@ -626,7 +743,82 @@ router.get("/reviews", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Edit review (within 24 hours)
+// Create a new review
+router.post("/reviews", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const result = await getClientFromUser(userId);
+
+    if ("error" in result) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    const reviewSchema = z.object({
+      bookingId: z.string().uuid(),
+      rating: z.number().min(1).max(5),
+      comment: z.string().max(1000).optional(),
+    });
+
+    const parsed = reviewSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid review data", details: parsed.error.errors });
+    }
+
+    const { bookingId, rating, comment } = parsed.data;
+
+    // Get the booking to verify it belongs to this user and is completed
+    const [booking] = await db
+      .select()
+      .from(bookings)
+      .where(and(eq(bookings.id, bookingId), eq(bookings.clientId, userId)));
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    if (booking.status !== "completed") {
+      return res.status(400).json({ error: "Can only review completed bookings" });
+    }
+
+    // Check if review already exists for this booking
+    const [existingReview] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.bookingId, bookingId));
+
+    if (existingReview) {
+      return res.status(400).json({ error: "You have already reviewed this booking" });
+    }
+
+    // Create the review
+    const [newReview] = await db
+      .insert(reviews)
+      .values({
+        clientId: userId,
+        salonId: booking.salonId,
+        masterId: booking.masterId,
+        bookingId: bookingId,
+        rating,
+        comment: comment || null,
+      })
+      .returning();
+
+    // Update salon and master ratings
+    if (booking.salonId) {
+      await updateSalonRating(booking.salonId);
+    }
+    if (booking.masterId) {
+      await updateMasterRating(booking.masterId);
+    }
+
+    return res.status(201).json(newReview);
+  } catch (error) {
+    console.error("Create review error:", error);
+    return res.status(500).json({ error: "Failed to create review" });
+  }
+});
+
+// Edit review (within 30 minutes)
 router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
@@ -646,13 +838,13 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    // Check if review is within 24 hours
+    // Check if review is within 30 minutes
     const reviewDate = new Date(review.createdAt!);
     const now = new Date();
-    const hoursSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
+    const minutesSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60);
 
-    if (hoursSinceReview > 24) {
-      return res.status(400).json({ error: "Reviews can only be edited within 24 hours" });
+    if (minutesSinceReview > 30) {
+      return res.status(400).json({ error: "Reviews can only be edited within 30 minutes" });
     }
 
     const reviewSchema = z.object({
@@ -686,7 +878,7 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Delete review (within 24 hours)
+// Delete review (within 30 minutes)
 router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
@@ -706,13 +898,13 @@ router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    // Check if review is within 24 hours
+    // Check if review is within 30 minutes
     const reviewDate = new Date(review.createdAt!);
     const now = new Date();
-    const hoursSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
+    const minutesSinceReview = (now.getTime() - reviewDate.getTime()) / (1000 * 60);
 
-    if (hoursSinceReview > 24) {
-      return res.status(400).json({ error: "Reviews can only be deleted within 24 hours" });
+    if (minutesSinceReview > 30) {
+      return res.status(400).json({ error: "Reviews can only be deleted within 30 minutes" });
     }
 
     const salonId = review.salonId;
@@ -732,6 +924,205 @@ router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     console.error("Delete review error:", error);
     return res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
+// ============ SUPPORT TICKETS ============
+
+// Get user's support tickets
+router.get("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+
+    const tickets = await db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.userId, userId))
+      .orderBy(desc(supportTickets.createdAt));
+
+    // Get message counts for each ticket
+    const ticketsWithCounts = await Promise.all(
+      tickets.map(async (ticket) => {
+        const messages = await db
+          .select()
+          .from(supportMessages)
+          .where(eq(supportMessages.ticketId, ticket.id));
+
+        const unreadCount = messages.filter(
+          (m) => m.senderType === "admin" && !m.isRead
+        ).length;
+
+        return { ...ticket, messageCount: messages.length, unreadCount };
+      })
+    );
+
+    return res.json(ticketsWithCounts);
+  } catch (error) {
+    console.error("Get support tickets error:", error);
+    return res.status(500).json({ error: "Failed to get tickets" });
+  }
+});
+
+// Create a new support ticket
+router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+
+    const ticketSchema = z.object({
+      subject: z.string().min(1).max(255),
+      category: z.enum(["bug", "payment", "question", "suggestion"]),
+      message: z.string().min(1).max(5000),
+    });
+
+    const parsed = ticketSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.errors });
+    }
+
+    const { subject, category, message } = parsed.data;
+
+    // Create the ticket
+    const [ticket] = await db
+      .insert(supportTickets)
+      .values({
+        userId,
+        subject,
+        category,
+      })
+      .returning();
+
+    // Create the first message
+    await db.insert(supportMessages).values({
+      ticketId: ticket.id,
+      senderId: userId,
+      senderType: "user",
+      message,
+    });
+
+    return res.status(201).json(ticket);
+  } catch (error) {
+    console.error("Create support ticket error:", error);
+    return res.status(500).json({ error: "Failed to create ticket" });
+  }
+});
+
+// Get a specific ticket with messages
+router.get("/support/tickets/:id", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const messages = await db
+      .select()
+      .from(supportMessages)
+      .where(eq(supportMessages.ticketId, id))
+      .orderBy(supportMessages.createdAt);
+
+    // Mark admin messages as read
+    await db
+      .update(supportMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(supportMessages.ticketId, id),
+          eq(supportMessages.senderType, "admin"),
+          eq(supportMessages.isRead, false)
+        )
+      );
+
+    return res.json({ ...ticket, messages });
+  } catch (error) {
+    console.error("Get support ticket error:", error);
+    return res.status(500).json({ error: "Failed to get ticket" });
+  }
+});
+
+// Send a message on a ticket
+router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+
+    // Verify ticket belongs to user
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    if (ticket.status === "closed") {
+      return res.status(400).json({ error: "Cannot message on closed ticket" });
+    }
+
+    const messageSchema = z.object({
+      message: z.string().min(1).max(5000),
+    });
+
+    const parsed = messageSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid message", details: parsed.error.errors });
+    }
+
+    const [newMessage] = await db
+      .insert(supportMessages)
+      .values({
+        ticketId: id,
+        senderId: userId,
+        senderType: "user",
+        message: parsed.data.message,
+      })
+      .returning();
+
+    // Update ticket timestamp
+    await db
+      .update(supportTickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(supportTickets.id, id));
+
+    return res.status(201).json(newMessage);
+  } catch (error) {
+    console.error("Send support message error:", error);
+    return res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
+// Close a ticket
+router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const [updated] = await db
+      .update(supportTickets)
+      .set({ status: "closed", resolvedAt: new Date(), updatedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("Close support ticket error:", error);
+    return res.status(500).json({ error: "Failed to close ticket" });
   }
 });
 

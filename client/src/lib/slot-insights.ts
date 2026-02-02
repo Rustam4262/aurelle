@@ -40,8 +40,8 @@ export function analyzeTimeSlot(time: string): TimeSlotAnalysis {
   const hour = parseInt(time.split(":")[0]);
 
   let period: TimeSlotAnalysis["period"] = "morning";
-  let label = TIME_PERIODS.morning.label;
-  let icon = TIME_PERIODS.morning.icon;
+  let label: string = TIME_PERIODS.morning.label;
+  let icon: string = TIME_PERIODS.morning.icon;
 
   if (hour >= TIME_PERIODS.evening.start) {
     period = "evening";

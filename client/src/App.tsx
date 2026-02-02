@@ -25,6 +25,9 @@ const MasterPage = lazy(() => import("@/pages/master"));
 const ClientPage = lazy(() => import("@/pages/client"));
 const AboutPage = lazy(() => import("@/pages/about"));
 const AdminPage = lazy(() => import("@/pages/admin"));
+const SoloMasterPage = lazy(() => import("@/pages/solo-master"));
+const SoloMasterOnboardingPage = lazy(() => import("@/pages/solo-master-onboarding"));
+const PublicMasterPage = lazy(() => import("@/pages/public-master"));
 
 // Loading fallback component
 function PageLoader() {
@@ -54,8 +57,11 @@ function Router() {
           <Route path="/owner/salon/:id" component={OwnerSalonPage} />
           <Route path="/master" component={MasterPage} />
           <Route path="/client" component={ClientPage} />
+          <Route path="/solo-master" component={SoloMasterPage} />
+          <Route path="/solo-master/onboarding" component={SoloMasterOnboardingPage} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/:rest*" component={AdminPage} />
+          <Route path="/master/:slug" component={PublicMasterPage} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>

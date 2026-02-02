@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { UserProfile } from "@shared/schema";
-import { BookingCalendar } from "@/components/booking-calendar";
 import {
   ArrowLeft,
   Calendar,
@@ -18,26 +17,21 @@ import {
   MessageSquare,
   LogOut,
   User,
-  CheckCircle,
-  Wallet,
   Loader2,
-  BarChart3,
-  CalendarRange,
+  LayoutDashboard,
+  HeadphonesIcon,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-// Import new components
+// Import components
+import { ClientDashboard } from "@/components/client/ClientDashboard";
 import { ClientProfile } from "@/components/client/ClientProfile";
 import { ClientBookings } from "@/components/client/ClientBookings";
-import { ClientAnalytics } from "@/components/client/ClientAnalytics";
 import { ClientReviews } from "@/components/client/ClientReviews";
 import { ClientFavorites } from "@/components/client/ClientFavorites";
+import { ClientSupport } from "@/components/client/ClientSupport";
 import { WriteReviewDialog } from "@/components/client/WriteReviewDialog";
-import type { EnrichedBooking, EnrichedFavorite, EnrichedReview } from "@/components/client/types";
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
-}
+import type { EnrichedBooking, EnrichedFavorite, EnrichedMasterFavorite, EnrichedReview } from "@/components/client/types";
 
 export default function ClientPage() {
   const { t, i18n } = useTranslation();
@@ -45,7 +39,7 @@ export default function ClientPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   // State for actions lifted up
   const [writeReviewDialogOpen, setWriteReviewDialogOpen] = useState(false);
@@ -65,6 +59,11 @@ export default function ClientPage() {
 
   const { data: favoritesData, isLoading: favoritesLoading } = useQuery<EnrichedFavorite[]>({
     queryKey: ["/api/client/favorites"],
+    enabled: !!user,
+  });
+
+  const { data: masterFavoritesData, isLoading: masterFavoritesLoading } = useQuery<EnrichedMasterFavorite[]>({
+    queryKey: ["/api/client/master-favorites"],
     enabled: !!user,
   });
 
@@ -123,7 +122,7 @@ export default function ClientPage() {
   };
 
   const handleSubmitReview = (data: { rating: number; comment: string }) => {
-    if (reviewBooking) {
+    if (reviewBooking && reviewBooking.salonId) {
       createReviewMutation.mutate({
         bookingId: reviewBooking.id,
         salonId: reviewBooking.salonId,
@@ -137,6 +136,11 @@ export default function ClientPage() {
   const hasReviewForBooking = (bookingId: string) => {
     return reviewsData?.some((r) => r.bookingId === bookingId) || false;
   };
+
+  // Get completed bookings that don't have a review yet
+  const pendingReviewBookings = bookingsData?.filter(
+    (b) => b.status === "completed" && !hasReviewForBooking(b.id)
+  );
 
   if (authLoading || profileLoading) {
     return (
@@ -191,17 +195,6 @@ export default function ClientPage() {
     return null;
   }
 
-  // Calculate high-level stats for header
-  const stats = {
-    totalBookings: bookingsData?.length || 0,
-    completedBookings: bookingsData?.filter((b) => b.status === "completed").length || 0,
-    totalSpent:
-      bookingsData
-        ?.filter((b) => b.status === "completed")
-        .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
-    favoritesCount: favoritesData?.length || 0,
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-card">
@@ -239,86 +232,15 @@ export default function ClientPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-6">
-        {/* Profile Card with Statistics */}
-        <Card className="p-6 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={profileData.avatarUrl || undefined} />
-              <AvatarFallback className="text-xl">
-                {profileData.fullName?.[0] || user.firstName?.[0] || user.email?.[0] || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="font-medium text-foreground text-lg">
-                {profileData.fullName ||
-                  `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                  t("marketplace.client.unnamed")}
-              </h2>
-              <p className="text-muted-foreground">{user.email}</p>
-              {profileData.phone && (
-                <p className="text-sm text-muted-foreground">{profileData.phone}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
-                <Calendar className="h-5 w-5 text-primary" />
-                {stats.totalBookings}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("marketplace.client.stats.totalBookings")}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-green-600">
-                <CheckCircle className="h-5 w-5" />
-                {stats.completedBookings}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("marketplace.client.stats.completed")}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
-                <Wallet className="h-5 w-5 text-primary" />
-                <span className="text-lg">{formatCurrency(stats.totalSpent)}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("marketplace.client.stats.totalSpent")}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-foreground">
-                <Heart className="h-5 w-5 text-pink-500" />
-                {stats.favoritesCount}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("marketplace.client.stats.favorites")}
-              </p>
-            </div>
-          </div>
-        </Card>
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-6 mb-6">
-            <TabsTrigger value="profile" data-testid="tab-profile">
-              <User className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.client.tabs.profile")}</span>
+            <TabsTrigger value="dashboard" data-testid="tab-dashboard">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.client.tabs.dashboard")}</span>
             </TabsTrigger>
             <TabsTrigger value="bookings" data-testid="tab-bookings">
               <Calendar className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.client.tabs.bookings")}</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" data-testid="tab-analytics">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.client.tabs.analytics")}</span>
-            </TabsTrigger>
-            <TabsTrigger value="calendar" data-testid="tab-calendar">
-              <CalendarRange className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
             </TabsTrigger>
             <TabsTrigger value="favorites" data-testid="tab-favorites">
               <Heart className="h-4 w-4 mr-2" />
@@ -328,13 +250,26 @@ export default function ClientPage() {
               <MessageSquare className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("marketplace.client.tabs.reviews")}</span>
             </TabsTrigger>
+            <TabsTrigger value="profile" data-testid="tab-profile">
+              <User className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.client.tabs.profile")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="support" data-testid="tab-support">
+              <HeadphonesIcon className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("marketplace.client.tabs.support")}</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent
-            value="profile"
+            value="dashboard"
             className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
-            <ClientProfile profileData={profileData} />
+            <ClientDashboard
+              profileData={profileData}
+              bookings={bookingsData}
+              favorites={favoritesData}
+              onNavigateToTab={setActiveTab}
+            />
           </TabsContent>
 
           <TabsContent
@@ -352,36 +287,41 @@ export default function ClientPage() {
           </TabsContent>
 
           <TabsContent
-            value="analytics"
-            className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-          >
-            <ClientAnalytics bookings={bookingsData} />
-          </TabsContent>
-
-          <TabsContent
-            value="calendar"
-            className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-          >
-            <BookingCalendar
-              bookings={bookingsData || []}
-              isLoading={bookingsLoading}
-              showSalon={true}
-              showMaster={true}
-            />
-          </TabsContent>
-
-          <TabsContent
             value="favorites"
             className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
-            <ClientFavorites favorites={favoritesData} isLoading={favoritesLoading} />
+            <ClientFavorites
+              favorites={favoritesData}
+              masterFavorites={masterFavoritesData}
+              isLoading={favoritesLoading}
+              isMasterFavoritesLoading={masterFavoritesLoading}
+            />
           </TabsContent>
 
           <TabsContent
             value="reviews"
             className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
-            <ClientReviews reviews={reviewsData} isLoading={reviewsLoading} />
+            <ClientReviews
+              reviews={reviewsData}
+              isLoading={reviewsLoading}
+              pendingReviewBookings={pendingReviewBookings}
+              onWriteReview={handleOpenWriteReview}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="profile"
+            className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
+            <ClientProfile profileData={profileData} />
+          </TabsContent>
+
+          <TabsContent
+            value="support"
+            className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
+            <ClientSupport />
           </TabsContent>
         </Tabs>
       </div>

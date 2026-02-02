@@ -57,8 +57,10 @@ router.get("/me", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Master account not found" });
     }
 
-    // Get the salon
-    const [salon] = await db.select().from(salons).where(eq(salons.id, master.salonId));
+    // Get the salon (only if master belongs to a salon, not for solo masters)
+    const salon = master.salonId
+      ? (await db.select().from(salons).where(eq(salons.id, master.salonId)))[0]
+      : null;
 
     // Get bookings for this master
     const masterBookings = await db
@@ -187,9 +189,13 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       return res.json([]);
     }
 
-    // Collect unique IDs for batch fetching
-    const serviceIds = Array.from(new Set(masterBookings.map((b) => b.serviceId)));
-    const salonIds = Array.from(new Set(masterBookings.map((b) => b.salonId)));
+    // Collect unique IDs for batch fetching (filter out nulls for nullable foreign keys)
+    const serviceIds = Array.from(
+      new Set(masterBookings.map((b) => b.serviceId).filter((id): id is string => id !== null)),
+    );
+    const salonIds = Array.from(
+      new Set(masterBookings.map((b) => b.salonId).filter((id): id is string => id !== null)),
+    );
     const clientIds = Array.from(new Set(masterBookings.map((b) => b.clientId)));
 
     // Batch fetch services, salons, and client profiles
@@ -218,8 +224,8 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
       return {
         ...booking,
-        salon: salonsMap.get(booking.salonId) || null,
-        service: servicesMap.get(booking.serviceId) || null,
+        salon: booking.salonId ? salonsMap.get(booking.salonId) || null : null,
+        service: booking.serviceId ? servicesMap.get(booking.serviceId) || null : null,
         clientName,
       };
     });
@@ -435,8 +441,10 @@ router.get("/stats", isAuthenticated, async (req: any, res) => {
       .orderBy(desc(sql`COUNT(*)`))
       .limit(10);
 
-    // Get service details for popular services
-    const serviceIds = popularServices.map((s) => s.serviceId);
+    // Get service details for popular services (filter out nulls for nullable serviceId)
+    const serviceIds = popularServices
+      .map((s) => s.serviceId)
+      .filter((id): id is string => id !== null);
     let serviceDetails: any[] = [];
     if (serviceIds.length > 0) {
       serviceDetails = await db.select().from(services).where(inArray(services.id, serviceIds));

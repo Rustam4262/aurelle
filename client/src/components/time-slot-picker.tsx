@@ -84,7 +84,7 @@ export function TimeSlotPicker({
   // Calculate insights and recommendations
   const { insights, recommendedTimes, groupedSlots } = useMemo(() => {
     if (!availability?.slots) {
-      return { insights: null, recommendedTimes: [], groupedSlots: null };
+      return { insights: null, recommendedTimes: [] as string[], groupedSlots: null };
     }
 
     const insights = calculateDayInsights(availability.slots, currentLang);

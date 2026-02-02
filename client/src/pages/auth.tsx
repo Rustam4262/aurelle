@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, User, Store, Check, Mail, Phone } from "lucide-react";
+import { ArrowLeft, User, Store, Check, Mail, Phone, Briefcase } from "lucide-react";
 import { SiGoogle, SiGithub } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 function Logo({ className }: { className?: string }) {
   return <img src="/images/logo.jpg" alt="AURELLE" className={className} />;
@@ -62,9 +63,10 @@ export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const soloMasterEnabled = useFeatureFlag("SOLO_MASTER");
 
   const [step, setStep] = useState<"role" | "details">("role");
-  const [selectedRole, setSelectedRole] = useState<"client" | "owner">("client");
+  const [selectedRole, setSelectedRole] = useState<"client" | "owner" | "solo_master">("client");
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -105,6 +107,8 @@ export default function AuthPage() {
       });
       if (selectedRole === "owner") {
         navigate("/owner");
+      } else if (selectedRole === "solo_master") {
+        navigate("/solo-master/onboarding");
       } else {
         navigate("/profile");
       }
@@ -355,41 +359,61 @@ export default function AuthPage() {
                   {t("marketplace.auth.selectRole")}
                 </p>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 gap-4 ${soloMasterEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
                   <button
                     type="button"
                     onClick={() => setSelectedRole("client")}
-                    className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center gap-3 hover-elevate ${
+                    className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
                       selectedRole === "client" ? "border-primary bg-primary/5" : "border-border"
                     }`}
                     data-testid="button-role-client"
                   >
                     <User
-                      className={`h-10 w-10 ${selectedRole === "client" ? "text-primary" : "text-muted-foreground"}`}
+                      className={`h-8 w-8 ${selectedRole === "client" ? "text-primary" : "text-muted-foreground"}`}
                     />
-                    <span className="font-medium">{t("marketplace.auth.roleClient")}</span>
+                    <span className="font-medium text-sm">{t("marketplace.auth.roleClient")}</span>
                     <span className="text-xs text-muted-foreground text-center">
                       {t("marketplace.auth.roleClientDesc")}
                     </span>
-                    {selectedRole === "client" && <Check className="h-5 w-5 text-primary" />}
+                    {selectedRole === "client" && <Check className="h-4 w-4 text-primary" />}
                   </button>
+
+                  {soloMasterEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole("solo_master")}
+                      className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
+                        selectedRole === "solo_master" ? "border-primary bg-primary/5" : "border-border"
+                      }`}
+                      data-testid="button-role-solo-master"
+                    >
+                      <Briefcase
+                        className={`h-8 w-8 ${selectedRole === "solo_master" ? "text-primary" : "text-muted-foreground"}`}
+                      />
+                      <span className="font-medium text-sm">{t("marketplace.auth.roleSoloMaster", "Solo Master")}</span>
+                      <span className="text-xs text-muted-foreground text-center">
+                        {t("marketplace.auth.roleSoloMasterDesc", "Independent beauty professional")}
+                      </span>
+                      {selectedRole === "solo_master" && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  )}
 
                   <button
                     type="button"
                     onClick={() => setSelectedRole("owner")}
-                    className={`p-6 rounded-lg border-2 transition-all flex flex-col items-center gap-3 hover-elevate ${
+                    className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
                       selectedRole === "owner" ? "border-primary bg-primary/5" : "border-border"
                     }`}
                     data-testid="button-role-owner"
                   >
                     <Store
-                      className={`h-10 w-10 ${selectedRole === "owner" ? "text-primary" : "text-muted-foreground"}`}
+                      className={`h-8 w-8 ${selectedRole === "owner" ? "text-primary" : "text-muted-foreground"}`}
                     />
-                    <span className="font-medium">{t("marketplace.auth.roleOwner")}</span>
+                    <span className="font-medium text-sm">{t("marketplace.auth.roleOwner")}</span>
                     <span className="text-xs text-muted-foreground text-center">
                       {t("marketplace.auth.roleOwnerDesc")}
                     </span>
-                    {selectedRole === "owner" && <Check className="h-5 w-5 text-primary" />}
+                    {selectedRole === "owner" && <Check className="h-4 w-4 text-primary" />}
                   </button>
                 </div>
 
@@ -417,7 +441,9 @@ export default function AuthPage() {
                   <span className="text-sm text-muted-foreground">
                     {selectedRole === "client"
                       ? t("marketplace.auth.roleClient")
-                      : t("marketplace.auth.roleOwner")}
+                      : selectedRole === "solo_master"
+                        ? t("marketplace.auth.roleSoloMaster", "Solo Master")
+                        : t("marketplace.auth.roleOwner")}
                   </span>
                 </div>
 

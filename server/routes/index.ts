@@ -15,6 +15,8 @@ import ownerRoutes from "./owner.routes";
 import clientRoutes from "./client.routes";
 import contactRoutes from "./contact.routes";
 import adminRoutes from "./admin.routes";
+import soloMasterRoutes from "./soloMaster.routes";
+import publicMasterRoutes from "./publicMaster.routes";
 import healthRoutes from "./health.routes";
 import featureFlagsRoutes from "./featureFlags.routes";
 
@@ -35,6 +37,7 @@ router.use("/", usersRoutes);
 
 // Public salon/master browsing
 router.use("/salons", salonsRoutes);
+router.use("/masters", publicMasterRoutes);
 
 // Authenticated user routes
 router.use("/bookings", bookingsRoutes);
@@ -50,6 +53,7 @@ router.use("/portfolio", portfolioRoutes);
 router.use("/master", mastersRoutes);
 router.use("/owner", ownerRoutes);
 router.use("/client", clientRoutes);
+router.use("/solo-master", soloMasterRoutes);
 
 // Admin panel (requires admin authentication)
 router.use("/admin", adminRoutes);

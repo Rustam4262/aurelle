@@ -45,6 +45,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     // Check if user is the master or salon owner
     if (master.userId !== userId) {
+      // Solo masters (salonId is null) can only be managed by themselves
+      if (!master.salonId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const { salons } = await import("@shared/schema");
       const [salon] = await db.select().from(salons).where(eq(salons.id, master.salonId));
       if (!salon || salon.ownerId !== userId) {
@@ -83,6 +87,10 @@ router.delete("/:itemId", isAuthenticated, async (req: any, res) => {
     }
 
     if (master.userId !== userId) {
+      // Solo masters (salonId is null) can only be managed by themselves
+      if (!master.salonId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const { salons } = await import("@shared/schema");
       const [salon] = await db.select().from(salons).where(eq(salons.id, master.salonId));
       if (!salon || salon.ownerId !== userId) {

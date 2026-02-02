@@ -29,6 +29,9 @@ export const FEATURE_FLAGS = {
   // Additional features
   EXPORT_EXCEL: process.env.FEAT_EXPORT_EXCEL === "true",
   EXPORT_PDF: process.env.FEAT_EXPORT_PDF === "true",
+
+  // Solo Master Feature - Independent beauty professionals
+  SOLO_MASTER: process.env.FEAT_SOLO_MASTER === "true",
 } as const;
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
