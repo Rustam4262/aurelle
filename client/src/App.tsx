@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,7 +18,7 @@ const SalonPage = lazy(() => import("@/pages/salon"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
-const ProfilePage = lazy(() => import("@/pages/profile"));
+// ProfilePage removed - /profile now redirects to /client
 const OwnerPage = lazy(() => import("@/pages/owner"));
 const OwnerSalonPage = lazy(() => import("@/pages/owner-salon"));
 const MasterPage = lazy(() => import("@/pages/master"));
@@ -52,7 +52,9 @@ function Router() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
           <Route path="/auth/reset-password" component={ResetPasswordPage} />
-          <Route path="/profile" component={ProfilePage} />
+          <Route path="/profile">
+            <Redirect to="/client" />
+          </Route>
           <Route path="/owner" component={OwnerPage} />
           <Route path="/owner/salon/:id" component={OwnerSalonPage} />
           <Route path="/master" component={MasterPage} />
