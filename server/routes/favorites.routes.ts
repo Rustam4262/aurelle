@@ -5,6 +5,7 @@ import { db } from "../db";
 import { favorites, salons } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.get("/", isAuthenticated, async (req: any, res) => {
       .where(eq(favorites.userId, userId));
     return res.json(userFavorites);
   } catch (error) {
-    console.error("Get favorites error:", error);
+    logger.error("Get favorites error:", error);
     return res.status(500).json({ error: "Failed to get favorites" });
   }
 });
@@ -50,7 +51,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const [favorite] = await db.insert(favorites).values([{ userId, salonId }]).returning();
     return res.status(201).json(favorite);
   } catch (error) {
-    console.error("Add favorite error:", error);
+    logger.error("Add favorite error:", error);
     return res.status(500).json({ error: "Failed to add favorite" });
   }
 });
@@ -66,7 +67,7 @@ router.delete("/:salonId", isAuthenticated, async (req: any, res) => {
       .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
     return res.json({ success: true });
   } catch (error) {
-    console.error("Remove favorite error:", error);
+    logger.error("Remove favorite error:", error);
     return res.status(500).json({ error: "Failed to remove favorite" });
   }
 });
@@ -92,7 +93,7 @@ router.post("/:salonId", isAuthenticated, async (req: any, res) => {
       return res.json({ favorited: true });
     }
   } catch (error) {
-    console.error("Toggle favorite error:", error);
+    logger.error("Toggle favorite error:", error);
     return res.status(500).json({ error: "Failed to toggle favorite" });
   }
 });
@@ -104,7 +105,7 @@ router.get("/my-favorites", isAuthenticated, async (req: any, res) => {
     const userFavorites = await db.select().from(favorites).where(eq(favorites.userId, userId));
     return res.json(userFavorites);
   } catch (error) {
-    console.error("Get favorites error:", error);
+    logger.error("Get favorites error:", error);
     return res.status(500).json({ error: "Failed to get favorites" });
   }
 });

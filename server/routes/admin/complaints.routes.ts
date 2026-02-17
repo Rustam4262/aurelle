@@ -4,6 +4,7 @@ import { complaints, sanctions } from "@shared/admin-schema";
 import { users } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.get("/", requirePermission("complaints.read"), async (req, res) => {
 
     res.json({ complaints: allComplaints });
   } catch (error: any) {
-    console.error("List complaints error:", error);
+    logger.error("List complaints error", error as Error, { source: "complaints-routes" });
     res.status(500).json({ error: "Failed to fetch complaints" });
   }
 });
@@ -76,7 +77,7 @@ router.get("/:id", requirePermission("complaints.read"), async (req, res) => {
 
     res.json(complaint);
   } catch (error: any) {
-    console.error("Get complaint error:", error);
+    logger.error("Get complaint error", error as Error, { source: "complaints-routes" });
     res.status(500).json({ error: "Failed to fetch complaint" });
   }
 });
@@ -116,7 +117,7 @@ router.patch("/:id/assign", requirePermission("complaints.resolve"), async (req,
 
     res.json({ complaint: updated });
   } catch (error: any) {
-    console.error("Assign complaint error:", error);
+    logger.error("Assign complaint error", error as Error, { source: "complaints-routes" });
     res.status(500).json({ error: "Failed to assign complaint" });
   }
 });
@@ -200,7 +201,7 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
 
     res.json({ complaint: updated, sanctionId });
   } catch (error: any) {
-    console.error("Resolve complaint error:", error);
+    logger.error("Resolve complaint error", error as Error, { source: "complaints-routes" });
     res.status(500).json({ error: "Failed to resolve complaint" });
   }
 });
@@ -243,7 +244,7 @@ router.patch("/:id/reject", requirePermission("complaints.resolve"), async (req,
 
     res.json({ complaint: updated });
   } catch (error: any) {
-    console.error("Reject complaint error:", error);
+    logger.error("Reject complaint error", error as Error, { source: "complaints-routes" });
     res.status(500).json({ error: "Failed to reject complaint" });
   }
 });

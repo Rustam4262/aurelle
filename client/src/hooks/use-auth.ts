@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { User } from "@shared/models/auth";
+import { logger } from '@/lib/logger';
 
 async function fetchUser(): Promise<User | null> {
   const response = await fetch("/api/auth/user", {
@@ -34,7 +35,7 @@ async function logout(): Promise<void> {
       throw new Error("Logout failed");
     }
   } catch (error) {
-    console.error("Logout error:", error);
+    logger.error("Logout error", error);
     // Fallback to GET redirect
     window.location.href = "/api/logout";
   }

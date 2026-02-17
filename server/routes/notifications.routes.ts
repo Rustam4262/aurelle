@@ -3,6 +3,7 @@ import { isAuthenticated } from "../auth";
 import { db } from "../db";
 import { notifications } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get("/", isAuthenticated, async (req: any, res) => {
       .orderBy(desc(notifications.createdAt));
     return res.json(userNotifications);
   } catch (error) {
-    console.error("Get notifications error:", error);
+    logger.error("Get notifications error:", error);
     return res.status(500).json({ error: "Failed to get notifications" });
   }
 });
@@ -40,7 +41,7 @@ router.patch("/:id/read", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Mark notification read error:", error);
+    logger.error("Mark notification read error:", error);
     return res.status(500).json({ error: "Failed to mark notification as read" });
   }
 });
@@ -54,7 +55,7 @@ router.patch("/read-all", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Mark all notifications read error:", error);
+    logger.error("Mark all notifications read error:", error);
     return res.status(500).json({ error: "Failed to mark notifications as read" });
   }
 });

@@ -4,6 +4,7 @@ import twilio from "twilio";
 import { db } from "./db";
 import { users, userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "./lib/logger";
 
 // Store verification codes temporarily (in production, use Redis)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -27,7 +28,7 @@ export function setupPhoneAuth(app: Express) {
   const twilioConfig = getTwilioClient();
 
   if (!twilioConfig) {
-    console.log("Phone auth not configured - missing Twilio credentials");
+    logger.info("Phone auth not configured - missing Twilio credentials");
     return;
   }
 
@@ -64,11 +65,11 @@ export function setupPhoneAuth(app: Express) {
           expiresIn: 600, // seconds
         });
       } catch (twilioError: any) {
-        console.error("Twilio error:", twilioError);
+        logger.error("Twilio error", twilioError);
 
         // Fallback for development: just store the code without sending
         if (process.env.NODE_ENV === "development") {
-          console.log(`Development mode - verification code for ${phoneNumber}: ${code}`);
+          logger.info(`Development mode - verification code for ${phoneNumber}: ${code}`);
           return res.json({
             success: true,
             message: "Development mode - check console for code",
@@ -80,7 +81,7 @@ export function setupPhoneAuth(app: Express) {
         return res.status(500).json({ error: "Failed to send verification code" });
       }
     } catch (error) {
-      console.error("Send code error:", error);
+      logger.error("Send code error", error);
       return res.status(500).json({ error: "Failed to send verification code" });
     }
   });
@@ -115,7 +116,7 @@ export function setupPhoneAuth(app: Express) {
           }
           verificationCodes.delete(phoneNumber);
         } else {
-          console.error("Twilio verification error:", twilioError);
+          logger.error("Twilio verification error", twilioError);
           return res.status(400).json({ error: "Invalid or expired verification code" });
         }
       }
@@ -162,19 +163,19 @@ export function setupPhoneAuth(app: Express) {
 
       (req as any).login(sessionUser, (err: any) => {
         if (err) {
-          console.error("Login error:", err);
+          logger.error("Login error", err);
           return res.status(500).json({ error: "Failed to create session" });
         }
         return res.json({ success: true, user: sessionUser.claims });
       });
     } catch (error) {
-      console.error("Verify code error:", error);
+      logger.error("Verify code error", error);
       return res.status(500).json({ error: "Failed to verify code" });
     }
   });
 
   app.use("/api", router);
-  console.log("Phone auth (SMS) configured successfully");
+  logger.info("Phone auth (SMS) configured successfully");
 }
 
 export function isPhoneAuthConfigured(): boolean {

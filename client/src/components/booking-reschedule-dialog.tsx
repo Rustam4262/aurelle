@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,9 @@ export function BookingRescheduleDialog({ open, onOpenChange, booking }: Resched
       onOpenChange(false);
     },
     onError: (error: any) => {
-      console.error("Reschedule error:", error);
+      logger.error("Reschedule error", error as Error, {
+        source: "booking-reschedule-dialog",
+      });
       const errorMessage = error.response?.data?.error || error.message;
       toast({
         title: t("bookings.reschedule.error", "Reschedule failed"),

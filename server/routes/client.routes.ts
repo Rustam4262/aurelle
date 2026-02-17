@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { db } from "../db";
+import { logger } from "../lib/logger";
 import {
   userProfiles,
   bookings,
@@ -138,7 +139,7 @@ router.get("/profile", isAuthenticated, async (req: any, res) => {
 
     return res.json(result.profile);
   } catch (error) {
-    console.error("Get client profile error:", error);
+    logger.error("Get client profile error:", error);
     return res.status(500).json({ error: "Failed to get profile" });
   }
 });
@@ -173,7 +174,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update client profile error:", error);
+    logger.error("Update client profile error:", error);
     return res.status(500).json({ error: "Failed to update profile" });
   }
 });
@@ -182,24 +183,24 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 router.post("/bookings", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    console.log("[DEBUG] Create booking request from user:", userId);
+    logger.info("[DEBUG] Create booking request from user: " + userId);
 
     const result = await getClientFromUser(userId);
-    console.log("[DEBUG] Profile lookup result:", result);
+    logger.info("[DEBUG] Profile lookup result: " + JSON.stringify(result));
 
     if ("error" in result) {
-      console.log("[DEBUG] Error in getClientFromUser:", result.error);
+      logger.info("[DEBUG] Error in getClientFromUser: " + result.error);
       return res.status(result.status).json({ error: result.error });
     }
 
     if (!result.profile) {
-      console.log("[DEBUG] No profile found for user:", userId);
+      logger.info("[DEBUG] No profile found for user: " + userId);
       return res
         .status(400)
         .json({ error: "Profile not found. Please complete your profile first." });
     }
 
-    console.log("[DEBUG] Profile found:", result.profile.id);
+    logger.info("[DEBUG] Profile found: " + result.profile.id);
 
     const bookingSchema = z.object({
       salonId: z.string(),
@@ -287,7 +288,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Create booking
-    console.log("[DEBUG] Creating booking with data:", {
+    logger.info("[DEBUG] Creating booking with data: " + JSON.stringify({
       clientId: result.profile.id,
       salonId,
       serviceId,
@@ -295,7 +296,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       bookingDate,
       startTime,
       endTime,
-    });
+    }));
 
     const [newBooking] = await db
       .insert(bookings)
@@ -315,7 +316,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       })
       .returning();
 
-    console.log("[DEBUG] Booking created successfully:", newBooking);
+    logger.info("[DEBUG] Booking created successfully: " + JSON.stringify(newBooking));
 
     // Send confirmation email if email is configured
     const userEmail = req.user?.claims?.email;
@@ -366,16 +367,16 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
           language,
         );
 
-        console.log(`[EMAIL] Confirmation email sent to ${userEmail}`);
+        logger.info(`[EMAIL] Confirmation email sent to ${userEmail}`);
       } catch (emailError) {
         // Don't fail the booking if email fails
-        console.error("[EMAIL] Failed to send confirmation email:", emailError);
+        logger.error("[EMAIL] Failed to send confirmation email:", emailError);
       }
     }
 
     return res.status(201).json(newBooking);
   } catch (error) {
-    console.error("Create booking error:", error);
+    logger.error("Create booking error:", error);
     return res.status(500).json({ error: "Failed to create booking" });
   }
 });
@@ -440,7 +441,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedBookings);
   } catch (error) {
-    console.error("Get client bookings error:", error);
+    logger.error("Get client bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
   }
 });
@@ -529,17 +530,17 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
             language,
           );
 
-          console.log(`[EMAIL] Cancellation email sent to ${cancelUserEmail}`);
+          logger.info(`[EMAIL] Cancellation email sent to ${cancelUserEmail}`);
         }
       } catch (emailError) {
         // Don't fail the cancellation if email fails
-        console.error("[EMAIL] Failed to send cancellation email:", emailError);
+        logger.error("[EMAIL] Failed to send cancellation email:", emailError);
       }
     }
 
     return res.json(updated);
   } catch (error) {
-    console.error("Cancel client booking error:", error);
+    logger.error("Cancel client booking error:", error);
     return res.status(500).json({ error: "Failed to cancel booking" });
   }
 });
@@ -570,7 +571,7 @@ router.get("/favorites", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedFavorites);
   } catch (error) {
-    console.error("Get client favorites error:", error);
+    logger.error("Get client favorites error:", error);
     return res.status(500).json({ error: "Failed to get favorites" });
   }
 });
@@ -592,7 +593,7 @@ router.delete("/favorites/:salonId", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Remove favorite error:", error);
+    logger.error("Remove favorite error:", error);
     return res.status(500).json({ error: "Failed to remove favorite" });
   }
 });
@@ -631,7 +632,7 @@ router.get("/master-favorites", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedFavorites);
   } catch (error) {
-    console.error("Get client master favorites error:", error);
+    logger.error("Get client master favorites error:", error);
     return res.status(500).json({ error: "Failed to get master favorites" });
   }
 });
@@ -677,7 +678,7 @@ router.post("/master-favorites", isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(newFavorite);
   } catch (error) {
-    console.error("Add master favorite error:", error);
+    logger.error("Add master favorite error:", error);
     return res.status(500).json({ error: "Failed to add master to favorites" });
   }
 });
@@ -699,7 +700,7 @@ router.delete("/master-favorites/:masterId", isAuthenticated, async (req: any, r
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Remove master favorite error:", error);
+    logger.error("Remove master favorite error:", error);
     return res.status(500).json({ error: "Failed to remove master from favorites" });
   }
 });
@@ -735,7 +736,7 @@ router.get("/reviews", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedReviews);
   } catch (error) {
-    console.error("Get client reviews error:", error);
+    logger.error("Get client reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -810,7 +811,7 @@ router.post("/reviews", isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(newReview);
   } catch (error) {
-    console.error("Create review error:", error);
+    logger.error("Create review error:", error);
     return res.status(500).json({ error: "Failed to create review" });
   }
 });
@@ -870,7 +871,7 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Edit review error:", error);
+    logger.error("Edit review error:", error);
     return res.status(500).json({ error: "Failed to edit review" });
   }
 });
@@ -919,7 +920,7 @@ router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete review error:", error);
+    logger.error("Delete review error:", error);
     return res.status(500).json({ error: "Failed to delete review" });
   }
 });
@@ -953,7 +954,7 @@ router.get("/support/tickets", isAuthenticated, async (req: any, res) => {
 
     return res.json(ticketsWithCounts);
   } catch (error) {
-    console.error("Get support tickets error:", error);
+    logger.error("Get support tickets error:", error);
     return res.status(500).json({ error: "Failed to get tickets" });
   }
 });
@@ -996,7 +997,7 @@ router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(ticket);
   } catch (error) {
-    console.error("Create support ticket error:", error);
+    logger.error("Create support ticket error:", error);
     return res.status(500).json({ error: "Failed to create ticket" });
   }
 });
@@ -1036,7 +1037,7 @@ router.get("/support/tickets/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json({ ...ticket, messages });
   } catch (error) {
-    console.error("Get support ticket error:", error);
+    logger.error("Get support ticket error:", error);
     return res.status(500).json({ error: "Failed to get ticket" });
   }
 });
@@ -1085,7 +1086,7 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
 
     return res.status(201).json(newMessage);
   } catch (error) {
-    console.error("Send support message error:", error);
+    logger.error("Send support message error:", error);
     return res.status(500).json({ error: "Failed to send message" });
   }
 });
@@ -1113,7 +1114,7 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
 
     return res.json(updated);
   } catch (error) {
-    console.error("Close support ticket error:", error);
+    logger.error("Close support ticket error:", error);
     return res.status(500).json({ error: "Failed to close ticket" });
   }
 });

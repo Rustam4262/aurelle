@@ -15,6 +15,7 @@ import Home from "@/pages/home";
 // Lazy load all other pages for code splitting
 const NotFound = lazy(() => import("@/pages/not-found"));
 const SalonPage = lazy(() => import("@/pages/salon"));
+const SearchPage = lazy(() => import("@/pages/search"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
@@ -48,6 +49,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/about" component={AboutPage} />
+          <Route path="/search" component={SearchPage} />
           <Route path="/salon/:id" component={SalonPage} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/auth/forgot-password" component={ForgotPasswordPage} />

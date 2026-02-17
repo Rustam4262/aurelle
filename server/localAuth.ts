@@ -6,6 +6,7 @@ import { users, passwordResetTokens } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { authLimiter, registerLimiter } from "./middleware/rateLimiter";
+import { logger } from "./lib/logger";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -40,7 +41,7 @@ export function setupLocalAuth(app: Express) {
       }
 
       const { email, password, firstName, lastName } = parsed.data;
-      console.log(`[Registration] Attempt for email: ${email}`);
+      logger.info(`Registration attempt for email: ${email}`, { source: "localAuth" });
 
       const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
@@ -62,7 +63,7 @@ export function setupLocalAuth(app: Express) {
         })
         .returning();
 
-      console.log(`[Registration] User created with ID: ${newUser.id}`);
+      logger.info(`User created with ID: ${newUser.id}`, { source: "localAuth" });
 
       (req.session as any).passport = {
         user: {
@@ -79,7 +80,7 @@ export function setupLocalAuth(app: Express) {
 
       req.session.save((err) => {
         if (err) {
-          console.error("Session save error:", err);
+          logger.error("Session save error", err as Error, { source: "localAuth" });
           return res.status(500).json({ message: "Failed to create session" });
         }
         res.json({
@@ -93,7 +94,7 @@ export function setupLocalAuth(app: Express) {
         });
       });
     } catch (error: any) {
-      console.error("[Registration] Critical error:", error);
+      logger.error("Registration critical error", error as Error, { source: "localAuth" });
       res.status(500).json({
         message: "Registration failed",
         error: process.env.NODE_ENV === "development" ? error.message : undefined,
@@ -136,7 +137,7 @@ export function setupLocalAuth(app: Express) {
 
       req.session.save((err) => {
         if (err) {
-          console.error("Session save error:", err);
+          logger.error("Session save error", err as Error, { source: "localAuth" });
           return res.status(500).json({ message: "Failed to create session" });
         }
         res.json({
@@ -150,7 +151,7 @@ export function setupLocalAuth(app: Express) {
         });
       });
     } catch (error) {
-      console.error("Login error:", error);
+      logger.error("Login error", error as Error, { source: "localAuth" });
       res.status(500).json({ message: "Login failed" });
     }
   });
@@ -189,7 +190,7 @@ export function setupLocalAuth(app: Express) {
       // TODO: Send email with reset link
       // For now, log the reset link (in production, send via email)
       const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
-      console.log(`[Password Reset] Link for ${email}: ${resetLink}`);
+      logger.info(`Password reset link for ${email}: ${resetLink}`, { source: "localAuth" });
 
       // In development, include token in response (REMOVE IN PRODUCTION)
       const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
@@ -200,7 +201,7 @@ export function setupLocalAuth(app: Express) {
         ...devResponse,
       });
     } catch (error) {
-      console.error("Password reset request error:", error);
+      logger.error("Password reset request error", error as Error, { source: "localAuth" });
       res.status(500).json({ message: "Password reset request failed" });
     }
   });
@@ -251,10 +252,10 @@ export function setupLocalAuth(app: Express) {
         message: "Password has been reset successfully. You can now log in with your new password.",
       });
     } catch (error) {
-      console.error("Password reset confirmation error:", error);
+      logger.error("Password reset confirmation error", error as Error, { source: "localAuth" });
       res.status(500).json({ message: "Password reset failed" });
     }
   });
 
-  console.log("Local auth (login/password) configured successfully");
+  logger.info("Local auth (login/password) configured successfully", { source: "localAuth" });
 }

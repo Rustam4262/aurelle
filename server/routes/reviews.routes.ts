@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { eq, desc } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -79,10 +80,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       await updateMasterRating(parsed.data.masterId);
     }
 
-    console.log("[REVIEW] Created:", review);
+    logger.info("[REVIEW] Created: " + JSON.stringify(review));
     return res.status(201).json(review);
   } catch (error) {
-    console.error("Create review error:", error);
+    logger.error("Create review error:", error);
     return res.status(500).json({ error: "Failed to create review" });
   }
 });
@@ -118,7 +119,7 @@ router.get("/salon/:salonId", async (req, res) => {
 
     return res.json(salonReviews);
   } catch (error) {
-    console.error("Get salon reviews error:", error);
+    logger.error("Get salon reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -152,7 +153,7 @@ router.get("/master/:masterId", async (req, res) => {
 
     return res.json(masterReviews);
   } catch (error) {
-    console.error("Get master reviews error:", error);
+    logger.error("Get master reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -193,7 +194,7 @@ router.get("/my-reviews", isAuthenticated, async (req: any, res) => {
 
     return res.json(clientReviews);
   } catch (error) {
-    console.error("Get my reviews error:", error);
+    logger.error("Get my reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -234,10 +235,10 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
       .where(eq(reviews.id, reviewId))
       .returning();
 
-    console.log("[REVIEW] Owner responded:", updatedReview);
+    logger.info("[REVIEW] Owner responded: " + JSON.stringify(updatedReview));
     return res.json(updatedReview);
   } catch (error) {
-    console.error("Respond to review error:", error);
+    logger.error("Respond to review error:", error);
     return res.status(500).json({ error: "Failed to respond to review" });
   }
 });

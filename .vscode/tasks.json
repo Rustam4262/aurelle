@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Setup Demo Data",
+			"type": "shell",
+			"command": "${workspaceFolder}/node_modules/.bin/tsx",
+			"args": [
+				"server/setup-demo.ts"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Dev Server",
+			"type": "shell",
+			"command": "${workspaceFolder}/node_modules/.bin/tsx",
+			"args": [
+				"watch",
+				"server/index.ts"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

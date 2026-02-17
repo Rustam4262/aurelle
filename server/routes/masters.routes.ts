@@ -13,6 +13,7 @@ import {
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -83,7 +84,7 @@ router.get("/me", isAuthenticated, async (req: any, res) => {
       reviews: masterReviews,
     });
   } catch (error) {
-    console.error("Get master dashboard error:", error);
+    logger.error("Get master dashboard error:", error);
     return res.status(500).json({ error: "Failed to get master data" });
   }
 });
@@ -105,7 +106,7 @@ router.get("/schedule", isAuthenticated, async (req: any, res) => {
 
     return res.json(hours);
   } catch (error) {
-    console.error("Get master schedule error:", error);
+    logger.error("Get master schedule error:", error);
     return res.status(500).json({ error: "Failed to get schedule" });
   }
 });
@@ -148,7 +149,7 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
 
     return res.json([]);
   } catch (error) {
-    console.error("Update master schedule error:", error);
+    logger.error("Update master schedule error:", error);
     return res.status(500).json({ error: "Failed to update schedule" });
   }
 });
@@ -232,7 +233,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedBookings);
   } catch (error) {
-    console.error("Get master bookings error:", error);
+    logger.error("Get master bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
   }
 });
@@ -285,7 +286,7 @@ router.patch("/bookings/:bookingId/status", isAuthenticated, async (req: any, re
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update booking status error:", error);
+    logger.error("Update booking status error:", error);
     return res.status(500).json({ error: "Failed to update booking status" });
   }
 });
@@ -308,7 +309,7 @@ router.get("/portfolio", isAuthenticated, async (req: any, res) => {
 
     return res.json(portfolio);
   } catch (error) {
-    console.error("Get master portfolio error:", error);
+    logger.error("Get master portfolio error:", error);
     return res.status(500).json({ error: "Failed to get portfolio" });
   }
 });
@@ -354,7 +355,7 @@ router.post("/portfolio", isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(portfolioItem);
   } catch (error) {
-    console.error("Add portfolio error:", error);
+    logger.error("Add portfolio error:", error);
     return res.status(500).json({ error: "Failed to add portfolio image" });
   }
 });
@@ -384,7 +385,7 @@ router.delete("/portfolio/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Remove portfolio error:", error);
+    logger.error("Remove portfolio error:", error);
     return res.status(500).json({ error: "Failed to remove portfolio image" });
   }
 });
@@ -509,7 +510,7 @@ router.get("/stats", isAuthenticated, async (req: any, res) => {
       },
     });
   } catch (error) {
-    console.error("Get master stats error:", error);
+    logger.error("Get master stats error:", error);
     return res.status(500).json({ error: "Failed to get statistics" });
   }
 });

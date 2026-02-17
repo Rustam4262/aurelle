@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import type { Express } from "express";
 import { authStorage } from "./auth/storage";
+import { logger } from "./lib/logger";
 
 function getGitHubCredentials() {
   const clientID = process.env.GITHUB_CLIENT_ID;
@@ -12,7 +13,7 @@ function getGitHubCredentials() {
   }
 
   if (clientID.length < 10 || clientSecret.length < 10) {
-    console.warn("GitHub OAuth credentials appear to be invalid");
+    logger.warn("GitHub OAuth credentials appear to be invalid");
     return null;
   }
 
@@ -23,7 +24,7 @@ export async function setupGitHubAuth(app: Express) {
   const credentials = getGitHubCredentials();
 
   if (!credentials) {
-    console.log(
+    logger.info(
       "GitHub OAuth not configured - missing or invalid GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET",
     );
     return;
@@ -106,7 +107,7 @@ export async function setupGitHubAuth(app: Express) {
     })(req, res, next);
   });
 
-  console.log("GitHub OAuth configured successfully");
+  logger.info("GitHub OAuth configured successfully");
 }
 
 export function isGitHubConfigured(): boolean {

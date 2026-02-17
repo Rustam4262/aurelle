@@ -84,17 +84,17 @@ export function HomeFooter() {
 
           <div className="md:col-span-2">
             <h4 className="font-bold text-xs uppercase tracking-widest text-foreground mb-6">
-              Platforma
+              {t("marketplace.footer.platform")}
             </h4>
             <ul className="space-y-4">
               <li>
                 <span className="text-muted-foreground font-light italic opacity-50 cursor-not-allowed">
-                  Terms of Service
+                  {t("marketplace.footer.termsOfService")}
                 </span>
               </li>
               <li>
                 <span className="text-muted-foreground font-light italic opacity-50 cursor-not-allowed">
-                  Privacy Policy
+                  {t("marketplace.footer.privacyPolicy")}
                 </span>
               </li>
             </ul>

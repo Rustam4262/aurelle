@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { logger } from "@/lib/logger";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
@@ -266,7 +267,7 @@ export function PortfolioUpload({
         setImages([]);
       }, 2000);
     } catch (error) {
-      console.error("Upload error:", error);
+      logger.error("Upload error", error as Error, { source: "portfolio-upload" });
       toast({
         title: t("marketplace.portfolio.upload.errors.uploadFailed"),
         description: t("marketplace.portfolio.upload.errors.uploadFailedDesc"),

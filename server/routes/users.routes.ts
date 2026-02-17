@@ -4,6 +4,7 @@ import { db } from "../db";
 import { userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get("/profile", isAuthenticated, async (req: any, res) => {
     }
     return res.json({ exists: true, ...profile });
   } catch (error) {
-    console.error("Get profile error:", error);
+    logger.error("Get profile error:", error);
     return res.status(500).json({ error: "Failed to get profile" });
   }
 });
@@ -116,7 +117,7 @@ router.post("/profile", isAuthenticated, async (req: any, res) => {
       return res.status(201).json(created);
     }
   } catch (error) {
-    console.error("Create/update profile error:", error);
+    logger.error("Create/update profile error:", error);
     return res.status(500).json({ error: "Failed to save profile" });
   }
 });

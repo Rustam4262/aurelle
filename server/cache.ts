@@ -1,5 +1,6 @@
 // Redis caching with graceful degradation
 import type { RedisClientType } from "redis";
+import { logger } from "./lib/logger";
 
 let redisClient: RedisClientType | null = null;
 let isRedisAvailable = false;
@@ -10,8 +11,8 @@ export async function initRedis() {
     const redisUrl = process.env.REDIS_URL;
 
     if (!redisUrl) {
-      console.log("[REDIS] ⚠️ Redis not configured - caching disabled");
-      console.log("[REDIS] Set REDIS_URL environment variable to enable caching");
+      logger.info("⚠️ Redis not configured - caching disabled", { source: "redis" });
+      logger.info("Set REDIS_URL environment variable to enable caching", { source: "redis" });
       return;
     }
 
@@ -19,20 +20,20 @@ export async function initRedis() {
     redisClient = createClient({ url: redisUrl });
 
     redisClient.on("error", (err) => {
-      console.error("[REDIS] Error:", err);
+      logger.error("Redis error", err, { source: "redis" });
       isRedisAvailable = false;
     });
 
     redisClient.on("connect", () => {
-      console.log("[REDIS] ✅ Connected successfully");
+      logger.info("✅ Redis connected successfully", { source: "redis" });
       isRedisAvailable = true;
     });
 
     await redisClient.connect();
     isRedisAvailable = true;
   } catch (error) {
-    console.error("[REDIS] Failed to initialize:", error);
-    console.log("[REDIS] Continuing without caching");
+    logger.error("Redis failed to initialize", error, { source: "redis" });
+    logger.info("Continuing without caching", { source: "redis" });
     redisClient = null;
     isRedisAvailable = false;
   }
@@ -51,7 +52,7 @@ export async function getCache(key: string): Promise<any | null> {
     }
     return null;
   } catch (error) {
-    console.error(`[REDIS] Get error for key ${key}:`, error);
+    logger.error(`Redis get error for key ${key}`, error, { source: "redis" });
     return null;
   }
 }
@@ -65,7 +66,7 @@ export async function setCache(key: string, value: any, ttlSeconds: number = 300
   try {
     await redisClient.setEx(key, ttlSeconds, JSON.stringify(value));
   } catch (error) {
-    console.error(`[REDIS] Set error for key ${key}:`, error);
+    logger.error(`Redis set error for key ${key}`, error, { source: "redis" });
   }
 }
 
@@ -78,7 +79,7 @@ export async function delCache(key: string): Promise<void> {
   try {
     await redisClient.del(key);
   } catch (error) {
-    console.error(`[REDIS] Delete error for key ${key}:`, error);
+    logger.error(`Redis delete error for key ${key}`, error, { source: "redis" });
   }
 }
 
@@ -94,7 +95,7 @@ export async function clearCachePattern(pattern: string): Promise<void> {
       await redisClient.del(keys);
     }
   } catch (error) {
-    console.error(`[REDIS] Clear pattern error for ${pattern}:`, error);
+    logger.error(`Redis clear pattern error for ${pattern}`, error, { source: "redis" });
   }
 }
 
@@ -118,13 +119,13 @@ export function cacheMiddleware(keyPrefix: string, ttl: number = 300) {
 
       // Override json function to cache response
       res.json = function (body: any) {
-        setCache(cacheKey, body, ttl).catch(console.error);
+        setCache(cacheKey, body, ttl).catch((err) => logger.error("Redis cache set error", err, { source: "redis" }));
         return originalSend(body);
       };
 
       next();
     } catch (error) {
-      console.error("[REDIS] Middleware error:", error);
+      logger.error("Redis middleware error", error, { source: "redis" });
       next();
     }
   };

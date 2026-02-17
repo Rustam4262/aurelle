@@ -53,3 +53,16 @@ tmpclaude-*
 
 # Replit state files
 .local/
+
+# Mobile build artifacts
+android/app/build/
+android/build/
+ios/build/
+ios/Pods/
+*.apk
+*.aab
+*.ipa
+
+# Package manager lock files (keep npm only)
+pnpm-lock.yaml
+yarn.lock

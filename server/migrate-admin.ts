@@ -3,13 +3,14 @@ import { sql } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from "./lib/logger";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
   try {
-    console.log("🚀 Starting admin panel migrations...\n");
+    logger.info("Starting admin panel migrations", { source: "migrate-admin" });
 
     const migrationsDir = path.join(__dirname, "../migrations");
     const migrationFiles = [
@@ -24,11 +25,11 @@ async function runMigrations() {
       const filePath = path.join(migrationsDir, file);
 
       if (!fs.existsSync(filePath)) {
-        console.log(`⚠️  Skipping ${file} - file not found`);
+        logger.warn(`Skipping ${file} - file not found`, { source: "migrate-admin" });
         continue;
       }
 
-      console.log(`📝 Running migration: ${file}`);
+      logger.info(`Running migration: ${file}`, { source: "migrate-admin" });
       const migrationSQL = fs.readFileSync(filePath, "utf-8");
 
       // Split by semicolons but keep statements together
@@ -43,20 +44,20 @@ async function runMigrations() {
         } catch (error: any) {
           // Ignore "already exists" errors
           if (error.message?.includes("already exists")) {
-            console.log(`   ℹ️  Skipped - already exists`);
+            logger.info("Skipped - already exists", { source: "migrate-admin" });
           } else {
             throw error;
           }
         }
       }
 
-      console.log(`✅ Completed: ${file}\n`);
+      logger.info(`Completed: ${file}`, { source: "migrate-admin" });
     }
 
-    console.log("✨ All migrations completed successfully!");
+    logger.info("All migrations completed successfully", { source: "migrate-admin" });
     process.exit(0);
   } catch (error) {
-    console.error("❌ Migration failed:", error);
+    logger.error("Migration failed", error as Error, { source: "migrate-admin" });
     process.exit(1);
   }
 }

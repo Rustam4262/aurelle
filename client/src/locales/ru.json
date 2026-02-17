@@ -134,7 +134,10 @@
       "forOwners": "Владельцам",
       "registerSalon": "Добавить салон",
       "dashboard": "Панель управления",
-      "copyright": "© {{year}} AURELLE. Все права защищены."
+      "copyright": "© {{year}} AURELLE. Все права защищены.",
+      "termsOfService": "Условия использования",
+      "privacyPolicy": "Политика конфиденциальности",
+      "platform": "Платформа"
     },
     "auth": {
       "title": "Добро пожаловать в AURELLE",
@@ -255,6 +258,7 @@
     },
     "owner": {
       "title": "Панель владельца салона",
+      "quickActions": "Быстрые действия",
       "mySalons": "Мои салоны",
       "addSalon": "Добавить салон",
       "editSalon": "Редактировать салон",
@@ -772,7 +776,14 @@
       "revenueTrend": "Тренд доходов (последние 30 дней)",
       "bookingsTrend": "Тренд бронирований (последние 30 дней)",
       "topServicesChart": "Топ услуги по бронированиям",
-      "topMastersChart": "Топ мастера по доходам"
+      "topMastersChart": "Топ мастера по доходам",
+      "financialMetrics": "Ключевые метрики",
+      "avgBookingValue": "Средний чек",
+      "perBooking": "на одну запись",
+      "cancellationRate": "Процент отмен",
+      "thisMonth": "в этом месяце",
+      "repeatClients": "Повторные клиенты",
+      "returningToday": "вернулись сегодня"
     },
     "bookings": {
       "title": "Бронирования",

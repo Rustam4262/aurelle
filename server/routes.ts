@@ -9,9 +9,14 @@ import { setupPhoneAuth } from "./phoneAuth";
 import { registerUploadRoutes } from "./uploadRoutes";
 import { globalLimiter } from "./middleware/rateLimiter";
 import apiRoutes from "./routes/index";
+import seoRoutes from "./routes/seo.routes";
 import healthRoutes from "./routes/health.routes";
+import { logger } from "./lib/logger";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // SEO routes (robots.txt, sitemap.xml) - must be before /api prefix
+  app.use("/", seoRoutes);
+
   // Health check endpoints (no rate limiting)
   app.use("/api", healthRoutes);
 
@@ -39,6 +44,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Register all modular API routes
   app.use("/api", apiRoutes);
 
-  console.log("All routes registered successfully");
+  logger.info("All routes registered successfully");
   return httpServer;
 }

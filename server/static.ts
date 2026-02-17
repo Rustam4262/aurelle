@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { logger } from "./lib/logger";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(process.cwd(), "dist", "public");
@@ -45,7 +46,7 @@ export function serveStatic(app: Express) {
       .replace(/src="\/assets\/([^"]+\.js)"/g, 'src="/assets/$1?v=' + timestamp + '"')
       .replace(/href="\/assets\/([^"]+\.css)"/g, 'href="/assets/$1?v=' + timestamp + '"');
 
-    console.log("[Cache-busting] Serving HTML with timestamp:", timestamp);
+    logger.info(`[Cache-busting] Serving HTML with timestamp: ${timestamp}`, { source: "static" });
     res.send(modifiedHtml);
   });
 }

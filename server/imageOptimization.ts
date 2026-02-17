@@ -2,6 +2,7 @@
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import { logger } from "./lib/logger";
 
 export interface ImageOptimizationOptions {
   width?: number;
@@ -48,10 +49,12 @@ export async function optimizeImage(
     // Save optimized image
     await pipeline.toFile(outputPath);
 
-    console.log(`[IMAGE] Optimized: ${path.basename(inputPath)} → ${path.basename(outputPath)}`);
+    logger.info(`Optimized: ${path.basename(inputPath)} → ${path.basename(outputPath)}`, {
+      source: "imageOptimization",
+    });
     return outputPath;
   } catch (error) {
-    console.error("[IMAGE] Optimization error:", error);
+    logger.error("Optimization error", error as Error, { source: "imageOptimization" });
     throw new Error("Failed to optimize image");
   }
 }
@@ -89,7 +92,7 @@ export async function createImageVariants(
 
     return variants;
   } catch (error) {
-    console.error("[IMAGE] Create variants error:", error);
+    logger.error("Create variants error", error as Error, { source: "imageOptimization" });
     throw new Error("Failed to create image variants");
   }
 }
@@ -107,7 +110,7 @@ export async function getImageMetadata(imagePath: string) {
       size: metadata.size,
     };
   } catch (error) {
-    console.error("[IMAGE] Get metadata error:", error);
+    logger.error("Get metadata error", error as Error, { source: "imageOptimization" });
     return null;
   }
 }

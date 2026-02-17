@@ -5,6 +5,7 @@ import { db } from "../db";
 import { bookings, insertBookingSchema, userProfiles } from "@shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { createNewBookingNotification } from "../notifications";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
         booking.id,
       );
       if (!notification) {
-        console.warn(
+        logger.warn(
           `Failed to create notification for master ${booking.masterId} for booking ${booking.id}`,
         );
       }
@@ -42,7 +43,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(booking);
   } catch (error) {
-    console.error("Create booking error:", error);
+    logger.error("Create booking error:", error);
     return res.status(500).json({ error: "Failed to create booking" });
   }
 });
@@ -66,7 +67,7 @@ router.get("/", isAuthenticated, async (req: any, res) => {
       .orderBy(desc(bookings.bookingDate));
     return res.json(userBookings);
   } catch (error) {
-    console.error("Get bookings error:", error);
+    logger.error("Get bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
   }
 });
@@ -95,7 +96,7 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
     }
     return res.json(booking);
   } catch (error) {
-    console.error("Cancel booking error:", error);
+    logger.error("Cancel booking error:", error);
     return res.status(500).json({ error: "Failed to cancel booking" });
   }
 });
@@ -184,7 +185,7 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
 
     return res.json(updatedBooking);
   } catch (error) {
-    console.error("Reschedule booking error:", error);
+    logger.error("Reschedule booking error:", error);
     return res.status(500).json({ error: "Failed to reschedule booking" });
   }
 });

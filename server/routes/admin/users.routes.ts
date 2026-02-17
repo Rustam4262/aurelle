@@ -3,6 +3,7 @@ import { db } from "../../db";
 import { users } from "@shared/schema";
 import { eq, desc, like, or } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -37,7 +38,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 
     res.json({ users: allUsers });
   } catch (error: any) {
-    console.error("List users error:", error);
+    logger.error("List users error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
@@ -53,7 +54,7 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
 
     res.json({ user });
   } catch (error: any) {
-    console.error("Get user error:", error);
+    logger.error("Get user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to fetch user" });
   }
 });
@@ -92,7 +93,7 @@ router.patch("/:id", requirePermission("users.write"), async (req, res) => {
 
     res.json({ user: updated });
   } catch (error: any) {
-    console.error("Update user error:", error);
+    logger.error("Update user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to update user" });
   }
 });
@@ -125,7 +126,7 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
 
     res.json({ user: oldUser, message: "User blocked successfully" });
   } catch (error: any) {
-    console.error("Block user error:", error);
+    logger.error("Block user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to block user" });
   }
 });
@@ -156,7 +157,7 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
 
     res.json({ user: oldUser, message: "User unblocked successfully" });
   } catch (error: any) {
-    console.error("Unblock user error:", error);
+    logger.error("Unblock user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to unblock user" });
   }
 });
@@ -187,7 +188,7 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
 
     res.json({ message: "User deleted" });
   } catch (error: any) {
-    console.error("Delete user error:", error);
+    logger.error("Delete user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to delete user" });
   }
 });

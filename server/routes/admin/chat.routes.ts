@@ -5,6 +5,7 @@ import { users } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { insertChatMessageSchema } from "@shared/admin-schema";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get("/threads", requirePermission("chat.read"), async (req, res) => {
 
     res.json({ threads });
   } catch (error: any) {
-    console.error("List threads error:", error);
+    logger.error("List threads error", error as Error, { source: "chat-routes" });
     res.status(500).json({ error: "Failed to fetch threads" });
   }
 });
@@ -69,7 +70,7 @@ router.get("/threads/:id/messages", requirePermission("chat.read"), async (req, 
 
     res.json({ messages });
   } catch (error: any) {
-    console.error("Get messages error:", error);
+    logger.error("Get messages error", error as Error, { source: "chat-routes" });
     res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
@@ -103,7 +104,7 @@ router.post("/threads/:id/messages", requirePermission("chat.write"), async (req
 
     res.status(201).json({ message: newMessage });
   } catch (error: any) {
-    console.error("Send message error:", error);
+    logger.error("Send message error", error as Error, { source: "chat-routes" });
     res.status(400).json({ error: error.message || "Failed to send message" });
   }
 });
@@ -130,7 +131,7 @@ router.patch("/threads/:id/assign", requirePermission("chat.write"), async (req,
 
     res.json({ thread: updated });
   } catch (error: any) {
-    console.error("Assign thread error:", error);
+    logger.error("Assign thread error", error as Error, { source: "chat-routes" });
     res.status(500).json({ error: "Failed to assign thread" });
   }
 });
@@ -170,7 +171,7 @@ router.patch("/threads/:id/close", requirePermission("chat.write"), async (req, 
 
     res.json({ thread: updated });
   } catch (error: any) {
-    console.error("Close thread error:", error);
+    logger.error("Close thread error", error as Error, { source: "chat-routes" });
     res.status(500).json({ error: "Failed to close thread" });
   }
 });

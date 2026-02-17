@@ -134,7 +134,10 @@
       "forOwners": "Egalar uchun",
       "registerSalon": "Salon qo'shish",
       "dashboard": "Boshqaruv paneli",
-      "copyright": "© {{year}} AURELLE. Barcha huquqlar himoyalangan."
+      "copyright": "© {{year}} AURELLE. Barcha huquqlar himoyalangan.",
+      "termsOfService": "Foydalanish shartlari",
+      "privacyPolicy": "Maxfiylik siyosati",
+      "platform": "Platform"
     },
     "auth": {
       "title": "AURELLE ga xush kelibsiz",
@@ -772,7 +775,14 @@
       "revenueTrend": "Daromad tendentsiyasi (oxirgi 30 kun)",
       "bookingsTrend": "Bronlar tendentsiyasi (oxirgi 30 kun)",
       "topServicesChart": "Top xizmatlar (bronlar bo'yicha)",
-      "topMastersChart": "Top ustalar (daromad bo'yicha)"
+      "topMastersChart": "Top ustalar (daromad bo'yicha)",
+      "financialMetrics": "Asosiy ko'rsatkichlar",
+      "avgBookingValue": "O'rtacha bron qiymati",
+      "perBooking": "bir bron uchun",
+      "cancellationRate": "Bekor qilish foizi",
+      "thisMonth": "bu oyda",
+      "repeatClients": "Qaytgan mijozlar",
+      "returningToday": "bugun qaytdi"
     },
     "bookings": {
       "title": "Bronlar",

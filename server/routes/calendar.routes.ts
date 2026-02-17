@@ -3,6 +3,7 @@ import { isAuthenticated } from "../auth";
 import { db } from "../db";
 import { bookings, salons, masters, services } from "@shared/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -105,7 +106,7 @@ router.get("/availability", isAuthenticated, async (req: any, res) => {
 
     return res.json(sortedDates);
   } catch (error) {
-    console.error("Get calendar availability error:", error);
+    logger.error("Get calendar availability error:", error);
     return res.status(500).json({ error: "Failed to get calendar availability" });
   }
 });
@@ -153,7 +154,7 @@ router.get("/day-schedule", isAuthenticated, async (req: any, res) => {
 
     return res.json(dayBookings);
   } catch (error) {
-    console.error("Get day schedule error:", error);
+    logger.error("Get day schedule error:", error);
     return res.status(500).json({ error: "Failed to get day schedule" });
   }
 });
@@ -235,7 +236,7 @@ router.get("/monthly-stats", isAuthenticated, async (req: any, res) => {
         totalBookings > 0 ? ((cancelledBookings / totalBookings) * 100).toFixed(1) : 0,
     });
   } catch (error) {
-    console.error("Get monthly stats error:", error);
+    logger.error("Get monthly stats error:", error);
     return res.status(500).json({ error: "Failed to get monthly statistics" });
   }
 });

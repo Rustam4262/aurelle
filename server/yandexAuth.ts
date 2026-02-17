@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as YandexStrategy } from "passport-yandex";
 import type { Express } from "express";
 import { authStorage } from "./auth/storage";
+import { logger } from "./lib/logger";
 
 function getYandexCredentials() {
   const clientID = process.env.YANDEX_CLIENT_ID;
@@ -12,7 +13,7 @@ function getYandexCredentials() {
   }
 
   if (clientID.length < 10 || clientSecret.length < 10) {
-    console.warn("Yandex OAuth credentials appear to be invalid");
+    logger.warn("Yandex OAuth credentials appear to be invalid");
     return null;
   }
 
@@ -23,7 +24,7 @@ export async function setupYandexAuth(app: Express) {
   const credentials = getYandexCredentials();
 
   if (!credentials) {
-    console.log(
+    logger.info(
       "Yandex OAuth not configured - missing or invalid YANDEX_CLIENT_ID/YANDEX_CLIENT_SECRET",
     );
     return;
@@ -107,7 +108,7 @@ export async function setupYandexAuth(app: Express) {
     })(req, res, next);
   });
 
-  console.log("Yandex OAuth configured successfully");
+  logger.info("Yandex OAuth configured successfully");
 }
 
 export function isYandexConfigured(): boolean {

@@ -13,6 +13,7 @@ import {
   salonExceptions,
 } from "@shared/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.get("/", async (req, res) => {
     const result = await query.orderBy(desc(salons.averageRating));
     return res.json(result);
   } catch (error) {
-    console.error("Get salons error:", error);
+    logger.error("Get salons error:", error);
     return res.status(500).json({ error: "Failed to get salons" });
   }
 });
@@ -71,7 +72,7 @@ router.get("/:id", async (req, res) => {
       reviews: salonReviews,
     });
   } catch (error) {
-    console.error("Get salon error:", error);
+    logger.error("Get salon error:", error);
     return res.status(500).json({ error: "Failed to get salon" });
   }
 });
@@ -86,7 +87,7 @@ router.get("/:id/services", async (req, res) => {
       .where(and(eq(services.salonId, id), eq(services.isActive, true)));
     return res.json(result);
   } catch (error) {
-    console.error("Get services error:", error);
+    logger.error("Get services error:", error);
     return res.status(500).json({ error: "Failed to get services" });
   }
 });
@@ -101,7 +102,7 @@ router.get("/:id/masters", async (req, res) => {
       .where(and(eq(masters.salonId, id), eq(masters.isActive, true)));
     return res.json(result);
   } catch (error) {
-    console.error("Get masters error:", error);
+    logger.error("Get masters error:", error);
     return res.status(500).json({ error: "Failed to get masters" });
   }
 });
@@ -116,7 +117,7 @@ router.get("/:id/hours", async (req, res) => {
       .where(eq(salonWorkingHours.salonId, id));
     return res.json(result);
   } catch (error) {
-    console.error("Get hours error:", error);
+    logger.error("Get hours error:", error);
     return res.status(500).json({ error: "Failed to get hours" });
   }
 });
@@ -132,7 +133,7 @@ router.get("/:id/reviews", async (req, res) => {
       .orderBy(desc(reviews.createdAt));
     return res.json(result);
   } catch (error) {
-    console.error("Get reviews error:", error);
+    logger.error("Get reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -155,7 +156,7 @@ router.get("/masters/:id", async (req, res) => {
 
     return res.json({ ...master, reviews: masterReviews });
   } catch (error) {
-    console.error("Get master error:", error);
+    logger.error("Get master error:", error);
     return res.status(500).json({ error: "Failed to get master" });
   }
 });
@@ -432,8 +433,53 @@ router.get("/masters/:id/availability", async (req, res) => {
       availableSlots: slots.filter((s) => s.isAvailable).length,
     });
   } catch (error) {
-    console.error("Get master availability error:", error);
+    logger.error("Get master availability error:", error);
     return res.status(500).json({ error: "Failed to get availability" });
+  }
+});
+
+// Get all services across all salons
+router.get("/list/all-services", async (req, res) => {
+  try {
+    const allServices = await db
+      .select()
+      .from(services)
+      .where(eq(services.isActive, true))
+      .orderBy(desc(services.createdAt));
+    return res.json(allServices);
+  } catch (error) {
+    logger.error("Get all services error:", error);
+    return res.status(500).json({ error: "Failed to get services" });
+  }
+});
+
+// Get all unique cities
+router.get("/list/all-cities", async (req, res) => {
+  try {
+    const salonsList = await db
+      .select()
+      .from(salons)
+      .where(eq(salons.isActive, true));
+
+    // Extract unique cities from salon data
+    const cities = Array.from(
+      new Set(
+        salonsList
+          .map((salon: any) => {
+            const cityData = salon.city;
+            if (typeof cityData === "object" && cityData !== null) {
+              return Object.values(cityData as Record<string, any>).find((v) => typeof v === "string") || "Unknown";
+            }
+            return String(cityData) || "Unknown";
+          })
+          .filter((city) => city && city !== "Unknown")
+      )
+    ).sort();
+
+    return res.json(cities);
+  } catch (error) {
+    logger.error("Get cities error:", error);
+    return res.status(500).json({ error: "Failed to get cities" });
   }
 });
 

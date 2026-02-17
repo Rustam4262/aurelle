@@ -7,12 +7,13 @@ import { db } from "../db";
 import { sanctions } from "@shared/admin-schema";
 import { eq, and, lte, or, isNotNull } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 export async function expireSanctions() {
   try {
     const now = new Date();
 
-    console.log(`[Cron] Checking for expired sanctions at ${now.toISOString()}`);
+    logger.info(`[Cron] Checking for expired sanctions at ${now.toISOString()}`);
 
     // Check if sanctions table exists first
     const tableCheck = await db.execute(sql`
@@ -46,9 +47,9 @@ export async function expireSanctions() {
       .returning();
 
     if (expiredSanctions.length > 0) {
-      console.log(`[Cron] Expired ${expiredSanctions.length} sanctions:`);
+      logger.info(`[Cron] Expired ${expiredSanctions.length} sanctions:`);
       expiredSanctions.forEach((s) => {
-        console.log(
+        logger.info(
           `  - ${s.targetType}:${s.targetId} (${s.sanctionType}) - expired at ${s.endsAt}`,
         );
       });
@@ -56,7 +57,7 @@ export async function expireSanctions() {
 
     return expiredSanctions.length;
   } catch (error) {
-    console.error("[Cron] Error expiring sanctions:", error);
+    logger.error("[Cron] Error expiring sanctions", error);
     throw error;
   }
 }
@@ -68,17 +69,17 @@ export async function expireSanctions() {
 export function startSanctionExpiryJob() {
   const INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-  console.log("[Cron] Starting sanction expiry job (runs every 5 minutes)");
+  logger.info("[Cron] Starting sanction expiry job (runs every 5 minutes)");
 
   // Run immediately on startup
   expireSanctions().catch((error) => {
-    console.error("[Cron] Initial sanction expiry failed:", error);
+    logger.error("[Cron] Initial sanction expiry failed", error);
   });
 
   // Then run periodically
   setInterval(() => {
     expireSanctions().catch((error) => {
-      console.error("[Cron] Scheduled sanction expiry failed:", error);
+      logger.error("[Cron] Scheduled sanction expiry failed", error);
     });
   }, INTERVAL);
 }

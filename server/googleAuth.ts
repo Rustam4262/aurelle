@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import type { Express } from "express";
 import { authStorage } from "./auth/storage";
+import { logger } from "./lib/logger";
 
 function getGoogleCredentials() {
   const clientID = process.env.GOOGLE_CLIENT_ID;
@@ -12,7 +13,7 @@ function getGoogleCredentials() {
   }
 
   if (clientID.length < 10 || clientSecret.length < 10) {
-    console.warn("Google OAuth credentials appear to be invalid");
+    logger.warn("Google OAuth credentials appear to be invalid");
     return null;
   }
 
@@ -23,7 +24,7 @@ export async function setupGoogleAuth(app: Express) {
   const credentials = getGoogleCredentials();
 
   if (!credentials) {
-    console.log(
+    logger.info(
       "Google OAuth not configured - missing or invalid GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET",
     );
     return;
@@ -104,7 +105,7 @@ export async function setupGoogleAuth(app: Express) {
     })(req, res, next);
   });
 
-  console.log("Google OAuth configured successfully");
+  logger.info("Google OAuth configured successfully");
 }
 
 export function isGoogleConfigured(): boolean {

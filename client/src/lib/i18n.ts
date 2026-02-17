@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { logger } from '@/lib/logger';
 
 import en from "../locales/en.json";
 import ru from "../locales/ru.json";
@@ -19,6 +20,13 @@ i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+  missingKeyHandler: (lngs, ns, key) => {
+    // Log missing keys in development
+    if (import.meta.env.DEV) {
+      logger.warn(`Missing translation key: ${key}`);
+    }
+  },
+  returnEmptyString: false, // Return key name instead of empty string for missing translations
 });
 
 export const formatCurrency = (amount: number): string => {

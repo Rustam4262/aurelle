@@ -6,6 +6,7 @@ import { isPhoneAuthConfigured } from "../phoneAuth";
 import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
 import { eq, and, sql } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -84,7 +85,7 @@ router.post("/logout", (req: any, res) => {
   if (req.session) {
     req.session.destroy((err: any) => {
       if (err) {
-        console.error("Logout error:", err);
+        logger.error("Logout error", err);
         return res.status(500).json({ message: "Logout failed" });
       }
       // Clear cookie with all possible options to ensure it's removed
@@ -106,7 +107,7 @@ router.get("/logout", (req: any, res) => {
   if (req.session) {
     req.session.destroy((err: any) => {
       if (err) {
-        console.error("Logout error:", err);
+        logger.error("Logout error", err);
         return res.redirect("/auth?error=logout_failed");
       }
       // Clear cookie with all possible options

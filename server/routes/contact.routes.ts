@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { contactSchema, newsletterSchema } from "@shared/schema";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.post("/contact", async (req, res) => {
     // For now, just return success (can store in DB later)
     return res.status(201).json({ success: true, message: "Thank you for your message!" });
   } catch (error) {
-    console.error("Contact form error:", error);
+    logger.error("Contact form error", error);
     return res.status(500).json({ error: "Failed to submit form" });
   }
 });
@@ -27,7 +28,7 @@ router.post("/newsletter", async (req, res) => {
     }
     return res.status(201).json({ success: true, message: "Thank you for subscribing!" });
   } catch (error) {
-    console.error("Newsletter error:", error);
+    logger.error("Newsletter error", error);
     return res.status(500).json({ error: "Failed to subscribe" });
   }
 });

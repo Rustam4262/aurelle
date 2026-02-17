@@ -3,6 +3,7 @@ import { upload, setUploadType, optimizeImage, getFileUrl } from "./upload";
 import { isAuthenticated } from "./auth";
 import path from "path";
 import fs from "fs/promises";
+import { logger } from "./lib/logger";
 
 export function registerUploadRoutes(app: Express) {
   // ============ UPLOAD ENDPOINTS ============
@@ -36,7 +37,7 @@ export function registerUploadRoutes(app: Express) {
           filename: req.file.filename,
         });
       } catch (error) {
-        console.error("Upload salon photo error:", error);
+        logger.error("Upload salon photo error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to upload photo" });
       }
     },
@@ -70,7 +71,7 @@ export function registerUploadRoutes(app: Express) {
           filename: req.file.filename,
         });
       } catch (error) {
-        console.error("Upload master photo error:", error);
+        logger.error("Upload master photo error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to upload photo" });
       }
     },
@@ -104,7 +105,7 @@ export function registerUploadRoutes(app: Express) {
           filename: req.file.filename,
         });
       } catch (error) {
-        console.error("Upload portfolio error:", error);
+        logger.error("Upload portfolio error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to upload photo" });
       }
     },
@@ -139,7 +140,7 @@ export function registerUploadRoutes(app: Express) {
           filename: req.file.filename,
         });
       } catch (error) {
-        console.error("Upload avatar error:", error);
+        logger.error("Upload avatar error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to upload avatar" });
       }
     },
@@ -173,7 +174,7 @@ export function registerUploadRoutes(app: Express) {
 
         return res.json({ success: true, message: "File deleted" });
       } catch (error) {
-        console.error("Delete file error:", error);
+        logger.error("Delete file error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to delete file" });
       }
     },
@@ -210,7 +211,7 @@ export function registerUploadRoutes(app: Express) {
           urls,
         });
       } catch (error) {
-        console.error("Upload salon photos error:", error);
+        logger.error("Upload salon photos error", error as Error, { source: "uploadRoutes" });
         return res.status(500).json({ error: "Failed to upload photos" });
       }
     },

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { logger } from "../lib/logger";
 
 // Email configuration from environment variables
 const EMAIL_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
@@ -15,7 +16,7 @@ let transporter: Transporter | null = null;
 // Initialize email transporter
 export function initializeEmail(): void {
   if (!EMAIL_USER || !EMAIL_PASS) {
-    console.warn("⚠️  Email not configured - SMTP_USER or SMTP_PASS missing");
+    logger.warn("⚠️  Email not configured - SMTP_USER or SMTP_PASS missing");
     return;
   }
 
@@ -30,9 +31,9 @@ export function initializeEmail(): void {
       },
     });
 
-    console.log("✅ Email system initialized");
+    logger.info("✅ Email system initialized");
   } catch (error) {
-    console.error("❌ Failed to initialize email:", error);
+    logger.error("❌ Failed to initialize email", error);
   }
 }
 
@@ -44,7 +45,7 @@ export function isEmailConfigured(): boolean {
 // Send email helper
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   if (!transporter) {
-    console.warn("Email not configured, skipping email send");
+    logger.warn("Email not configured, skipping email send");
     return;
   }
 
@@ -55,9 +56,9 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
       subject,
       html,
     });
-    console.log(`📧 Email sent to ${to}: ${subject}`);
+    logger.info(`📧 Email sent to ${to}: ${subject}`);
   } catch (error) {
-    console.error(`Failed to send email to ${to}:`, error);
+    logger.error(`Failed to send email to ${to}`, error);
     throw error;
   }
 }

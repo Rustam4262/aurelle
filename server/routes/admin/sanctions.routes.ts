@@ -4,6 +4,7 @@ import { sanctions, sanctionReasonCodes } from "@shared/admin-schema";
 import { insertSanctionSchema, insertSanctionReasonCodeSchema } from "@shared/admin-schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.get("/", requirePermission("sanctions.read"), async (req, res) => {
 
     res.json({ sanctions: allSanctions });
   } catch (error: any) {
-    console.error("List sanctions error:", error);
+    logger.error("List sanctions error", error as Error, { source: "sanctions-routes" });
     res.status(500).json({ error: "Failed to fetch sanctions" });
   }
 });
@@ -74,7 +75,7 @@ router.post("/", requirePermission("sanctions.create"), async (req, res) => {
 
     res.status(201).json({ sanction: newSanction });
   } catch (error: any) {
-    console.error("Create sanction error:", error);
+    logger.error("Create sanction error", error as Error, { source: "sanctions-routes" });
     res.status(400).json({ error: error.message || "Failed to create sanction" });
   }
 });
@@ -123,7 +124,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
 
     res.json({ sanction: updatedSanction });
   } catch (error: any) {
-    console.error("Revoke sanction error:", error);
+    logger.error("Revoke sanction error", error as Error, { source: "sanctions-routes" });
     res.status(500).json({ error: "Failed to revoke sanction" });
   }
 });
@@ -154,7 +155,7 @@ router.get(
         sanctions: activeSanctions,
       });
     } catch (error: any) {
-      console.error("Check sanction error:", error);
+      logger.error("Check sanction error", error as Error, { source: "sanctions-routes" });
       res.status(500).json({ error: "Failed to check sanction status" });
     }
   },
@@ -171,7 +172,7 @@ router.get("/reasons", requirePermission("sanctions.read"), async (req, res) => 
 
     res.json({ reasons });
   } catch (error: any) {
-    console.error("List reason codes error:", error);
+    logger.error("List reason codes error", error as Error, { source: "sanctions-routes" });
     res.status(500).json({ error: "Failed to fetch reason codes" });
   }
 });
@@ -196,7 +197,7 @@ router.post("/reasons", requirePermission("sanctions.write"), async (req, res) =
 
     res.status(201).json({ reason: newReason });
   } catch (error: any) {
-    console.error("Create reason code error:", error);
+    logger.error("Create reason code error", error as Error, { source: "sanctions-routes" });
     res.status(400).json({ error: error.message || "Failed to create reason code" });
   }
 });

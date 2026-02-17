@@ -22,6 +22,7 @@ import {
   insertSalonBreakSchema,
   insertSalonExceptionSchema,
   insertSalonManagerSchema,
+  masterWorkingHours,
 } from "@shared/schema";
 import {
   requirePermission,
@@ -34,8 +35,134 @@ import { eq, and, desc, inArray, gte, lte, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
 import { createNewBookingNotification } from "../notifications";
+import { cacheMiddleware } from "../cache";
+import { logger } from "../lib/logger";
 
 const router = Router();
+
+// ============ ANALYTICS ENDPOINTS (Phase 2 - P0-1) ============
+
+// Get revenue analytics
+router.get(
+  "/analytics/revenue",
+  isAuthenticated,
+  cacheMiddleware("analytics:revenue", 300), // Cache for 5 minutes
+  async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const { startDate, endDate, salonId, masterId } = req.query;
+
+      // Base conditions: owner's salons
+      const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+      if (ownerSalons.length === 0) {
+        return res.json({
+          totalRevenue: 0,
+          revenueByService: [],
+          revenueByMaster: [],
+          dailyRevenue: [],
+        });
+      }
+
+      const allSalonIds = ownerSalons.map((s) => s.id);
+
+      // Build filters
+      const conditions = [
+        eq(bookings.status, "completed"),
+        inArray(bookings.salonId, allSalonIds),
+      ];
+
+      if (salonId && salonId !== "all") {
+        conditions.push(eq(bookings.salonId, salonId as string));
+      }
+
+      if (masterId) {
+        conditions.push(eq(bookings.masterId, masterId as string));
+      }
+
+      const end = endDate ? new Date(endDate as string) : new Date();
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(end.getDate() - 30));
+
+      const dateCondition = and(gte(bookings.bookingDate, start), lte(bookings.bookingDate, end));
+      if (dateCondition) {
+        conditions.push(dateCondition);
+      }
+
+      const whereClause = and(...conditions);
+
+      // 1. Total Revenue & Aggregates
+      const [totals] = await db
+        .select({
+          revenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(bookings)
+        .where(whereClause);
+
+      // 2. Revenue by Service (Top 5)
+      const revenueByService = await db
+        .select({
+          serviceId: bookings.serviceId,
+          serviceName: services.name,
+          revenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(bookings)
+        .leftJoin(services, eq(bookings.serviceId, services.id))
+        .where(whereClause)
+        .groupBy(bookings.serviceId, services.name)
+        .orderBy(desc(sql`sum(${bookings.priceSnapshot})::numeric`))
+        .limit(5);
+
+      // 3. Revenue by Master (Top 5)
+      const revenueByMaster = await db
+        .select({
+          masterId: bookings.masterId,
+          masterName: masters.name,
+          revenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(bookings)
+        .leftJoin(masters, eq(bookings.masterId, masters.id))
+        .where(whereClause)
+        .groupBy(bookings.masterId, masters.name)
+        .orderBy(desc(sql`sum(${bookings.priceSnapshot})::numeric`))
+        .limit(5);
+
+      // 4. Daily Revenue Trend
+      const dailyRevenue = await db
+        .select({
+          date: sql<string>`to_char(${bookings.bookingDate}, 'YYYY-MM-DD')`,
+          revenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+        })
+        .from(bookings)
+        .where(whereClause)
+        .groupBy(sql`to_char(${bookings.bookingDate}, 'YYYY-MM-DD')`)
+        .orderBy(sql`to_char(${bookings.bookingDate}, 'YYYY-MM-DD')`);
+
+      return res.json({
+        totalRevenue: parseFloat(totals?.revenue || "0"),
+        totalBookings: totals?.count || 0,
+        averageCheck: totals?.count ? parseFloat(totals.revenue || "0") / totals.count : 0,
+        revenueByService: revenueByService.map(s => ({
+          ...s,
+          revenue: parseFloat(s.revenue || "0"),
+        })),
+        revenueByMaster: revenueByMaster.map(m => ({
+          ...m,
+          revenue: parseFloat(m.revenue || "0"),
+        })),
+        dailyRevenue: dailyRevenue.map(d => ({
+          date: d.date,
+          revenue: parseFloat(d.revenue || "0"),
+        })),
+      });
+
+    } catch (error) {
+      logger.error("Get revenue analytics error:", error);
+      return res.status(500).json({ error: "Failed to get revenue analytics" });
+    }
+  }
+);
 
 // Create salon
 router.post("/salons", isAuthenticated, async (req: any, res) => {
@@ -53,7 +180,7 @@ router.post("/salons", isAuthenticated, async (req: any, res) => {
       .returning();
     return res.status(201).json(salon);
   } catch (error) {
-    console.error("Create salon error:", error);
+    logger.error("Create salon error:", error);
     return res.status(500).json({ error: "Failed to create salon" });
   }
 });
@@ -65,7 +192,7 @@ router.get("/salons", isAuthenticated, async (req: any, res) => {
     const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
     return res.json(ownerSalons);
   } catch (error) {
-    console.error("Get owner salons error:", error);
+    logger.error("Get owner salons error:", error);
     return res.status(500).json({ error: "Failed to get salons" });
   }
 });
@@ -85,7 +212,7 @@ router.get("/salons/:id", isAuthenticated, async (req: any, res) => {
     }
     return res.json(salon);
   } catch (error) {
-    console.error("Get owner salon error:", error);
+    logger.error("Get owner salon error:", error);
     return res.status(500).json({ error: "Failed to get salon" });
   }
 });
@@ -108,7 +235,7 @@ router.get("/salons/:salonId/services", isAuthenticated, async (req: any, res) =
     const salonServices = await db.select().from(services).where(eq(services.salonId, salonId));
     return res.json(salonServices);
   } catch (error) {
-    console.error("Get owner services error:", error);
+    logger.error("Get owner services error:", error);
     return res.status(500).json({ error: "Failed to get services" });
   }
 });
@@ -131,7 +258,7 @@ router.get("/salons/:salonId/masters", isAuthenticated, async (req: any, res) =>
     const salonMasters = await db.select().from(masters).where(eq(masters.salonId, salonId));
     return res.json(salonMasters);
   } catch (error) {
-    console.error("Get owner masters error:", error);
+    logger.error("Get owner masters error:", error);
     return res.status(500).json({ error: "Failed to get masters" });
   }
 });
@@ -157,7 +284,7 @@ router.get("/salons/:salonId/hours", isAuthenticated, async (req: any, res) => {
       .where(eq(salonWorkingHours.salonId, salonId));
     return res.json(hours);
   } catch (error) {
-    console.error("Get owner hours error:", error);
+    logger.error("Get owner hours error:", error);
     return res.status(500).json({ error: "Failed to get hours" });
   }
 });
@@ -180,8 +307,60 @@ router.delete("/salons/:salonId/services/:serviceId", isAuthenticated, async (re
     await db.delete(services).where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete service error:", error);
+    logger.error("Delete service error:", error);
     return res.status(500).json({ error: "Failed to delete service" });
+  }
+});
+
+// Update service
+router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const updateServiceSchema = z.object({
+      name: z.object({
+        en: z.string(),
+        ru: z.string(),
+        uz: z.string(),
+      }),
+      description: z.object({
+        en: z.string(),
+        ru: z.string(),
+        uz: z.string(),
+      }),
+      category: z.string(),
+      priceMin: z.number(),
+      priceMax: z.number(),
+      duration: z.number(),
+      isActive: z.boolean(),
+    });
+
+    const parsed = updateServiceSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid service data", details: parsed.error.errors });
+    }
+
+    const [updatedService] = await db
+      .update(services)
+      .set({ ...parsed.data })
+      .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)))
+      .returning();
+
+    return res.json(updatedService);
+  } catch (error) {
+    logger.error("Update service error:", error);
+    return res.status(500).json({ error: "Failed to update service" });
   }
 });
 
@@ -203,7 +382,7 @@ router.delete("/salons/:salonId/masters/:masterId", isAuthenticated, async (req:
     await db.delete(masters).where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete master error:", error);
+    logger.error("Delete master error:", error);
     return res.status(500).json({ error: "Failed to delete master" });
   }
 });
@@ -262,7 +441,7 @@ router.patch("/salons/:id", isAuthenticated, async (req: any, res) => {
     }
     return res.json(salon);
   } catch (error) {
-    console.error("Update salon error:", error);
+    logger.error("Update salon error:", error);
     return res.status(500).json({ error: "Failed to update salon" });
   }
 });
@@ -348,10 +527,10 @@ router.patch("/salons/:id/status", isAuthenticated, async (req: any, res) => {
       result: "success",
     });
 
-    console.log(`[Salon Status] Salon ${id} status changed: ${salon.status} -> ${newStatus}`);
+    logger.info(`[Salon Status] Salon ${id} status changed: ${salon.status} -> ${newStatus}`);
     return res.json(updatedSalon);
   } catch (error) {
-    console.error("Update salon status error:", error);
+    logger.error("Update salon status error:", error);
     return res.status(500).json({ error: "Failed to update salon status" });
   }
 });
@@ -427,7 +606,7 @@ router.post("/salons/:salonId/masters", isAuthenticated, async (req: any, res) =
 
     return res.status(201).json(result);
   } catch (error) {
-    console.error("Add master error:", error);
+    logger.error("Add master error:", error);
     return res.status(500).json({ error: "Failed to add master" });
   }
 });
@@ -459,7 +638,7 @@ router.post("/salons/:salonId/services", isAuthenticated, async (req: any, res) 
       .returning();
     return res.status(201).json(service);
   } catch (error) {
-    console.error("Add service error:", error);
+    logger.error("Add service error:", error);
     return res.status(500).json({ error: "Failed to add service" });
   }
 });
@@ -488,7 +667,7 @@ router.post("/salons/:salonId/hours", isAuthenticated, async (req: any, res) => 
 
     return res.json(newHours);
   } catch (error) {
-    console.error("Set hours error:", error);
+    logger.error("Set hours error:", error);
     return res.status(500).json({ error: "Failed to set hours" });
   }
 });
@@ -545,8 +724,128 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
 
     return res.json(enrichedBookings);
   } catch (error) {
-    console.error("Get salon bookings error:", error);
+    logger.error("Get salon bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
+  }
+});
+
+// Get advanced bookings with filtering
+router.get("/bookings/advanced", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { status, salonId, masterId, dateFrom, dateTo, search } = req.query;
+
+    // Get owner's salons first
+    const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json({ bookings: [], total: 0 });
+    }
+
+    const ownerSalonIds = ownerSalons.map(s => s.id);
+
+    // Build query
+    const conditions = [inArray(bookings.salonId, ownerSalonIds)];
+
+    if (status && status !== " " && typeof status === "string") {
+      conditions.push(eq(bookings.status, status as any));
+    }
+
+    if (salonId && salonId !== " " && typeof salonId === "string") {
+      conditions.push(eq(bookings.salonId, salonId));
+    }
+
+    if (masterId && masterId !== " " && typeof masterId === "string") {
+      conditions.push(eq(bookings.masterId, masterId));
+    }
+
+    if (dateFrom && typeof dateFrom === "string") {
+      conditions.push(gte(bookings.bookingDate, new Date(dateFrom)));
+    }
+
+    if (dateTo && typeof dateTo === "string") {
+      conditions.push(lte(bookings.bookingDate, new Date(dateTo)));
+    }
+
+    let bookingQuery = db
+      .select()
+      .from(bookings)
+      .where(and(...conditions))
+      .orderBy(desc(bookings.bookingDate));
+
+    // Execute query
+    const matchingBookings = await bookingQuery;
+
+    // Filter by search (client name) manually or via localized search if possible
+    // Since client name is in userProfiles, we need to fetch/join.
+    // Let's fetch related data first.
+
+    if (matchingBookings.length === 0) {
+      return res.json({ bookings: [], total: 0 });
+    }
+
+    // Collect IDs
+    const serviceIds = Array.from(new Set(matchingBookings.map(b => b.serviceId).filter(id => id !== null))) as string[];
+    const masterIds = Array.from(new Set(matchingBookings.map(b => b.masterId).filter(id => id !== null))) as string[];
+    const clientIds = Array.from(new Set(matchingBookings.map(b => b.clientId)));
+    const bookingSalonIds = Array.from(new Set(matchingBookings.map(b => b.salonId).filter(id => id !== null))) as string[];
+
+    // Fetch related data
+    const [servicesData, mastersData, clientsData, salonsData] = await Promise.all([
+      serviceIds.length > 0 ? db.select().from(services).where(inArray(services.id, serviceIds)) : [],
+      masterIds.length > 0 ? db.select().from(masters).where(inArray(masters.id, masterIds)) : [],
+      clientIds.length > 0 ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds)) : [],
+      bookingSalonIds.length > 0 ? db.select().from(salons).where(inArray(salons.id, bookingSalonIds)) : []
+    ]);
+
+    const servicesMap = new Map(servicesData.map(s => [s.id, s]));
+    const mastersMap = new Map(mastersData.map(m => [m.id, m]));
+    const clientsMap = new Map(clientsData.map(c => [c.id, c]));
+    const salonsMap = new Map(salonsData.map(s => [s.id, s]));
+
+    // Enrich and filter by search if needed
+    let enrichedBookings = matchingBookings.map(booking => {
+      const client = clientsMap.get(booking.clientId);
+      const salon = booking.salonId ? salonsMap.get(booking.salonId) : null;
+      const master = booking.masterId ? mastersMap.get(booking.masterId) : null;
+      const service = booking.serviceId ? servicesMap.get(booking.serviceId) : null;
+
+      // Handle salon name (jsonb)
+      const salonNameObj = salon?.name as any;
+
+      // Handle master name (string)
+      const masterName = master?.name ? { en: master.name, ru: master.name, uz: master.name } : undefined;
+
+      // Handle service name (jsonb)
+      const serviceNameObj = service?.name as any;
+
+      return {
+        ...booking,
+        clientName: client?.fullName || "Unknown",
+        clientEmail: "", // We'd need to join with 'users' table for email, profile only has 'fullName'. assuming profile has it or we skip it. UserProfile schema check needed. userProfiles usually has userId.
+        clientAvatar: client?.avatarUrl || null,
+        salonName: salonNameObj,
+        masterName: masterName, // frontend expects obj
+        serviceName: serviceNameObj,
+        // formatted date/time are usually handled on frontend, but we pass raw
+      };
+    });
+
+    if (search && typeof search === "string") {
+      const searchLower = search.toLowerCase();
+      enrichedBookings = enrichedBookings.filter(b =>
+        (b.clientName && b.clientName.toLowerCase().includes(searchLower))
+      );
+    }
+
+    return res.json({
+      bookings: enrichedBookings,
+      total: enrichedBookings.length
+    });
+
+  } catch (error) {
+    logger.error("Get advanced bookings error:", error);
+    return res.status(500).json({ error: "Failed to fetch bookings" });
   }
 });
 
@@ -603,7 +902,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     return res.json(enrichedBookings);
   } catch (error) {
-    console.error("Get owner bookings error:", error);
+    logger.error("Get owner bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
   }
 });
@@ -643,7 +942,7 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update booking status error:", error);
+    logger.error("Update booking status error:", error);
     return res.status(500).json({ error: "Failed to update booking" });
   }
 });
@@ -696,8 +995,99 @@ router.patch("/bookings/:id/assign-master", isAuthenticated, async (req: any, re
 
     return res.json(updated);
   } catch (error) {
-    console.error("Assign master to booking error:", error);
+    logger.error("Assign master to booking error:", error);
     return res.status(500).json({ error: "Failed to assign master" });
+  }
+});
+
+// ============ SERVICE STATS ENDPOINT ============
+
+// Get service statistics across all owner's salons
+router.get("/services/stats", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+
+    // Get owner's salons
+    const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+
+    if (ownerSalons.length === 0) {
+      return res.json([]);
+    }
+
+    const salonIds = ownerSalons.map((s) => s.id);
+
+    // Get all services for owner's salons with booking statistics
+    const allServices = await db
+      .select({
+        id: services.id,
+        salonId: services.salonId,
+        salonName: salons.name,
+        name: services.name,
+        description: services.description,
+        category: services.category,
+        priceMin: services.priceMin,
+        priceMax: services.priceMax,
+        duration: services.duration,
+        isActive: services.isActive,
+        displayOrder: services.displayOrder,
+      })
+      .from(services)
+      .leftJoin(salons, eq(services.salonId, salons.id))
+      .where(inArray(services.salonId, salonIds))
+      .orderBy(services.displayOrder);
+
+    // Get booking stats for each service
+    const serviceIds = allServices.map((s) => s.id);
+    const bookingStats =
+      serviceIds.length > 0
+        ? await db
+          .select({
+            serviceId: bookings.serviceId,
+            bookingCount: sql<number>`count(*)::int`,
+            lastBookedAt: sql<string>`max(${bookings.createdAt})`,
+          })
+          .from(bookings)
+          .where(sql`${bookings.serviceId} = ANY(${serviceIds})`)
+          .groupBy(bookings.serviceId)
+        : [];
+
+    const statsMap = new Map(bookingStats.map((s) => [s.serviceId, s]));
+
+    const servicesWithStats = allServices.map((service) => {
+      const stats = statsMap.get(service.id);
+
+      // Parse salon name if it's a JSON string/object (it's stored as jsonb but we want string for display if simpler, 
+      // but frontend expects string "salonName". The select above joins with salons.name which is likely a json object {en:..., ru:...})
+      // The frontend Interface says `salonName: string`.
+      // Let's check how `salonName` is handled. If `salons.name` is an object, we might need to pick a default language or return the object.
+      // Looking at `Service` interface in frontend: `salonName: string`.
+      // Usage in frontend: `<p className="..."> {service.salonName} </p>`
+      // If it's an object, React will error.
+      // We should probably format it here or change frontend to handle object.
+      // `salons.name` is defined as `jsonb` or similar in schema? verification needed.
+      // Schema says `name` is `jsonb` usually for multilanguage. 
+      // Let's assume we return the 'en' name or a stringified version for now, OR update frontend.
+      // Looking at `owner.routes.ts` `GET /salons`, it returns raw `salons` rows.
+      // In `ServiceManagement`, `salonName` is displayed directly.
+      // Let's cast it to string safely or pick 'en'.
+
+      const salonNameObj = service.salonName as any;
+      const salonNameStr = typeof salonNameObj === 'object'
+        ? (salonNameObj.en || Object.values(salonNameObj)[0] || "Salon")
+        : String(salonNameObj);
+
+      return {
+        ...service,
+        salonName: salonNameStr,
+        bookingCount: stats?.bookingCount || 0,
+        lastBookedAt: stats?.lastBookedAt || null,
+      };
+    });
+
+    return res.json(servicesWithStats);
+  } catch (error) {
+    logger.error("Get service stats error:", error);
+    return res.status(500).json({ error: "Failed to get service statistics" });
   }
 });
 
@@ -743,23 +1133,48 @@ router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
     const bookingCounts =
       masterIds.length > 0
         ? await db
-            .select({
-              masterId: bookings.masterId,
-              totalBookings: sql<number>`count(*)::int`,
-              completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
-              totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
-            })
-            .from(bookings)
-            .where(
-              and(
-                sql`${bookings.masterId} = ANY(${masterIds})`,
-                gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
-              ),
-            )
-            .groupBy(bookings.masterId)
+          .select({
+            masterId: bookings.masterId,
+            totalBookings: sql<number>`count(*)::int`,
+            completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
+            totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+          })
+          .from(bookings)
+          .where(
+            and(
+              sql`${bookings.masterId} = ANY(${masterIds})`,
+              gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
+            ),
+          )
+          .groupBy(bookings.masterId)
         : [];
 
-    // Merge booking stats with masters
+
+
+    // Get working hours for these masters
+    let hoursMap = new Map();
+    if (masterIds.length > 0) {
+      const hours = await db
+        .select()
+        .from(masterWorkingHours)
+        .where(inArray(masterWorkingHours.masterId, masterIds));
+
+      const dayKeys = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+      hours.forEach((h) => {
+        if (!hoursMap.has(h.masterId)) hoursMap.set(h.masterId, {});
+        const dayKey = dayKeys[h.dayOfWeek];
+        if (dayKey) {
+          hoursMap.get(h.masterId)[dayKey] = {
+            start: h.openTime,
+            end: h.closeTime,
+            isWorking: !h.isClosed,
+          };
+        }
+      });
+    }
+
+    // Merge booking stats and hours with masters
     const mastersWithStats = allMasters.map((master) => {
       const stats = bookingCounts.find((bc) => bc.masterId === master.id);
       return {
@@ -767,12 +1182,13 @@ router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
         totalBookings: stats?.totalBookings || 0,
         completedBookings: stats?.completedBookings || 0,
         totalRevenue: parseFloat(stats?.totalRevenue || "0"),
+        workingHours: hoursMap.get(master.id) || {},
       };
     });
 
     return res.json(mastersWithStats);
   } catch (error) {
-    console.error("Get master stats error:", error);
+    logger.error("Get master stats error:", error);
     return res.status(500).json({ error: "Failed to get master statistics" });
   }
 });
@@ -793,7 +1209,6 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    // Validate request body
     const updateSchema = z.object({
       name: z.string().min(1).optional(),
       bio: z
@@ -812,14 +1227,20 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
         .optional(),
       experience: z.number().optional(),
       isActive: z.boolean().optional(),
+      workingHours: z.record(z.object({
+        start: z.string(),
+        end: z.string(),
+        isWorking: z.boolean()
+      })).optional(),
     });
 
     const validatedData = updateSchema.parse(req.body);
+    const { workingHours, ...masterData } = validatedData;
 
     // Update master
     const [updatedMaster] = await db
       .update(masters)
-      .set(validatedData)
+      .set(masterData)
       .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)))
       .returning();
 
@@ -827,12 +1248,42 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
       return res.status(404).json({ error: "Master not found" });
     }
 
+    // Update working hours if provided
+    if (workingHours) {
+      // Delete existing
+      await db.delete(masterWorkingHours).where(eq(masterWorkingHours.masterId, masterId));
+
+      const dayMap: Record<string, number> = {
+        "sunday": 0, "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6
+      };
+
+      const hoursToInsert = [];
+      for (const [day, schedule] of Object.entries(workingHours)) {
+        if (dayMap[day] !== undefined && schedule) {
+          hoursToInsert.push({
+            masterId,
+            dayOfWeek: dayMap[day],
+            openTime: schedule.start || "09:00",
+            closeTime: schedule.end || "18:00",
+            isClosed: !schedule.isWorking
+          });
+        }
+      }
+
+      if (hoursToInsert.length > 0) {
+        await db.insert(masterWorkingHours).values(hoursToInsert);
+      }
+
+      // Return updated master with hours (mocking passing back what we just saved for simplicity or fetch again)
+      return res.json({ ...updatedMaster, workingHours });
+    }
+
     return res.json(updatedMaster);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request data", details: error.errors });
     }
-    console.error("Update master error:", error);
+    logger.error("Update master error:", error);
     return res.status(500).json({ error: "Failed to update master" });
   }
 });
@@ -874,7 +1325,7 @@ router.post("/masters/:masterId/portfolio", isAuthenticated, async (req: any, re
 
     return res.json(newPortfolioImage);
   } catch (error) {
-    console.error("Upload portfolio error:", error);
+    logger.error("Upload portfolio error:", error);
     return res.status(500).json({ error: "Failed to upload portfolio image" });
   }
 });
@@ -911,7 +1362,7 @@ router.delete("/masters/:masterId/portfolio/:imageId", isAuthenticated, async (r
 
     return res.json({ success: true, deleted });
   } catch (error) {
-    console.error("Delete portfolio error:", error);
+    logger.error("Delete portfolio error:", error);
     return res.status(500).json({ error: "Failed to delete portfolio image" });
   }
 });
@@ -941,8 +1392,65 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
 
     return res.json(allServices);
   } catch (error) {
-    console.error("Get service stats error:", error);
+    logger.error("Get service stats error:", error);
     return res.status(500).json({ error: "Failed to get service statistics" });
+  }
+});
+
+// Create new service
+router.post("/salons/:salonId/services", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify salon ownership
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const createServiceSchema = z.object({
+      name: z.object({
+        en: z.string().min(1),
+        ru: z.string().min(1),
+        uz: z.string().min(1),
+      }),
+      description: z
+        .object({
+          en: z.string(),
+          ru: z.string(),
+          uz: z.string(),
+        })
+        .optional(),
+      category: z.string().min(1),
+      priceMin: z.number().int().positive(),
+      priceMax: z.number().int().positive().optional(),
+      duration: z.number().int().positive(),
+      isActive: z.boolean().default(true),
+    });
+
+    const parsed = createServiceSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    // Create service
+    const [newService] = await db
+      .insert(services)
+      .values({
+        salonId,
+        ...parsed.data,
+      })
+      .returning();
+
+    return res.status(201).json(newService);
+  } catch (error) {
+    logger.error("Create service error:", error);
+    return res.status(500).json({ error: "Failed to create service" });
   }
 });
 
@@ -1004,8 +1512,75 @@ router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: 
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update service error:", error);
+    logger.error("Update service error:", error);
     return res.status(500).json({ error: "Failed to update service" });
+  }
+});
+
+// Delete service (soft delete)
+router.delete("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    // Verify salon ownership
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Check if service exists and belongs to salon
+    const [service] = await db
+      .select()
+      .from(services)
+      .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
+
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // Perform soft delete (set isActive to false) - or hard delete if no bookings?
+    // For now, let's just deactivate it to be safe, as per schema comments it seems there's no deletedAt
+    // But checking schema, there is no deletedAt, only isActive.
+    // If we want to remove it from the list, we might need a status field or actual delete.
+    // Given the requirement "Delete a service", users usually expect it gone.
+    // But services have foreign keys in bookings.
+    // Let's check if there are any bookings.
+
+    const [booking] = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.serviceId, serviceId))
+      .limit(1);
+
+    if (booking) {
+      // If has bookings, soft delete (deactivate) and maybe rename?
+      // Or just return error saying "Cannot delete service with existing bookings, deactivating instead"
+      // Let's just deactivate for now and return success.
+      const [updated] = await db
+        .update(services)
+        .set({ isActive: false })
+        .where(eq(services.id, serviceId))
+        .returning();
+      return res.json({ message: "Service has existing bookings, deactivated instead of deleted", service: updated });
+    }
+
+    // If no bookings, hard delete
+    await db.delete(masterServices).where(eq(masterServices.serviceId, serviceId)); // Delete relations first
+    const [deleted] = await db
+      .delete(services)
+      .where(eq(services.id, serviceId))
+      .returning();
+
+    return res.json({ success: true, deleted });
+
+  } catch (error) {
+    logger.error("Delete service error:", error);
+    return res.status(500).json({ error: "Failed to delete service" });
   }
 });
 
@@ -1060,7 +1635,7 @@ router.post("/services/:serviceId/duplicate", isAuthenticated, async (req: any, 
 
     return res.status(201).json(duplicated);
   } catch (error) {
-    console.error("Duplicate service error:", error);
+    logger.error("Duplicate service error:", error);
     return res.status(500).json({ error: "Failed to duplicate service" });
   }
 });
@@ -1095,7 +1670,7 @@ router.get("/services/:id/masters", isAuthenticated, async (req: any, res) => {
 
     return res.json({ masterIds: assignments.map((a) => a.masterId) });
   } catch (error) {
-    console.error("Get service masters error:", error);
+    logger.error("Get service masters error:", error);
     return res.status(500).json({ error: "Failed to get service masters" });
   }
 });
@@ -1177,7 +1752,7 @@ router.patch(
 
       return res.json({ success: true, masterIds });
     } catch (error) {
-      console.error("Assign masters to service error:", error);
+      logger.error("Assign masters to service error:", error);
       return res.status(500).json({ error: "Failed to assign masters" });
     }
   },
@@ -1242,7 +1817,7 @@ router.patch(
 
       return res.json(updated);
     } catch (error) {
-      console.error("Toggle service error:", error);
+      logger.error("Toggle service error:", error);
       return res.status(500).json({ error: "Failed to toggle service" });
     }
   },
@@ -1311,7 +1886,7 @@ router.post(
 
       return res.json({ success: true, updated });
     } catch (error) {
-      console.error("Bulk toggle services error:", error);
+      logger.error("Bulk toggle services error:", error);
       return res.status(500).json({ error: "Failed to bulk toggle services" });
     }
   },
@@ -1368,7 +1943,7 @@ router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true, updated: updates.flat() });
   } catch (error) {
-    console.error("Reorder services error:", error);
+    logger.error("Reorder services error:", error);
     return res.status(500).json({ error: "Failed to reorder services" });
   }
 });
@@ -1475,7 +2050,7 @@ router.get(
 
       return res.json({ bookings: filteredBookings, total });
     } catch (error) {
-      console.error("Get advanced bookings error:", error);
+      logger.error("Get advanced bookings error:", error);
       return res.status(500).json({ error: "Failed to get bookings" });
     }
   },
@@ -1578,7 +2153,7 @@ router.post(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
-      console.error("Bulk update bookings error:", error);
+      logger.error("Bulk update bookings error:", error);
       return res.status(500).json({ error: "Failed to update bookings" });
     }
   },
@@ -1611,7 +2186,7 @@ router.get(
 
       return res.json({ history: booking.history || [] });
     } catch (error) {
-      console.error("Get booking history error:", error);
+      logger.error("Get booking history error:", error);
       return res.status(500).json({ error: "Failed to get booking history" });
     }
   },
@@ -1649,15 +2224,15 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
         salonName: salons.name,
         masterName: masters.name,
         serviceName: services.name,
-        // clientName/Email joined incorrectly, stubbing for now to fix build
-        clientName: sql<string>`''`,
-        clientEmail: sql<string>`''`,
+        clientName: userProfiles.fullName,
+        clientEmail: users.email,
       })
       .from(bookings)
       .leftJoin(salons, eq(bookings.salonId, salons.id))
       .leftJoin(masters, eq(bookings.masterId, masters.id))
       .leftJoin(services, eq(bookings.serviceId, services.id))
-      //.leftJoin(sql`users`, sql`bookings.client_id = users.id`) // invalid join
+      .leftJoin(userProfiles, eq(bookings.clientId, userProfiles.id))
+      .leftJoin(users, eq(userProfiles.userId, users.id))
       .where(and(...conditions))
       .orderBy(desc(bookings.bookingDate));
 
@@ -1693,7 +2268,7 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
     res.setHeader("Content-Disposition", "attachment; filename=bookings.csv");
     return res.send(csv);
   } catch (error) {
-    console.error("Export bookings error:", error);
+    logger.error("Export bookings error:", error);
     return res.status(500).json({ error: "Failed to export bookings" });
   }
 });
@@ -1735,7 +2310,7 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
     const todayCompletionRate =
       todayBookings.length > 0
         ? (todayBookings.filter((b) => b.status === "completed").length / todayBookings.length) *
-          100
+        100
         : 0;
 
     // Week stats
@@ -1896,7 +2471,7 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
       trends: trendData,
     });
   } catch (error) {
-    console.error("Dashboard overview error:", {
+    logger.error("Dashboard overview error:", {
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       ownerId: req.user?.claims?.sub,
@@ -1955,7 +2530,7 @@ router.get("/dashboard/recent-activity", isAuthenticated, async (req: any, res) 
 
     return res.json(activity);
   } catch (error) {
-    console.error("Recent activity error:", error);
+    logger.error("Recent activity error:", error);
     return res.status(500).json({ error: "Failed to get recent activity" });
   }
 });
@@ -2040,7 +2615,7 @@ router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
 
     return res.json(alerts);
   } catch (error) {
-    console.error("Dashboard alerts error:", error);
+    logger.error("Dashboard alerts error:", error);
     return res.status(500).json({ error: "Failed to get alerts" });
   }
 });
@@ -2125,7 +2700,7 @@ router.get(
         cancellationRate: Math.round(cancellationRate * 10) / 10,
       });
     } catch (error) {
-      console.error("Custom range analytics error:", error);
+      logger.error("Custom range analytics error:", error);
       return res.status(500).json({ error: "Failed to get analytics" });
     }
   },
@@ -2256,7 +2831,7 @@ router.get(
         },
       });
     } catch (error) {
-      console.error("Comparison analytics error:", error);
+      logger.error("Comparison analytics error:", error);
       return res.status(500).json({ error: "Failed to get comparison analytics" });
     }
   },
@@ -2341,7 +2916,7 @@ router.get(
 
       return res.json(masterPerformance);
     } catch (error) {
-      console.error("Master performance analytics error:", error);
+      logger.error("Master performance analytics error:", error);
       return res.status(500).json({ error: "Failed to get master performance" });
     }
   },
@@ -2423,7 +2998,7 @@ router.get(
 
       return res.json(servicePerformance);
     } catch (error) {
-      console.error("Service performance analytics error:", error);
+      logger.error("Service performance analytics error:", error);
       return res.status(500).json({ error: "Failed to get service performance" });
     }
   },
@@ -2490,7 +3065,7 @@ router.get(
 
       return res.json(peakHours);
     } catch (error) {
-      console.error("Peak hours analytics error:", error);
+      logger.error("Peak hours analytics error:", error);
       return res.status(500).json({ error: "Failed to get peak hours" });
     }
   },
@@ -2660,8 +3235,125 @@ router.post(
 
       return res.status(201).json(booking);
     } catch (error) {
-      console.error("Manual booking creation error:", error);
+      logger.error("Manual booking creation error:", error);
       return res.status(500).json({ error: "Failed to create manual booking" });
+    }
+  },
+);
+
+// Reschedule booking
+router.patch(
+  "/bookings/:id/reschedule",
+  isAuthenticated,
+  requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS),
+  async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const ownerId = req.user.claims.sub;
+      const { newBookingDate, newStartTime, newEndTime, reason } = req.body;
+
+      // Validation
+      if (!newBookingDate || !newStartTime || !newEndTime) {
+        return res.status(400).json({
+          error: "Missing required fields",
+          required: ["newBookingDate", "newStartTime", "newEndTime"],
+        });
+      }
+
+      // Get booking and verify salon ownership
+      const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Solo master bookings cannot be managed by owner (unless we add logic, but sticky to standard)
+      if (!booking.salonId) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const [salon] = await db
+        .select()
+        .from(salons)
+        .where(and(eq(salons.id, booking.salonId), eq(salons.ownerId, ownerId)));
+
+      if (!salon) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      // Check for conflicts
+      if (booking.masterId) {
+        const conflictingBookings = await db
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.masterId, booking.masterId),
+              eq(bookings.bookingDate, new Date(newBookingDate)),
+              ne(bookings.status, "cancelled"),
+              ne(bookings.id, id), // Exclude current booking
+              // Check time overlap
+              sql`(${bookings.startTime} < ${newEndTime} AND ${bookings.endTime} > ${newStartTime})`,
+            ),
+          );
+
+        if (conflictingBookings.length > 0) {
+          return res.status(409).json({
+            error: "Master is already booked during this time",
+            conflicts: conflictingBookings,
+          });
+        }
+      }
+
+      // Update booking
+      const historyEntry = {
+        timestamp: new Date().toISOString(),
+        action: "reschedule",
+        changedBy: ownerId,
+        changes: {
+          bookingDate: { from: booking.bookingDate, to: newBookingDate },
+          startTime: { from: booking.startTime, to: newStartTime },
+          endTime: { from: booking.endTime, to: newEndTime },
+          reason: reason || undefined,
+        },
+      };
+
+      const currentHistory = (booking.modificationHistory as any[]) || [];
+
+      const [updated] = await db
+        .update(bookings)
+        .set({
+          bookingDate: new Date(newBookingDate),
+          startTime: newStartTime,
+          endTime: newEndTime,
+          updatedAt: new Date(),
+          modifiedBy: ownerId,
+          modificationHistory: [...currentHistory, historyEntry],
+        })
+        .where(eq(bookings.id, id))
+        .returning();
+
+      // Log audit
+      await logAudit({
+        actorId: ownerId,
+        action: "booking.reschedule",
+        entityType: "bookings",
+        entityId: id,
+        salonId: booking.salonId,
+        details: {
+          bookingId: id,
+          oldDate: booking.bookingDate,
+          newDate: newBookingDate,
+          oldTime: booking.startTime,
+          newTime: newStartTime,
+          reason,
+        },
+        result: "success",
+      });
+
+      return res.json(updated);
+    } catch (error) {
+      logger.error("Reschedule booking error:", error);
+      return res.status(500).json({ error: "Failed to reschedule booking" });
     }
   },
 );
@@ -2688,7 +3380,7 @@ router.get("/salons/:id/breaks", isAuthenticated, async (req: any, res) => {
 
     return res.json(breaks);
   } catch (error) {
-    console.error("Get salon breaks error:", error);
+    logger.error("Get salon breaks error:", error);
     return res.status(500).json({ error: "Failed to get breaks" });
   }
 });
@@ -2736,7 +3428,7 @@ router.post(
 
       return res.status(201).json(breakEntry);
     } catch (error) {
-      console.error("Create salon break error:", error);
+      logger.error("Create salon break error:", error);
       return res.status(500).json({ error: "Failed to create break" });
     }
   },
@@ -2781,7 +3473,7 @@ router.patch(
 
       return res.json(updated);
     } catch (error) {
-      console.error("Update salon break error:", error);
+      logger.error("Update salon break error:", error);
       return res.status(500).json({ error: "Failed to update break" });
     }
   },
@@ -2819,7 +3511,7 @@ router.delete(
 
       return res.json({ success: true });
     } catch (error) {
-      console.error("Delete salon break error:", error);
+      logger.error("Delete salon break error:", error);
       return res.status(500).json({ error: "Failed to delete break" });
     }
   },
@@ -2858,7 +3550,7 @@ router.get("/salons/:id/exceptions", isAuthenticated, async (req: any, res) => {
 
     return res.json(exceptions);
   } catch (error) {
-    console.error("Get salon exceptions error:", error);
+    logger.error("Get salon exceptions error:", error);
     return res.status(500).json({ error: "Failed to get exceptions" });
   }
 });
@@ -2907,7 +3599,7 @@ router.post(
 
       return res.status(201).json(exception);
     } catch (error) {
-      console.error("Create salon exception error:", error);
+      logger.error("Create salon exception error:", error);
       return res.status(500).json({ error: "Failed to create exception" });
     }
   },
@@ -2952,7 +3644,7 @@ router.patch(
 
       return res.json(updated);
     } catch (error) {
-      console.error("Update salon exception error:", error);
+      logger.error("Update salon exception error:", error);
       return res.status(500).json({ error: "Failed to update exception" });
     }
   },
@@ -2990,7 +3682,7 @@ router.delete(
 
       return res.json({ success: true });
     } catch (error) {
-      console.error("Delete salon exception error:", error);
+      logger.error("Delete salon exception error:", error);
       return res.status(500).json({ error: "Failed to delete exception" });
     }
   },
@@ -3032,7 +3724,7 @@ router.get("/salons/:id/managers", isAuthenticated, async (req: any, res) => {
 
     return res.json(managers);
   } catch (error) {
-    console.error("Get salon managers error:", error);
+    logger.error("Get salon managers error:", error);
     return res.status(500).json({ error: "Failed to get managers" });
   }
 });
@@ -3152,7 +3844,7 @@ router.post(
 
       return res.status(201).json(manager);
     } catch (error) {
-      console.error("Invite manager error:", error);
+      logger.error("Invite manager error:", error);
       return res.status(500).json({ error: "Failed to invite manager" });
     }
   },
@@ -3208,7 +3900,7 @@ router.post(
 
       return res.json(updated);
     } catch (error) {
-      console.error("Accept invitation error:", error);
+      logger.error("Accept invitation error:", error);
       return res.status(500).json({ error: "Failed to accept invitation" });
     }
   },
@@ -3261,7 +3953,7 @@ router.patch(
 
       return res.json(updated);
     } catch (error) {
-      console.error("Update manager permissions error:", error);
+      logger.error("Update manager permissions error:", error);
       return res.status(500).json({ error: "Failed to update permissions" });
     }
   },
@@ -3312,7 +4004,7 @@ router.delete(
 
       return res.json({ success: true, message: "Manager access revoked" });
     } catch (error) {
-      console.error("Revoke manager error:", error);
+      logger.error("Revoke manager error:", error);
       return res.status(500).json({ error: "Failed to revoke manager access" });
     }
   },

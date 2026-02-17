@@ -14,6 +14,7 @@ import {
 import { Upload, X, Loader2, CheckCircle2, ZoomIn, RotateCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/lib/logger";
 
 interface AvatarUploadProps {
   value?: string;
@@ -194,7 +195,7 @@ export function AvatarUpload({
         setUploadProgress(0);
       }, 2000);
     } catch (error) {
-      console.error("Upload error:", error);
+      logger.error("Upload error", error as Error, { source: "avatar-upload" });
       toast({
         title: t("marketplace.portfolio.upload.errors.uploadFailed"),
         description: "Failed to upload image. Please try again.",

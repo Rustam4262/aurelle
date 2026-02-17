@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { logger } from "@/lib/logger";
 import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -128,7 +129,7 @@ export function ImageUpload({
         setUploadProgress(0);
       }, 2000);
     } catch (error) {
-      console.error("Upload error:", error);
+      logger.error("Upload error", error as Error, { source: "image-upload" });
       toast({
         title: "Upload failed",
         description: "Failed to upload image. Please try again.",
@@ -307,7 +308,7 @@ export function MultiImageUpload({
 
       setTimeout(() => setUploadProgress(0), 1500);
     } catch (error) {
-      console.error("Upload error:", error);
+      logger.error("Upload error", error as Error, { source: "image-upload" });
       toast({
         title: "Upload failed",
         description: "Failed to upload images. Please try again.",

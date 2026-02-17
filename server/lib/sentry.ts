@@ -16,7 +16,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 export function initializeSentry() {
   // Only initialize if DSN is provided
   if (!process.env.SENTRY_DSN) {
-    console.warn("Sentry DSN not configured. Backend error monitoring disabled.");
+    console.warn("[Sentry] DSN not configured. Backend error monitoring disabled.");
     return;
   }
 
@@ -85,7 +85,7 @@ export function initializeSentry() {
     nodeVersion: process.version,
   });
 
-  console.log("✅ Sentry initialized for backend error monitoring");
+  console.log("[Sentry] ✅ Initialized for backend error monitoring");
 }
 
 /**
@@ -101,7 +101,7 @@ export function setupSentryMiddleware(_app: Express) {
 
   // In Sentry SDK v8+, request handling is automatic via the init() integrations
   // No manual middleware setup is required
-  console.log("✅ Sentry middleware configured (auto-instrumentation enabled)");
+  console.log("[Sentry] ✅ Middleware configured (auto-instrumentation enabled)");
 }
 
 /**
@@ -134,7 +134,7 @@ export function setupSentryErrorHandler(app: Express) {
     },
   );
 
-  console.log("✅ Sentry error handler configured");
+  console.log("[Sentry] ✅ Error handler configured");
 }
 
 /**

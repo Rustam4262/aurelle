@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getAllFeatureFlags } from "../featureFlags";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get("/", async (req, res) => {
     const flags = getAllFeatureFlags();
     return res.json(flags);
   } catch (error) {
-    console.error("Get feature flags error:", error);
+    logger.error("Get feature flags error", error);
     return res.status(500).json({ error: "Failed to get feature flags" });
   }
 });

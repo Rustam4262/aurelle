@@ -2,6 +2,7 @@ import { db } from "../db";
 import { ownerPermissions, salonManagers } from "../../shared/schema";
 import { eq, and, or } from "drizzle-orm";
 import { Request, Response, NextFunction } from "express";
+import { logger } from "./logger";
 
 /**
  * User roles
@@ -78,7 +79,7 @@ export async function hasPermission(ownerId: string, permission: string): Promis
 
     return result.length > 0;
   } catch (error) {
-    console.error("[RBAC] Error checking permission:", error);
+    logger.error("Error checking permission", error as Error, { source: "rbac" });
     return false;
   }
 }
@@ -101,7 +102,7 @@ export async function grantPermission(
       })
       .onConflictDoNothing();
   } catch (error) {
-    console.error("[RBAC] Error granting permission:", error);
+    logger.error("Error granting permission", error as Error, { source: "rbac" });
     throw error;
   }
 }
@@ -191,7 +192,7 @@ export async function hasManagerPermission(
     const permissions = manager.permissions as string[];
     return permissions.includes(permission);
   } catch (error) {
-    console.error("[RBAC] Error checking manager permission:", error);
+    logger.error("Error checking manager permission", error as Error, { source: "rbac" });
     return false;
   }
 }
@@ -215,7 +216,7 @@ export async function isSalonManager(userId: string, salonId: string): Promise<b
 
     return result.length > 0;
   } catch (error) {
-    console.error("[RBAC] Error checking manager status:", error);
+    logger.error("Error checking manager status", error as Error, { source: "rbac" });
     return false;
   }
 }
@@ -232,7 +233,7 @@ export async function getManagedSalons(userId: string): Promise<string[]> {
 
     return result.map((r) => r.salonId);
   } catch (error) {
-    console.error("[RBAC] Error getting managed salons:", error);
+    logger.error("Error getting managed salons", error as Error, { source: "rbac" });
     return [];
   }
 }
@@ -252,7 +253,7 @@ export async function canAccessSalon(ownerId: string, salonId: string): Promise<
 
     return result.length > 0;
   } catch (error) {
-    console.error("[RBAC] Error checking salon access:", error);
+    logger.error("Error checking salon access", error as Error, { source: "rbac" });
     return false;
   }
 }
@@ -287,7 +288,7 @@ export async function canAccessSalonAsOwnerOrManager(
 
     return { hasAccess: false, role: null };
   } catch (error) {
-    console.error("[RBAC] Error checking salon access:", error);
+    logger.error("Error checking salon access", error as Error, { source: "rbac" });
     return { hasAccess: false, role: null };
   }
 }

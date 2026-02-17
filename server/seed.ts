@@ -1,10 +1,11 @@
 import { db } from "./db";
 import { salons, masters, services, salonWorkingHours, masterServices } from "@shared/schema";
 import bcrypt from "bcrypt";
+import { logger } from "./lib/logger";
 
 // Seed данные для тестирования с stock изображениями
 export async function seedDatabase() {
-  console.log("🌱 Starting database seeding...");
+  logger.info("Starting database seeding", { source: "seed" });
 
   try {
     // Создаем тестовые салоны
@@ -91,12 +92,12 @@ export async function seedDatabase() {
       },
     ];
 
-    console.log("📝 Inserting salons...");
+    logger.info("Inserting salons", { source: "seed" });
     const insertedSalons = await db
       .insert(salons)
       .values(testSalons as any)
       .returning();
-    console.log(`✅ Created ${insertedSalons.length} salons`);
+    logger.info(`Created ${insertedSalons.length} salons`, { source: "seed" });
 
     // Создаем мастеров
     const testMasters = [
@@ -159,12 +160,12 @@ export async function seedDatabase() {
       },
     ];
 
-    console.log("👤 Inserting masters...");
+    logger.info("Inserting masters", { source: "seed" });
     const insertedMasters = await db
       .insert(masters)
       .values(testMasters as any)
       .returning();
-    console.log(`✅ Created ${insertedMasters.length} masters`);
+    logger.info(`Created ${insertedMasters.length} masters`, { source: "seed" });
 
     // Создаем услуги
     const testServices = [
@@ -262,12 +263,12 @@ export async function seedDatabase() {
       },
     ];
 
-    console.log("💅 Inserting services...");
+    logger.info("Inserting services", { source: "seed" });
     const insertedServices = await db
       .insert(services)
       .values(testServices as any)
       .returning();
-    console.log(`✅ Created ${insertedServices.length} services`);
+    logger.info(`Created ${insertedServices.length} services`, { source: "seed" });
 
     // Создаем расписание для салонов (пн-сб 9:00-20:00, вс выходной)
     const workingHoursData = [];
@@ -291,9 +292,9 @@ export async function seedDatabase() {
       });
     }
 
-    console.log("🕐 Inserting working hours...");
+    logger.info("Inserting working hours", { source: "seed" });
     await db.insert(salonWorkingHours).values(workingHoursData);
-    console.log(`✅ Created working hours for ${insertedSalons.length} salons`);
+    logger.info(`Created working hours for ${insertedSalons.length} salons`, { source: "seed" });
 
     // Связываем мастеров с услугами
     const masterServiceLinks = [
@@ -307,16 +308,15 @@ export async function seedDatabase() {
       { masterId: insertedMasters[2].id, serviceId: insertedServices[4].id },
     ];
 
-    console.log("🔗 Linking masters to services...");
+    logger.info("Linking masters to services", { source: "seed" });
     await db.insert(masterServices).values(masterServiceLinks);
-    console.log(`✅ Created ${masterServiceLinks.length} master-service links`);
+    logger.info(`Created ${masterServiceLinks.length} master-service links`, { source: "seed" });
 
-    console.log("\n🎉 Database seeding completed successfully!");
-    console.log("\n📊 Summary:");
-    console.log(`   - Salons: ${insertedSalons.length}`);
-    console.log(`   - Masters: ${insertedMasters.length}`);
-    console.log(`   - Services: ${insertedServices.length}`);
-    console.log(`   - Master-Service links: ${masterServiceLinks.length}`);
+    logger.info("Database seeding completed successfully", { source: "seed" });
+    logger.info(
+      `Summary - Salons: ${insertedSalons.length}, Masters: ${insertedMasters.length}, Services: ${insertedServices.length}, Links: ${masterServiceLinks.length}`,
+      { source: "seed" }
+    );
 
     return {
       salons: insertedSalons,
@@ -324,7 +324,7 @@ export async function seedDatabase() {
       services: insertedServices,
     };
   } catch (error) {
-    console.error("❌ Error seeding database:", error);
+    logger.error("Error seeding database", error as Error, { source: "seed" });
     throw error;
   }
 }
@@ -333,11 +333,11 @@ export async function seedDatabase() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   seedDatabase()
     .then(() => {
-      console.log("✅ Seeding complete!");
+      logger.info("Seeding complete", { source: "seed" });
       process.exit(0);
     })
     .catch((error) => {
-      console.error("❌ Seeding failed:", error);
+      logger.error("Seeding failed", error as Error, { source: "seed" });
       process.exit(1);
     });
 }

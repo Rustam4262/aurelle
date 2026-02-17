@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { logger } from "./lib/logger";
 
 /**
  * Initialize upload directories
@@ -12,7 +13,7 @@ export function initializeUploadDirectories() {
   // Create base uploads directory
   if (!fs.existsSync(uploadsBasePath)) {
     fs.mkdirSync(uploadsBasePath, { recursive: true });
-    console.log(`✓ Created uploads directory: ${uploadsBasePath}`);
+    logger.info(`✓ Created uploads directory: ${uploadsBasePath}`);
   }
 
   // Create subdirectories for each upload type
@@ -20,9 +21,9 @@ export function initializeUploadDirectories() {
     const typePath = path.join(uploadsBasePath, type);
     if (!fs.existsSync(typePath)) {
       fs.mkdirSync(typePath, { recursive: true });
-      console.log(`✓ Created upload directory: ${typePath}`);
+      logger.info(`✓ Created upload directory: ${typePath}`);
     }
   });
 
-  console.log("✓ Upload directories initialized");
+  logger.info("✓ Upload directories initialized");
 }

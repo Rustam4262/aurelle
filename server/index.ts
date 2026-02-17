@@ -19,8 +19,39 @@ initializeSentry();
 const app = express();
 const httpServer = createServer(app);
 
+import cors from "cors";
+import helmet from "helmet";
+
 // Setup Sentry request handler - must be first middleware
 setupSentryMiddleware(app);
+
+// Security headers with helmet
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "https://api-maps.yandex.ru", "https://sentry.io"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Needed for external resources
+  }),
+);
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5000",
+      "https://aurelle.uz",
+      "http://localhost", // Capacitor Android
+      "capacitor://localhost", // Capacitor iOS
+    ],
+    credentials: true,
+  }),
+);
 
 declare module "http" {
   interface IncomingMessage {
@@ -38,16 +69,11 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
+// Import unified logger
+import { log, logger } from "./lib/logger";
 
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
+// Export for backward compatibility
+export { log, logger };
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -106,15 +132,15 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (process.env.NODE_ENV === "production") {
-    console.log("Serving static files in production mode");
+    logger.info("Serving static files in production mode");
     serveStatic(app);
   } else {
-    console.log(`Initializing Vite in development mode... (REPL_ID: ${process.env.REPL_ID})`);
-    console.log("Importing ./vite...");
+    logger.info(`Initializing Vite in development mode... (REPL_ID: ${process.env.REPL_ID})`);
+    logger.info("Importing ./vite...");
     const { setupVite } = await import("./vite");
-    console.log("Imported ./vite successfully. Calling setupVite...");
+    logger.info("Imported ./vite successfully. Calling setupVite...");
     await setupVite(httpServer, app);
-    console.log("Vite initialized successfully");
+    logger.info("Vite initialized successfully");
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT

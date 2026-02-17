@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { logger } from "@/lib/logger";
 import {
   TrendingUp,
   TrendingDown,
@@ -8,8 +9,10 @@ import {
   Calendar,
   AlertCircle,
   Store,
+  Target,
+  XCircle,
+  Repeat,
   Scissors,
-  UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -185,9 +188,11 @@ export function OwnerDashboardOverview() {
 
   if (overviewError) {
     // Log error for debugging
-    console.error("Dashboard overview load error:", {
-      error: overviewError,
-      timestamp: new Date().toISOString(),
+    logger.error("Dashboard overview load error", overviewError as Error, {
+      source: "owner-dashboard-overview",
+      meta: {
+        timestamp: new Date().toISOString(),
+      },
     });
 
     const errorMessage =
@@ -255,6 +260,42 @@ export function OwnerDashboardOverview() {
           ))}
         </div>
       )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+          onClick={() => setLocation("/owner?tab=bookings")}
+        >
+          <Calendar className="h-6 w-6 text-primary" />
+          <span className="text-xs font-medium">{t("bookings.title", "Bookings")}</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+          onClick={() => setLocation("/owner?tab=services")}
+        >
+          <Scissors className="h-6 w-6 text-primary" />
+          <span className="text-xs font-medium">{t("services.title", "Services")}</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+          onClick={() => setLocation("/owner?tab=masters")}
+        >
+          <Users className="h-6 w-6 text-primary" />
+          <span className="text-xs font-medium">{t("masters.title", "Masters")}</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+          onClick={() => setLocation("/owner?tab=salons")}
+        >
+          <Store className="h-6 w-6 text-primary" />
+          <span className="text-xs font-medium">{t("marketplace.owner.mySalons", "Salons")}</span>
+        </Button>
+      </div>
 
       {/* Today's KPIs */}
       <div>
@@ -371,6 +412,71 @@ export function OwnerDashboardOverview() {
           </Card>
         </div>
       </div>
+
+      {/* Financial Metrics */}
+      {overview.month.bookings > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-3">{t("dashboard.financialMetrics", "Key Metrics")}</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("dashboard.avgBookingValue", "Avg. Booking Value")}
+                </CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(overview.month.revenue / Math.max(overview.month.bookings, 1))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("dashboard.perBooking", "per completed booking")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("dashboard.cancellationRate", "Cancellation Rate")}
+                </CardTitle>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {overview.today.completionRate > 0
+                    ? `${(100 - overview.today.completionRate).toFixed(1)}%`
+                    : "0%"
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("dashboard.thisMonth", "this month")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("dashboard.repeatClients", "Repeat Clients")}
+                </CardTitle>
+                <Repeat className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {overview.today.newClients > 0
+                    ? `${Math.max(0, overview.today.bookings - overview.today.newClients)}`
+                    : "0"
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("dashboard.returningToday", "returning today")}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Charts Section */}
       {overview.trends && overview.trends.length > 0 && (

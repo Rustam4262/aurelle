@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Copy, Eye, EyeOff, TrendingUp, Calendar } from "lucide-react";
+import { GripVertical, Pencil, Copy, Eye, EyeOff, TrendingUp, Calendar, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -226,8 +226,19 @@ export function ServiceManagement() {
 
   const [services, setServices] = useState<Service[]>([]);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [creatingService, setCreatingService] = useState(false);
   const [duplicatingService, setDuplicatingService] = useState<Service | null>(null);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
+  const [createFormData, setCreateFormData] = useState<EditFormData>({
+    name: { en: "", ru: "", uz: "" },
+    description: { en: "", ru: "", uz: "" },
+    category: "hair",
+    priceMin: 0,
+    priceMax: 0,
+    duration: 60,
+    isActive: true,
+  });
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [assignedMasters, setAssignedMasters] = useState<string[]>([]);
 
@@ -299,7 +310,6 @@ export function ServiceManagement() {
         `/api/owner/salons/${salonId}/services/${serviceId}`,
         data,
       );
-      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -312,6 +322,66 @@ export function ServiceManagement() {
     onError: (error: any) => {
       toast({
         title: t("services.updateError", "Failed to update service"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create service mutation
+  const createServiceMutation = useMutation({
+    mutationFn: async ({ salonId, data }: { salonId: string; data: EditFormData }) => {
+      const res = await apiRequest("POST", `/api/owner/salons/${salonId}/services`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t("services.createSuccess", "Service created successfully"),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
+      setCreatingService(false);
+      setCreateFormData({
+        name: { en: "", ru: "", uz: "" },
+        description: { en: "", ru: "", uz: "" },
+        category: "hair",
+        priceMin: 0,
+        priceMax: 0,
+        duration: 60,
+        isActive: true,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("services.createError", "Failed to create service"),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete service mutation
+  const deleteServiceMutation = useMutation({
+    mutationFn: async ({ salonId, serviceId }: { salonId: string; serviceId: string }) => {
+      const res = await apiRequest("DELETE", `/api/owner/salons/${salonId}/services/${serviceId}`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.message) {
+        toast({
+          title: t("services.deactivated", "Service Deactivated"),
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: t("services.deleteSuccess", "Service deleted successfully"),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/services/stats"] });
+      setDeletingService(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("services.deleteError", "Failed to delete service"),
         description: error.message,
         variant: "destructive",
       });
@@ -475,6 +545,25 @@ export function ServiceManagement() {
 
   const handleDuplicate = (service: Service) => {
     setDuplicatingService(service);
+  }; const handleDelete = (service: Service) => {
+    setDeletingService(service);
+  };
+
+  const handleCreate = () => {
+    if (salons.length === 0) return;
+
+    createServiceMutation.mutate({
+      salonId: salons[0].id, // Default to first salon for now, or add selector in dialog
+      data: createFormData,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingService) return;
+    deleteServiceMutation.mutate({
+      salonId: deletingService.salonId,
+      serviceId: deletingService.id,
+    });
   };
 
   const handleToggleActive = (service: Service) => {
@@ -521,14 +610,25 @@ export function ServiceManagement() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>{t("services.management", "Service Management")}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              "services.dragToReorder",
-              "Drag services to reorder them. Edit, duplicate, or toggle visibility.",
-            )}
-          </p>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div>
+            <CardTitle>{t("services.management", "Service Management")}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t(
+                "services.dragToReorder",
+                "Drag services to reorder them. Edit, duplicate, or toggle visibility.",
+              )}
+            </p>
+          </div>
+          {salons.length > 0 && (
+            <Button
+              onClick={() => setCreatingService(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t("marketplace.owner.addService", "Add Service")}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {/* Bulk Actions Bar */}
@@ -595,21 +695,35 @@ export function ServiceManagement() {
                 strategy={verticalListSortingStrategy}
               >
                 {services.map((service) => (
-                  <SortableServiceItem
-                    key={service.id}
-                    service={service}
-                    onEdit={handleEdit}
-                    onDuplicate={handleDuplicate}
-                    onToggleActive={handleToggleActive}
-                    isSelected={selectedServices.includes(service.id)}
-                    onSelect={(serviceId, checked) => {
-                      if (checked) {
-                        setSelectedServices([...selectedServices, serviceId]);
-                      } else {
-                        setSelectedServices(selectedServices.filter((id) => id !== serviceId));
-                      }
-                    }}
-                  />
+                  <div key={service.id} className="relative group">
+                    <SortableServiceItem
+                      service={service}
+                      onEdit={handleEdit}
+                      onDuplicate={handleDuplicate}
+                      onToggleActive={handleToggleActive}
+                      isSelected={selectedServices.includes(service.id)}
+                      onSelect={(serviceId, checked) => {
+                        if (checked) {
+                          setSelectedServices([...selectedServices, serviceId]);
+                        } else {
+                          setSelectedServices(selectedServices.filter((id) => id !== serviceId));
+                        }
+                      }}
+                    />
+                    <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent drag
+                          handleDelete(service);
+                        }}
+                        className="h-8 w-8 text-destructive hover:text-destructive/90 bg-white/80 backdrop-blur-sm"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </SortableContext>
             </DndContext>
@@ -871,6 +985,153 @@ export function ServiceManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Create Service Dialog */}
+      <Dialog open={creatingService} onOpenChange={setCreatingService}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("services.createService", "Create Service")}</DialogTitle>
+            <DialogDescription>
+              {t("services.createDescription", "Add a new service to your salon")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("services.name", "Service Name")}</Label>
+              <Input
+                placeholder="English"
+                value={createFormData.name.en}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    name: { ...createFormData.name, en: e.target.value },
+                  })
+                }
+              />
+              <Input
+                placeholder="Русский"
+                value={createFormData.name.ru}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    name: { ...createFormData.name, ru: e.target.value },
+                  })
+                }
+              />
+              <Input
+                placeholder="O'zbek"
+                value={createFormData.name.uz}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    name: { ...createFormData.name, uz: e.target.value },
+                  })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("services.category", "Category")}</Label>
+              <Select
+                value={createFormData.category}
+                onValueChange={(value) => setCreateFormData({ ...createFormData, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hair">Hair</SelectItem>
+                  <SelectItem value="nails">Nails</SelectItem>
+                  <SelectItem value="makeup">Makeup</SelectItem>
+                  <SelectItem value="massage">Massage</SelectItem>
+                  <SelectItem value="skincare">Skincare</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("services.priceMin", "Min Price")}</Label>
+                <Input
+                  type="number"
+                  value={createFormData.priceMin}
+                  onChange={(e) =>
+                    setCreateFormData({
+                      ...createFormData,
+                      priceMin: parseFloat(e.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("services.priceMax", "Max Price")}</Label>
+                <Input
+                  type="number"
+                  value={createFormData.priceMax}
+                  onChange={(e) =>
+                    setCreateFormData({
+                      ...createFormData,
+                      priceMax: parseFloat(e.target.value),
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("services.duration", "Duration (minutes)")}</Label>
+              <Input
+                type="number"
+                value={createFormData.duration}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    duration: parseInt(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatingService(false)}>
+              {t("common.cancel", "Cancel")}
+            </Button>
+            <Button onClick={handleCreate} disabled={createServiceMutation.isPending}>
+              {createServiceMutation.isPending
+                ? t("common.creating", "Creating...")
+                : t("common.create", "Create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingService} onOpenChange={() => setDeletingService(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("services.deleteTitle", "Delete Service")}</DialogTitle>
+            <DialogDescription>
+              {t("services.deleteConfirm", "Are you sure you want to delete this service? This action cannot be undone.")}
+              {deletingService?.bookingCount && deletingService.bookingCount > 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 rounded text-sm">
+                  {t("services.hasBookingsWarning", "Warning: This service has existing bookings. It will be deactivated instead of deleted.")}
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingService(null)}>
+              {t("common.cancel", "Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteServiceMutation.isPending}>
+              {deleteServiceMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 }

@@ -4,6 +4,7 @@ import { auditLogs } from "@shared/admin-schema";
 import { users } from "@shared/schema";
 import { eq, and, desc, like, gte, lte } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.get("/", requirePermission("audit.read"), async (req, res) => {
 
     res.json({ logs });
   } catch (error: any) {
-    console.error("List audit logs error:", error);
+    logger.error("List audit logs error", error as Error, { source: "audit-routes" });
     res.status(500).json({ error: "Failed to fetch audit logs" });
   }
 });
@@ -77,7 +78,7 @@ router.get("/:id", requirePermission("audit.read"), async (req, res) => {
 
     res.json(log);
   } catch (error: any) {
-    console.error("Get audit log error:", error);
+    logger.error("Get audit log error", error as Error, { source: "audit-routes" });
     res.status(500).json({ error: "Failed to fetch audit log" });
   }
 });
@@ -103,7 +104,7 @@ router.get("/entity/:entityType/:entityId", requirePermission("audit.read"), asy
 
     res.json({ logs });
   } catch (error: any) {
-    console.error("Get entity logs error:", error);
+    logger.error("Get entity logs error", error as Error, { source: "audit-routes" });
     res.status(500).json({ error: "Failed to fetch entity logs" });
   }
 });

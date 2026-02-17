@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { log } from "../index";
+import { logger } from "../lib/logger";
 
 // Custom error class with structured data
 export class AppError extends Error {
@@ -94,21 +94,26 @@ export function errorHandler(
 
   if (statusCode >= 500) {
     // Server errors - log full details
-    console.error("❌ Server Error:", {
-      code,
-      message,
-      path: req.path,
-      method: req.method,
-      stack: err.stack,
-      details,
+    logger.error("❌ Server Error", err, {
+      source: "errorHandler",
+      meta: {
+        code,
+        message,
+        path: req.path,
+        method: req.method,
+        details,
+      },
     });
   } else if (statusCode >= 400 && isDevelopment) {
     // Client errors - log only in development
-    console.warn("⚠️  Client Error:", {
-      code,
-      message,
-      path: req.path,
-      method: req.method,
+    logger.warn("⚠️  Client Error", {
+      source: "errorHandler",
+      meta: {
+        code,
+        message,
+        path: req.path,
+        method: req.method,
+      },
     });
   }
 

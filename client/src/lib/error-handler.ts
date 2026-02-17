@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { toast } from "@/hooks/use-toast";
+import { logger } from "./logger";
 
 /**
  * API Error Types
@@ -198,11 +199,13 @@ export function handleApiError(error: any, customMessage?: string) {
   const apiError = parseApiError(error);
   const message = customMessage || ERROR_MESSAGES[apiError.code] || apiError.message;
 
-  console.error("API Error:", {
-    code: apiError.code,
-    message: apiError.message,
-    details: apiError.details,
-    originalError: error,
+  logger.error("API Error", error, {
+    source: "apiError",
+    meta: {
+      code: apiError.code,
+      message: apiError.message,
+      details: apiError.details,
+    },
   });
 
   // Show toast notification
@@ -321,12 +324,12 @@ export function withErrorHandler<T extends (...args: any[]) => Promise<any>>(
 }
 
 /**
- * Log error to external service (Sentry, LogRocket, etc.)
- * TODO: Implement when ready
+ * Log error to external service (Sentry)
+ * Integrated with unified logger
  */
 export function logErrorToService(error: Error, errorInfo?: any) {
-  if (process.env.NODE_ENV === "production") {
-    // Example: Sentry.captureException(error, { extra: errorInfo });
-    console.log("Would log to external service:", error, errorInfo);
-  }
+  logger.error("External error logged", error, {
+    source: "errorService",
+    meta: errorInfo,
+  });
 }

@@ -10,6 +10,7 @@ import {
   bookings,
 } from "@shared/schema";
 import { isAuthenticated } from "../auth";
+import { logger } from "../lib/logger";
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.get("/me", isAuthenticated, async (req: any, res) => {
 
     return res.json(master);
   } catch (error) {
-    console.error("Get solo master error:", error);
+    logger.error("Get solo master error:", error);
     return res.status(500).json({ error: "Failed to get profile" });
   }
 });
@@ -125,7 +126,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update solo master profile error:", error);
+    logger.error("Update solo master profile error:", error);
     return res.status(500).json({ error: "Failed to update profile" });
   }
 });
@@ -148,7 +149,7 @@ router.get("/check-slug", isAuthenticated, async (req: any, res) => {
 
     return res.json({ available: !existing });
   } catch (error) {
-    console.error("Check slug error:", error);
+    logger.error("Check slug error:", error);
     return res.status(500).json({ error: "Failed to check slug" });
   }
 });
@@ -170,7 +171,7 @@ router.get("/settings", isAuthenticated, async (req: any, res) => {
 
     return res.json(settings || {});
   } catch (error) {
-    console.error("Get solo master settings error:", error);
+    logger.error("Get solo master settings error:", error);
     return res.status(500).json({ error: "Failed to get settings" });
   }
 });
@@ -218,7 +219,7 @@ router.put("/settings", isAuthenticated, async (req: any, res) => {
       return res.json(created);
     }
   } catch (error) {
-    console.error("Update solo master settings error:", error);
+    logger.error("Update solo master settings error:", error);
     return res.status(500).json({ error: "Failed to update settings" });
   }
 });
@@ -241,7 +242,7 @@ router.get("/schedule", isAuthenticated, async (req: any, res) => {
 
     return res.json(hours);
   } catch (error) {
-    console.error("Get schedule error:", error);
+    logger.error("Get schedule error:", error);
     return res.status(500).json({ error: "Failed to get schedule" });
   }
 });
@@ -295,7 +296,7 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
 
     return res.json(updatedHours);
   } catch (error) {
-    console.error("Update schedule error:", error);
+    logger.error("Update schedule error:", error);
     return res.status(500).json({ error: "Failed to update schedule" });
   }
 });
@@ -319,7 +320,7 @@ router.post("/complete-onboarding", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Complete onboarding error:", error);
+    logger.error("Complete onboarding error:", error);
     return res.status(500).json({ error: "Failed to complete onboarding" });
   }
 });
@@ -385,7 +386,7 @@ router.get("/stats", isAuthenticated, async (req: any, res) => {
       pendingBookings: Number(pendingBookings[0]?.count || 0),
     });
   } catch (error) {
-    console.error("Get stats error:", error);
+    logger.error("Get stats error:", error);
     return res.status(500).json({ error: "Failed to get stats" });
   }
 });
@@ -410,7 +411,7 @@ router.get("/services", isAuthenticated, async (req: any, res) => {
 
     return res.json(services);
   } catch (error) {
-    console.error("Get services error:", error);
+    logger.error("Get services error:", error);
     return res.status(500).json({ error: "Failed to get services" });
   }
 });
@@ -463,7 +464,7 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
 
     return res.status(201).json(created);
   } catch (error) {
-    console.error("Create service error:", error);
+    logger.error("Create service error:", error);
     return res.status(500).json({ error: "Failed to create service" });
   }
 });
@@ -527,7 +528,7 @@ router.put("/services/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update service error:", error);
+    logger.error("Update service error:", error);
     return res.status(500).json({ error: "Failed to update service" });
   }
 });
@@ -557,7 +558,7 @@ router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete service error:", error);
+    logger.error("Delete service error:", error);
     return res.status(500).json({ error: "Failed to delete service" });
   }
 });
@@ -593,7 +594,7 @@ router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
 
     return res.json({ success: true });
   } catch (error) {
-    console.error("Reorder services error:", error);
+    logger.error("Reorder services error:", error);
     return res.status(500).json({ error: "Failed to reorder services" });
   }
 });
@@ -640,7 +641,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     return res.json(filtered);
   } catch (error) {
-    console.error("Get bookings error:", error);
+    logger.error("Get bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });
   }
 });
@@ -680,7 +681,7 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
 
     return res.json(updated);
   } catch (error) {
-    console.error("Update booking status error:", error);
+    logger.error("Update booking status error:", error);
     return res.status(500).json({ error: "Failed to update booking" });
   }
 });

@@ -11,6 +11,7 @@ import {
   bookings,
   soloMasterSettings,
 } from "@shared/schema";
+import { logger } from "../lib/logger";
 
 const router = express.Router();
 
@@ -79,7 +80,7 @@ router.get("/:slug", async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error("Get public master error:", error);
+    logger.error("Get public master error:", error);
     return res.status(500).json({ error: "Failed to get master" });
   }
 });
@@ -108,7 +109,7 @@ router.get("/:slug/services", async (req, res) => {
 
     return res.json(services);
   } catch (error) {
-    console.error("Get master services error:", error);
+    logger.error("Get master services error:", error);
     return res.status(500).json({ error: "Failed to get services" });
   }
 });
@@ -164,7 +165,7 @@ router.get("/:slug/reviews", async (req, res) => {
       })),
     );
   } catch (error) {
-    console.error("Get master reviews error:", error);
+    logger.error("Get master reviews error:", error);
     return res.status(500).json({ error: "Failed to get reviews" });
   }
 });
@@ -287,7 +288,7 @@ router.get("/:slug/availability", async (req, res) => {
       slots,
     });
   } catch (error) {
-    console.error("Get master availability error:", error);
+    logger.error("Get master availability error:", error);
     return res.status(500).json({ error: "Failed to get availability" });
   }
 });
@@ -347,7 +348,7 @@ router.post("/:slug/check-distance", async (req, res) => {
       mobileExtraCharge: master.mobileExtraCharge || 0,
     });
   } catch (error) {
-    console.error("Check distance error:", error);
+    logger.error("Check distance error:", error);
     return res.status(500).json({ error: "Failed to check distance" });
   }
 });

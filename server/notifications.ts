@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { masters, notifications, newBookingNotificationSchema } from "@shared/schema";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "@shared/schema";
+import { logger } from "./lib/logger";
 
 export async function createNewBookingNotification(
   db: NodePgDatabase<typeof schema>,
@@ -28,7 +29,9 @@ export async function createNewBookingNotification(
 
   const parsed = newBookingNotificationSchema.safeParse(notificationPayload);
   if (!parsed.success) {
-    console.error("Notification validation failed:", parsed.error.errors);
+    logger.error("Notification validation failed", new Error(JSON.stringify(parsed.error.errors)), {
+      source: "notifications",
+    });
     return null;
   }
 

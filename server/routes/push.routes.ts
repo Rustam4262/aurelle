@@ -5,6 +5,7 @@ import { db } from "../db";
 import { pushSubscriptions, insertPushSubscriptionSchema } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import webpush from "web-push";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -17,10 +18,10 @@ const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@aurelle.uz";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  console.log("[PUSH] ✅ Web Push configured with VAPID keys");
+  logger.info("[PUSH] ✅ Web Push configured with VAPID keys");
 } else {
-  console.log("[PUSH] ⚠️ Push notifications not configured - missing VAPID keys");
-  console.log("[PUSH] Generate keys with: npx web-push generate-vapid-keys");
+  logger.info("[PUSH] ⚠️ Push notifications not configured - missing VAPID keys");
+  logger.info("[PUSH] Generate keys with: npx web-push generate-vapid-keys");
 }
 
 // Get VAPID public key (for client to use when subscribing)
@@ -60,7 +61,7 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
         .where(eq(pushSubscriptions.id, existingSubscription.id))
         .returning();
 
-      console.log("[PUSH] Subscription updated:", { userId, endpoint: endpoint.substring(0, 50) });
+      logger.info("[PUSH] Subscription updated: " + JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }));
       return res.json(updated);
     }
 
@@ -84,13 +85,13 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
       .values([parsed.data as any])
       .returning();
 
-    console.log("[PUSH] New subscription created:", {
+    logger.info("[PUSH] New subscription created: " + JSON.stringify({
       userId,
       endpoint: endpoint.substring(0, 50),
-    });
+    }));
     return res.status(201).json(subscription);
   } catch (error) {
-    console.error("Subscribe to push error:", error);
+    logger.error("Subscribe to push error:", error);
     return res.status(500).json({ error: "Failed to subscribe to push notifications" });
   }
 });
@@ -114,10 +115,10 @@ router.post("/unsubscribe", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Subscription not found" });
     }
 
-    console.log("[PUSH] Subscription deleted:", { userId, endpoint: endpoint.substring(0, 50) });
+    logger.info("[PUSH] Subscription deleted: " + JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }));
     return res.json({ success: true });
   } catch (error) {
-    console.error("Unsubscribe from push error:", error);
+    logger.error("Unsubscribe from push error:", error);
     return res.status(500).json({ error: "Failed to unsubscribe from push notifications" });
   }
 });
@@ -134,7 +135,7 @@ router.get("/subscriptions", isAuthenticated, async (req: any, res) => {
 
     return res.json(userSubscriptions);
   } catch (error) {
-    console.error("Get subscriptions error:", error);
+    logger.error("Get subscriptions error:", error);
     return res.status(500).json({ error: "Failed to get subscriptions" });
   }
 });
@@ -183,7 +184,7 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
           // If subscription is invalid (410 Gone), delete it
           if (error.statusCode === 410) {
             await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
-            console.log("[PUSH] Deleted invalid subscription:", sub.id);
+            logger.info("[PUSH] Deleted invalid subscription: " + sub.id);
           }
           throw error;
         }
@@ -193,10 +194,10 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
     const successful = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
 
-    console.log("[PUSH] Test notifications sent:", { userId, successful, failed });
+    logger.info("[PUSH] Test notifications sent: " + JSON.stringify({ userId, successful, failed }));
     return res.json({ successful, failed, total: userSubscriptions.length });
   } catch (error) {
-    console.error("Test push notification error:", error);
+    logger.error("Test push notification error:", error);
     return res.status(500).json({ error: "Failed to send test notification" });
   }
 });
@@ -220,7 +221,7 @@ export async function sendPushToUser(
 ) {
   try {
     if (!vapidPublicKey || !vapidPrivateKey) {
-      console.log("[PUSH] Skipping notification - not configured");
+      logger.info("[PUSH] Skipping notification - not configured");
       return { sent: 0, failed: 0 };
     }
 
@@ -251,7 +252,7 @@ export async function sendPushToUser(
           // If subscription is invalid (410 Gone), delete it
           if (error.statusCode === 410) {
             await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
-            console.log("[PUSH] Deleted invalid subscription:", sub.id);
+            logger.info("[PUSH] Deleted invalid subscription: " + sub.id);
           }
           throw error;
         }
@@ -261,10 +262,10 @@ export async function sendPushToUser(
     const sent = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
 
-    console.log("[PUSH] Notifications sent:", { userId, sent, failed });
+    logger.info("[PUSH] Notifications sent: " + JSON.stringify({ userId, sent, failed }));
     return { sent, failed };
   } catch (error) {
-    console.error("Send push to user error:", error);
+    logger.error("Send push to user error:", error);
     return { sent: 0, failed: 0 };
   }
 }

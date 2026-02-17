@@ -5,6 +5,7 @@ import { db } from "../db";
 import { waitlist, insertWaitlistSchema, userProfiles, salons, services } from "@shared/schema";
 import { eq, and, or } from "drizzle-orm";
 import { sendPushToUser } from "./push.routes";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -58,10 +59,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       .values([{ ...(parsed.data as any), expiresAt }])
       .returning();
 
-    console.log("[WAITLIST] New entry:", entry);
+    logger.info("[WAITLIST] New entry: " + JSON.stringify(entry));
     return res.status(201).json(entry);
   } catch (error) {
-    console.error("Join waitlist error:", error);
+    logger.error("Join waitlist error:", error);
     return res.status(500).json({ error: "Failed to join waitlist" });
   }
 });
@@ -103,7 +104,7 @@ router.get("/my-waitlist", isAuthenticated, async (req: any, res) => {
 
     return res.json(entries);
   } catch (error) {
-    console.error("Get my waitlist error:", error);
+    logger.error("Get my waitlist error:", error);
     return res.status(500).json({ error: "Failed to get waitlist" });
   }
 });
@@ -145,7 +146,7 @@ router.get("/salon/:salonId", isAuthenticated, async (req: any, res) => {
 
     return res.json(entries);
   } catch (error) {
-    console.error("Get salon waitlist error:", error);
+    logger.error("Get salon waitlist error:", error);
     return res.status(500).json({ error: "Failed to get waitlist" });
   }
 });
@@ -202,10 +203,10 @@ router.post("/:entryId/notify", isAuthenticated, async (req: any, res) => {
       });
     }
 
-    console.log("[WAITLIST] Notified:", updated);
+    logger.info("[WAITLIST] Notified: " + JSON.stringify(updated));
     return res.json(updated);
   } catch (error) {
-    console.error("Notify waitlist error:", error);
+    logger.error("Notify waitlist error:", error);
     return res.status(500).json({ error: "Failed to notify waitlist" });
   }
 });
@@ -235,10 +236,10 @@ router.delete("/:entryId", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Waitlist entry not found or access denied" });
     }
 
-    console.log("[WAITLIST] Deleted:", deleted[0]);
+    logger.info("[WAITLIST] Deleted: " + JSON.stringify(deleted[0]));
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete waitlist error:", error);
+    logger.error("Delete waitlist error:", error);
     return res.status(500).json({ error: "Failed to delete waitlist entry" });
   }
 });

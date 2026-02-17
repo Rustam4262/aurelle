@@ -3,6 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Bell, Calendar } from "lucide-react";
 import type { Notification } from "@shared/schema";
+import { logger } from "@/lib/logger";
 
 interface MasterNotificationsProps {
   notifications: Notification[] | undefined;
@@ -85,7 +86,9 @@ export function MasterNotifications({
                               });
                             }
                           } catch (error) {
-                            console.error("Failed to parse notification metadata:", error);
+                            logger.error("Failed to parse notification metadata", error as Error, {
+                              source: "MasterNotifications",
+                            });
                           }
                         }
                         return (

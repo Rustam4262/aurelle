@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { db } from "../db";
 import { adminUsers, adminRoles, auditLogs, sanctions } from "@shared/admin-schema";
 import { eq, and, or, gte, isNull } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 // Extend Express Request type to include admin info
 declare global {
@@ -65,7 +66,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
 
     next();
   } catch (error) {
-    console.error("Admin middleware error:", error);
+    logger.error("Admin middleware error", error as Error, { source: "admin-middleware" });
     res.status(500).json({ error: "Failed to verify admin status" });
   }
 }
@@ -157,7 +158,7 @@ export async function logAuditAction(data: {
       meta: auditData.meta || undefined,
     });
   } catch (error) {
-    console.error("Failed to log audit action:", error);
+    logger.error("Failed to log audit action", error as Error, { source: "admin-middleware" });
     // Don't throw - logging failure shouldn't break the request
   }
 }
@@ -211,7 +212,7 @@ export async function checkSanctions(req: Request, res: Response, next: NextFunc
 
     next();
   } catch (error) {
-    console.error("Sanction check error:", error);
+    logger.error("Sanction check error", error as Error, { source: "admin-middleware" });
     // Don't block on error - fail open for regular users
     next();
   }
@@ -247,7 +248,7 @@ export async function checkFeatureRestriction(userId: string, feature: string): 
 
     return false; // Feature is allowed
   } catch (error) {
-    console.error("Feature restriction check error:", error);
+    logger.error("Feature restriction check error", error as Error, { source: "admin-middleware" });
     return false; // Fail open - don't block on error
   }
 }

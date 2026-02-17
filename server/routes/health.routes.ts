@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { sql } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.get("/health", async (req, res) => {
 
     res.status(statusCode).json(healthData);
   } catch (error) {
-    console.error("Health check failed:", error);
+    logger.error("Health check failed", error);
 
     res.status(503).json({
       status: "unhealthy",
@@ -62,7 +63,7 @@ async function checkDatabase(): Promise<boolean> {
     await db.execute(sql`SELECT 1`);
     return true;
   } catch (error) {
-    console.error("Database health check failed:", error);
+    logger.error("Database health check failed", error);
     return false;
   }
 }

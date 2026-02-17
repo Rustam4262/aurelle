@@ -3,6 +3,7 @@ import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { logger } from "@/lib/logger";
 import { MapPin, Search } from "lucide-react";
 
 interface LocationPickerProps {
@@ -58,7 +59,7 @@ export function LocationPicker({
         }
       }
     } catch (error) {
-      console.error("Geocoding error:", error);
+      logger.error("Geocoding error", error as Error, { source: "location-picker" });
     }
   };
 
@@ -86,7 +87,7 @@ export function LocationPicker({
         });
       }
     } catch (error) {
-      console.error("Reverse geocoding error:", error);
+      logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
       // Still update coordinates even if address lookup fails
       onLocationChange({
         latitude: newCoords[0],
@@ -122,7 +123,7 @@ export function LocationPicker({
                 });
               }
             } catch (error) {
-              console.error("Reverse geocoding error:", error);
+              logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
             }
           }
 
@@ -132,7 +133,7 @@ export function LocationPicker({
           }
         },
         (error) => {
-          console.error("Geolocation error:", error);
+          logger.error("Geolocation error", error as unknown, { source: "location-picker" });
         },
       );
     }
@@ -218,7 +219,7 @@ export function LocationPicker({
                       });
                     }
                   } catch (error) {
-                    console.error("Reverse geocoding error:", error);
+                    logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
                   }
                 }
               }}

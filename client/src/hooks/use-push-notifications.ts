@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { logger } from '@/lib/logger';
 
 // Convert base64 string to Uint8Array for VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -53,7 +54,7 @@ export function usePushNotifications() {
         const data = (await response.json()) as VapidKeyResponse;
         return data.publicKey;
       } catch (error) {
-        console.log("Push notifications not configured on server");
+        logger.info("Push notifications not configured on server");
         return null;
       }
     },

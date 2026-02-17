@@ -134,7 +134,10 @@
       "forOwners": "For Owners",
       "registerSalon": "Register Salon",
       "dashboard": "Salon Dashboard",
-      "copyright": "\u00a9 {{year}} AURELLE. All rights reserved."
+      "copyright": "\u00a9 {{year}} AURELLE. All rights reserved.",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy",
+      "platform": "Platform"
     },
     "auth": {
       "title": "Welcome to AURELLE",
@@ -255,6 +258,7 @@
     },
     "owner": {
       "title": "Salon Owner Dashboard",
+      "quickActions": "Quick Actions",
       "mySalons": "My Salons",
       "addSalon": "Add New Salon",
       "editSalon": "Edit Salon",
@@ -770,7 +774,14 @@
       "revenueTrend": "Revenue Trend (Last 30 Days)",
       "bookingsTrend": "Bookings Trend (Last 30 Days)",
       "topServicesChart": "Top Services by Bookings",
-      "topMastersChart": "Top Masters by Revenue"
+      "topMastersChart": "Top Masters by Revenue",
+      "financialMetrics": "Key Metrics",
+      "avgBookingValue": "Avg. Booking Value",
+      "perBooking": "per completed booking",
+      "cancellationRate": "Cancellation Rate",
+      "thisMonth": "this month",
+      "repeatClients": "Repeat Clients",
+      "returningToday": "returning today"
     },
     "bookings": {
       "title": "Bookings",

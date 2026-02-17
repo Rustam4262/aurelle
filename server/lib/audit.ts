@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { auditLogs, type InsertAuditLog } from "../../shared/schema";
+import { logger } from "./logger";
 
 export interface AuditLogParams {
   actorId: string;
@@ -48,7 +49,10 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
     await db.insert(auditLogs).values(auditLog);
   } catch (error) {
     // Don't throw - audit logging should not break main flow
-    console.error("[AuditLog] Failed to log audit event:", error, params);
+    logger.error("Failed to log audit event", error as Error, {
+      source: "audit",
+      meta: { params },
+    });
   }
 }
 

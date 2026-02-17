@@ -13,6 +13,7 @@ import {
   Upload,
   X,
   Clock,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,11 @@ interface Master {
   };
   email?: string;
   phone?: string;
-  specialization?: string;
+  specialties?: {
+    en: string[];
+    ru: string[];
+    uz: string[];
+  };
   bio?: {
     en: string;
     ru: string;
@@ -105,6 +110,15 @@ export function MasterManagement() {
     queryKey: ["/api/owner/masters/stats"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/owner/masters/stats");
+      return res.json();
+    },
+  });
+
+  // Fetch owner salons for navigation
+  const { data: salons = [] } = useQuery<any[]>({
+    queryKey: ["/api/owner/salons"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/owner/salons");
       return res.json();
     },
   });
@@ -201,10 +215,11 @@ export function MasterManagement() {
     setEditFormData({
       name: master.name,
       bio: master.bio || { en: "", ru: "", uz: "" },
-      specialization: master.specialization || "",
+      specialization: master.specialties?.en?.join(", ") || "",
       phone: master.phone || "",
       isActive: master.isActive,
     });
+    // Ensure workingHours from backend (if any) are set, or use defaults
     setWorkingHours(master.workingHours || {});
   };
 
@@ -226,6 +241,11 @@ export function MasterManagement() {
       masterId: editingMaster.id,
       data: {
         ...editFormData,
+        specialties: {
+          en: editFormData.specialization.split(",").map(s => s.trim()).filter(Boolean),
+          ru: [],
+          uz: []
+        },
         workingHours,
       },
     });
@@ -260,14 +280,25 @@ export function MasterManagement() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>{t("masters.management", "Master Management")}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              "masters.manageDescription",
-              "Manage your masters, view their performance, and update their profiles.",
-            )}
-          </p>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div>
+            <CardTitle>{t("masters.management", "Master Management")}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t(
+                "masters.manageDescription",
+                "Manage your masters, view their performance, and update their profiles.",
+              )}
+            </p>
+          </div>
+          {salons.length > 0 && (
+            <Button
+              onClick={() => window.location.href = `/owner/salon/${salons[0].id}?tab=staff`}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t("marketplace.owner.addMaster", "Add Master")}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {masters.length === 0 ? (
@@ -307,9 +338,9 @@ export function MasterManagement() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">{master.salonName}</p>
-                          {master.specialization && (
+                          {master.specialties?.en && master.specialties.en.length > 0 && (
                             <p className="text-sm text-muted-foreground capitalize">
-                              {master.specialization}
+                              {master.specialties.en.join(", ")}
                             </p>
                           )}
                         </div>

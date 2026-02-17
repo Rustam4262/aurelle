@@ -1,4 +1,3 @@
-console.log("Loading vite.ts...");
 import { type Express } from "express";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
@@ -6,6 +5,9 @@ import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import { logger } from "./lib/logger";
+
+logger.info("Loading vite.ts...");
 
 const viteLogger = createLogger();
 
@@ -16,7 +18,7 @@ export async function setupVite(server: Server, app: Express) {
     allowedHosts: true as const,
   };
 
-  console.log("Creating Vite server with config...");
+  logger.info("Creating Vite server with config...");
 
   const vite = await createViteServer({
     ...viteConfig,
@@ -31,10 +33,10 @@ export async function setupVite(server: Server, app: Express) {
     server: serverOptions,
     appType: "custom",
   });
-  console.log("Vite server created successfully");
+  logger.info("Vite server created successfully");
 
   app.use(vite.middlewares);
-  console.log("Vite middlewares attached");
+  logger.info("Vite middlewares attached");
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;

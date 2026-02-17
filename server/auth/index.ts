@@ -2,6 +2,7 @@ import type { Express, RequestHandler } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "../db";
+import { logger } from "../lib/logger";
 
 const PgSession = connectPgSimple(session);
 
@@ -47,7 +48,7 @@ export async function setupAuth(app: Express) {
     }),
   );
 
-  console.log("Auth system initialized (local auth only)");
+  logger.info("Auth system initialized (local auth only)");
 }
 
 // Placeholder for auth routes registration

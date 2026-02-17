@@ -4,6 +4,7 @@ import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
 import { portfolioItems, insertPortfolioItemSchema, masters } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get("/master/:masterId", async (req, res) => {
 
     return res.json(items);
   } catch (error) {
-    console.error("Get portfolio error:", error);
+    logger.error("Get portfolio error:", error);
     return res.status(500).json({ error: "Failed to get portfolio" });
   }
 });
@@ -61,10 +62,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       .values([parsed.data as any])
       .returning();
 
-    console.log("[PORTFOLIO] Item added:", item);
+    logger.info("[PORTFOLIO] Item added: " + JSON.stringify(item));
     return res.status(201).json(item);
   } catch (error) {
-    console.error("Add portfolio item error:", error);
+    logger.error("Add portfolio item error:", error);
     return res.status(500).json({ error: "Failed to add portfolio item" });
   }
 });
@@ -100,10 +101,10 @@ router.delete("/:itemId", isAuthenticated, async (req: any, res) => {
 
     await db.delete(portfolioItems).where(eq(portfolioItems.id, itemId));
 
-    console.log("[PORTFOLIO] Item deleted:", itemId);
+    logger.info("[PORTFOLIO] Item deleted: " + itemId);
     return res.json({ success: true });
   } catch (error) {
-    console.error("Delete portfolio item error:", error);
+    logger.error("Delete portfolio item error:", error);
     return res.status(500).json({ error: "Failed to delete portfolio item" });
   }
 });

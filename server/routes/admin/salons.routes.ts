@@ -3,6 +3,7 @@ import { db } from "../../db";
 import { salons } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get("/", requirePermission("salons.read"), async (req, res) => {
 
     res.json({ salons: allSalons });
   } catch (error: any) {
-    console.error("List salons error:", error);
+    logger.error("List salons error", error as Error, { source: "salons-routes" });
     res.status(500).json({ error: "Failed to fetch salons" });
   }
 });
@@ -65,7 +66,7 @@ router.patch("/:id/activate", requirePermission("salons.verify"), async (req, re
 
     res.json({ salon: updated });
   } catch (error: any) {
-    console.error("Activate salon error:", error);
+    logger.error("Activate salon error", error as Error, { source: "salons-routes" });
     res.status(500).json({ error: "Failed to activate salon" });
   }
 });
@@ -101,7 +102,7 @@ router.patch("/:id/pause", requirePermission("salons.verify"), async (req, res) 
 
     res.json({ salon: updated });
   } catch (error: any) {
-    console.error("Pause salon error:", error);
+    logger.error("Pause salon error", error as Error, { source: "salons-routes" });
     res.status(500).json({ error: "Failed to pause salon" });
   }
 });

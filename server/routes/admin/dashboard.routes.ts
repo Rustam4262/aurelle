@@ -4,6 +4,7 @@ import { users, salons, masters, bookings } from "@shared/schema";
 import { complaints, sanctions } from "@shared/admin-schema";
 import { eq, sql, gte } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 
@@ -69,7 +70,7 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
       },
     });
   } catch (error: any) {
-    console.error("Dashboard stats error:", error);
+    logger.error("Dashboard stats error", error as Error, { source: "dashboard-routes" });
     res.status(500).json({ error: "Failed to fetch dashboard stats" });
   }
 });
@@ -111,7 +112,7 @@ router.get("/activity", requirePermission("analytics.read"), async (req, res) =>
       recentComplaints,
     });
   } catch (error: any) {
-    console.error("Dashboard activity error:", error);
+    logger.error("Dashboard activity error", error as Error, { source: "dashboard-routes" });
     res.status(500).json({ error: "Failed to fetch activity" });
   }
 });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -94,7 +95,9 @@ export function BookingManualCreateDialog({
       handleClose();
     },
     onError: (error: any) => {
-      console.error("Manual booking creation error:", error);
+      logger.error("Manual booking creation error", error as Error, {
+        source: "booking-manual-create-dialog",
+      });
       const errorMessage = error.response?.data?.error || error.message;
       toast({
         title: t("bookings.manual.error", "Creation failed"),

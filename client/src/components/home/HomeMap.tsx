@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { getLocalizedText } from "@/lib/i18n";
 import type { Salon } from "@shared/schema";
+import { logger } from "@/lib/logger";
 
 declare global {
   interface Window {
@@ -97,7 +98,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
           setMapLoaded(true);
         });
       } catch (error) {
-        console.error("Map initialization error:", error);
+        logger.error("Map initialization error", error as Error, { source: "HomeMap" });
         setMapError(true);
       }
     };
@@ -121,7 +122,9 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
       script.async = true;
       script.onload = initMap;
       script.onerror = () => {
-        console.error("Failed to load Yandex Maps");
+        logger.error("Failed to load Yandex Maps", new Error("Yandex Maps API failed to load"), {
+          source: "HomeMap",
+        });
         setMapError(true);
       };
       document.head.appendChild(script);
@@ -132,7 +135,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
         try {
           map.destroy();
         } catch (e) {
-          console.error("Error destroying map:", e);
+          logger.error("Error destroying map", e as Error, { source: "HomeMap" });
         }
       }
     };
