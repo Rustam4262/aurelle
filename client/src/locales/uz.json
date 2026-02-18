@@ -1582,5 +1582,18 @@
     "confirmBooking": "Buyurtmani tasdiqlash",
     "bookingSuccess": "Buyurtma yaratildi",
     "bookingSuccessDesc": "Buyurtmangiz tasdiqlanish uchun yuborildi."
+  },
+  "admin": {
+    "title": "Administrator paneli",
+    "nav": {
+      "dashboard": "Bosh sahifa",
+      "users": "Foydalanuvchilar",
+      "salons": "Salonlar va ustalar",
+      "complaints": "Shikoyatlar",
+      "sanctions": "Sanksiyalar",
+      "chat": "Qo'llab-quvvatlash chati",
+      "audit": "Audit jurnali"
+    },
+    "logout": "Chiqish"
   }
 }

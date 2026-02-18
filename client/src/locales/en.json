@@ -1581,5 +1581,18 @@
     "confirmBooking": "Confirm Booking",
     "bookingSuccess": "Booking Created",
     "bookingSuccessDesc": "Your booking has been submitted for confirmation."
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "salons": "Salons & Masters",
+      "complaints": "Complaints",
+      "sanctions": "Sanctions",
+      "chat": "Support Chat",
+      "audit": "Audit Logs"
+    },
+    "logout": "Logout"
   }
 }

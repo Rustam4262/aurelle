@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -23,19 +24,21 @@ import AdminChat from "@/pages/admin/chat";
 import AdminAudit from "@/pages/admin/audit";
 
 // Navigation items
-const navItems = [
-  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/users", label: "Users", icon: Users },
-  { path: "/admin/salons", label: "Salons & Masters", icon: Store },
-  { path: "/admin/complaints", label: "Complaints", icon: AlertCircle },
-  { path: "/admin/sanctions", label: "Sanctions", icon: Shield },
-  { path: "/admin/chat", label: "Support Chat", icon: MessageSquare },
-  { path: "/admin/audit", label: "Audit Logs", icon: FileText },
+const getNavItems = (t: any) => [
+  { path: "/admin/dashboard", label: t("admin.nav.dashboard"), icon: LayoutDashboard },
+  { path: "/admin/users", label: t("admin.nav.users"), icon: Users },
+  { path: "/admin/salons", label: t("admin.nav.salons"), icon: Store },
+  { path: "/admin/complaints", label: t("admin.nav.complaints"), icon: AlertCircle },
+  { path: "/admin/sanctions", label: t("admin.nav.sanctions"), icon: Shield },
+  { path: "/admin/chat", label: t("admin.nav.chat"), icon: MessageSquare },
+  { path: "/admin/audit", label: t("admin.nav.audit"), icon: FileText },
 ];
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
+  const { t } = useTranslation();
+  const navItems = getNavItems(t);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -43,7 +46,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
           <h1 className="text-2xl font-serif font-semibold text-foreground">AURELLE</h1>
-          <p className="text-sm text-muted-foreground mt-1">Admin Panel</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("admin.title")}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -88,7 +91,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => logout()}>
             <LogOut className="h-4 w-4" />
-            Logout
+            {t("admin.logout")}
           </Button>
         </div>
       </aside>
