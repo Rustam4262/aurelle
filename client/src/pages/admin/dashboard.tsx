@@ -108,7 +108,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-serif font-semibold text-foreground">{t("owner.admin.dashboard.title")}</h1>
-        <p className="text-muted-foreground mt-2">{t("owner.admin.dashboard.subtitle", "Platform overview and key metrics")}</p>
+        <p className="text-muted-foreground mt-2">{t("owner.admin.dashboard.subtitle")}</p>
       </div>
 
       {/* KPI Cards */}
@@ -136,20 +136,20 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* Quick Actions */}
+      {/* Platform Health */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Platform Health
+            {t("owner.admin.dashboard.platformHealth")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">User Verification Rate</p>
-                <p className="text-sm text-muted-foreground">Email and phone verified users</p>
+                <p className="font-medium">{t("owner.admin.dashboard.userVerificationRate")}</p>
+                <p className="text-sm text-muted-foreground">{t("owner.admin.dashboard.emailPhoneVerified")}</p>
               </div>
               <div className="text-2xl font-bold text-green-600">
                 {stats?.stats.salons.total
@@ -161,8 +161,8 @@ export default function AdminDashboard() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Complaint Resolution</p>
-                <p className="text-sm text-muted-foreground">Open complaints requiring attention</p>
+                <p className="font-medium">{t("owner.admin.dashboard.complaintResolution")}</p>
+                <p className="text-sm text-muted-foreground">{t("owner.admin.dashboard.openComplaintsRequiringAttention")}</p>
               </div>
               <div className="text-2xl font-bold text-orange-600">
                 {stats?.stats.moderation.openComplaints || 0}
@@ -171,8 +171,8 @@ export default function AdminDashboard() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Active Enforcement</p>
-                <p className="text-sm text-muted-foreground">Current sanctions in effect</p>
+                <p className="font-medium">{t("owner.admin.dashboard.activeEnforcement")}</p>
+                <p className="text-sm text-muted-foreground">{t("owner.admin.dashboard.currentSanctionsInEffect")}</p>
               </div>
               <div className="text-2xl font-bold text-red-600">
                 {stats?.stats.moderation.activeSanctions || 0}

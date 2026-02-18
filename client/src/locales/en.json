@@ -1047,6 +1047,7 @@
       },
       "dashboard": {
         "title": "Dashboard",
+        "subtitle": "Platform overview and key metrics",
         "totalUsers": "Total Users",
         "newThisWeek": "+{{count}} this week",
         "salons": "Salons",
@@ -1059,7 +1060,14 @@
         "requireAttention": "Require attention",
         "activeSanctions": "Active Sanctions",
         "currentlyEnforced": "Currently enforced",
-        "loading": "Loading statistics..."
+        "loading": "Loading statistics...",
+        "platformHealth": "Platform Health",
+        "userVerificationRate": "User Verification Rate",
+        "emailPhoneVerified": "Email and phone verified users",
+        "complaintResolution": "Complaint Resolution",
+        "openComplaintsRequiringAttention": "Open complaints requiring attention",
+        "activeEnforcement": "Active Enforcement",
+        "currentSanctionsInEffect": "Current sanctions in effect"
       },
       "users": {
         "title": "Users",

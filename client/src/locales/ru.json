@@ -1049,6 +1049,7 @@
       },
       "dashboard": {
         "title": "Панель управления",
+        "subtitle": "Обзор платформы и ключевые показатели",
         "totalUsers": "Всего пользователей",
         "newThisWeek": "+{{count}} за неделю",
         "salons": "Салоны",
@@ -1061,7 +1062,14 @@
         "requireAttention": "Требуют внимания",
         "activeSanctions": "Активные санкции",
         "currentlyEnforced": "Применены",
-        "loading": "Загрузка статистики..."
+        "loading": "Загрузка статистики...",
+        "platformHealth": "Здоровье платформы",
+        "userVerificationRate": "Уровень верификации пользователей",
+        "emailPhoneVerified": "Email и телефон подтверждены",
+        "complaintResolution": "Решение жалоб",
+        "openComplaintsRequiringAttention": "Открытые жалобы, требующие внимания",
+        "activeEnforcement": "Активное применение",
+        "currentSanctionsInEffect": "Текущие санкции в действии"
       },
       "users": {
         "title": "Пользователи",

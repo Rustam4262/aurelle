@@ -1048,6 +1048,7 @@
       },
       "dashboard": {
         "title": "Boshqaruv paneli",
+        "subtitle": "Platforma ko'rinishi va asosiy ko'rsatkichlar",
         "totalUsers": "Jami foydalanuvchilar",
         "newThisWeek": "Bu hafta +{{count}}",
         "salons": "Salonlar",
@@ -1060,7 +1061,14 @@
         "requireAttention": "E'tibor talab qiladi",
         "activeSanctions": "Faol sanktsiyalar",
         "currentlyEnforced": "Qo'llanilmoqda",
-        "loading": "Statistika yuklanmoqda..."
+        "loading": "Statistika yuklanmoqda...",
+        "platformHealth": "Platforma salomatligi",
+        "userVerificationRate": "Foydalanuvchi tasdiqlash darajasi",
+        "emailPhoneVerified": "Email va telefon tasdiqlangan foydalanuvchilar",
+        "complaintResolution": "Shikoyatlarni hal qilish",
+        "openComplaintsRequiringAttention": "E'tibor talab qiluvchi ochiq shikoyatlar",
+        "activeEnforcement": "Faol qo'llash",
+        "currentSanctionsInEffect": "Hozirgi sanktsiyalar"
       },
       "users": {
         "title": "Foydalanuvchilar",
