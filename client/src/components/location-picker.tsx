@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { logger } from "@/lib/logger";
 import { MapPin, Search } from "lucide-react";
 
-const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "22630f41-e074-42fd-9549-c902a031fab1";
+const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0";
 
 interface LocationPickerProps {
   latitude?: number;
