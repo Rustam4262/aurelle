@@ -12,6 +12,8 @@ import {
   AlertCircle,
   LogOut,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminSalons from "@/pages/admin/salons";
@@ -77,6 +79,13 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
+
+          {/* Language and Theme Switchers */}
+          <div className="flex items-center gap-2 mb-3">
+            <LanguageSwitcher variant="outline" className="flex-1" />
+            <ThemeToggle />
+          </div>
+
           <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => logout()}>
             <LogOut className="h-4 w-4" />
             Logout
