@@ -6,7 +6,7 @@ import { MapPin } from "lucide-react";
 import { getLocalizedText } from "@/lib/i18n";
 import type { Salon } from "@shared/schema";
 
-const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "";
+const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "22630f41-e074-42fd-9549-c902a031fab1";
 
 export function HomeMap({ salons }: { salons: Salon[] }) {
   const { t, i18n } = useTranslation();
