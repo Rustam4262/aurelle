@@ -1,10 +1,24 @@
-import { useState, useEffect } from "react";
-import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logger } from "@/lib/logger";
 import { MapPin, Search } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix default marker icon
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 interface LocationPickerProps {
   latitude?: number;
@@ -12,6 +26,46 @@ interface LocationPickerProps {
   address?: string;
   onLocationChange: (location: { latitude: number; longitude: number; address: string }) => void;
   className?: string;
+}
+
+// Component to handle map clicks and marker updates
+function MapController({
+  position,
+  onPositionChange,
+  onAddressChange,
+}: {
+  position: [number, number];
+  onPositionChange: (pos: [number, number]) => void;
+  onAddressChange: (address: string) => void;
+}) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker>(null);
+
+  useMapEvents({
+    click: async (e) => {
+      const newPos: [number, number] = [e.latlng.lat, e.latlng.lng];
+      onPositionChange(newPos);
+
+      // Reverse geocode using Nominatim
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=ru`
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          onAddressChange(data.display_name);
+        }
+      } catch (error) {
+        logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
+      }
+    },
+  });
+
+  useEffect(() => {
+    map.setView(position, map.getZoom());
+  }, [position, map]);
+
+  return null;
 }
 
 export function LocationPicker({
@@ -23,26 +77,23 @@ export function LocationPicker({
 }: LocationPickerProps) {
   const [coords, setCoords] = useState<[number, number]>([latitude, longitude]);
   const [searchQuery, setSearchQuery] = useState(address);
-  const [mapInstance, setMapInstance] = useState<any>(null);
-  const [ymaps, setYmaps] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const apiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "";
-
-  // Search for address
+  // Search for address using Nominatim
   const handleSearch = async () => {
-    if (!ymaps || !searchQuery) return;
+    if (!searchQuery) return;
 
+    setIsSearching(true);
     try {
-      const geocoder = ymaps.geocode(searchQuery, {
-        results: 1,
-      });
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=ru`
+      );
+      const data = await response.json();
 
-      const result = await geocoder;
-      const firstGeoObject = result.geoObjects.get(0);
-
-      if (firstGeoObject) {
-        const newCoords = firstGeoObject.geometry.getCoordinates();
-        const newAddress = firstGeoObject.getAddressLine();
+      if (data && data.length > 0) {
+        const result = data[0];
+        const newCoords: [number, number] = [parseFloat(result.lat), parseFloat(result.lon)];
+        const newAddress = result.display_name;
 
         setCoords(newCoords);
         setSearchQuery(newAddress);
@@ -52,48 +103,11 @@ export function LocationPicker({
           longitude: newCoords[1],
           address: newAddress,
         });
-
-        // Center map on new location
-        if (mapInstance) {
-          mapInstance.setCenter(newCoords, 15);
-        }
       }
     } catch (error) {
       logger.error("Geocoding error", error as Error, { source: "location-picker" });
-    }
-  };
-
-  // Handle map click
-  const handleMapClick = async (e: any) => {
-    if (!ymaps) return;
-
-    const newCoords = e.get("coords") as [number, number];
-    setCoords(newCoords);
-
-    // Reverse geocode to get address
-    try {
-      const geocoder = ymaps.geocode(newCoords);
-      const result = await geocoder;
-      const firstGeoObject = result.geoObjects.get(0);
-
-      if (firstGeoObject) {
-        const newAddress = firstGeoObject.getAddressLine();
-        setSearchQuery(newAddress);
-
-        onLocationChange({
-          latitude: newCoords[0],
-          longitude: newCoords[1],
-          address: newAddress,
-        });
-      }
-    } catch (error) {
-      logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
-      // Still update coordinates even if address lookup fails
-      onLocationChange({
-        latitude: newCoords[0],
-        longitude: newCoords[1],
-        address: searchQuery,
-      });
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -106,37 +120,49 @@ export function LocationPicker({
           setCoords(newCoords);
 
           // Get address for current location
-          if (ymaps) {
-            try {
-              const geocoder = ymaps.geocode(newCoords);
-              const result = await geocoder;
-              const firstGeoObject = result.geoObjects.get(0);
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newCoords[0]}&lon=${newCoords[1]}&accept-language=ru`
+            );
+            const data = await response.json();
 
-              if (firstGeoObject) {
-                const newAddress = firstGeoObject.getAddressLine();
-                setSearchQuery(newAddress);
+            if (data.display_name) {
+              const newAddress = data.display_name;
+              setSearchQuery(newAddress);
 
-                onLocationChange({
-                  latitude: newCoords[0],
-                  longitude: newCoords[1],
-                  address: newAddress,
-                });
-              }
-            } catch (error) {
-              logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
+              onLocationChange({
+                latitude: newCoords[0],
+                longitude: newCoords[1],
+                address: newAddress,
+              });
             }
-          }
-
-          // Center map on current location
-          if (mapInstance) {
-            mapInstance.setCenter(newCoords, 15);
+          } catch (error) {
+            logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
           }
         },
         (error) => {
           logger.error("Geolocation error", error as unknown, { source: "location-picker" });
-        },
+        }
       );
     }
+  };
+
+  const handlePositionChange = (newPos: [number, number]) => {
+    setCoords(newPos);
+    onLocationChange({
+      latitude: newPos[0],
+      longitude: newPos[1],
+      address: searchQuery,
+    });
+  };
+
+  const handleAddressChange = (newAddress: string) => {
+    setSearchQuery(newAddress);
+    onLocationChange({
+      latitude: coords[0],
+      longitude: coords[1],
+      address: newAddress,
+    });
   };
 
   return (
@@ -155,7 +181,12 @@ export function LocationPicker({
               }
             }}
           />
-          <Button type="button" variant="outline" onClick={handleSearch}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSearch}
+            disabled={isSearching}
+          >
             <Search className="h-4 w-4" />
           </Button>
           <Button
@@ -173,59 +204,56 @@ export function LocationPicker({
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <YMaps
-          query={{
-            apikey: apiKey,
-            lang: "ru_RU",
-          }}
+        <MapContainer
+          center={coords}
+          zoom={15}
+          scrollWheelZoom={true}
+          style={{ height: "400px", width: "100%" }}
         >
-          <Map
-            defaultState={{
-              center: coords,
-              zoom: 15,
-            }}
-            width="100%"
-            height="400px"
-            onClick={handleMapClick}
-            onLoad={(ymapsInstance: any) => setYmaps(ymapsInstance)}
-            instanceRef={(ref: any) => setMapInstance(ref)}
-            modules={["geocode"]}
-          >
-            <Placemark
-              geometry={coords}
-              options={{
-                preset: "islands#redDotIcon",
-                draggable: true,
-              }}
-              onDragEnd={async (e: any) => {
-                const newCoords = e.get("target").geometry.getCoordinates();
-                setCoords(newCoords);
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker
+            position={coords}
+            draggable={true}
+            eventHandlers={{
+              dragend: async (e) => {
+                const marker = e.target;
+                const position = marker.getLatLng();
+                const newPos: [number, number] = [position.lat, position.lng];
+
+                setCoords(newPos);
 
                 // Reverse geocode
-                if (ymaps) {
-                  try {
-                    const geocoder = ymaps.geocode(newCoords);
-                    const result = await geocoder;
-                    const firstGeoObject = result.geoObjects.get(0);
+                try {
+                  const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru`
+                  );
+                  const data = await response.json();
 
-                    if (firstGeoObject) {
-                      const newAddress = firstGeoObject.getAddressLine();
-                      setSearchQuery(newAddress);
-
-                      onLocationChange({
-                        latitude: newCoords[0],
-                        longitude: newCoords[1],
-                        address: newAddress,
-                      });
-                    }
-                  } catch (error) {
-                    logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
+                  if (data.display_name) {
+                    setSearchQuery(data.display_name);
+                    onLocationChange({
+                      latitude: newPos[0],
+                      longitude: newPos[1],
+                      address: data.display_name,
+                    });
                   }
+                } catch (error) {
+                  logger.error("Reverse geocoding error", error as Error, {
+                    source: "location-picker",
+                  });
                 }
-              }}
-            />
-          </Map>
-        </YMaps>
+              },
+            }}
+          />
+          <MapController
+            position={coords}
+            onPositionChange={handlePositionChange}
+            onAddressChange={handleAddressChange}
+          />
+        </MapContainer>
       </div>
 
       <div className="text-sm text-muted-foreground">
