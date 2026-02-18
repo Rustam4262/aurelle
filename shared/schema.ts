@@ -34,6 +34,7 @@ export const salons = pgTable(
     email: varchar("email", { length: 255 }),
     photos: text("photos").array(),
     isActive: boolean("is_active").default(true),
+    isVerified: boolean("is_verified").default(false), // Admin verification status
     status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused
     averageRating: decimal("average_rating", { precision: 2, scale: 1 }).default("0"),
     reviewCount: integer("review_count").default(0),
@@ -44,6 +45,7 @@ export const salons = pgTable(
     index("idx_salons_owner").on(table.ownerId),
     index("idx_salons_city").on(table.city),
     index("idx_salons_location").on(table.latitude, table.longitude),
+    index("idx_salons_verified").on(table.isVerified),
   ],
 );
 
@@ -974,3 +976,75 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
 
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// ============ USER ACTIVITY SESSIONS ============
+export const userActivitySessions = pgTable(
+  "user_activity_sessions",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    sessionId: varchar("session_id").notNull(),
+    loginAt: timestamp("login_at").defaultNow().notNull(),
+    logoutAt: timestamp("logout_at"),
+    lastActivityAt: timestamp("last_activity_at").defaultNow().notNull(),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    deviceType: varchar("device_type", { length: 50 }),
+    browser: varchar("browser", { length: 100 }),
+    os: varchar("os", { length: 100 }),
+    durationSeconds: integer("duration_seconds").default(0),
+    pageViews: integer("page_views").default(0),
+    actionsCount: integer("actions_count").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_user_activity_sessions_user_id").on(table.userId),
+    index("idx_user_activity_sessions_session_id").on(table.sessionId),
+    index("idx_user_activity_sessions_login_at").on(table.loginAt),
+  ],
+);
+
+export const insertUserActivitySessionSchema = createInsertSchema(userActivitySessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserActivitySession = z.infer<typeof insertUserActivitySessionSchema>;
+export type UserActivitySession = typeof userActivitySessions.$inferSelect;
+
+// ============ USER ACTIVITY ACTIONS ============
+export const userActivityActions = pgTable(
+  "user_activity_actions",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    sessionId: varchar("session_id"),
+    actionType: varchar("action_type", { length: 100 }).notNull(),
+    entityType: varchar("entity_type", { length: 50 }),
+    entityId: varchar("entity_id"),
+    metadata: jsonb("metadata"),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_user_activity_actions_user_id").on(table.userId),
+    index("idx_user_activity_actions_session_id").on(table.sessionId),
+    index("idx_user_activity_actions_created_at").on(table.createdAt),
+    index("idx_user_activity_actions_type").on(table.actionType, table.createdAt),
+  ],
+);
+
+export const insertUserActivityActionSchema = createInsertSchema(userActivityActions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUserActivityAction = z.infer<typeof insertUserActivityActionSchema>;
+export type UserActivityAction = typeof userActivityActions.$inferSelect;

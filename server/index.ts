@@ -12,6 +12,7 @@ import {
   setupSentryErrorHandler,
   trackUserMiddleware,
 } from "./lib/sentry";
+import { trackActivityHeartbeat } from "./middleware/activity";
 
 // Initialize Sentry as early as possible
 initializeSentry();
@@ -112,6 +113,9 @@ app.use((req, res, next) => {
 
   // Track user context after authentication
   app.use(trackUserMiddleware());
+
+  // Track user activity heartbeat for authenticated users
+  app.use(trackActivityHeartbeat());
 
   // Sentry error handler - must be before other error handlers
   setupSentryErrorHandler(app);

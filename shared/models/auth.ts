@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -29,6 +29,11 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   isBlocked: boolean("is_blocked").default(false),
   blockReason: varchar("block_reason"),
+  // Activity tracking fields
+  lastLoginAt: timestamp("last_login_at"),
+  lastActivityAt: timestamp("last_activity_at"),
+  loginCount: integer("login_count").default(0),
+  totalSessionTimeSeconds: bigint("total_session_time_seconds", { mode: "number" }).default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

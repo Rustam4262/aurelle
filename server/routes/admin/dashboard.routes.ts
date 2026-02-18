@@ -41,11 +41,11 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
       .from(users)
       .where(gte(users.createdAt, sevenDaysAgo));
 
-    // Active salons (status = 'active')
-    const [activeSalons] = await db
+    // Verified salons (isVerified = true)
+    const [verifiedSalons] = await db
       .select({ count: sql<number>`count(*)` })
       .from(salons)
-      .where(eq(salons.status, "active"));
+      .where(eq(salons.isVerified, true));
 
     res.json({
       stats: {
@@ -55,7 +55,7 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
         },
         salons: {
           total: Number(totalSalons.count),
-          active: Number(activeSalons.count),
+          verified: Number(verifiedSalons.count),
         },
         masters: {
           total: Number(totalMasters.count),

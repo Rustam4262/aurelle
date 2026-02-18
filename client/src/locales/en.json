@@ -1148,6 +1148,26 @@
         "loading": "Loading users...",
         "blockReason": "Block reason:"
       },
+      "activity": {
+        "title": "User Activity",
+        "subtitle": "Monitor user sessions and actions",
+        "sessions": "User Sessions",
+        "online": "Online Now",
+        "onlineUsers": "{{count}} users online",
+        "lastLogin": "Last Login",
+        "lastActivity": "Last Activity",
+        "sessionDuration": "Session Duration",
+        "totalTime": "Total Time",
+        "loginCount": "Total Logins",
+        "actions": "Actions",
+        "deviceType": "Device",
+        "browser": "Browser",
+        "ipAddress": "IP Address",
+        "active": "Active",
+        "ended": "Ended",
+        "noSessions": "No sessions found",
+        "loading": "Loading activity..."
+      },
       "salons": {
         "title": "Salons & Masters",
         "subtitle": "Manage salons and staff",

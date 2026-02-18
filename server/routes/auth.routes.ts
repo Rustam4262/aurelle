@@ -7,6 +7,7 @@ import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
 import { eq, and, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { trackUserLogout } from "../middleware/activity";
 
 const router = Router();
 
@@ -83,6 +84,11 @@ router.get("/auth/user", async (req: any, res) => {
 // Logout endpoint (POST)
 router.post("/logout", (req: any, res) => {
   if (req.session) {
+    const sessionId = req.sessionID;
+
+    // Track logout before destroying session
+    trackUserLogout(sessionId);
+
     req.session.destroy((err: any) => {
       if (err) {
         logger.error("Logout error", err);
@@ -105,6 +111,11 @@ router.post("/logout", (req: any, res) => {
 // Logout endpoint (GET) - for redirect-based logout
 router.get("/logout", (req: any, res) => {
   if (req.session) {
+    const sessionId = req.sessionID;
+
+    // Track logout before destroying session
+    trackUserLogout(sessionId);
+
     req.session.destroy((err: any) => {
       if (err) {
         logger.error("Logout error", err);

@@ -1149,6 +1149,26 @@
         "loading": "Yuklanmoqda...",
         "blockReason": "Bloklash sababi:"
       },
+      "activity": {
+        "title": "Foydalanuvchilar faolligi",
+        "subtitle": "Sessiyalar va harakatlarni kuzatish",
+        "sessions": "Foydalanuvchi sessiyalari",
+        "online": "Hozir onlayn",
+        "onlineUsers": "{{count}} foydalanuvchi onlayn",
+        "lastLogin": "Oxirgi kirish",
+        "lastActivity": "Oxirgi faollik",
+        "sessionDuration": "Sessiya davomiyligi",
+        "totalTime": "Umumiy vaqt",
+        "loginCount": "Jami kirishlar",
+        "actions": "Harakatlar",
+        "deviceType": "Qurilma",
+        "browser": "Brauzer",
+        "ipAddress": "IP manzil",
+        "active": "Faol",
+        "ended": "Tugagan",
+        "noSessions": "Sessiyalar topilmadi",
+        "loading": "Faollik yuklanmoqda..."
+      },
       "salons": {
         "title": "Salonlar va Ustalar",
         "subtitle": "Salonlar va xodimlarni boshqarish",

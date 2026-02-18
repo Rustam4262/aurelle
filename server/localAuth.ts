@@ -7,6 +7,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { authLimiter, registerLimiter } from "./middleware/rateLimiter";
 import { logger } from "./lib/logger";
+import { trackUserLogin } from "./middleware/activity";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -83,6 +84,10 @@ export function setupLocalAuth(app: Express) {
           logger.error("Session save error", err as Error, { source: "localAuth" });
           return res.status(500).json({ message: "Failed to create session" });
         }
+
+        // Track user registration/login activity
+        trackUserLogin(newUser.id, req);
+
         res.json({
           success: true,
           user: {
@@ -140,6 +145,10 @@ export function setupLocalAuth(app: Express) {
           logger.error("Session save error", err as Error, { source: "localAuth" });
           return res.status(500).json({ message: "Failed to create session" });
         }
+
+        // Track user login activity
+        trackUserLogin(user.id, req);
+
         res.json({
           success: true,
           user: {

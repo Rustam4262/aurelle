@@ -7,6 +7,7 @@ import sanctionsRoutes from "./admin/sanctions.routes";
 import complaintsRoutes from "./admin/complaints.routes";
 import chatRoutes from "./admin/chat.routes";
 import auditRoutes from "./admin/audit.routes";
+import activityRoutes from "./admin/activity.routes";
 
 const router = Router();
 
@@ -33,5 +34,8 @@ router.use("/chat", chatRoutes);
 
 // Audit Logs
 router.use("/audit", auditRoutes);
+
+// User Activity & Analytics
+router.use("/activity", activityRoutes);
 
 export default router;
