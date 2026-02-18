@@ -60,15 +60,19 @@ jobs:
           VITE_APP_VERSION: ${{ github.sha }}
 
       - name: Create Sentry release
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        continue-on-error: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "⏭️ Skipping Sentry release (no auth token configured)"
+            exit 0
+          fi
+
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
-
-          # Set environment variables
-          export SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
-          export SENTRY_ORG=${{ secrets.SENTRY_ORG }}
-          export SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
 
           RELEASE_VERSION="aurelle@${{ github.sha }}"
 
@@ -262,13 +266,19 @@ jobs:
           echo "✅ Smoke tests passed!"
 
       - name: Notify Sentry of deployment
-        if: success() && secrets.SENTRY_AUTH_TOKEN != ''
+        if: success()
+        continue-on-error: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
-          # Sentry CLI should already be installed from earlier step
-          export SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
-          export SENTRY_ORG=${{ secrets.SENTRY_ORG }}
-          export SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "⏭️ Skipping Sentry deployment notification (no auth token configured)"
+            exit 0
+          fi
 
+          # Sentry CLI should already be installed from earlier step
           RELEASE_VERSION="aurelle@${{ github.sha }}"
 
           # Create deployment notification
