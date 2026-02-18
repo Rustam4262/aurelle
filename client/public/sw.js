@@ -1,14 +1,39 @@
 // Service Worker for Push Notifications
 // This file handles push notifications in the background
+// Version: 2.0.0 - Updated 2026-02-18
+
+const CACHE_NAME = 'aurelle-v2.0.0';
 
 self.addEventListener("install", (event) => {
-  console.log("[SW] Service Worker installing...");
-  self.skipWaiting();
+  console.log("[SW] Service Worker installing... v2.0.0");
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Service Worker activating...");
-  event.waitUntil(clients.claim());
+  console.log("[SW] Service Worker activating... v2.0.0");
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => {
+            console.log('[SW] Deleting cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 // Handle push notifications
