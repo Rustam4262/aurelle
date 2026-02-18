@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Store, Calendar, AlertCircle, Shield, TrendingUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface DashboardStats {
   stats: {
@@ -27,6 +28,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/dashboard"],
   });
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-serif font-semibold">Dashboard</h1>
+        <h1 className="text-3xl font-serif font-semibold">{t("owner.admin.dashboard.title")}</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i}>
@@ -53,49 +55,49 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      title: "Total Users",
+      title: t("owner.admin.dashboard.totalUsers"),
       value: stats?.stats.users.total || 0,
-      subtitle: `+${stats?.stats.users.newLastWeek || 0} this week`,
+      subtitle: t("owner.admin.dashboard.newThisWeek", { count: stats?.stats.users.newLastWeek || 0 }),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
     {
-      title: "Salons",
+      title: t("owner.admin.dashboard.salons"),
       value: stats?.stats.salons.total || 0,
-      subtitle: `${stats?.stats.salons.verified || 0} verified`,
+      subtitle: t("owner.admin.dashboard.verified", { count: stats?.stats.salons.verified || 0 }),
       icon: Store,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
     },
     {
-      title: "Masters",
+      title: t("owner.admin.dashboard.masters"),
       value: stats?.stats.masters.total || 0,
-      subtitle: "Active masters",
+      subtitle: t("owner.admin.dashboard.activeMasters"),
       icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
     {
-      title: "Total Bookings",
+      title: t("owner.admin.dashboard.totalBookings"),
       value: stats?.stats.bookings.total || 0,
-      subtitle: "All time",
+      subtitle: t("owner.admin.dashboard.allTime"),
       icon: Calendar,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
     },
     {
-      title: "Open Complaints",
+      title: t("owner.admin.dashboard.openComplaints"),
       value: stats?.stats.moderation.openComplaints || 0,
-      subtitle: "Require attention",
+      subtitle: t("owner.admin.dashboard.requireAttention"),
       icon: AlertCircle,
       color: "text-red-600",
       bgColor: "bg-red-100",
     },
     {
-      title: "Active Sanctions",
+      title: t("owner.admin.dashboard.activeSanctions"),
       value: stats?.stats.moderation.activeSanctions || 0,
-      subtitle: "Currently enforced",
+      subtitle: t("owner.admin.dashboard.currentlyEnforced"),
       icon: Shield,
       color: "text-yellow-600",
       bgColor: "bg-yellow-100",
@@ -105,8 +107,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Platform overview and key metrics</p>
+        <h1 className="text-3xl font-serif font-semibold text-foreground">{t("owner.admin.dashboard.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("owner.admin.dashboard.subtitle", "Platform overview and key metrics")}</p>
       </div>
 
       {/* KPI Cards */}
