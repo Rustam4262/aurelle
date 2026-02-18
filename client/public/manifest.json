@@ -1,0 +1,9 @@
+{
+    "name": "Aurelle",
+    "short_name": "Aurelle",
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff",
+    "description": "Find your perfect salon with AURELLE."
+}
