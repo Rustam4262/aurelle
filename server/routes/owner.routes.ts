@@ -37,6 +37,7 @@ import { isAuthenticated } from "../auth";
 import { createNewBookingNotification } from "../notifications";
 import { cacheMiddleware } from "../cache";
 import { logger } from "../lib/logger";
+import { upload, setUploadType, getFileUrl } from "../upload";
 
 const router = Router();
 
@@ -165,25 +166,79 @@ router.get(
 );
 
 // Create salon
-router.post("/salons", isAuthenticated, async (req: any, res) => {
-  try {
-    const ownerId = req.user.claims.sub;
-    const parsed = insertSalonSchema.safeParse({ ...req.body, ownerId });
+router.post(
+  "/salons",
+  isAuthenticated,
+  setUploadType("salons"),
+  upload.array("photos", 10),
+  async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const files = req.files as Express.Multer.File[];
 
-    if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid salon data", details: parsed.error.errors });
+      // Parse JSON fields from FormData
+      const name = req.body.name ? JSON.parse(req.body.name) : null;
+      const description = req.body.description ? JSON.parse(req.body.description) : null;
+      const workingHoursData = req.body.workingHours ? JSON.parse(req.body.workingHours) : [];
+
+      // Build photos array from uploaded files
+      const photoUrls = files?.map((file) => getFileUrl(file.filename, "salons")) || [];
+
+      const salonData = {
+        ownerId,
+        name,
+        description,
+        address: req.body.address,
+        city: req.body.city,
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+        phone: req.body.phone,
+        email: req.body.email || null,
+        photos: photoUrls,
+        status: req.body.status || "draft",
+      };
+
+      const parsed = insertSalonSchema.safeParse(salonData);
+
+      if (!parsed.success) {
+        logger.error("Salon validation failed", undefined, {
+          source: "owner.routes",
+          meta: { errors: parsed.error.errors },
+        });
+        return res.status(400).json({
+          error: "Invalid salon data",
+          details: parsed.error.errors,
+        });
+      }
+
+      // Create salon
+      const [salon] = await db.insert(salons).values([parsed.data as any]).returning();
+
+      // Create working hours if provided
+      if (workingHoursData && workingHoursData.length > 0) {
+        const hoursToInsert = workingHoursData.map((hour: any) => ({
+          salonId: salon.id,
+          dayOfWeek: hour.dayOfWeek,
+          openTime: hour.openTime,
+          closeTime: hour.closeTime,
+          isClosed: !hour.isOpen,
+        }));
+
+        await db.insert(salonWorkingHours).values(hoursToInsert);
+      }
+
+      logger.info(`Salon created: ${salon.id}`, {
+        source: "owner.routes",
+        meta: { salonId: salon.id, ownerId },
+      });
+
+      return res.status(201).json(salon);
+    } catch (error) {
+      logger.error("Create salon error", error as Error, { source: "owner.routes" });
+      return res.status(500).json({ error: "Failed to create salon" });
     }
-
-    const [salon] = await db
-      .insert(salons)
-      .values([parsed.data as any])
-      .returning();
-    return res.status(201).json(salon);
-  } catch (error) {
-    logger.error("Create salon error:", error);
-    return res.status(500).json({ error: "Failed to create salon" });
   }
-});
+);
 
 // Get owner's salons
 router.get("/salons", isAuthenticated, async (req: any, res) => {
