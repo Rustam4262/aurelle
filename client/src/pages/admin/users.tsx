@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { exportToExcel, formatDataForExcel } from "@/lib/export";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -291,41 +292,33 @@ export default function AdminUsers() {
   };
 
   // Export to CSV
-  const exportToCSV = () => {
+  const exportToExcelFile = () => {
     if (!data?.users || data.users.length === 0) {
       toast({ title: "No data to export", variant: "destructive" });
       return;
     }
 
-    const headers = ["ID", "Full Name", "Email", "Phone", "Role", "Status", "Email Verified", "Phone Verified", "Created At"];
-    const rows = data.users.map((user) => [
-      user.id,
-      user.fullName,
-      user.email,
-      user.phone || "",
-      user.role,
-      user.status,
-      user.isEmailVerified ? "Yes" : "No",
-      user.isPhoneVerified ? "Yes" : "No",
-      format(new Date(user.createdAt), "yyyy-MM-dd HH:mm:ss"),
-    ]);
+    // Prepare data for Excel export
+    const exportData = data.users.map((user) => ({
+      "ID": user.id,
+      "Full Name": user.fullName,
+      "Email": user.email,
+      "Phone": user.phone || "",
+      "Role": user.role,
+      "Status": user.status,
+      "Email Verified": user.isEmailVerified ? "Yes" : "No",
+      "Phone Verified": user.isPhoneVerified ? "Yes" : "No",
+      "Last Login": user.lastLoginAt ? format(new Date(user.lastLoginAt), "yyyy-MM-dd HH:mm:ss") : "Never",
+      "Login Count": user.loginCount || 0,
+      "Created At": format(new Date(user.createdAt), "yyyy-MM-dd HH:mm:ss"),
+      "Block Reason": user.blockReason || "",
+    }));
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
+    // Export to Excel
+    const filename = `users_export_${format(new Date(), "yyyy-MM-dd_HHmm")}`;
+    exportToExcel(exportData, filename, "Users");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `users_export_${format(new Date(), "yyyy-MM-dd_HHmm")}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({ title: "Export successful", description: `Exported ${data.users.length} users` });
+    toast({ title: "Export successful", description: `Exported ${data.users.length} users to Excel` });
   };
 
   // Filter users by verification status
@@ -359,7 +352,7 @@ export default function AdminUsers() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportToCSV} disabled={!data?.users || data.users.length === 0}>
+          <Button variant="outline" size="sm" onClick={exportToExcelFile} disabled={!data?.users || data.users.length === 0}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>

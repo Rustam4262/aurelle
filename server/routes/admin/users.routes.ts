@@ -5,6 +5,7 @@ import { adminUsers, adminRoles } from "@shared/admin-schema";
 import { eq, desc, asc, like, or, and, sql } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
+import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
 
 const router = Router();
 
@@ -367,6 +368,15 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       req,
     });
 
+    // Send email notification (non-blocking)
+    if (updated.email) {
+      const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
+      const adminName = req.admin?.roleName || "Administrator";
+      sendUserBlockedEmail(updated.email, userName, reason || "Violation of platform rules", adminName).catch((err) => {
+        logger.error("Failed to send block email", err, { userId: updated.id, source: "users-routes" });
+      });
+    }
+
     res.json({ user: updated, message: "User blocked successfully" });
   } catch (error: any) {
     logger.error("Block user error", error as Error, { source: "users-routes" });
@@ -408,6 +418,15 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       newData: { isBlocked: false },
       req,
     });
+
+    // Send email notification (non-blocking)
+    if (updated.email) {
+      const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
+      const adminName = req.admin?.roleName || "Administrator";
+      sendUserUnblockedEmail(updated.email, userName, adminName).catch((err) => {
+        logger.error("Failed to send unblock email", err, { userId: updated.id, source: "users-routes" });
+      });
+    }
 
     res.json({ user: updated, message: "User unblocked successfully" });
   } catch (error: any) {
