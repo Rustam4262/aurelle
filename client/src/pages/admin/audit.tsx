@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -9,8 +12,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { FileText, Search, Info } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface AuditLog {
   log: {
@@ -20,21 +40,88 @@ interface AuditLog {
     entityId: string | null;
     actorRole: string;
     createdAt: string;
+    ip?: string;
+    userAgent?: string;
+    oldData?: any;
+    newData?: any;
+    meta?: any;
   };
-  actorName: string;
+  actorFirstName: string;
+  actorLastName: string;
   actorEmail: string;
 }
 
+const ACTION_COLORS: Record<string, string> = {
+  create: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  update: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  delete: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  block: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+  unblock: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+};
+
+function getActionColor(action: string): string {
+  const actionType = action.split(".")[1] || action;
+  return ACTION_COLORS[actionType] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+}
+
 export default function AdminAudit() {
+  const { t } = useTranslation();
+
+  const [actionFilter, setActionFilter] = useState<string>("");
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  // Build query params
+  const queryParams: Record<string, string> = { limit: "200" };
+  if (actionFilter) queryParams.action = actionFilter;
+  if (entityTypeFilter !== "all") queryParams.entityType = entityTypeFilter;
+
   const { data, isLoading } = useQuery<{ logs: AuditLog[] }>({
-    queryKey: ["/api/admin/audit", { limit: 100 }],
+    queryKey: ["/api/admin/audit", queryParams],
   });
+
+  const openDetailsDialog = (log: AuditLog) => {
+    setSelectedLog(log);
+    setShowDetailsDialog(true);
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-serif font-semibold">Audit Logs</h1>
         <p className="text-muted-foreground mt-2">Complete history of all admin actions</p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="w-64">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by action..."
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+        <div className="w-48">
+          <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by entity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Entities</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="salon">Salon</SelectItem>
+              <SelectItem value="master">Master</SelectItem>
+              <SelectItem value="complaint">Complaint</SelectItem>
+              <SelectItem value="sanction">Sanction</SelectItem>
+              <SelectItem value="booking">Booking</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
@@ -50,46 +137,178 @@ export default function AdminAudit() {
           ) : !data?.logs || data.logs.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">No audit logs</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Timestamp</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.logs.map(({ log, actorName }) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <p className="font-medium">{actorName || "Admin"}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm">
-                        {log.entityType}
-                        {log.entityId && `: ${log.entityId.slice(0, 8)}...`}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{log.actorRole}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(log.createdAt), "MMM d, yyyy HH:mm")}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Actor</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Entity</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead className="text-right">Details</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.logs.map(({ log, actorFirstName, actorLastName, actorEmail }) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {format(new Date(log.createdAt), "MMM d, yyyy HH:mm:ss")}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {actorFirstName && actorLastName
+                              ? `${actorFirstName} ${actorLastName}`
+                              : actorEmail || "Admin"}
+                          </p>
+                          {actorEmail && (
+                            <p className="text-xs text-muted-foreground">{actorEmail}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {log.actorRole}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`font-mono text-xs ${getActionColor(log.action)}`}>
+                          {log.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium capitalize">{log.entityType}</p>
+                          {log.entityId && (
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {log.entityId.slice(0, 12)}...
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">
+                        {log.ip || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openDetailsDialog({ log, actorFirstName, actorLastName, actorEmail })}
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Audit Log Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this admin action
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedLog && (
+            <div className="space-y-6 py-4">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Action</Label>
+                  <Badge variant="outline" className={`mt-1 ${getActionColor(selectedLog.log.action)}`}>
+                    {selectedLog.log.action}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Timestamp</Label>
+                  <p className="text-sm mt-1">
+                    {format(new Date(selectedLog.log.createdAt), "PPpp")}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Actor</Label>
+                  <p className="text-sm mt-1">
+                    {selectedLog.actorFirstName && selectedLog.actorLastName
+                      ? `${selectedLog.actorFirstName} ${selectedLog.actorLastName}`
+                      : selectedLog.actorEmail || "Admin"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{selectedLog.actorEmail}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Role</Label>
+                  <Badge variant="secondary" className="mt-1">
+                    {selectedLog.log.actorRole}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Entity Type</Label>
+                  <p className="text-sm mt-1 capitalize">{selectedLog.log.entityType}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Entity ID</Label>
+                  <p className="text-sm mt-1 font-mono">{selectedLog.log.entityId || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">IP Address</Label>
+                  <p className="text-sm mt-1 font-mono">{selectedLog.log.ip || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">User Agent</Label>
+                  <p className="text-xs mt-1 text-muted-foreground truncate">
+                    {selectedLog.log.userAgent || "—"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Old Data */}
+              {selectedLog.log.oldData && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Previous State</Label>
+                  <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    {JSON.stringify(selectedLog.log.oldData, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {/* New Data */}
+              {selectedLog.log.newData && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">New State</Label>
+                  <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    {JSON.stringify(selectedLog.log.newData, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {/* Meta */}
+              {selectedLog.log.meta && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Metadata</Label>
+                  <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    {JSON.stringify(selectedLog.log.meta, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
