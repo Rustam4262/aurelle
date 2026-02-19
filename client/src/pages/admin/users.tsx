@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,12 @@ import {
   UserCheck,
   UserX,
   AlertCircle,
+  Download,
+  CheckSquare,
+  Square,
+  Clock,
+  ShieldCheck,
+  ShieldX,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -103,12 +110,18 @@ export default function AdminUsers() {
 
   // Search & Filters
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [verificationFilter, setVerificationFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const pageSize = 20;
+
+  // Bulk selection
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   // Dialogs
   const [blockDialog, setBlockDialog] = useState<{ open: boolean; user: User | null }>({
@@ -116,6 +129,10 @@ export default function AdminUsers() {
     user: null,
   });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: User | null }>({
+    open: false,
+    user: null,
+  });
+  const [quickViewDialog, setQuickViewDialog] = useState<{ open: boolean; user: User | null }>({
     open: false,
     user: null,
   });
@@ -127,7 +144,7 @@ export default function AdminUsers() {
     queryKey: [
       "/api/admin/users",
       {
-        search,
+        search: debouncedSearch,
         role: roleFilter !== "all" ? roleFilter : undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
         sortBy,
@@ -245,6 +262,91 @@ export default function AdminUsers() {
     }
   };
 
+  // Bulk selection handlers
+  const toggleUserSelection = (userId: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+    setSelectAll(false);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll || selectedUsers.size === data?.users.length) {
+      setSelectedUsers(new Set());
+      setSelectAll(false);
+    } else {
+      const allIds = new Set(data?.users.map((u) => u.id) || []);
+      setSelectedUsers(allIds);
+      setSelectAll(true);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedUsers(new Set());
+    setSelectAll(false);
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    if (!data?.users || data.users.length === 0) {
+      toast({ title: "No data to export", variant: "destructive" });
+      return;
+    }
+
+    const headers = ["ID", "Full Name", "Email", "Phone", "Role", "Status", "Email Verified", "Phone Verified", "Created At"];
+    const rows = data.users.map((user) => [
+      user.id,
+      user.fullName,
+      user.email,
+      user.phone || "",
+      user.role,
+      user.status,
+      user.isEmailVerified ? "Yes" : "No",
+      user.isPhoneVerified ? "Yes" : "No",
+      format(new Date(user.createdAt), "yyyy-MM-dd HH:mm:ss"),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `users_export_${format(new Date(), "yyyy-MM-dd_HHmm")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "Export successful", description: `Exported ${data.users.length} users` });
+  };
+
+  // Filter users by verification status
+  const filteredUsers = useMemo(() => {
+    if (!data?.users) return [];
+    if (verificationFilter === "all") return data.users;
+
+    return data.users.filter((user) => {
+      if (verificationFilter === "verified") {
+        return user.isEmailVerified && user.isPhoneVerified;
+      } else if (verificationFilter === "email-verified") {
+        return user.isEmailVerified;
+      } else if (verificationFilter === "phone-verified") {
+        return user.isPhoneVerified;
+      } else if (verificationFilter === "unverified") {
+        return !user.isEmailVerified && !user.isPhoneVerified;
+      }
+      return true;
+    });
+  }, [data?.users, verificationFilter]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -253,18 +355,52 @@ export default function AdminUsers() {
           <h1 className="text-3xl font-serif font-semibold text-foreground">User Management</h1>
           <p className="text-muted-foreground mt-2">
             Manage all platform users • {data?.total || 0} total users
+            {selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportToCSV} disabled={!data?.users || data.users.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedUsers.size > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckSquare className="h-5 w-5 text-primary" />
+                <span className="font-medium">{selectedUsers.size} user(s) selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={clearSelection}>
+                  Clear Selection
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    toast({
+                      title: "Bulk actions",
+                      description: "Bulk block/delete coming soon!",
+                    });
+                  }}
+                >
+                  <Ban className="h-4 w-4 mr-2" />
+                  Block Selected
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       {stats && stats.total > 0 && (
@@ -342,16 +478,21 @@ export default function AdminUsers() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search */}
-            <div className="relative md:col-span-2">
+            <div className="relative md:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or phone..."
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
               />
+              {search && debouncedSearch !== search && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
 
             {/* Role Filter */}
@@ -379,6 +520,30 @@ export default function AdminUsers() {
                 <SelectItem value="blocked">Blocked</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Verification Filter */}
+            <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Verification" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="verified">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-green-600" />
+                    Fully Verified
+                  </div>
+                </SelectItem>
+                <SelectItem value="email-verified">Email Verified</SelectItem>
+                <SelectItem value="phone-verified">Phone Verified</SelectItem>
+                <SelectItem value="unverified">
+                  <div className="flex items-center gap-2">
+                    <ShieldX className="h-4 w-4 text-red-600" />
+                    Unverified
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -403,7 +568,7 @@ export default function AdminUsers() {
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">Loading users...</p>
             </div>
-          ) : !data?.users || data.users.length === 0 ? (
+          ) : !filteredUsers || filteredUsers.length === 0 ? (
             <div className="text-center py-12">
               <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No users found</h3>
@@ -440,6 +605,20 @@ export default function AdminUsers() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={toggleSelectAll}
+                        >
+                          {selectAll || selectedUsers.size === filteredUsers.length ? (
+                            <CheckSquare className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableHead>
                       <TableHead>
                         <Button
                           variant="ghost"
@@ -490,8 +669,22 @@ export default function AdminUsers() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.users.map((user) => (
-                      <TableRow key={user.id}>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id} className={selectedUsers.has(user.id) ? "bg-muted/50" : ""}>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => toggleUserSelection(user.id)}
+                          >
+                            {selectedUsers.has(user.id) ? (
+                              <CheckSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{user.fullName || "No name"}</p>
@@ -568,10 +761,14 @@ export default function AdminUsers() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setQuickViewDialog({ open: true, user })}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Quick View
+                              </DropdownMenuItem>
                               <Link href={`/admin/users/${user.id}`}>
                                 <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  Full Details
                                 </DropdownMenuItem>
                               </Link>
                               <DropdownMenuSeparator />
@@ -724,6 +921,120 @@ export default function AdminUsers() {
             >
               {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick View Dialog */}
+      <Dialog
+        open={quickViewDialog.open}
+        onOpenChange={(open) => !open && setQuickViewDialog({ open: false, user: null })}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Quick overview of user information</DialogDescription>
+          </DialogHeader>
+          {quickViewDialog.user && (
+            <div className="space-y-6 py-4">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
+                  <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Role</Label>
+                  <Badge className={ROLE_COLORS[quickViewDialog.user.role]} variant="outline">
+                    {quickViewDialog.user.role}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-sm">{quickViewDialog.user.email}</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Phone className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-sm">{quickViewDialog.user.phone || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Account Status</Label>
+                    <Badge className={STATUS_COLORS[quickViewDialog.user.status]} variant="outline">
+                      {quickViewDialog.user.status}
+                    </Badge>
+                    {quickViewDialog.user.status === "blocked" && quickViewDialog.user.blockReason && (
+                      <p className="text-xs text-muted-foreground mt-2">{quickViewDialog.user.blockReason}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Verification</Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {quickViewDialog.user.isEmailVerified ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          Email ✓
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-50">
+                          Email ✗
+                        </Badge>
+                      )}
+                      {quickViewDialog.user.phone && (
+                        quickViewDialog.user.isPhoneVerified ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            Phone ✓
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50">
+                            Phone ✗
+                          </Badge>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Member Since</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-sm">{format(new Date(quickViewDialog.user.createdAt), "PPP")}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">User ID</Label>
+                    <p className="text-xs font-mono mt-1 text-muted-foreground">{quickViewDialog.user.id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickViewDialog({ open: false, user: null })}>
+              Close
+            </Button>
+            {quickViewDialog.user && (
+              <Link href={`/admin/users/${quickViewDialog.user.id}`}>
+                <Button>
+                  <Shield className="h-4 w-4 mr-2" />
+                  View Full Details
+                </Button>
+              </Link>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
