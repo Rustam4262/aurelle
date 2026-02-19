@@ -11,6 +11,7 @@ import {
   MessageSquare,
   FileText,
   AlertCircle,
+  Activity,
   LogOut,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -22,12 +23,14 @@ import AdminComplaints from "@/pages/admin/complaints";
 import AdminSanctions from "@/pages/admin/sanctions";
 import AdminChat from "@/pages/admin/chat";
 import AdminAudit from "@/pages/admin/audit";
+import AdminActivity from "@/pages/admin/activity";
 
 // Navigation items
 const getNavItems = (t: any) => [
   { path: "/admin/dashboard", label: t("admin.nav.dashboard"), icon: LayoutDashboard },
   { path: "/admin/users", label: t("admin.nav.users"), icon: Users },
   { path: "/admin/salons", label: t("admin.nav.salons"), icon: Store },
+  { path: "/admin/activity", label: t("admin.nav.activity"), icon: Activity },
   { path: "/admin/complaints", label: t("admin.nav.complaints"), icon: AlertCircle },
   { path: "/admin/sanctions", label: t("admin.nav.sanctions"), icon: Shield },
   { path: "/admin/chat", label: t("admin.nav.chat"), icon: MessageSquare },
@@ -143,6 +146,7 @@ export default function AdminPage() {
 
   if (location === "/admin/users") PageComponent = AdminUsers;
   else if (location === "/admin/salons") PageComponent = AdminSalons;
+  else if (location === "/admin/activity") PageComponent = AdminActivity;
   else if (location === "/admin/complaints") PageComponent = AdminComplaints;
   else if (location === "/admin/sanctions") PageComponent = AdminSanctions;
   else if (location === "/admin/chat") PageComponent = AdminChat;
