@@ -54,6 +54,11 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
+  Users as UsersIcon,
+  UserCheck,
+  UserX,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -117,7 +122,7 @@ export default function AdminUsers() {
   const [blockReason, setBlockReason] = useState("");
 
   // Fetch users
-  const { data, isLoading, refetch } = useQuery<UsersResponse>({
+  const { data, isLoading, error, refetch } = useQuery<UsersResponse>({
     queryKey: [
       "/api/admin/users",
       {
@@ -131,6 +136,21 @@ export default function AdminUsers() {
       },
     ],
   });
+
+  // Calculate stats from current data
+  const stats = data?.users
+    ? {
+        total: data.total,
+        active: data.users.filter((u) => u.status === "active").length,
+        blocked: data.users.filter((u) => u.status === "blocked").length,
+        byRole: {
+          client: data.users.filter((u) => u.role === "client").length,
+          owner: data.users.filter((u) => u.role === "owner").length,
+          master: data.users.filter((u) => u.role === "master").length,
+          admin: data.users.filter((u) => u.role === "admin").length,
+        },
+      }
+    : null;
 
   // Block user mutation
   const blockUserMutation = useMutation({
@@ -202,12 +222,90 @@ export default function AdminUsers() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-serif font-semibold text-foreground">User Management</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage all platform users • {data?.total || 0} total users
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-serif font-semibold text-foreground">User Management</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage all platform users • {data?.total || 0} total users
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
+
+      {/* Stats Cards */}
+      {stats && stats.total > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <UsersIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                </div>
+                <UserCheck className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Blocked</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
+                </div>
+                <UserX className="h-8 w-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">By Role</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span>Clients:</span>
+                    <span className="font-bold">{stats.byRole.client}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Owners:</span>
+                    <span className="font-bold">{stats.byRole.owner}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Masters:</span>
+                    <span className="font-bold">{stats.byRole.master}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Admins:</span>
+                    <span className="font-bold">{stats.byRole.admin}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters Card */}
       <Card>
@@ -262,10 +360,46 @@ export default function AdminUsers() {
       {/* Users Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading users...</div>
+          {error ? (
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Failed to load users</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                There was an error loading the user list. Please try again.
+              </p>
+              <Button onClick={() => refetch()} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          ) : isLoading ? (
+            <div className="text-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Loading users...</p>
+            </div>
           ) : !data?.users || data.users.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No users found</div>
+            <div className="text-center py-12">
+              <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No users found</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {search || roleFilter !== "all" || statusFilter !== "all"
+                  ? "Try adjusting your filters or search query"
+                  : "No users have registered yet. Users will appear here once they sign up."}
+              </p>
+              {(search || roleFilter !== "all" || statusFilter !== "all") && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearch("");
+                    setRoleFilter("all");
+                    setStatusFilter("all");
+                    setPage(1);
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           ) : (
             <>
               <div className="overflow-x-auto">
