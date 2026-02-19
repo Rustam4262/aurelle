@@ -120,6 +120,7 @@ export default function AdminUsers() {
     user: null,
   });
   const [blockReason, setBlockReason] = useState("");
+  const [showSeedDialog, setShowSeedDialog] = useState(false);
 
   // Fetch users
   const { data, isLoading, error, refetch } = useQuery<UsersResponse>({
@@ -194,6 +195,31 @@ export default function AdminUsers() {
     },
     onError: () => {
       toast({ title: "Failed to delete user", variant: "destructive" });
+    },
+  });
+
+  // Seed test users mutation
+  const seedTestUsersMutation = useMutation({
+    mutationFn: async (confirmProduction: boolean = false) => {
+      const res = await apiRequest("POST", "/api/admin/seed/test-users", {
+        confirmProduction,
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setShowSeedDialog(false);
+      toast({
+        title: "Test users created",
+        description: `Created ${data.created} users, skipped ${data.skipped} existing`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create test users",
+        description: error.message || "Unknown error",
+        variant: "destructive",
+      });
     },
   });
 
@@ -386,19 +412,27 @@ export default function AdminUsers() {
                   ? "Try adjusting your filters or search query"
                   : "No users have registered yet. Users will appear here once they sign up."}
               </p>
-              {(search || roleFilter !== "all" || statusFilter !== "all") && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearch("");
-                    setRoleFilter("all");
-                    setStatusFilter("all");
-                    setPage(1);
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              )}
+              <div className="flex items-center gap-3 justify-center">
+                {(search || roleFilter !== "all" || statusFilter !== "all") && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearch("");
+                      setRoleFilter("all");
+                      setStatusFilter("all");
+                      setPage(1);
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+                {!search && roleFilter === "all" && statusFilter === "all" && (
+                  <Button variant="default" onClick={() => setShowSeedDialog(true)}>
+                    <UsersIcon className="h-4 w-4 mr-2" />
+                    Create Test Users
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -689,6 +723,49 @@ export default function AdminUsers() {
               disabled={deleteUserMutation.isPending}
             >
               {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Seed Test Users Dialog */}
+      <Dialog open={showSeedDialog} onOpenChange={setShowSeedDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Test Users</DialogTitle>
+            <DialogDescription>
+              This will create 7 test users with different roles and statuses for testing purposes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-3 text-sm">
+              <p className="font-medium">Test users to be created:</p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>2 Clients (Анна Иванова, Дмитрий Петров)</li>
+                <li>2 Salon Owners (Ольга Смирнова, Сергей Козлов)</li>
+                <li>2 Masters (Елена Волкова, Алексей Морозов)</li>
+                <li>1 Blocked User (для тестирования блокировки)</li>
+              </ul>
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="font-medium mb-1">Login Credentials:</p>
+                <p className="text-muted-foreground">
+                  Email: <code className="text-xs">client1@test.com</code> (или любой другой)
+                </p>
+                <p className="text-muted-foreground">
+                  Password: <code className="text-xs">TestPass123!</code>
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSeedDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => seedTestUsersMutation.mutate(false)}
+              disabled={seedTestUsersMutation.isPending}
+            >
+              {seedTestUsersMutation.isPending ? "Creating..." : "Create Test Users"}
             </Button>
           </DialogFooter>
         </DialogContent>

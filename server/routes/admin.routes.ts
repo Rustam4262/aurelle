@@ -8,6 +8,7 @@ import complaintsRoutes from "./admin/complaints.routes";
 import chatRoutes from "./admin/chat.routes";
 import auditRoutes from "./admin/audit.routes";
 import activityRoutes from "./admin/activity.routes";
+import seedRoutes from "./admin/seed.routes";
 
 const router = Router();
 
@@ -37,5 +38,8 @@ router.use("/audit", auditRoutes);
 
 // User Activity & Analytics
 router.use("/activity", activityRoutes);
+
+// Seed Test Data (development/testing)
+router.use("/seed", seedRoutes);
 
 export default router;
