@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { exportToExcel, formatDataForExcel } from "@/lib/export";
+import { exportToExcel, exportToPDF, formatDataForExcel } from "@/lib/export";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ import {
   Clock,
   ShieldCheck,
   ShieldX,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -84,6 +85,8 @@ interface User {
   createdAt: string;
   blockedAt?: string | null;
   blockReason?: string | null;
+  lastLoginAt?: string | null;
+  loginCount?: number;
 }
 
 interface UsersResponse {
@@ -321,6 +324,33 @@ export default function AdminUsers() {
     toast({ title: "Export successful", description: `Exported ${data.users.length} users to Excel` });
   };
 
+  // Export to PDF
+  const exportToPDFFile = () => {
+    if (!data?.users || data.users.length === 0) {
+      toast({ title: "No data to export", variant: "destructive" });
+      return;
+    }
+
+    // Prepare data for PDF export
+    const exportData = data.users.map((user) => ({
+      "Name": user.fullName,
+      "Email": user.email,
+      "Phone": user.phone || "-",
+      "Role": user.role,
+      "Status": user.status,
+      "Verified": user.isEmailVerified && user.isPhoneVerified ? "Yes" : "No",
+      "Logins": user.loginCount || 0,
+      "Created": format(new Date(user.createdAt), "yyyy-MM-dd"),
+    }));
+
+    const filename = `users_report_${format(new Date(), "yyyy-MM-dd_HHmm")}`;
+    exportToPDF(exportData, filename, "AURELLE Users Report", {
+      orientation: "landscape",
+    });
+
+    toast({ title: "PDF export successful", description: `Exported ${data.users.length} users to PDF` });
+  };
+
   // Filter users by verification status
   const filteredUsers = useMemo(() => {
     if (!data?.users) return [];
@@ -354,7 +384,11 @@ export default function AdminUsers() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportToExcelFile} disabled={!data?.users || data.users.length === 0}>
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            Export Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportToPDFFile} disabled={!data?.users || data.users.length === 0}>
+            <FileText className="h-4 w-4 mr-2" />
+            Export PDF
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
