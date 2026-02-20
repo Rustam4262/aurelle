@@ -18,45 +18,60 @@ function getUserId(req: Request): string {
 async function getUserRoles(userId: string): Promise<string[]> {
   const roles: string[] = [];
 
-  // Check if admin
   try {
-    const [adminUser] = await db
-      .select()
-      .from(adminUsers)
-      .where(and(eq(adminUsers.userId, userId), eq(adminUsers.isActive, true)))
-      .limit(1);
+    // Check if admin
+    try {
+      const [adminUser] = await db
+        .select()
+        .from(adminUsers)
+        .where(and(eq(adminUsers.userId, userId), eq(adminUsers.isActive, true)))
+        .limit(1);
 
-    if (adminUser) {
-      roles.push("admin");
+      if (adminUser) {
+        roles.push("admin");
+      }
+    } catch (error) {
+      // Admin tables may not exist, skip silently
+      logger.debug("Admin check skipped", { userId, error: String(error) });
     }
-  } catch {
-    // Admin tables may not exist
-  }
 
-  // Check if salon owner
-  const [salonOwner] = await db
-    .select({ id: salons.id })
-    .from(salons)
-    .where(eq(salons.ownerId, userId))
-    .limit(1);
+    // Check if salon owner
+    try {
+      const [salonOwner] = await db
+        .select({ id: salons.id })
+        .from(salons)
+        .where(eq(salons.ownerId, userId))
+        .limit(1);
 
-  if (salonOwner) {
-    roles.push("salon_owner");
-  }
+      if (salonOwner) {
+        roles.push("salon_owner");
+      }
+    } catch (error) {
+      logger.debug("Salon owner check failed", { userId, error: String(error) });
+    }
 
-  // Check if master
-  const [master] = await db
-    .select({ id: masters.id })
-    .from(masters)
-    .where(eq(masters.userId, userId))
-    .limit(1);
+    // Check if master
+    try {
+      const [master] = await db
+        .select({ id: masters.id })
+        .from(masters)
+        .where(eq(masters.userId, userId))
+        .limit(1);
 
-  if (master) {
-    roles.push("master");
-  }
+      if (master) {
+        roles.push("master");
+      }
+    } catch (error) {
+      logger.debug("Master check failed", { userId, error: String(error) });
+    }
 
-  // Default to client if no other roles
-  if (roles.length === 0) {
+    // Default to client if no other roles
+    if (roles.length === 0) {
+      roles.push("client");
+    }
+  } catch (error) {
+    // Fallback to client if all checks fail
+    logger.error("getUserRoles failed completely", error as Error, { userId });
     roles.push("client");
   }
 
@@ -143,16 +158,33 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     // Get all matching users (before pagination for role filtering)
     const allMatchingUsers = await baseQuery.orderBy(orderFn(sortColumn));
 
+    logger.info("Admin users query results", {
+      totalUsers: allMatchingUsers.length,
+      roleFilter: role || "all",
+      searchFilter: search || "none",
+      statusFilter: status || "all",
+    });
+
     // Role filtering (post-query, since it requires joins)
     let filteredUsers = allMatchingUsers;
 
     if (role && role !== "all") {
+      logger.info("Applying role filter", { role, usersBeforeFilter: allMatchingUsers.length });
+
       const usersWithRoles = await Promise.all(
         allMatchingUsers.map(async (user) => ({
           user,
           roles: await getUserRoles(user.id),
         }))
       );
+
+      logger.debug("Users with roles computed", {
+        totalProcessed: usersWithRoles.length,
+        sampleRoles: usersWithRoles.slice(0, 3).map(({ user, roles }) => ({
+          email: user.email,
+          roles,
+        })),
+      });
 
       if (role === "admin") {
         filteredUsers = usersWithRoles
@@ -171,6 +203,11 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           .filter(({ roles }) => roles.includes("client") && roles.length === 1)
           .map(({ user }) => user);
       }
+
+      logger.info("After role filter", {
+        role,
+        usersAfterFilter: filteredUsers.length,
+      });
     }
 
     // Manual pagination after filtering
@@ -179,6 +216,13 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     const pageSizeNum = parseInt(pageSize as string);
     const offset = (pageNum - 1) * pageSizeNum;
     const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
+
+    logger.info("Pagination applied", {
+      total,
+      page: pageNum,
+      pageSize: pageSizeNum,
+      usersOnThisPage: paginatedUsers.length,
+    });
 
     // Transform to match frontend interface
     const transformedUsers = await Promise.all(
@@ -207,6 +251,12 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
         };
       })
     );
+
+    logger.info("Returning users response", {
+      usersCount: transformedUsers.length,
+      total,
+      totalPages: Math.ceil(total / pageSizeNum),
+    });
 
     res.json({
       users: transformedUsers,
