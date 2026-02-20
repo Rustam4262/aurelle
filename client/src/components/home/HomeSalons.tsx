@@ -20,7 +20,7 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
   return (
     <Link href={`/salon/${salon.id}`}>
       <Card
-        className="group overflow-hidden hover-elevate cursor-pointer border-border/50 hover:border-primary/20 transition-all duration-500"
+        className="group overflow-hidden cursor-pointer border-border/50 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-2 transition-all duration-500 ease-out"
         data-testid={`card-salon-${salon.id}`}
       >
         <div className="aspect-[4/3] relative overflow-hidden">
