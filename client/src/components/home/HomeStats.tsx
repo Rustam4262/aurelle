@@ -1,13 +1,45 @@
 import { useTranslation } from "react-i18next";
+import { useCountUp } from "@/hooks/use-count-up";
+
+interface StatItemProps {
+  end: number;
+  suffix?: string;
+  labelKey: string;
+  delay?: number;
+}
+
+function StatItem({ end, suffix = "", labelKey, delay = 0 }: StatItemProps) {
+  const { t } = useTranslation();
+  const { value, elementRef } = useCountUp({
+    start: 0,
+    end,
+    duration: 2500 + delay,
+    separator: ",",
+    suffix,
+  });
+
+  return (
+    <div className="text-center group">
+      <p
+        ref={elementRef}
+        className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter"
+      >
+        {value}
+      </p>
+      <div className="w-10 h-0.5 bg-primary-foreground/30 mx-auto mb-4 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+      <p className="text-primary-foreground/70 uppercase tracking-widest text-xs font-bold transition-colors group-hover:text-primary-foreground">
+        {t(labelKey)}
+      </p>
+    </div>
+  );
+}
 
 export function HomeStats() {
-  const { t } = useTranslation();
-
   const stats = [
-    { value: "500+", labelKey: "marketplace.stats.salons" },
-    { value: "10,000+", labelKey: "marketplace.stats.clients" },
-    { value: "50,000+", labelKey: "marketplace.stats.bookings" },
-    { value: "12", labelKey: "marketplace.stats.cities" },
+    { end: 500, suffix: "+", labelKey: "marketplace.stats.salons", delay: 0 },
+    { end: 10000, suffix: "+", labelKey: "marketplace.stats.clients", delay: 100 },
+    { end: 50000, suffix: "+", labelKey: "marketplace.stats.bookings", delay: 200 },
+    { end: 12, suffix: "", labelKey: "marketplace.stats.cities", delay: 300 },
   ];
 
   return (
@@ -22,15 +54,13 @@ export function HomeStats() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center group">
-              <p className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter">
-                {stat.value}
-              </p>
-              <div className="w-10 h-0.5 bg-primary-foreground/30 mx-auto mb-4 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-              <p className="text-primary-foreground/70 uppercase tracking-widest text-xs font-bold transition-colors group-hover:text-primary-foreground">
-                {t(stat.labelKey)}
-              </p>
-            </div>
+            <StatItem
+              key={index}
+              end={stat.end}
+              suffix={stat.suffix}
+              labelKey={stat.labelKey}
+              delay={stat.delay}
+            />
           ))}
         </div>
       </div>
