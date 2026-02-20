@@ -77,53 +77,13 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       pageSize = "20",
     } = req.query;
 
-    // Build base query with role filter using SQL
-    let baseQuery;
+    // Build simplified base query (no complex joins for sorting)
+    let baseQuery = db.select().from(users);
     const conditions = [];
 
-    // Role filter via SQL subqueries
-    if (role && role !== "all") {
-      if (role === "admin") {
-        // Users who are admins
-        baseQuery = db
-          .selectDistinct()
-          .from(users)
-          .innerJoin(adminUsers, and(
-            eq(adminUsers.userId, users.id),
-            eq(adminUsers.isActive, true)
-          ));
-      } else if (role === "salon_owner") {
-        // Users who own salons
-        baseQuery = db
-          .selectDistinct()
-          .from(users)
-          .innerJoin(salons, eq(salons.ownerId, users.id));
-      } else if (role === "master") {
-        // Users who are masters
-        baseQuery = db
-          .selectDistinct()
-          .from(users)
-          .innerJoin(masters, eq(masters.userId, users.id));
-      } else if (role === "client") {
-        // Users who are NOT in any special role
-        baseQuery = db
-          .select()
-          .from(users)
-          .where(sql`
-            ${users.id} NOT IN (SELECT user_id FROM admin_users WHERE is_active = true)
-            AND ${users.id} NOT IN (SELECT owner_id FROM salons)
-            AND ${users.id} NOT IN (SELECT user_id FROM masters)
-          `);
-      } else {
-        baseQuery = db.select().from(users);
-      }
-    } else {
-      baseQuery = db.select().from(users);
-    }
-
     // Search filter
-    if (search) {
-      const searchTerm = `%${search}%`;
+    if (search && (search as string).trim()) {
+      const searchTerm = `%${(search as string).trim()}%`;
       conditions.push(
         or(
           like(users.email, searchTerm),
@@ -164,53 +124,10 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 
     // Apply conditions
     if (conditions.length > 0) {
-      baseQuery = (baseQuery as any).where(and(...conditions));
+      baseQuery = baseQuery.where(and(...conditions)) as typeof baseQuery;
     }
 
-    // Count total with same filters
-    let countQuery;
-    if (role && role !== "all") {
-      if (role === "admin") {
-        countQuery = db
-          .select({ count: sql<number>`count(DISTINCT ${users.id})` })
-          .from(users)
-          .innerJoin(adminUsers, and(
-            eq(adminUsers.userId, users.id),
-            eq(adminUsers.isActive, true)
-          ));
-      } else if (role === "salon_owner") {
-        countQuery = db
-          .select({ count: sql<number>`count(DISTINCT ${users.id})` })
-          .from(users)
-          .innerJoin(salons, eq(salons.ownerId, users.id));
-      } else if (role === "master") {
-        countQuery = db
-          .select({ count: sql<number>`count(DISTINCT ${users.id})` })
-          .from(users)
-          .innerJoin(masters, eq(masters.userId, users.id));
-      } else if (role === "client") {
-        countQuery = db
-          .select({ count: sql<number>`count(*)` })
-          .from(users)
-          .where(sql`
-            ${users.id} NOT IN (SELECT user_id FROM admin_users WHERE is_active = true)
-            AND ${users.id} NOT IN (SELECT owner_id FROM salons)
-            AND ${users.id} NOT IN (SELECT user_id FROM masters)
-          `);
-      } else {
-        countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
-      }
-    } else {
-      countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
-    }
-
-    if (conditions.length > 0) {
-      countQuery = (countQuery as any).where(and(...conditions));
-    }
-
-    const [{ count: total }] = await countQuery;
-
-    // Sort
+    // Sort (whitelist of allowed columns)
     const sortableColumns: Record<string, any> = {
       createdAt: users.createdAt,
       email: users.email,
@@ -223,22 +140,49 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     const sortColumn = sortableColumns[sortBy as string] || users.createdAt;
     const orderFn = sortOrder === "asc" ? asc : desc;
 
-    // Paginate
+    // Get all matching users (before pagination for role filtering)
+    const allMatchingUsers = await baseQuery.orderBy(orderFn(sortColumn));
+
+    // Role filtering (post-query, since it requires joins)
+    let filteredUsers = allMatchingUsers;
+
+    if (role && role !== "all") {
+      const usersWithRoles = await Promise.all(
+        allMatchingUsers.map(async (user) => ({
+          user,
+          roles: await getUserRoles(user.id),
+        }))
+      );
+
+      if (role === "admin") {
+        filteredUsers = usersWithRoles
+          .filter(({ roles }) => roles.includes("admin"))
+          .map(({ user }) => user);
+      } else if (role === "salon_owner") {
+        filteredUsers = usersWithRoles
+          .filter(({ roles }) => roles.includes("salon_owner"))
+          .map(({ user }) => user);
+      } else if (role === "master") {
+        filteredUsers = usersWithRoles
+          .filter(({ roles }) => roles.includes("master"))
+          .map(({ user }) => user);
+      } else if (role === "client") {
+        filteredUsers = usersWithRoles
+          .filter(({ roles }) => roles.includes("client") && roles.length === 1)
+          .map(({ user }) => user);
+      }
+    }
+
+    // Manual pagination after filtering
+    const total = filteredUsers.length;
     const pageNum = parseInt(page as string);
     const pageSizeNum = parseInt(pageSize as string);
     const offset = (pageNum - 1) * pageSizeNum;
-
-    const allUsers = await (baseQuery as any)
-      .orderBy(orderFn(sortColumn))
-      .limit(pageSizeNum)
-      .offset(offset);
-
-    // Extract user data from joined results
-    const userRecords = allUsers.map((row: any) => row.users || row);
+    const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
 
     // Transform to match frontend interface
     const transformedUsers = await Promise.all(
-      userRecords.map(async (user: any) => {
+      paginatedUsers.map(async (user) => {
         const userRoles = await getUserRoles(user.id);
 
         return {
@@ -266,14 +210,15 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 
     res.json({
       users: transformedUsers,
-      total: Number(total),
+      total,
       page: pageNum,
       pageSize: pageSizeNum,
-      totalPages: Math.ceil(Number(total) / pageSizeNum),
+      totalPages: Math.ceil(total / pageSizeNum),
     });
   } catch (error: any) {
     logger.error("List users error", error as Error, { source: "users-routes" });
-    res.status(500).json({ error: "Failed to fetch users" });
+    console.error("Admin users detailed error:", error);
+    res.status(500).json({ error: "Failed to fetch users", details: error.message });
   }
 });
 

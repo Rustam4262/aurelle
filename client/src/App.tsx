@@ -26,6 +26,8 @@ const OwnerSalonPage = lazy(() => import("@/pages/owner-salon"));
 const MasterPage = lazy(() => import("@/pages/master"));
 const ClientPage = lazy(() => import("@/pages/client"));
 const AboutPage = lazy(() => import("@/pages/about"));
+const TermsPage = lazy(() => import("@/pages/terms"));
+const PrivacyPage = lazy(() => import("@/pages/privacy"));
 const AdminPage = lazy(() => import("@/pages/admin"));
 const SoloMasterPage = lazy(() => import("@/pages/solo-master"));
 const SoloMasterOnboardingPage = lazy(() => import("@/pages/solo-master-onboarding"));
@@ -50,6 +52,8 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/about" component={AboutPage} />
+          <Route path="/terms" component={TermsPage} />
+          <Route path="/privacy" component={PrivacyPage} />
           <Route path="/search" component={SearchPage} />
           <Route path="/salon/:id" component={SalonPage} />
           <Route path="/auth" component={AuthPage} />
