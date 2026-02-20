@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { SearchSEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -100,9 +101,11 @@ export default function SearchPage() {
     (searchQuery ? 1 : 0) + (selectedCity ? 1 : 0) + (selectedCategory ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border">
+    <>
+      <SearchSEO />
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <Button
             variant="ghost"
@@ -225,6 +228,7 @@ export default function SearchPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

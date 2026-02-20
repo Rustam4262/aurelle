@@ -1,5 +1,6 @@
 import { useNavigationScroll } from "@/hooks/use-navigation-scroll";
 import { useMarketplaceData } from "@/hooks/use-marketplace-data";
+import { HomeSEO } from "@/components/SEO";
 
 // Sub-components
 import { HomeNavigation } from "@/components/home/HomeNavigation";
@@ -16,19 +17,22 @@ export default function Home() {
   const { salons, isLoading } = useMarketplaceData();
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/10">
-      <HomeNavigation scrolled={scrolled} />
+    <>
+      <HomeSEO />
+      <div className="min-h-screen bg-background selection:bg-primary/10">
+        <HomeNavigation scrolled={scrolled} />
 
-      <main>
-        <HomeHero />
-        <HomeCategories />
-        <HomeSalons salons={salons} isLoading={isLoading} />
-        <HomeMap salons={salons} />
-        <HomeStats />
-        <HomeCTA />
-      </main>
+        <main>
+          <HomeHero />
+          <HomeCategories />
+          <HomeSalons salons={salons} isLoading={isLoading} />
+          <HomeMap salons={salons} />
+          <HomeStats />
+          <HomeCTA />
+        </main>
 
       <HomeFooter />
-    </div>
+      </div>
+    </>
   );
 }

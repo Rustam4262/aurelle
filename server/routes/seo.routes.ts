@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { db } from "../db";
+import { salons, masters } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -29,107 +32,132 @@ Crawl-delay: 0
   res.send(robots);
 });
 
-// Sitemap.xml for search engine indexing
-router.get("/sitemap.xml", (_req, res) => {
-  const baseUrl = process.env.BASE_URL || "https://aurelle.uz";
-  
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+// Sitemap.xml for search engine indexing (Dynamic with salons and masters)
+router.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const baseUrl = process.env.BASE_URL || "https://aurelle.uz";
+    const today = new Date().toISOString().split('T')[0];
+
+    // Fetch all active salons
+    const allSalons = await db
+      .select({
+        id: salons.id,
+        updatedAt: salons.updatedAt,
+      })
+      .from(salons);
+
+    // Fetch all active masters with slugs
+    const allMasters = await db
+      .select({
+        slug: masters.slug,
+        updatedAt: masters.updatedAt,
+      })
+      .from(masters)
+      .where(masters.slug);
+
+    // Build sitemap XML
+    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Home Page -->
+  <!-- Static Pages -->
   <url>
     <loc>${baseUrl}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- About Page -->
+
   <url>
     <loc>${baseUrl}/about</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- Search Page -->
+
   <url>
     <loc>${baseUrl}/search</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  
-  <!-- Authentication Pages -->
+
   <url>
     <loc>${baseUrl}/auth</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
   </url>
-  
-  <!-- For Owners Pages -->
-  <url>
-    <loc>${baseUrl}/owner</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <!-- Solo Master Pages -->
-  <url>
-    <loc>${baseUrl}/solo-master</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <!-- Popular Cities -->
+
+  <!-- Cities -->
   <url>
     <loc>${baseUrl}/search?city=tashkent</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>${baseUrl}/search?city=samarkand</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
-  
   <url>
     <loc>${baseUrl}/search?city=bukhara</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
-  
+
   <!-- Service Categories -->
   <url>
     <loc>${baseUrl}/search?q=hair</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>${baseUrl}/search?q=nails</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>${baseUrl}/search?q=spa</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-</urlset>`;
 
-  res.type("application/xml");
-  res.send(sitemap);
+  <!-- Dynamic Salon Pages -->
+`;
+
+    // Add salon URLs
+    for (const salon of allSalons) {
+      const lastmod = salon.updatedAt ? new Date(salon.updatedAt).toISOString().split('T')[0] : today;
+      sitemap += `  <url>
+    <loc>${baseUrl}/salon/${salon.id}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
+
+    // Add master URLs
+    for (const master of allMasters) {
+      if (master.slug) {
+        const lastmod = master.updatedAt ? new Date(master.updatedAt).toISOString().split('T')[0] : today;
+        sitemap += `  <url>
+    <loc>${baseUrl}/master/${master.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      }
+    }
+
+    sitemap += `</urlset>`;
+
+    res.type("application/xml");
+    res.send(sitemap);
+  } catch (error) {
+    console.error("Sitemap generation error:", error);
+    res.status(500).send("Error generating sitemap");
+  }
 });
 
 export default router;
