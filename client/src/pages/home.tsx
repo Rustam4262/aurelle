@@ -9,6 +9,8 @@ import { HomeCategories } from "@/components/home/HomeCategories";
 import { HomeSalons } from "@/components/home/HomeSalons";
 import { HomeMap } from "@/components/home/HomeMap";
 import { HomeStats } from "@/components/home/HomeStats";
+import { HomeTestimonials } from "@/components/home/HomeTestimonials";
+import { HomeFAQ } from "@/components/home/HomeFAQ";
 import { HomeCTA } from "@/components/home/HomeCTA";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
@@ -28,6 +30,8 @@ export default function Home() {
           <HomeSalons salons={salons} isLoading={isLoading} />
           <HomeMap salons={salons} />
           <HomeStats />
+          <HomeTestimonials />
+          <HomeFAQ />
           <HomeCTA />
         </main>
 
