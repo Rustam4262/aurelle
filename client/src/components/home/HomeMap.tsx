@@ -52,7 +52,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
         <div style="font-family: system-ui; padding: 16px;">
           ${salon.address ? `
             <div style="margin-bottom: 12px; font-size: 14px; color: #374151;">
-              <strong>Адрес:</strong> ${salon.address}
+              <strong>${t("marketplace.home.map.address")}:</strong> ${salon.address}
             </div>
           ` : ''}
 
@@ -89,14 +89,14 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
             <MapPin className="h-4 w-4" />
-            Интерактивная карта
+            {t("marketplace.home.map.badge")}
           </div>
           <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3 font-light">
             {t("marketplace.map.title")}
           </h2>
           <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto">
             {salonsWithCoords.length > 0
-              ? `${salonsWithCoords.length} ${salonsWithCoords.length === 1 ? 'салон' : 'салонов'} на карте`
+              ? t("marketplace.home.map.salonsOnMap", { count: salonsWithCoords.length })
               : t("marketplace.map.subtitle")
             }
           </p>
@@ -115,12 +115,12 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
             {isFullscreen ? (
               <>
                 <Minimize2 className="h-4 w-4 mr-2" />
-                Exit Fullscreen
+                {t("marketplace.home.map.exitFullscreen")}
               </>
             ) : (
               <>
                 <Maximize2 className="h-4 w-4 mr-2" />
-                Fullscreen
+                {t("marketplace.home.map.fullscreen")}
               </>
             )}
           </Button>
@@ -137,7 +137,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                     {t("marketplace.map.loading")}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2 tracking-wide font-light">
-                    Загрузка интерактивной карты...
+                    {t("marketplace.home.map.loadingInteractive")}
                   </p>
                 </div>
               </div>
@@ -216,10 +216,10 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                     <Card className="p-8 text-center max-w-md bg-background/95 backdrop-blur-sm pointer-events-auto">
                       <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                       <h3 className="font-semibold text-lg mb-2">
-                        Нет салонов на карте
+                        {t("marketplace.home.map.noSalonsOnMap")}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Салоны появятся на карте после добавления координат
+                        {t("marketplace.home.map.noSalonsDesc")}
                       </p>
                     </Card>
                   </div>
@@ -234,13 +234,13 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
           <div className="mt-6 flex items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-violet-500"></div>
-              <span>Салон красоты</span>
+              <span>{t("marketplace.home.map.beautySalon")}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center font-bold">
                 {salonsWithCoords.length > 9 ? '9+' : salonsWithCoords.length}
               </div>
-              <span>Кластер салонов</span>
+              <span>{t("marketplace.home.map.salonCluster")}</span>
             </div>
           </div>
         )}

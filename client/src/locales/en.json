@@ -118,6 +118,99 @@
       "registerSalon": "Register Your Salon",
       "joinClient": "Join as Client"
     },
+    "home": {
+      "faq": {
+        "badge": "Frequently Asked Questions",
+        "title": "Answers to Your Questions",
+        "subtitle": "Didn't find an answer? Contact our support",
+        "categories": {
+          "all": "All Questions",
+          "client": "For Clients",
+          "salon": "For Salons",
+          "master": "For Masters"
+        },
+        "client": {
+          "q1": "How to book a master through AURELLE?",
+          "a1": "Choose a salon or master, view available time slots in the calendar, select a convenient slot and confirm the booking. You will receive a notification via email and in your personal account.",
+          "q2": "Can I cancel or reschedule an appointment?",
+          "a2": "Yes, you can cancel or reschedule an appointment in your personal account 24 hours before the appointed time. Cancellation less than 24 hours in advance may incur a penalty fee according to the salon's policy.",
+          "q3": "Is it safe to pay for services through the platform?",
+          "a3": "Absolutely safe. We use secure payment gateways and do not store your card data. All transactions are encrypted according to PCI DSS standards."
+        },
+        "salon": {
+          "q1": "How much does it cost to list a salon on the platform?",
+          "a1": "Registration and listing basic salon information is free. We take a small commission only from completed bookings. Premium plans with extended features are also available.",
+          "q2": "How does the online booking system work?",
+          "a2": "You set up your work schedule, services and prices. Clients book available time slots online, and you receive notifications. The system automatically manages the calendar and reminders.",
+          "q3": "What analytics does the platform provide?",
+          "a3": "You get detailed statistics: number of views, new clients, popular services, revenue by period, rating and reviews. All data is available in real-time in your personal account."
+        },
+        "master": {
+          "q1": "Can I work as a freelance master?",
+          "a1": "Yes! AURELLE supports solo masters. Create your page, specify services and prices, set up your work schedule. You will get your own link for clients.",
+          "q2": "How to improve my rating on the platform?",
+          "a2": "Quality service is the main factor. Also important: complete profile, quick responses to messages, regular portfolio updates, availability of reviews and adherence to the work schedule."
+        },
+        "support": {
+          "title": "Still have questions?",
+          "description": "Our support team is available 24/7 and always ready to help"
+        }
+      },
+      "map": {
+        "badge": "Interactive Map",
+        "address": "Address",
+        "salonsOnMap_one": "{{count}} salon on map",
+        "salonsOnMap_other": "{{count}} salons on map",
+        "exitFullscreen": "Exit Fullscreen",
+        "fullscreen": "Fullscreen",
+        "loadingInteractive": "Loading interactive map...",
+        "noSalonsOnMap": "No salons on map",
+        "noSalonsDesc": "Salons will appear on the map after adding coordinates",
+        "beautySalon": "Beauty Salon",
+        "salonCluster": "Salon Cluster"
+      },
+      "testimonials": {
+        "badge": "Customer Testimonials",
+        "title": "What People Say About Us",
+        "subtitle": "Over 10,000 happy users trust AURELLE",
+        "t1": {
+          "name": "Anna Ivanova",
+          "role": "Regular Client",
+          "text": "Wonderful experience! Found the perfect salon through AURELLE. The master was very professional, and the result exceeded all expectations. Now I only book through this platform!",
+          "service": "Manicure and Gel Polish"
+        },
+        "t2": {
+          "name": "Dmitry Petrov",
+          "role": "Barbershop Owner",
+          "text": "Registered my barbershop on the platform a month ago - client flow increased by 40%! Convenient booking system, transparent analytics. I recommend it to all colleagues.",
+          "service": "Barbershop 'Stylish Guys'"
+        },
+        "t3": {
+          "name": "Maria Sidorova",
+          "role": "SPA Enthusiast",
+          "text": "Discovered many new beauty salons in my area! Very convenient to compare prices and read real reviews. The bonus system is an additional plus!",
+          "service": "SPA and Massage"
+        },
+        "t4": {
+          "name": "Ekaterina Novikova",
+          "role": "Nail Master",
+          "text": "I've been working with AURELLE for six months. My client base has tripled! The platform helps effectively manage bookings and receive honest feedback from clients.",
+          "service": "Nail Art Studio"
+        },
+        "t5": {
+          "name": "Alexey Smirnov",
+          "role": "Stylist-Hairdresser",
+          "text": "Excellent platform for promoting services! Intuitive interface, quality support. My services became visible to thousands of potential clients.",
+          "service": "Salon 'Image'"
+        },
+        "stats": {
+          "happyClients": "Happy Clients",
+          "beautySalons": "Beauty Salons",
+          "avgRating": "Average Rating",
+          "bookingsCompleted": "Bookings Completed"
+        }
+      }
+    },
     "footer": {
       "tagline": "Discover and book the best beauty salons across Uzbekistan. Your perfect look is just a click away.",
       "forClients": "For Clients",
@@ -287,6 +380,12 @@
       "goodDay": "Good time selection",
       "limitedDay": "Few slots remaining",
       "fullDay": "Fully booked",
+      "recommendations": {
+        "excellent": "Great day for booking",
+        "good": "Good time selection",
+        "limited": "Few slots remaining",
+        "full": "Fully booked"
+      },
       "bookingWindow": {
         "pastDatesDisabled": "Past dates are disabled",
         "maxDaysAdvance": "You can book up to {{days}} days in advance",
@@ -846,6 +945,16 @@
         "view": "View",
         "back": "Back"
       }
+    },
+    "errorBoundary": {
+      "title": "Something Went Wrong",
+      "description": "The application encountered an unexpected error. Please try reloading the page or return to the home page.",
+      "technicalDetails": "Technical Details (dev mode only)",
+      "tryAgain": "Try Again",
+      "goHome": "Go Home",
+      "errorLoading": "Loading Error",
+      "somethingWentWrong": "Something went wrong",
+      "retry": "Retry"
     },
     "errors": {
       "UNAUTHORIZED": "Unauthorized access",

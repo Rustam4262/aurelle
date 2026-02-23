@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { ChevronDown, HelpCircle } from "lucide-react";
 
 interface FAQItem {
   id: number;
-  question: string;
-  answer: string;
+  questionKey: string;
+  answerKey: string;
   category: "client" | "salon" | "master";
 }
 
@@ -13,54 +14,55 @@ const faqData: FAQItem[] = [
   {
     id: 1,
     category: "client",
-    question: "Как записаться к мастеру через AURELLE?",
-    answer: "Выберите салон или мастера, просмотрите доступное время в календаре, выберите удобный слот и подтвердите запись. Вы получите уведомление на email и в личном кабинете."
+    questionKey: "marketplace.home.faq.client.q1",
+    answerKey: "marketplace.home.faq.client.a1"
   },
   {
     id: 2,
     category: "client",
-    question: "Можно ли отменить или перенести запись?",
-    answer: "Да, вы можете отменить или перенести запись в личном кабинете за 24 часа до назначенного времени. При отмене менее чем за 24 часа может взиматься штраф согласно политике салона."
+    questionKey: "marketplace.home.faq.client.q2",
+    answerKey: "marketplace.home.faq.client.a2"
   },
   {
     id: 3,
     category: "salon",
-    question: "Сколько стоит размещение салона на платформе?",
-    answer: "Регистрация и размещение базовой информации о салоне бесплатны. Мы берем небольшую комиссию только с завершенных записей. Также доступны премиум-тарифы с расширенными функциями."
+    questionKey: "marketplace.home.faq.salon.q1",
+    answerKey: "marketplace.home.faq.salon.a1"
   },
   {
     id: 4,
     category: "salon",
-    question: "Как работает система онлайн-записи?",
-    answer: "Вы настраиваете расписание работы, услуги и цены. Клиенты бронируют свободное время онлайн, а вы получаете уведомления. Система автоматически управляет календарем и напоминаниями."
+    questionKey: "marketplace.home.faq.salon.q2",
+    answerKey: "marketplace.home.faq.salon.a2"
   },
   {
     id: 5,
     category: "master",
-    question: "Могу ли я работать как самозанятый мастер?",
-    answer: "Да! AURELLE поддерживает solo-мастеров. Создайте свою страницу, укажите услуги и цены, настройте график работы. Вы получите собственную ссылку для клиентов."
+    questionKey: "marketplace.home.faq.master.q1",
+    answerKey: "marketplace.home.faq.master.a1"
   },
   {
     id: 6,
     category: "client",
-    question: "Безопасно ли оплачивать услуги через платформу?",
-    answer: "Абсолютно безопасно. Мы используем защищенные платежные шлюзы и не храним данные ваших карт. Все транзакции шифруются по стандарту PCI DSS."
+    questionKey: "marketplace.home.faq.client.q3",
+    answerKey: "marketplace.home.faq.client.a3"
   },
   {
     id: 7,
     category: "salon",
-    question: "Какую аналитику предоставляет платформа?",
-    answer: "Вы получаете подробную статистику: количество просмотров, новые клиенты, популярные услуги, доход по периодам, рейтинг и отзывы. Все данные доступны в реальном времени в личном кабинете."
+    questionKey: "marketplace.home.faq.salon.q3",
+    answerKey: "marketplace.home.faq.salon.a3"
   },
   {
     id: 8,
     category: "master",
-    question: "Как повысить свой рейтинг на платформе?",
-    answer: "Качественное обслуживание - главный фактор. Также важны: полнота профиля, быстрые ответы на сообщения, регулярное обновление портфолио, наличие отзывов и соблюдение графика работы."
+    questionKey: "marketplace.home.faq.master.q2",
+    answerKey: "marketplace.home.faq.master.a2"
   }
 ];
 
 export function HomeFAQ() {
+  const { t } = useTranslation();
   const [openId, setOpenId] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "client" | "salon" | "master">("all");
 
@@ -73,10 +75,10 @@ export function HomeFAQ() {
     : faqData.filter(item => item.category === activeCategory);
 
   const categories = [
-    { id: "all", label: "Все вопросы", icon: "❓" },
-    { id: "client", label: "Для клиентов", icon: "👤" },
-    { id: "salon", label: "Для салонов", icon: "💅" },
-    { id: "master", label: "Для мастеров", icon: "✂️" },
+    { id: "all", label: t("marketplace.home.faq.categories.all"), icon: "❓" },
+    { id: "client", label: t("marketplace.home.faq.categories.client"), icon: "👤" },
+    { id: "salon", label: t("marketplace.home.faq.categories.salon"), icon: "💅" },
+    { id: "master", label: t("marketplace.home.faq.categories.master"), icon: "✂️" },
   ] as const;
 
   return (
@@ -86,13 +88,13 @@ export function HomeFAQ() {
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
             <HelpCircle className="h-4 w-4" />
-            Часто задаваемые вопросы
+            {t("marketplace.home.faq.badge")}
           </div>
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 font-light">
-            Ответы на ваши вопросы
+            {t("marketplace.home.faq.title")}
           </h2>
           <p className="text-muted-foreground text-lg font-light">
-            Не нашли ответ? Напишите нам в поддержку
+            {t("marketplace.home.faq.subtitle")}
           </p>
         </div>
 
@@ -134,7 +136,7 @@ export function HomeFAQ() {
               >
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                    {item.question}
+                    {t(item.questionKey)}
                   </h3>
                 </div>
                 <div
@@ -154,7 +156,7 @@ export function HomeFAQ() {
                 <div className="px-6 pb-6 pt-2">
                   <div className="w-12 h-0.5 bg-gradient-to-r from-primary to-pink-500 mb-4 rounded-full"></div>
                   <p className="text-muted-foreground leading-relaxed">
-                    {item.answer}
+                    {t(item.answerKey)}
                   </p>
                 </div>
               </div>
@@ -165,10 +167,10 @@ export function HomeFAQ() {
         {/* Contact Support CTA */}
         <Card className="mt-12 p-8 text-center bg-gradient-to-br from-primary/5 to-pink-500/5 border-primary/20">
           <h3 className="font-serif text-2xl text-foreground mb-3 font-light">
-            Остались вопросы?
+            {t("marketplace.home.faq.support.title")}
           </h3>
           <p className="text-muted-foreground mb-6">
-            Наша служба поддержки работает 24/7 и всегда готова помочь
+            {t("marketplace.home.faq.support.description")}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a

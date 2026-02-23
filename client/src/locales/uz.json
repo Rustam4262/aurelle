@@ -118,6 +118,99 @@
       "registerSalon": "Salon qo'shish",
       "joinClient": "Mijoz bo'lish"
     },
+    "home": {
+      "faq": {
+        "badge": "Tez-tez so'raladigan savollar",
+        "title": "Savollaringizga javoblar",
+        "subtitle": "Javob topolmadingizmi? Qo'llab-quvvatlash xizmatiga yozing",
+        "categories": {
+          "all": "Barcha savollar",
+          "client": "Mijozlar uchun",
+          "salon": "Salonlar uchun",
+          "master": "Ustalar uchun"
+        },
+        "client": {
+          "q1": "AURELLE orqali ustaga qanday yozilish mumkin?",
+          "a1": "Salon yoki ustani tanlang, kalendarda mavjud vaqtlarni ko'ring, qulay vaqtni tanlang va yozilishni tasdiqlang. Sizga email va shaxsiy kabinetda xabar keladi.",
+          "q2": "Yozilishni bekor qilish yoki ko'chirish mumkinmi?",
+          "a2": "Ha, siz shaxsiy kabinetda belgilangan vaqtdan 24 soat oldin yozilishni bekor qilishingiz yoki ko'chirishingiz mumkin. 24 soatdan kamroq vaqt qolganda bekor qilish salon siyosatiga ko'ra jarima to'lashni talab qilishi mumkin.",
+          "q3": "Platforma orqali xizmatlar uchun to'lash xavfsizmi?",
+          "a3": "Mutlaqo xavfsiz. Biz himoyalangan to'lov shlyuzlaridan foydalanamiz va sizning karta ma'lumotlaringizni saqlamaymiz. Barcha tranzaksiyalar PCI DSS standartiga muvofiq shifrlangan."
+        },
+        "salon": {
+          "q1": "Platformada salonni joylashtirish qancha turadi?",
+          "a1": "Ro'yxatdan o'tish va salon haqida asosiy ma'lumotlarni joylashtirish bepul. Biz faqat yakunlangan yozilishlardan kichik komissiya olamiz. Kengaytirilgan funksiyalar bilan premium tariflar ham mavjud.",
+          "q2": "Onlayn yozilish tizimi qanday ishlaydi?",
+          "a2": "Siz ish jadvalingizni, xizmatlar va narxlarni sozlaysiz. Mijozlar onlayn bo'sh vaqtni bron qilishadi va sizga xabar keladi. Tizim avtomatik ravishda kalendar va eslatmalarni boshqaradi.",
+          "q3": "Platforma qanday analitikani taqdim etadi?",
+          "a3": "Siz batafsil statistika olasiz: ko'rishlar soni, yangi mijozlar, mashhur xizmatlar, davr bo'yicha daromad, reyting va sharhlar. Barcha ma'lumotlar real vaqtda shaxsiy kabinetda mavjud."
+        },
+        "master": {
+          "q1": "Men mustaqil usta sifatida ishlay olamanmi?",
+          "a1": "Ha! AURELLE solo-ustalarni qo'llab-quvvatlaydi. O'z sahifangizni yarating, xizmatlar va narxlarni ko'rsating, ish jadvalingizni sozlang. Mijozlar uchun o'z havolangizni olasiz.",
+          "q2": "Platformada reytingimni qanday oshirish mumkin?",
+          "a2": "Sifatli xizmat - asosiy omil. Shuningdek, muhim: to'liq profil, xabarlarga tez javob berish, muntazam portfolio yangilanishi, sharhlar mavjudligi va ish jadvaliga rioya qilish."
+        },
+        "support": {
+          "title": "Yana savollaringiz bormi?",
+          "description": "Bizning qo'llab-quvvatlash xizmatimiz 24/7 ishlaydi va har doim yordam berishga tayyor"
+        }
+      },
+      "map": {
+        "badge": "Interaktiv xarita",
+        "address": "Manzil",
+        "salonsOnMap_one": "Xaritada {{count}} salon",
+        "salonsOnMap_other": "Xaritada {{count}} salon",
+        "exitFullscreen": "To'liq ekrandan chiqish",
+        "fullscreen": "To'liq ekran",
+        "loadingInteractive": "Interaktiv xarita yuklanmoqda...",
+        "noSalonsOnMap": "Xaritada salonlar yo'q",
+        "noSalonsDesc": "Koordinatalar qo'shilgandan keyin salonlar xaritada ko'rinadi",
+        "beautySalon": "Go'zallik saloni",
+        "salonCluster": "Salonlar klasteri"
+      },
+      "testimonials": {
+        "badge": "Mijozlarimiz fikrlari",
+        "title": "Biz haqimizda nima deyishadi",
+        "subtitle": "10,000 dan ortiq mamnun foydalanuvchi AURELLE ga ishonadi",
+        "t1": {
+          "name": "Anna Ivanova",
+          "role": "Doimiy mijoz",
+          "text": "Ajoyib tajriba! AURELLE orqali ideal salonni topdim. Usta juda professional edi va natija barcha kutganlardan oshdi. Endi faqat shu platforma orqali yozilyapman!",
+          "service": "Manikyur va gel lak qoplama"
+        },
+        "t2": {
+          "name": "Dmitriy Petrov",
+          "role": "Barbershop egasi",
+          "text": "Bir oy oldin platformaga barbershopimni ro'yxatdan o'tkazdim - mijozlar oqimi 40% ga oshdi! Qulay yozilish tizimi, shaffof analitika. Barcha hamkasblarimga tavsiya qilaman.",
+          "service": "Barbershop 'Stylish Guys'"
+        },
+        "t3": {
+          "name": "Mariya Sidorova",
+          "role": "SPA ishqibozi",
+          "text": "O'z hududimda ko'plab yangi go'zallik salonlarini kashf qildim! Narxlarni solishtirish va haqiqiy sharhlarni o'qish juda qulay. Bonus tizimi - alohida plus!",
+          "service": "SPA va massaj"
+        },
+        "t4": {
+          "name": "Ekaterina Novikova",
+          "role": "Manikyur ustasi",
+          "text": "AURELLE bilan yarim yil ishlayapman. Mijozlar bazasi uch barobarga o'sdi! Platforma yozilishlarni samarali boshqarishga va mijozlardan halol fikr olishga yordam beradi.",
+          "service": "Nail Art Studio"
+        },
+        "t5": {
+          "name": "Aleksey Smirnov",
+          "role": "Stilist-sartarosh",
+          "text": "Xizmatlarni targ'ib qilish uchun ajoyib platforma! Intuitiv interfeys, sifatli qo'llab-quvvatlash. Xizmatlarim minglab potentsial mijozlarga ko'rinadigan bo'ldi.",
+          "service": "Salon 'Obraz'"
+        },
+        "stats": {
+          "happyClients": "Mamnun mijozlar",
+          "beautySalons": "Go'zallik salonlari",
+          "avgRating": "O'rtacha reyting",
+          "bookingsCompleted": "Bajarilgan bronlar"
+        }
+      }
+    },
     "footer": {
       "tagline": "O'zbekiston bo'ylab eng yaxshi go'zallik salonlarini toping va bron qiling. Mukammal ko'rinish — faqat bir bosish narida.",
       "forClients": "Mijozlar uchun",
@@ -287,6 +380,12 @@
       "goodDay": "Yaxshi vaqt tanlovi",
       "limitedDay": "Kam slotlar qoldi",
       "fullDay": "Hammasi band",
+      "recommendations": {
+        "excellent": "Yozilish uchun ajoyib kun",
+        "good": "Yaxshi vaqt tanlovi",
+        "limited": "Kam bo'sh slotlar qoldi",
+        "full": "To'liq band"
+      },
       "bookingWindow": {
         "pastDatesDisabled": "O'tgan sanalar yopiq",
         "maxDaysAdvance": "{{days}} kungacha oldindan yozilish mumkin",
@@ -846,6 +945,16 @@
         "view": "Ko'rish",
         "back": "Orqaga"
       }
+    },
+    "errorBoundary": {
+      "title": "Nimadir noto'g'ri ketdi",
+      "description": "Ilova kutilmagan xatoga duch keldi. Iltimos, sahifani qayta yuklashga urinib ko'ring yoki bosh sahifaga qayting.",
+      "technicalDetails": "Texnik tafsilotlar (faqat dev rejimida)",
+      "tryAgain": "Qayta urining",
+      "goHome": "Bosh sahifaga",
+      "errorLoading": "Yuklashda xatolik",
+      "somethingWentWrong": "Nimadir noto'g'ri ketdi",
+      "retry": "Qayta urinish"
     },
     "errors": {
       "UNAUTHORIZED": "Ruxsatsiz kirish",

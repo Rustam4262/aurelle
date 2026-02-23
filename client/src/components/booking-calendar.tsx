@@ -191,32 +191,18 @@ export function BookingCalendar({
     else if (ratio < 0.2) quality = "limited";
     else if (ratio < 0.5) quality = "good";
 
-    const recommendations: Record<string, Record<typeof quality, string>> = {
-      ru: {
-        excellent: "Отличный день для записи",
-        good: "Хороший выбор времени",
-        limited: "Осталось мало свободных слотов",
-        full: "Все слоты заняты",
-      },
-      en: {
-        excellent: "Great day for booking",
-        good: "Good time selection",
-        limited: "Few slots remaining",
-        full: "Fully booked",
-      },
-      uz: {
-        excellent: "Yozilish uchun ajoyib kun",
-        good: "Yaxshi vaqt tanlovi",
-        limited: "Kam bo'sh slotlar qoldi",
-        full: "To'liq band",
-      },
+    const recommendations: Record<typeof quality, string> = {
+      excellent: t("marketplace.calendar.recommendations.excellent"),
+      good: t("marketplace.calendar.recommendations.good"),
+      limited: t("marketplace.calendar.recommendations.limited"),
+      full: t("marketplace.calendar.recommendations.full"),
     };
 
     return {
       totalFree,
       primeTimeFree,
       quality,
-      recommendation: recommendations[currentLang]?.[quality] || recommendations.en[quality],
+      recommendation: recommendations[quality],
     };
   }, [timeSlots, selectedDateBookings, currentLang]);
 
