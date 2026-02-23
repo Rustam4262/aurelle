@@ -27,6 +27,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  emailVerified: boolean("email_verified").default(false),
+  phoneVerified: boolean("phone_verified").default(false),
   isBlocked: boolean("is_blocked").default(false),
   blockReason: varchar("block_reason"),
   // Activity tracking fields

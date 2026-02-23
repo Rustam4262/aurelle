@@ -82,109 +82,106 @@ async function getUserRoles(userId: string): Promise<string[]> {
 router.get("/", requirePermission("users.read"), async (req, res) => {
   try {
     const {
-      search,
-      role,
-      status,
-      verified,
+      search = "",
+      role = "",
+      status = "",
+      verified = "",
       sortBy = "createdAt",
       sortOrder = "desc",
       page = "1",
       pageSize = "20",
     } = req.query;
 
-    // Build simplified base query (no complex joins for sorting)
-    let baseQuery = db.select().from(users);
-    const conditions = [];
+    logger.info("Admin users request params", {
+      search,
+      role,
+      status,
+      verified,
+      sortBy,
+      sortOrder,
+      page,
+      pageSize,
+    });
+
+    // Step 1: Get ALL users first (no filters) to see if DB has data
+    const allUsersInDb = await db.select().from(users);
+    logger.info("Total users in database", { count: allUsersInDb.length });
+
+    if (allUsersInDb.length === 0) {
+      logger.warn("No users found in database at all!");
+      return res.json({
+        users: [],
+        total: 0,
+        page: 1,
+        pageSize: 20,
+        totalPages: 0,
+      });
+    }
+
+    // Step 2: Apply basic filters (status, search, verified)
+    let filteredUsers = [...allUsersInDb];
 
     // Search filter
-    if (search && (search as string).trim()) {
-      const searchTerm = `%${(search as string).trim()}%`;
-      conditions.push(
-        or(
-          like(users.email, searchTerm),
-          like(users.firstName, searchTerm),
-          like(users.lastName, searchTerm),
-          like(users.phoneNumber, searchTerm)
-        )
-      );
+    if (search && typeof search === "string" && search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      filteredUsers = filteredUsers.filter((user) => {
+        const email = (user.email || "").toLowerCase();
+        const firstName = (user.firstName || "").toLowerCase();
+        const lastName = (user.lastName || "").toLowerCase();
+        const phone = (user.phoneNumber || "").toLowerCase();
+        return (
+          email.includes(searchTerm) ||
+          firstName.includes(searchTerm) ||
+          lastName.includes(searchTerm) ||
+          phone.includes(searchTerm)
+        );
+      });
+      logger.info("After search filter", { count: filteredUsers.length, searchTerm });
     }
 
     // Status filter
-    if (status && status !== "all") {
+    if (status && status !== "all" && status !== "") {
       if (status === "blocked") {
-        conditions.push(eq(users.isBlocked, true));
+        filteredUsers = filteredUsers.filter((user) => user.isBlocked === true);
       } else if (status === "active") {
-        conditions.push(eq(users.isBlocked, false));
+        filteredUsers = filteredUsers.filter((user) => user.isBlocked !== true);
       }
+      logger.info("After status filter", { count: filteredUsers.length, status });
     }
 
     // Verification filter
-    if (verified && verified !== "all") {
+    if (verified && verified !== "all" && verified !== "") {
       if (verified === "email") {
-        conditions.push(eq(users.emailVerified, true));
+        filteredUsers = filteredUsers.filter((user) => user.emailVerified === true);
       } else if (verified === "phone") {
-        conditions.push(eq(users.phoneVerified, true));
+        filteredUsers = filteredUsers.filter((user) => user.phoneVerified === true);
       } else if (verified === "both") {
-        conditions.push(and(
-          eq(users.emailVerified, true),
-          eq(users.phoneVerified, true)
-        ));
+        filteredUsers = filteredUsers.filter(
+          (user) => user.emailVerified === true && user.phoneVerified === true
+        );
       } else if (verified === "none") {
-        conditions.push(and(
-          eq(users.emailVerified, false),
-          eq(users.phoneVerified, false)
-        ));
+        filteredUsers = filteredUsers.filter(
+          (user) => user.emailVerified !== true && user.phoneVerified !== true
+        );
       }
+      logger.info("After verification filter", { count: filteredUsers.length, verified });
     }
 
-    // Apply conditions
-    if (conditions.length > 0) {
-      baseQuery = baseQuery.where(and(...conditions)) as typeof baseQuery;
-    }
-
-    // Sort (whitelist of allowed columns)
-    const sortableColumns: Record<string, any> = {
-      createdAt: users.createdAt,
-      email: users.email,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      lastLoginAt: users.lastLoginAt,
-      lastActivityAt: users.lastActivityAt,
-      loginCount: users.loginCount,
-    };
-    const sortColumn = sortableColumns[sortBy as string] || users.createdAt;
-    const orderFn = sortOrder === "asc" ? asc : desc;
-
-    // Get all matching users (before pagination for role filtering)
-    const allMatchingUsers = await baseQuery.orderBy(orderFn(sortColumn));
-
-    logger.info("Admin users query results", {
-      totalUsers: allMatchingUsers.length,
-      roleFilter: role || "all",
-      searchFilter: search || "none",
-      statusFilter: status || "all",
-    });
-
-    // Role filtering (post-query, since it requires joins)
-    let filteredUsers = allMatchingUsers;
-
-    if (role && role !== "all") {
-      logger.info("Applying role filter", { role, usersBeforeFilter: allMatchingUsers.length });
+    // Step 3: Apply role filter (requires async operations)
+    if (role && role !== "all" && role !== "") {
+      logger.info("Applying role filter", { role, usersBeforeFilter: filteredUsers.length });
 
       const usersWithRoles = await Promise.all(
-        allMatchingUsers.map(async (user) => ({
-          user,
-          roles: await getUserRoles(user.id),
-        }))
+        filteredUsers.map(async (user) => {
+          try {
+            const userRoles = await getUserRoles(user.id);
+            return { user, roles: userRoles };
+          } catch (error) {
+            logger.error("Failed to get roles for user", error as Error, { userId: user.id });
+            return { user, roles: ["client"] }; // Fallback to client
+          }
+        })
       );
-
-      logger.debug("Users with roles computed", {
-        totalProcessed: usersWithRoles.length,
-        sampleRoles: usersWithRoles.slice(0, 3).map(({ user, roles }) => ({
-          email: user.email,
-          roles,
-        })),
-      });
 
       if (role === "admin") {
         filteredUsers = usersWithRoles
@@ -204,16 +201,40 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           .map(({ user }) => user);
       }
 
-      logger.info("After role filter", {
-        role,
-        usersAfterFilter: filteredUsers.length,
-      });
+      logger.info("After role filter", { role, usersAfterFilter: filteredUsers.length });
     }
 
-    // Manual pagination after filtering
+    // Step 4: Sort
+    const sortColumn = sortBy as string;
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
+
+    filteredUsers.sort((a, b) => {
+      let aVal: any = a[sortColumn as keyof typeof a];
+      let bVal: any = b[sortColumn as keyof typeof b];
+
+      // Handle null/undefined
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+
+      // Handle dates
+      if (aVal instanceof Date) aVal = aVal.getTime();
+      if (bVal instanceof Date) bVal = bVal.getTime();
+
+      // Handle strings
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
+      if (aVal < bVal) return -1 * sortDirection;
+      if (aVal > bVal) return 1 * sortDirection;
+      return 0;
+    });
+
+    logger.info("After sorting", { sortBy, sortOrder, count: filteredUsers.length });
+
+    // Step 5: Pagination
     const total = filteredUsers.length;
-    const pageNum = parseInt(page as string);
-    const pageSizeNum = parseInt(pageSize as string);
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const pageSizeNum = Math.max(1, Math.min(100, parseInt(pageSize as string) || 20));
     const offset = (pageNum - 1) * pageSizeNum;
     const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
 
@@ -221,13 +242,19 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       total,
       page: pageNum,
       pageSize: pageSizeNum,
+      offset,
       usersOnThisPage: paginatedUsers.length,
     });
 
-    // Transform to match frontend interface
+    // Step 6: Transform to frontend format
     const transformedUsers = await Promise.all(
       paginatedUsers.map(async (user) => {
-        const userRoles = await getUserRoles(user.id);
+        let userRoles: string[] = ["client"];
+        try {
+          userRoles = await getUserRoles(user.id);
+        } catch (error) {
+          logger.error("Failed to get roles during transform", error as Error, { userId: user.id });
+        }
 
         return {
           id: user.id,
@@ -236,8 +263,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           lastName: user.lastName,
           fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
           phone: user.phoneNumber,
-          role: userRoles[0], // Primary role
-          roles: userRoles, // All roles
+          role: userRoles[0] || "client",
+          roles: userRoles,
           status: user.isBlocked ? "blocked" : "active",
           isBlocked: user.isBlocked || false,
           blockReason: user.blockReason,
@@ -252,23 +279,28 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       })
     );
 
-    logger.info("Returning users response", {
-      usersCount: transformedUsers.length,
-      total,
-      totalPages: Math.ceil(total / pageSizeNum),
-    });
-
-    res.json({
+    const response = {
       users: transformedUsers,
       total,
       page: pageNum,
       pageSize: pageSizeNum,
       totalPages: Math.ceil(total / pageSizeNum),
+    };
+
+    logger.info("Returning users response", {
+      usersCount: transformedUsers.length,
+      total: response.total,
+      totalPages: response.totalPages,
     });
+
+    res.json(response);
   } catch (error: any) {
     logger.error("List users error", error as Error, { source: "users-routes" });
     console.error("Admin users detailed error:", error);
-    res.status(500).json({ error: "Failed to fetch users", details: error.message });
+    res.status(500).json({
+      error: "Failed to fetch users",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 });
 
