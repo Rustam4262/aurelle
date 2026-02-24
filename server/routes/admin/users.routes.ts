@@ -1,8 +1,8 @@
 import { Router, Request } from "express";
 import { db } from "../../db";
 import { users, salons, masters } from "@shared/schema";
-import { adminUsers, adminRoles } from "@shared/admin-schema";
-import { eq, desc, asc, like, or, and, sql } from "drizzle-orm";
+import { adminUsers } from "@shared/admin-schema";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
@@ -14,68 +14,62 @@ function getUserId(req: Request): string {
   return (req.session as any)?.passport?.user?.claims?.sub || "";
 }
 
-// Helper to determine user roles
-async function getUserRoles(userId: string): Promise<string[]> {
-  const roles: string[] = [];
+// Batch version: 3 queries for N users instead of 3N queries
+async function getBatchedUserRoles(userIds: string[]): Promise<Map<string, string[]>> {
+  const rolesMap = new Map<string, string[]>();
+  if (userIds.length === 0) return rolesMap;
 
+  // Initialize all users as "client" (default role)
+  userIds.forEach((id) => rolesMap.set(id, ["client"]));
+
+  // Query 1: find all admins in this batch
   try {
-    // Check if admin
-    try {
-      const [adminUser] = await db
-        .select()
-        .from(adminUsers)
-        .where(and(eq(adminUsers.userId, userId), eq(adminUsers.isActive, true)))
-        .limit(1);
-
-      if (adminUser) {
-        roles.push("admin");
-      }
-    } catch (error) {
-      // Admin tables may not exist, skip silently
-      logger.debug("Admin check skipped", { userId, error: String(error) });
-    }
-
-    // Check if salon owner
-    try {
-      const [salonOwner] = await db
-        .select({ id: salons.id })
-        .from(salons)
-        .where(eq(salons.ownerId, userId))
-        .limit(1);
-
-      if (salonOwner) {
-        roles.push("salon_owner");
-      }
-    } catch (error) {
-      logger.debug("Salon owner check failed", { userId, error: String(error) });
-    }
-
-    // Check if master
-    try {
-      const [master] = await db
-        .select({ id: masters.id })
-        .from(masters)
-        .where(eq(masters.userId, userId))
-        .limit(1);
-
-      if (master) {
-        roles.push("master");
-      }
-    } catch (error) {
-      logger.debug("Master check failed", { userId, error: String(error) });
-    }
-
-    // Default to client if no other roles
-    if (roles.length === 0) {
-      roles.push("client");
-    }
-  } catch (error) {
-    // Fallback to client if all checks fail
-    logger.error("getUserRoles failed completely", error as Error, { userId });
-    roles.push("client");
+    const adminList = await db
+      .select({ userId: adminUsers.userId })
+      .from(adminUsers)
+      .where(and(eq(adminUsers.isActive, true), inArray(adminUsers.userId, userIds)));
+    adminList.forEach(({ userId }) => {
+      const roles = (rolesMap.get(userId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("admin")) roles.push("admin");
+      rolesMap.set(userId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch admin check skipped", { meta: { error: String(e) } });
   }
 
-  return roles;
+  // Query 2: find all salon owners in this batch
+  try {
+    const ownerList = await db
+      .select({ ownerId: salons.ownerId })
+      .from(salons)
+      .where(inArray(salons.ownerId, userIds));
+    ownerList.forEach(({ ownerId }) => {
+      if (!ownerId) return;
+      const roles = (rolesMap.get(ownerId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("salon_owner")) roles.push("salon_owner");
+      rolesMap.set(ownerId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch owner check skipped", { meta: { error: String(e) } });
+  }
+
+  // Query 3: find all masters in this batch
+  try {
+    const masterList = await db
+      .select({ userId: masters.userId })
+      .from(masters)
+      .where(inArray(masters.userId, userIds.map(String)));
+    masterList.forEach(({ userId }) => {
+      if (!userId) return;
+      const roles = (rolesMap.get(userId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("master")) roles.push("master");
+      rolesMap.set(userId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch master check skipped", { meta: { error: String(e) } });
+  }
+
+  return rolesMap;
 }
 
 // GET /api/admin/users - List all users with pagination and filters
@@ -93,22 +87,16 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     } = req.query;
 
     logger.info("Admin users request params", {
-      search,
-      role,
-      status,
-      verified,
-      sortBy,
-      sortOrder,
-      page,
-      pageSize,
+      source: "users-routes",
+      meta: { search, role, status, verified, sortBy, sortOrder, page, pageSize },
     });
 
     // Step 1: Get ALL users first (no filters) to see if DB has data
     const allUsersInDb = await db.select().from(users);
-    logger.info("Total users in database", { count: allUsersInDb.length });
+    logger.info("Total users in database", { source: "users-routes", meta: { count: allUsersInDb.length } });
 
     if (allUsersInDb.length === 0) {
-      logger.warn("No users found in database at all!");
+      logger.warn("No users found in database at all!", { source: "users-routes" });
       return res.json({
         users: [],
         total: 0,
@@ -136,7 +124,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           phone.includes(searchTerm)
         );
       });
-      logger.info("After search filter", { count: filteredUsers.length, searchTerm });
+      logger.info("After search filter", { source: "users-routes", meta: { count: filteredUsers.length, searchTerm } });
     }
 
     // Status filter
@@ -146,7 +134,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       } else if (status === "active") {
         filteredUsers = filteredUsers.filter((user) => user.isBlocked !== true);
       }
-      logger.info("After status filter", { count: filteredUsers.length, status });
+      logger.info("After status filter", { source: "users-routes", meta: { count: filteredUsers.length, status } });
     }
 
     // Verification filter
@@ -164,44 +152,31 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           (user) => user.emailVerified !== true && user.phoneVerified !== true
         );
       }
-      logger.info("After verification filter", { count: filteredUsers.length, verified });
+      logger.info("After verification filter", { source: "users-routes", meta: { count: filteredUsers.length, verified } });
     }
 
-    // Step 3: Apply role filter (requires async operations)
-    if (role && role !== "all" && role !== "") {
-      logger.info("Applying role filter", { role, usersBeforeFilter: filteredUsers.length });
+    // Step 3: Apply role filter — single batch of 3 queries instead of 3N
+    let rolesMap = new Map<string, string[]>();
 
-      const usersWithRoles = await Promise.all(
-        filteredUsers.map(async (user) => {
-          try {
-            const userRoles = await getUserRoles(user.id);
-            return { user, roles: userRoles };
-          } catch (error) {
-            logger.error("Failed to get roles for user", error as Error, { userId: user.id });
-            return { user, roles: ["client"] }; // Fallback to client
-          }
-        })
-      );
+    if (role && role !== "all" && role !== "") {
+      logger.info("Applying role filter", { source: "users-routes", meta: { role, usersBeforeFilter: filteredUsers.length } });
+
+      rolesMap = await getBatchedUserRoles(filteredUsers.map((u) => u.id));
 
       if (role === "admin") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("admin"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("admin"));
       } else if (role === "salon_owner") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("salon_owner"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("salon_owner"));
       } else if (role === "master") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("master"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("master"));
       } else if (role === "client") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("client") && roles.length === 1)
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => {
+          const r = rolesMap.get(u.id) ?? ["client"];
+          return r.includes("client") && r.length === 1;
+        });
       }
 
-      logger.info("After role filter", { role, usersAfterFilter: filteredUsers.length });
+      logger.info("After role filter", { source: "users-routes", meta: { role, usersAfterFilter: filteredUsers.length } });
     }
 
     // Step 4: Sort
@@ -212,15 +187,12 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       let aVal: any = a[sortColumn as keyof typeof a];
       let bVal: any = b[sortColumn as keyof typeof b];
 
-      // Handle null/undefined
       if (aVal === null || aVal === undefined) aVal = "";
       if (bVal === null || bVal === undefined) bVal = "";
 
-      // Handle dates
       if (aVal instanceof Date) aVal = aVal.getTime();
       if (bVal instanceof Date) bVal = bVal.getTime();
 
-      // Handle strings
       if (typeof aVal === "string") aVal = aVal.toLowerCase();
       if (typeof bVal === "string") bVal = bVal.toLowerCase();
 
@@ -229,7 +201,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       return 0;
     });
 
-    logger.info("After sorting", { sortBy, sortOrder, count: filteredUsers.length });
+    logger.info("After sorting", { source: "users-routes", meta: { sortBy, sortOrder, count: filteredUsers.length } });
 
     // Step 5: Pagination
     const total = filteredUsers.length;
@@ -239,45 +211,38 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
 
     logger.info("Pagination applied", {
-      total,
-      page: pageNum,
-      pageSize: pageSizeNum,
-      offset,
-      usersOnThisPage: paginatedUsers.length,
+      source: "users-routes",
+      meta: { total, page: pageNum, pageSize: pageSizeNum, offset, usersOnThisPage: paginatedUsers.length },
     });
 
-    // Step 6: Transform to frontend format
-    const transformedUsers = await Promise.all(
-      paginatedUsers.map(async (user) => {
-        let userRoles: string[] = ["client"];
-        try {
-          userRoles = await getUserRoles(user.id);
-        } catch (error) {
-          logger.error("Failed to get roles during transform", error as Error, { userId: user.id });
-        }
+    // Step 6: Transform — reuse cached rolesMap, fetch only for paginated users if not already loaded
+    if (rolesMap.size === 0) {
+      rolesMap = await getBatchedUserRoles(paginatedUsers.map((u) => u.id));
+    }
 
-        return {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
-          phone: user.phoneNumber,
-          role: userRoles[0] || "client",
-          roles: userRoles,
-          status: user.isBlocked ? "blocked" : "active",
-          isBlocked: user.isBlocked || false,
-          blockReason: user.blockReason,
-          lastLoginAt: user.lastLoginAt,
-          lastActivityAt: user.lastActivityAt,
-          loginCount: user.loginCount || 0,
-          isEmailVerified: user.emailVerified || false,
-          isPhoneVerified: user.phoneVerified || false,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        };
-      })
-    );
+    const transformedUsers = paginatedUsers.map((user) => {
+      const userRoles = rolesMap.get(user.id) ?? ["client"];
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
+        phone: user.phoneNumber,
+        role: userRoles[0] || "client",
+        roles: userRoles,
+        status: user.isBlocked ? "blocked" : "active",
+        isBlocked: user.isBlocked || false,
+        blockReason: user.blockReason,
+        lastLoginAt: user.lastLoginAt,
+        lastActivityAt: user.lastActivityAt,
+        loginCount: user.loginCount || 0,
+        isEmailVerified: user.emailVerified || false,
+        isPhoneVerified: user.phoneVerified || false,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    });
 
     const response = {
       users: transformedUsers,
@@ -288,9 +253,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     };
 
     logger.info("Returning users response", {
-      usersCount: transformedUsers.length,
-      total: response.total,
-      totalPages: response.totalPages,
+      source: "users-routes",
+      meta: { usersCount: transformedUsers.length, total: response.total, totalPages: response.totalPages },
     });
 
     res.json(response);
@@ -372,7 +336,6 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Actually update database
     const [updated] = await db
       .update(users)
       .set({
@@ -383,7 +346,6 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       .where(eq(users.id, id))
       .returning();
 
-    // Log action
     await logAuditAction({
       actorUserId: userId,
       actorRole: req.admin!.roleName,
@@ -395,12 +357,11 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       req,
     });
 
-    // Send email notification (non-blocking)
     if (updated.email) {
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
       sendUserBlockedEmail(updated.email, userName, reason || "Violation of platform rules", adminName).catch((err) => {
-        logger.error("Failed to send block email", err, { userId: updated.id, source: "users-routes" });
+        logger.error("Failed to send block email", err, { source: "users-routes", meta: { userId: updated.id } });
       });
     }
 
@@ -423,18 +384,16 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Actually update database
     const [updated] = await db
       .update(users)
       .set({
         isBlocked: false,
-        blockReason: null,
+        blockReason: sql`NULL`,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))
       .returning();
 
-    // Log action
     await logAuditAction({
       actorUserId: userId,
       actorRole: req.admin!.roleName,
@@ -446,12 +405,11 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       req,
     });
 
-    // Send email notification (non-blocking)
     if (updated.email) {
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
       sendUserUnblockedEmail(updated.email, userName, adminName).catch((err) => {
-        logger.error("Failed to send unblock email", err, { userId: updated.id, source: "users-routes" });
+        logger.error("Failed to send unblock email", err, { source: "users-routes", meta: { userId: updated.id } });
       });
     }
 
@@ -474,8 +432,6 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Soft delete by marking as deleted (if you have such field)
-    // For now, just log the action
     await logAuditAction({
       actorUserId: userId,
       actorRole: req.admin!.roleName,
@@ -507,12 +463,6 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
       return res.status(400).json({ error: "Maximum 100 users can be blocked at once" });
     }
 
-    // Get users before update
-    const oldUsers = await db.select().from(users).where(
-      sql`${users.id} = ANY(${sql.array(userIds)})`
-    );
-
-    // Update all users
     const updated = await db
       .update(users)
       .set({
@@ -520,21 +470,16 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
         blockReason: reason || "Bulk blocked by admin",
         updatedAt: new Date(),
       })
-      .where(sql`${users.id} = ANY(${sql.array(userIds)})`)
+      .where(inArray(users.id, userIds))
       .returning();
 
-    // Log bulk action
     await logAuditAction({
       actorUserId: adminUserId,
       actorRole: req.admin!.roleName,
       action: "user.bulk_block",
       entityType: "user",
-      entityId: null,
-      meta: {
-        userIds,
-        count: updated.length,
-        reason,
-      },
+      entityId: undefined,
+      meta: { userIds, count: updated.length, reason },
       req,
     });
 
@@ -563,28 +508,23 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
       return res.status(400).json({ error: "Maximum 100 users can be unblocked at once" });
     }
 
-    // Update all users
     const updated = await db
       .update(users)
       .set({
         isBlocked: false,
-        blockReason: null,
+        blockReason: sql`NULL`,
         updatedAt: new Date(),
       })
-      .where(sql`${users.id} = ANY(${sql.array(userIds)})`)
+      .where(inArray(users.id, userIds))
       .returning();
 
-    // Log bulk action
     await logAuditAction({
       actorUserId: adminUserId,
       actorRole: req.admin!.roleName,
       action: "user.bulk_unblock",
       entityType: "user",
-      entityId: null,
-      meta: {
-        userIds,
-        count: updated.length,
-      },
+      entityId: undefined,
+      meta: { userIds, count: updated.length },
       req,
     });
 
@@ -599,39 +539,33 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
   }
 });
 
-// GET /api/admin/users/stats - Get user statistics
+// GET /api/admin/users/stats/overview - Get user statistics
 router.get("/stats/overview", requirePermission("users.read"), async (req, res) => {
   try {
-    // Total users
     const [totalResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users);
 
-    // Active users (not blocked)
     const [activeResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.isBlocked, false));
 
-    // Blocked users
     const [blockedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.isBlocked, true));
 
-    // Users by email verification
     const [emailVerifiedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.emailVerified, true));
 
-    // Users by phone verification
     const [phoneVerifiedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.phoneVerified, true));
 
-    // New users today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const [newTodayResult] = await db
@@ -639,7 +573,6 @@ router.get("/stats/overview", requirePermission("users.read"), async (req, res) 
       .from(users)
       .where(sql`${users.createdAt} >= ${today}`);
 
-    // Active users (logged in last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [activeWeekResult] = await db
       .select({ count: sql<number>`count(*)` })
