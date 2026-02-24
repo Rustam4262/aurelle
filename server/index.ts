@@ -43,7 +43,7 @@ app.use(
         "script-src": [
           "'self'",
           ...(process.env.NODE_ENV !== "production"
-            ? ["'unsafe-inline'", "'unsafe-eval'"]
+            ? ["'unsafe-inline'", "'unsafe-eval'"] // NODE_ENV !== production
             : []),
           "https://www.googletagmanager.com",
           "https://www.google-analytics.com",
