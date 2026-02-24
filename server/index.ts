@@ -27,17 +27,43 @@ import helmet from "helmet";
 setupSentryMiddleware(app);
 
 // Security headers with helmet
+// NOTE: mirrors configs/nginx-https.conf CSP (nginx applies it to HTML via try_files,
+// helmet applies it only to /api/* via proxy_pass).
+// Keep both in sync. Verify with: ./scripts/verify-csp.sh https://aurelle.uz
 app.use(
   helmet({
     contentSecurityPolicy: {
+      useDefaults: false,
       directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'", "https://api-maps.yandex.ru", "https://sentry.io"],
+        "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "object-src": ["'none'"],
+        "frame-ancestors": ["'none'"],
+        // In development Vite uses inline scripts and new Function() for HMR
+        "script-src": [
+          "'self'",
+          ...(process.env.NODE_ENV !== "production"
+            ? ["'unsafe-inline'", "'unsafe-eval'"] // NODE_ENV !== production
+            : []),
+          "https://www.googletagmanager.com",
+          "https://www.google-analytics.com",
+        ],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+        "img-src": ["'self'", "data:", "https:"],
+        "connect-src": [
+          "'self'",
+          "https://api-maps.yandex.ru",
+          "https://*.sentry.io",
+          "https://www.google-analytics.com",
+          "https://www.googletagmanager.com",
+          "wss:",
+        ],
+        "frame-src": ["https://www.googletagmanager.com"],
       },
     },
+    // frame-ancestors 'none' в CSP перекрывает X-Frame-Options, но оставляем для legacy
+    frameguard: { action: "deny" },
     crossOriginEmbedderPolicy: false, // Needed for external resources
   }),
 );
@@ -70,11 +96,7 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-// Import unified logger
-import { log, logger } from "./lib/logger";
-
-// Export for backward compatibility
-export { log, logger };
+import { logger } from "./lib/logger";
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -95,7 +117,7 @@ app.use((req, res, next) => {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
-      log(logLine);
+      logger.info(logLine);
     }
   });
 
@@ -159,7 +181,7 @@ app.use((req, res, next) => {
       reusePort: process.platform !== "win32",
     },
     () => {
-      log(`serving on port ${port}`);
+      logger.info(`serving on port ${port}`);
 
       // Start cron jobs
       startSanctionExpiryJob();
