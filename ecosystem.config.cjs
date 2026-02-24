@@ -12,6 +12,12 @@ module.exports = {
         NODE_ENV: "production",
         PORT: 5000,
       },
+      env_staging: {
+        NODE_ENV: "production", // same build mode, different env label
+        PORT: 5001,             // matches nginx-https.conf staging proxy_pass
+        SENTRY_ENVIRONMENT: "staging",
+        VITE_SENTRY_ENVIRONMENT: "staging",
+      },
 
       // Auto restart settings
       max_memory_restart: "1G",
@@ -42,10 +48,20 @@ module.exports = {
       user: "deploy",
       host: "your-server-ip",
       ref: "origin/main",
-      repo: "git@github.com:your-username/aurelle.git",
+      repo: "git@github.com:Rustam4262/aurelle.git",
       path: "/var/www/aurelle",
       "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env production && pm2 save",
+        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env production --name aurelle && pm2 save",
+      "pre-setup": "apt-get install git -y",
+    },
+    staging: {
+      user: "deploy",
+      host: "your-server-ip",
+      ref: "origin/main",
+      repo: "git@github.com:Rustam4262/aurelle.git",
+      path: "/var/www/aurelle-staging",
+      "post-deploy":
+        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env staging --name aurelle-staging && pm2 save",
       "pre-setup": "apt-get install git -y",
     },
   },
