@@ -59,14 +59,6 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  spam: "Spam",
-  fraud: "Fraud",
-  abuse: "Abuse",
-  quality: "Quality",
-  other: "Other",
-};
-
 export default function AdminComplaints() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -96,10 +88,10 @@ export default function AdminComplaints() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/complaints"] });
-      toast({ title: "Success", description: "Complaint assigned to you" });
+      toast({ title: t("common.success"), description: t("admin.complaints.toasts.assigned") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to assign complaint", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.complaints.toasts.assignFailed"), variant: "destructive" });
     },
   });
 
@@ -111,14 +103,14 @@ export default function AdminComplaints() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/complaints"] });
-      toast({ title: "Success", description: "Complaint resolved" });
+      toast({ title: t("common.success"), description: t("admin.complaints.toasts.resolved") });
       setShowResolveDialog(false);
       setSelectedComplaint(null);
       setResolutionComment("");
       setDecision("no_action");
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to resolve complaint", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.complaints.toasts.resolveFailed"), variant: "destructive" });
     },
   });
 
@@ -132,11 +124,11 @@ export default function AdminComplaints() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/complaints"] });
-      toast({ title: "Success", description: "Complaint rejected" });
+      toast({ title: t("common.success"), description: t("admin.complaints.toasts.rejected") });
       setSelectedComplaint(null);
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to reject complaint", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.complaints.toasts.rejectFailed"), variant: "destructive" });
     },
   });
 
@@ -157,7 +149,7 @@ export default function AdminComplaints() {
 
   const handleReject = () => {
     if (!selectedComplaint || !resolutionComment.trim()) {
-      toast({ title: "Error", description: "Please provide a rejection reason", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.complaints.toasts.reasonRequired"), variant: "destructive" });
       return;
     }
     rejectMutation.mutate({
@@ -181,8 +173,8 @@ export default function AdminComplaints() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">{t("marketplace.admin.complaints.title") || "Complaint Moderation"}</h1>
-        <p className="text-muted-foreground mt-2">{t("marketplace.admin.complaints.subtitle") || "Review and resolve user complaints"}</p>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.complaints.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("admin.complaints.subtitle")}</p>
       </div>
 
       {/* Filters */}
@@ -190,29 +182,29 @@ export default function AdminComplaints() {
         <div className="w-48">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("admin.complaints.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="in_review">In Review</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="all">{t("admin.complaints.allStatus")}</SelectItem>
+              <SelectItem value="open">{t("admin.complaints.status.open")}</SelectItem>
+              <SelectItem value="in_review">{t("admin.complaints.status.in_review")}</SelectItem>
+              <SelectItem value="resolved">{t("admin.complaints.status.resolved")}</SelectItem>
+              <SelectItem value="rejected">{t("admin.complaints.status.rejected")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="w-48">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by category" />
+              <SelectValue placeholder={t("admin.complaints.filterByCategory")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="spam">Spam</SelectItem>
-              <SelectItem value="fraud">Fraud</SelectItem>
-              <SelectItem value="abuse">Abuse</SelectItem>
-              <SelectItem value="quality">Quality</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="all">{t("admin.complaints.allCategories")}</SelectItem>
+              <SelectItem value="spam">{t("admin.complaints.categories.spam")}</SelectItem>
+              <SelectItem value="fraud">{t("admin.complaints.categories.fraud")}</SelectItem>
+              <SelectItem value="abuse">{t("admin.complaints.categories.abuse")}</SelectItem>
+              <SelectItem value="quality">{t("admin.complaints.categories.quality")}</SelectItem>
+              <SelectItem value="other">{t("admin.complaints.categories.other")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -222,24 +214,24 @@ export default function AdminComplaints() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5" />
-            {t("marketplace.admin.complaints.allComplaints") || "All Complaints"}
+            {t("admin.complaints.allComplaints")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t("admin.complaints.loading")}</div>
           ) : !data?.complaints || data.complaints.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No complaints</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.complaints.noComplaints")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Complainant</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("admin.complaints.table.complainant")}</TableHead>
+                  <TableHead>{t("admin.complaints.table.category")}</TableHead>
+                  <TableHead>{t("admin.complaints.table.target")}</TableHead>
+                  <TableHead>{t("admin.complaints.table.status")}</TableHead>
+                  <TableHead>{t("admin.complaints.table.date")}</TableHead>
+                  <TableHead className="text-right">{t("admin.complaints.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,14 +241,16 @@ export default function AdminComplaints() {
                       <p className="font-medium">
                         {complainantFirstName && complainantLastName
                           ? `${complainantFirstName} ${complainantLastName}`
-                          : complainantEmail || "Anonymous"}
+                          : complainantEmail || t("admin.complaints.anonymousFallback")}
                       </p>
                       {complainantEmail && (
                         <p className="text-xs text-muted-foreground">{complainantEmail}</p>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{CATEGORY_LABELS[complaint.category] || complaint.category}</Badge>
+                      <Badge variant="outline">
+                        {t(`admin.complaints.categories.${complaint.category}`, complaint.category)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <p className="text-sm">
@@ -268,7 +262,7 @@ export default function AdminComplaints() {
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_COLORS[complaint.status]}>
-                        {complaint.status.replace("_", " ")}
+                        {t(`admin.complaints.status.${complaint.status}`, complaint.status.replace("_", " "))}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -284,7 +278,7 @@ export default function AdminComplaints() {
                             disabled={assignMutation.isPending}
                           >
                             <UserCheck className="h-4 w-4 mr-1" />
-                            Assign
+                            {t("admin.complaints.buttons.assign")}
                           </Button>
                         )}
                         {complaint.status === "in_review" && (
@@ -295,7 +289,7 @@ export default function AdminComplaints() {
                               onClick={() => openResolveDialog({ complaint, complainantFirstName, complainantLastName, complainantEmail })}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Resolve
+                              {t("admin.complaints.buttons.resolve")}
                             </Button>
                             <Button
                               variant="outline"
@@ -303,7 +297,7 @@ export default function AdminComplaints() {
                               onClick={() => openRejectDialog({ complaint, complainantFirstName, complainantLastName, complainantEmail })}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
-                              Reject
+                              {t("admin.complaints.buttons.reject")}
                             </Button>
                           </>
                         )}
@@ -321,12 +315,12 @@ export default function AdminComplaints() {
       <Dialog open={showResolveDialog} onOpenChange={setShowResolveDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Resolve Complaint</DialogTitle>
+            <DialogTitle>{t("admin.complaints.resolveDialog.title")}</DialogTitle>
             <DialogDescription>
               {selectedComplaint && (
                 <>
                   <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">Description:</p>
+                    <p className="text-sm font-medium">{t("admin.complaints.resolveDialog.description")}</p>
                     <p className="text-sm mt-1">{selectedComplaint.complaint.description}</p>
                   </div>
                 </>
@@ -336,24 +330,24 @@ export default function AdminComplaints() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="decision">Decision</Label>
+              <Label htmlFor="decision">{t("admin.complaints.resolveDialog.decisionLabel")}</Label>
               <Select value={decision} onValueChange={setDecision}>
                 <SelectTrigger id="decision">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="no_action">No Action</SelectItem>
-                  <SelectItem value="warning">Warning Issued</SelectItem>
-                  <SelectItem value="sanction_applied">Sanction Applied</SelectItem>
+                  <SelectItem value="no_action">{t("admin.complaints.resolveDialog.decisions.none")}</SelectItem>
+                  <SelectItem value="warning">{t("admin.complaints.resolveDialog.decisions.warning")}</SelectItem>
+                  <SelectItem value="sanction_applied">{t("admin.complaints.resolveDialog.decisions.sanction")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="comment">Resolution Comment</Label>
+              <Label htmlFor="comment">{t("admin.complaints.resolveDialog.commentLabel")}</Label>
               <Textarea
                 id="comment"
-                placeholder="Explain the resolution decision..."
+                placeholder={t("admin.complaints.resolveDialog.commentPlaceholder")}
                 value={resolutionComment}
                 onChange={(e) => setResolutionComment(e.target.value)}
                 rows={4}
@@ -363,10 +357,10 @@ export default function AdminComplaints() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowResolveDialog(false)}>
-              Cancel
+              {t("admin.complaints.buttons.cancel")}
             </Button>
             <Button onClick={handleResolve} disabled={resolveMutation.isPending}>
-              {resolveMutation.isPending ? "Resolving..." : "Resolve Complaint"}
+              {resolveMutation.isPending ? t("admin.complaints.buttons.resolving") : t("admin.complaints.resolveDialog.resolveButton")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -376,18 +370,18 @@ export default function AdminComplaints() {
       <Dialog open={!!selectedComplaint && !showResolveDialog} onOpenChange={() => setSelectedComplaint(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Complaint</DialogTitle>
+            <DialogTitle>{t("admin.complaints.rejectDialog.title")}</DialogTitle>
             <DialogDescription>
-              Provide a reason for rejecting this complaint.
+              {t("admin.complaints.rejectDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="reject-reason">Rejection Reason</Label>
+              <Label htmlFor="reject-reason">{t("admin.complaints.rejectDialog.reasonLabel")}</Label>
               <Textarea
                 id="reject-reason"
-                placeholder="Explain why this complaint is being rejected..."
+                placeholder={t("admin.complaints.rejectDialog.reasonPlaceholder")}
                 value={resolutionComment}
                 onChange={(e) => setResolutionComment(e.target.value)}
                 rows={4}
@@ -397,10 +391,10 @@ export default function AdminComplaints() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedComplaint(null)}>
-              Cancel
+              {t("admin.complaints.buttons.cancel")}
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending || !resolutionComment.trim()}>
-              {rejectMutation.isPending ? "Rejecting..." : "Reject Complaint"}
+              {rejectMutation.isPending ? t("admin.complaints.buttons.rejecting") : t("admin.complaints.rejectDialog.rejectButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

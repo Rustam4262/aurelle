@@ -185,7 +185,7 @@ export default function AdminDashboard() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Activity className="h-4 w-4 text-green-600 animate-pulse" />
-            Online Users
+            {t("admin.dashboard.onlineUsers")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
             {onlineData?.onlineUsers?.toLocaleString() || 0}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Active in last 10 minutes • Updates every 30s
+            {t("admin.dashboard.onlineSubtitle")}
           </p>
         </CardContent>
       </Card>
@@ -201,8 +201,8 @@ export default function AdminDashboard() {
       {/* User Growth Chart */}
       <Card className="col-span-full lg:col-span-2">
         <CardHeader>
-          <CardTitle>User Growth (Last 30 Days)</CardTitle>
-          <CardDescription>Daily new user registrations</CardDescription>
+          <CardTitle>{t("admin.dashboard.userGrowthTitle")}</CardTitle>
+          <CardDescription>{t("admin.dashboard.userGrowthSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           {userGrowth && userGrowth.growth.length > 0 ? (
@@ -222,14 +222,14 @@ export default function AdminDashboard() {
                 <YAxis />
                 <Tooltip
                   labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                  formatter={(value: number) => [value, "New Users"]}
+                  formatter={(value: number) => [value, t("admin.dashboard.newUsersLabel")]}
                 />
                 <Area type="monotone" dataKey="count" stroke="#3b82f6" fillOpacity={1} fill="url(#colorUsers)" />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              No growth data available
+              {t("admin.dashboard.noGrowthData")}
             </div>
           )}
         </CardContent>
@@ -240,9 +240,9 @@ export default function AdminDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Platform Health
+            {t("admin.dashboard.platformHealth")}
           </CardTitle>
-          <CardDescription>Key performance indicators</CardDescription>
+          <CardDescription>{t("admin.dashboard.platformHealthSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           {platformHealth ? (
@@ -251,8 +251,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-blue-600" />
                   <div>
-                    <p className="text-sm font-medium">Active Sessions (24h)</p>
-                    <p className="text-xs text-muted-foreground">Logged in users</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.activeSessions")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.activeSessDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-blue-600">
@@ -264,8 +264,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-purple-600" />
                   <div>
-                    <p className="text-sm font-medium">Avg Session</p>
-                    <p className="text-xs text-muted-foreground">Duration in minutes</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.avgSession")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.avgSessDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-purple-600">
@@ -277,8 +277,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-green-600" />
                   <div>
-                    <p className="text-sm font-medium">Email Verified</p>
-                    <p className="text-xs text-muted-foreground">Verification rate</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.emailVerified")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.emailVerifDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-green-600">
@@ -290,8 +290,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-teal-600" />
                   <div>
-                    <p className="text-sm font-medium">Phone Verified</p>
-                    <p className="text-xs text-muted-foreground">Verification rate</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.phoneVerified")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.phoneVerifDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-teal-600">
@@ -303,8 +303,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-orange-600" />
                   <div>
-                    <p className="text-sm font-medium">Pending Complaints</p>
-                    <p className="text-xs text-muted-foreground">Require attention</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.pendingComplaints")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.pendingComplDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-orange-600">
@@ -316,8 +316,8 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-red-600" />
                   <div>
-                    <p className="text-sm font-medium">Blocked Users</p>
-                    <p className="text-xs text-muted-foreground">Percentage blocked</p>
+                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.blockedUsers")}</p>
+                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.blockedUsersDesc")}</p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-red-600">

@@ -88,9 +88,9 @@ export default function AdminActivity() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">User Activity</h1>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.activity.title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Monitor user sessions and activity in real-time
+          {t("admin.activity.subtitle")}
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default function AdminActivity() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-green-600" />
-            Currently Online
+            {t("admin.activity.currentlyOnline")}
             {onlineData && (
               <Badge variant="default" className="ml-2">
                 {onlineData.count}
@@ -109,10 +109,10 @@ export default function AdminActivity() {
         </CardHeader>
         <CardContent>
           {onlineLoading ? (
-            <div className="text-center py-8">Loading online users...</div>
+            <div className="text-center py-8">{t("admin.activity.loadingOnline")}</div>
           ) : !onlineData?.onlineUsers || onlineData.onlineUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No users currently online
+              {t("admin.activity.noUsersOnline")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -139,11 +139,11 @@ export default function AdminActivity() {
                   <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     <span>
-                      Active {formatDistanceToNow(new Date(user.lastActivityAt), { addSuffix: true })}
+                      {t("admin.activity.activePrefix")} {formatDistanceToNow(new Date(user.lastActivityAt), { addSuffix: true })}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Logged in {formatDistanceToNow(new Date(user.loginAt), { addSuffix: true })}
+                    {t("admin.activity.loggedInPrefix")} {formatDistanceToNow(new Date(user.loginAt), { addSuffix: true })}
                   </div>
                 </div>
               ))}
@@ -158,16 +158,16 @@ export default function AdminActivity() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              User Sessions
+              {t("admin.activity.userSessions")}
             </CardTitle>
             <div className="w-48">
               <Select value={activeOnlyFilter} onValueChange={setActiveOnlyFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter sessions" />
+                  <SelectValue placeholder={t("admin.activity.filterSessions")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="false">All Sessions</SelectItem>
-                  <SelectItem value="true">Active Only</SelectItem>
+                  <SelectItem value="false">{t("admin.activity.allSessions")}</SelectItem>
+                  <SelectItem value="true">{t("admin.activity.activeOnly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -175,23 +175,23 @@ export default function AdminActivity() {
         </CardHeader>
         <CardContent>
           {sessionsLoading ? (
-            <div className="text-center py-12">Loading sessions...</div>
+            <div className="text-center py-12">{t("admin.activity.loadingSessions")}</div>
           ) : !sessionsData?.sessions || sessionsData.sessions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No sessions found</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.activity.noSessions")}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Login Time</TableHead>
-                    <TableHead>Last Activity</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Browser</TableHead>
-                    <TableHead>IP Address</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.activity.table.user")}</TableHead>
+                    <TableHead>{t("admin.activity.table.status")}</TableHead>
+                    <TableHead>{t("admin.activity.table.loginTime")}</TableHead>
+                    <TableHead>{t("admin.activity.table.lastActivity")}</TableHead>
+                    <TableHead>{t("admin.activity.table.duration")}</TableHead>
+                    <TableHead>{t("admin.activity.table.device")}</TableHead>
+                    <TableHead>{t("admin.activity.table.browser")}</TableHead>
+                    <TableHead>{t("admin.activity.table.ipAddress")}</TableHead>
+                    <TableHead className="text-right">{t("admin.activity.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -202,7 +202,7 @@ export default function AdminActivity() {
                           <p className="font-medium">
                             {userFirstName && userLastName
                               ? `${userFirstName} ${userLastName}`
-                              : userEmail || "User"}
+                              : userEmail || t("admin.activity.table.user")}
                           </p>
                           {userEmail && (
                             <p className="text-xs text-muted-foreground">{userEmail}</p>
@@ -211,10 +211,10 @@ export default function AdminActivity() {
                       </TableCell>
                       <TableCell>
                         {session.logoutAt ? (
-                          <Badge variant="outline">Ended</Badge>
+                          <Badge variant="outline">{t("admin.activity.status.ended")}</Badge>
                         ) : (
                           <Badge variant="default" className="bg-green-600">
-                            Active
+                            {t("admin.activity.status.active")}
                           </Badge>
                         )}
                       </TableCell>
@@ -248,7 +248,7 @@ export default function AdminActivity() {
                         <div className="flex items-center justify-end gap-2">
                           <Badge variant="outline" className="text-xs">
                             <TrendingUp className="h-3 w-3 mr-1" />
-                            {session.actionsCount} actions
+                            {session.actionsCount} {t("admin.activity.actionsCount")}
                           </Badge>
                         </div>
                       </TableCell>

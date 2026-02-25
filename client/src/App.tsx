@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { Loader2 } from "lucide-react";
 
 // Eager load Home page (first page users see)
@@ -86,6 +87,7 @@ function App() {
           <TooltipProvider>
             <SkipToContent />
             <Toaster />
+            <PWAInstallPrompt />
             <Router />
           </TooltipProvider>
         </QueryClientProvider>

@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { Search, CheckCircle, XCircle, MapPin } from "lucide-react";
 
 interface Salon {
@@ -28,6 +29,7 @@ interface Salon {
 export default function AdminSalons() {
   const [search, setSearch] = useState("");
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data, isLoading } = useQuery<{ salons: Salon[] }>({
     queryKey: ["/api/admin/salons", { limit: 50 }],
@@ -37,11 +39,11 @@ export default function AdminSalons() {
     mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
-      toast({ title: "Salon verified successfully" });
+      toast({ title: t("admin.salons.toasts.verifiedSuccess") });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to verify salon",
+        title: t("admin.salons.toasts.verifyFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -52,11 +54,11 @@ export default function AdminSalons() {
     mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/unverify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
-      toast({ title: "Salon unverified" });
+      toast({ title: t("admin.salons.toasts.unverifiedSuccess") });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to unverify salon",
+        title: t("admin.salons.toasts.unverifyFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -71,8 +73,8 @@ export default function AdminSalons() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">Salon Management</h1>
-        <p className="text-muted-foreground mt-2">Manage and verify salons</p>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.salons.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("admin.salons.subtitle")}</p>
       </div>
 
       <Card>
@@ -80,7 +82,7 @@ export default function AdminSalons() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search salons..."
+              placeholder={t("admin.salons.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -89,18 +91,18 @@ export default function AdminSalons() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.salons.loading")}</div>
           ) : !filtered || filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No salons found</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.salons.noSalons")}</div>
           ) : (
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Salon</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("admin.salons.table.salon")}</TableHead>
+                    <TableHead>{t("admin.salons.table.location")}</TableHead>
+                    <TableHead>{t("admin.salons.table.status")}</TableHead>
+                    <TableHead className="text-right">{t("admin.salons.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -118,7 +120,7 @@ export default function AdminSalons() {
                           <div>
                             <p className="font-medium">{name}</p>
                             <p className="text-sm text-muted-foreground">
-                              ID: {salon.id.slice(0, 8)}...
+                              {t("admin.salons.idPrefix")} {salon.id.slice(0, 8)}...
                             </p>
                           </div>
                         </TableCell>
@@ -132,12 +134,12 @@ export default function AdminSalons() {
                           {salon.isVerified ? (
                             <Badge className="bg-green-100 text-green-800">
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              Verified
+                              {t("admin.salons.verified")}
                             </Badge>
                           ) : (
                             <Badge variant="outline">
                               <XCircle className="h-3 w-3 mr-1" />
-                              Not Verified
+                              {t("admin.salons.notVerified")}
                             </Badge>
                           )}
                         </TableCell>
@@ -149,7 +151,7 @@ export default function AdminSalons() {
                               onClick={() => unverifyMutation.mutate(salon.id)}
                               disabled={unverifyMutation.isPending}
                             >
-                              Unverify
+                              {t("admin.salons.unverify")}
                             </Button>
                           ) : (
                             <Button
@@ -158,7 +160,7 @@ export default function AdminSalons() {
                               onClick={() => verifyMutation.mutate(salon.id)}
                               disabled={verifyMutation.isPending}
                             >
-                              Verify
+                              {t("admin.salons.verify")}
                             </Button>
                           )}
                         </TableCell>

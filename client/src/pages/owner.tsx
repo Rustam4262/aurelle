@@ -100,7 +100,7 @@ export default function OwnerPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t("common.loading")}</div>
       </div>
     );
   }
@@ -127,12 +127,12 @@ export default function OwnerPage() {
         <div className="max-w-md mx-auto px-6 py-16">
           <Card className="p-8 text-center">
             <Store className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="font-serif text-xl text-foreground mb-2">Register Your Salon</h2>
+            <h2 className="font-serif text-xl text-foreground mb-2">{t("owner.registerSalon")}</h2>
             <p className="text-muted-foreground mb-6">
-              Sign in to register your salon and start attracting new clients.
+              {t("owner.registerSalonDesc")}
             </p>
             <Button onClick={goToAuth} className="w-full" data-testid="button-login-owner">
-              Sign In to Continue
+              {t("owner.signInToContinue")}
             </Button>
           </Card>
         </div>

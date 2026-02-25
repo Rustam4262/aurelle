@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { exportToExcel, exportToPDF, formatDataForExcel } from "@/lib/export";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +111,7 @@ const STATUS_COLORS = {
 };
 
 export default function AdminUsers() {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   // Search & Filters
@@ -183,10 +185,10 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setBlockDialog({ open: false, user: null });
       setBlockReason("");
-      toast({ title: "User blocked successfully" });
+      toast({ title: t("admin.users.toasts.blockedSuccess") });
     },
     onError: () => {
-      toast({ title: "Failed to block user", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.blockFailed"), variant: "destructive" });
     },
   });
 
@@ -197,10 +199,10 @@ export default function AdminUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "User unblocked successfully" });
+      toast({ title: t("admin.users.toasts.unblockedSuccess") });
     },
     onError: () => {
-      toast({ title: "Failed to unblock user", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.unblockFailed"), variant: "destructive" });
     },
   });
 
@@ -212,10 +214,10 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setDeleteDialog({ open: false, user: null });
-      toast({ title: "User deleted successfully" });
+      toast({ title: t("admin.users.toasts.deletedSuccess") });
     },
     onError: () => {
-      toast({ title: "Failed to delete user", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.deleteFailed"), variant: "destructive" });
     },
   });
 
@@ -231,13 +233,13 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setShowSeedDialog(false);
       toast({
-        title: "Test users created",
+        title: t("admin.users.toasts.testCreated"),
         description: `Created ${data.created} users, skipped ${data.skipped} existing`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create test users",
+        title: t("admin.users.toasts.testFailed"),
         description: error.message || "Unknown error",
         variant: "destructive",
       });
@@ -246,7 +248,7 @@ export default function AdminUsers() {
 
   const handleBlock = () => {
     if (!blockDialog.user || !blockReason.trim()) {
-      toast({ title: "Please provide a reason", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.pleaseProvideReason"), variant: "destructive" });
       return;
     }
     blockUserMutation.mutate({ userId: blockDialog.user.id, reason: blockReason });
@@ -297,7 +299,7 @@ export default function AdminUsers() {
   // Export to CSV
   const exportToExcelFile = () => {
     if (!data?.users || data.users.length === 0) {
-      toast({ title: "No data to export", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
       return;
     }
 
@@ -321,13 +323,13 @@ export default function AdminUsers() {
     const filename = `users_export_${format(new Date(), "yyyy-MM-dd_HHmm")}`;
     exportToExcel(exportData, filename, "Users");
 
-    toast({ title: "Export successful", description: `Exported ${data.users.length} users to Excel` });
+    toast({ title: t("admin.users.toasts.exportSuccess"), description: `Exported ${data.users.length} users to Excel` });
   };
 
   // Export to PDF
   const exportToPDFFile = () => {
     if (!data?.users || data.users.length === 0) {
-      toast({ title: "No data to export", variant: "destructive" });
+      toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
       return;
     }
 
@@ -348,7 +350,7 @@ export default function AdminUsers() {
       orientation: "landscape",
     });
 
-    toast({ title: "PDF export successful", description: `Exported ${data.users.length} users to PDF` });
+    toast({ title: t("admin.users.toasts.exportSuccess"), description: `Exported ${data.users.length} users to PDF` });
   };
 
   // Filter users by verification status
@@ -375,24 +377,24 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-semibold text-foreground">User Management</h1>
+          <h1 className="text-3xl font-serif font-semibold text-foreground">{t("admin.users.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage all platform users • {data?.total || 0} total users
-            {selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
+            {t("admin.users.subtitle")} {data?.total || 0} {t("admin.users.totalCount")}
+            {selectedUsers.size > 0 && ` • ${selectedUsers.size} ${t("admin.users.selectedCount")}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportToExcelFile} disabled={!data?.users || data.users.length === 0}>
             <Download className="h-4 w-4 mr-2" />
-            Export Excel
+            {t("admin.users.exportExcel")}
           </Button>
           <Button variant="outline" size="sm" onClick={exportToPDFFile} disabled={!data?.users || data.users.length === 0}>
             <FileText className="h-4 w-4 mr-2" />
-            Export PDF
+            {t("admin.users.exportPdf")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
+            {t("admin.users.refresh")}
           </Button>
         </div>
       </div>
@@ -404,11 +406,11 @@ export default function AdminUsers() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CheckSquare className="h-5 w-5 text-primary" />
-                <span className="font-medium">{selectedUsers.size} user(s) selected</span>
+                <span className="font-medium">{selectedUsers.size} {t("admin.users.selectedCount")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={clearSelection}>
-                  Clear Selection
+                  {t("admin.users.clearSelection")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -421,7 +423,7 @@ export default function AdminUsers() {
                   }}
                 >
                   <Ban className="h-4 w-4 mr-2" />
-                  Block Selected
+                  {t("admin.users.bulkActions")}
                 </Button>
               </div>
             </div>
@@ -436,7 +438,7 @@ export default function AdminUsers() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("admin.users.stats.totalUsers")}</p>
                   <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
                 <UsersIcon className="h-8 w-8 text-muted-foreground" />
@@ -448,7 +450,7 @@ export default function AdminUsers() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("admin.users.stats.active")}</p>
                   <p className="text-2xl font-bold text-green-600">{stats.active}</p>
                 </div>
                 <UserCheck className="h-8 w-8 text-green-600" />
@@ -460,7 +462,7 @@ export default function AdminUsers() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Blocked</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t("admin.users.stats.blocked")}</p>
                   <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
                 </div>
                 <UserX className="h-8 w-8 text-red-600" />
@@ -471,22 +473,22 @@ export default function AdminUsers() {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">By Role</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("admin.users.stats.byRole")}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span>Clients:</span>
+                    <span>{t("admin.users.stats.clients")}</span>
                     <span className="font-bold">{stats.byRole.client}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Owners:</span>
+                    <span>{t("admin.users.stats.owners")}</span>
                     <span className="font-bold">{stats.byRole.owner}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Masters:</span>
+                    <span>{t("admin.users.stats.masters")}</span>
                     <span className="font-bold">{stats.byRole.master}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Admins:</span>
+                    <span>{t("admin.users.stats.admins")}</span>
                     <span className="font-bold">{stats.byRole.admin}</span>
                   </div>
                 </div>
@@ -501,7 +503,7 @@ export default function AdminUsers() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Search & Filters
+            {t("admin.users.searchFilters")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -510,7 +512,7 @@ export default function AdminUsers() {
             <div className="relative md:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={t("admin.users.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -528,11 +530,11 @@ export default function AdminUsers() {
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="master">Master</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="all">{t("admin.users.roles.allRoles")}</SelectItem>
+                <SelectItem value="client">{t("admin.users.roles.client")}</SelectItem>
+                <SelectItem value="owner">{t("admin.users.roles.owner")}</SelectItem>
+                <SelectItem value="master">{t("admin.users.roles.master")}</SelectItem>
+                <SelectItem value="admin">{t("admin.users.roles.admin")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -542,9 +544,9 @@ export default function AdminUsers() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="all">{t("admin.users.statuses.allStatuses")}</SelectItem>
+                <SelectItem value="active">{t("admin.users.statuses.active")}</SelectItem>
+                <SelectItem value="blocked">{t("admin.users.statuses.blocked")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -554,19 +556,19 @@ export default function AdminUsers() {
                 <SelectValue placeholder="Verification" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">{t("admin.users.verification.all")}</SelectItem>
                 <SelectItem value="verified">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-green-600" />
-                    Fully Verified
+                    {t("admin.users.verification.fullyVerified")}
                   </div>
                 </SelectItem>
-                <SelectItem value="email-verified">Email Verified</SelectItem>
-                <SelectItem value="phone-verified">Phone Verified</SelectItem>
+                <SelectItem value="email-verified">{t("admin.users.verification.emailVerified")}</SelectItem>
+                <SelectItem value="phone-verified">{t("admin.users.verification.phoneVerified")}</SelectItem>
                 <SelectItem value="unverified">
                   <div className="flex items-center gap-2">
                     <ShieldX className="h-4 w-4 text-red-600" />
-                    Unverified
+                    {t("admin.users.verification.unverified")}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -581,28 +583,28 @@ export default function AdminUsers() {
           {error ? (
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Failed to load users</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("admin.users.loadError")}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                There was an error loading the user list. Please try again.
+                {t("admin.users.loadErrorDesc")}
               </p>
               <Button onClick={() => refetch()} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
+                {t("admin.users.tryAgain")}
               </Button>
             </div>
           ) : isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Loading users...</p>
+              <p className="text-muted-foreground">{t("admin.users.loadingUsers")}</p>
             </div>
           ) : !filteredUsers || filteredUsers.length === 0 ? (
             <div className="text-center py-12">
               <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No users found</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("admin.users.noUsersFound")}</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {search || roleFilter !== "all" || statusFilter !== "all"
-                  ? "Try adjusting your filters or search query"
-                  : "No users have registered yet. Users will appear here once they sign up."}
+                  ? t("admin.users.noUsersFiltered")
+                  : t("admin.users.noUsersEmpty")}
               </p>
               <div className="flex items-center gap-3 justify-center">
                 {(search || roleFilter !== "all" || statusFilter !== "all") && (
@@ -615,13 +617,13 @@ export default function AdminUsers() {
                       setPage(1);
                     }}
                   >
-                    Clear Filters
+                    {t("admin.users.clearFilters")}
                   </Button>
                 )}
                 {!search && roleFilter === "all" && statusFilter === "all" && (
                   <Button variant="default" onClick={() => setShowSeedDialog(true)}>
                     <UsersIcon className="h-4 w-4 mr-2" />
-                    Create Test Users
+                    {t("admin.users.createTestUsers")}
                   </Button>
                 )}
               </div>
@@ -653,11 +655,11 @@ export default function AdminUsers() {
                           onClick={() => toggleSort("fullName")}
                           className="font-semibold"
                         >
-                          User
+                          {t("admin.users.table.user")}
                           <ArrowUpDown className="ml-2 h-3 w-3" />
                         </Button>
                       </TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>{t("admin.users.table.contact")}</TableHead>
                       <TableHead>
                         <Button
                           variant="ghost"
@@ -665,7 +667,7 @@ export default function AdminUsers() {
                           onClick={() => toggleSort("role")}
                           className="font-semibold"
                         >
-                          Role
+                          {t("admin.users.table.role")}
                           <ArrowUpDown className="ml-2 h-3 w-3" />
                         </Button>
                       </TableHead>
@@ -676,11 +678,11 @@ export default function AdminUsers() {
                           onClick={() => toggleSort("status")}
                           className="font-semibold"
                         >
-                          Status
+                          {t("admin.users.table.status")}
                           <ArrowUpDown className="ml-2 h-3 w-3" />
                         </Button>
                       </TableHead>
-                      <TableHead>Verification</TableHead>
+                      <TableHead>{t("admin.users.table.verification")}</TableHead>
                       <TableHead>
                         <Button
                           variant="ghost"
@@ -688,11 +690,11 @@ export default function AdminUsers() {
                           onClick={() => toggleSort("createdAt")}
                           className="font-semibold"
                         >
-                          Joined
+                          {t("admin.users.table.joined")}
                           <ArrowUpDown className="ml-2 h-3 w-3" />
                         </Button>
                       </TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right">{t("admin.users.table.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -714,7 +716,7 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{user.fullName || "No name"}</p>
+                            <p className="font-medium">{user.fullName || t("admin.users.table.noName")}</p>
                             <p className="text-sm text-muted-foreground">
                               ID: {user.id.slice(0, 8)}...
                             </p>
@@ -752,11 +754,11 @@ export default function AdminUsers() {
                                 variant="outline"
                                 className="bg-green-50 text-green-700 border-green-200 text-xs"
                               >
-                                Email ✓
+                                {t("admin.users.table.emailVerified")}
                               </Badge>
                             ) : (
                               <Badge variant="outline" className="bg-gray-50 text-xs">
-                                Email ✗
+                                {t("admin.users.table.emailUnverified")}
                               </Badge>
                             )}
                             {user.phone &&
@@ -765,11 +767,11 @@ export default function AdminUsers() {
                                   variant="outline"
                                   className="bg-green-50 text-green-700 border-green-200 text-xs"
                                 >
-                                  Phone ✓
+                                  {t("admin.users.table.phoneVerified")}
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-gray-50 text-xs">
-                                  Phone ✗
+                                  {t("admin.users.table.phoneUnverified")}
                                 </Badge>
                               ))}
                           </div>
@@ -790,12 +792,12 @@ export default function AdminUsers() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => setQuickViewDialog({ open: true, user })}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                Quick View
+                                {t("admin.users.actions.quickView")}
                               </DropdownMenuItem>
                               <Link href={`/admin/users/${user.id}`}>
                                 <DropdownMenuItem>
                                   <Shield className="mr-2 h-4 w-4" />
-                                  Full Details
+                                  {t("admin.users.actions.fullDetails")}
                                 </DropdownMenuItem>
                               </Link>
                               <DropdownMenuSeparator />
@@ -805,7 +807,7 @@ export default function AdminUsers() {
                                   className="text-orange-600"
                                 >
                                   <Ban className="mr-2 h-4 w-4" />
-                                  Block User
+                                  {t("admin.users.actions.blockUser")}
                                 </DropdownMenuItem>
                               ) : (
                                 <DropdownMenuItem
@@ -813,7 +815,7 @@ export default function AdminUsers() {
                                   className="text-green-600"
                                 >
                                   <Unlock className="mr-2 h-4 w-4" />
-                                  Unblock User
+                                  {t("admin.users.actions.unblockUser")}
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem
@@ -821,7 +823,7 @@ export default function AdminUsers() {
                                 className="text-destructive"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete User
+                                {t("admin.users.actions.deleteUser")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -836,8 +838,8 @@ export default function AdminUsers() {
               {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, data.total)}{" "}
-                    of {data.total} users
+                    {t("admin.users.pagination.showing")} {(page - 1) * pageSize + 1} {t("admin.users.pagination.to")} {Math.min(page * pageSize, data.total)}{" "}
+                    {t("admin.users.pagination.of")} {data.total} {t("admin.users.pagination.users")}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -847,7 +849,7 @@ export default function AdminUsers() {
                       disabled={page === 1}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
+                      {t("admin.users.pagination.previous")}
                     </Button>
                     <div className="flex items-center gap-1">
                       {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
@@ -872,7 +874,7 @@ export default function AdminUsers() {
                       onClick={() => setPage(page + 1)}
                       disabled={page === data.totalPages}
                     >
-                      Next
+                      {t("admin.users.pagination.next")}
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>
@@ -890,19 +892,19 @@ export default function AdminUsers() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Block User</DialogTitle>
+            <DialogTitle>{t("admin.users.blockDialog.title")}</DialogTitle>
             <DialogDescription>
-              Block {blockDialog.user?.fullName || blockDialog.user?.email}
+              {t("admin.users.blockDialog.descPrefix")}{blockDialog.user?.fullName || blockDialog.user?.email}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="blockReason">Reason for blocking (required)</Label>
+              <Label htmlFor="blockReason">{t("admin.users.blockDialog.reasonLabel")}</Label>
               <Textarea
                 id="blockReason"
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="e.g., Spam, abuse, violation of terms..."
+                placeholder={t("admin.users.blockDialog.reasonPlaceholder")}
                 rows={4}
                 className="mt-2"
               />
@@ -910,14 +912,14 @@ export default function AdminUsers() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBlockDialog({ open: false, user: null })}>
-              Cancel
+              {t("admin.users.blockDialog.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleBlock}
               disabled={!blockReason.trim() || blockUserMutation.isPending}
             >
-              {blockUserMutation.isPending ? "Blocking..." : "Block User"}
+              {blockUserMutation.isPending ? t("admin.users.blockDialog.blocking") : t("admin.users.blockDialog.blockButton")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -930,23 +932,22 @@ export default function AdminUsers() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
+            <DialogTitle>{t("admin.users.deleteDialog.title")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to permanently delete{" "}
-              {deleteDialog.user?.fullName || deleteDialog.user?.email}? This action cannot be
-              undone.
+              {t("admin.users.deleteDialog.descPrefix")}
+              {deleteDialog.user?.fullName || deleteDialog.user?.email}{t("admin.users.deleteDialog.descSuffix")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog({ open: false, user: null })}>
-              Cancel
+              {t("admin.users.deleteDialog.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+              {deleteUserMutation.isPending ? t("admin.users.deleteDialog.deleting") : t("admin.users.deleteDialog.deleteButton")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -959,32 +960,32 @@ export default function AdminUsers() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>Quick overview of user information</DialogDescription>
+            <DialogTitle>{t("admin.users.viewDialog.title")}</DialogTitle>
+            <DialogDescription>{t("admin.users.viewDialog.description")}</DialogDescription>
           </DialogHeader>
           {quickViewDialog.user && (
             <div className="space-y-6 py-4">
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.fullName")}</Label>
                   <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "—"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Role</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.role")}</Label>
                   <Badge className={ROLE_COLORS[quickViewDialog.user.role]} variant="outline">
                     {quickViewDialog.user.role}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.email")}</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Mail className="h-3 w-3 text-muted-foreground" />
                     <p className="text-sm">{quickViewDialog.user.email}</p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.phone")}</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Phone className="h-3 w-3 text-muted-foreground" />
                     <p className="text-sm">{quickViewDialog.user.phone || "—"}</p>
@@ -996,7 +997,7 @@ export default function AdminUsers() {
               <div className="border-t pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Account Status</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.accountStatus")}</Label>
                     <Badge className={STATUS_COLORS[quickViewDialog.user.status]} variant="outline">
                       {quickViewDialog.user.status}
                     </Badge>
@@ -1005,25 +1006,25 @@ export default function AdminUsers() {
                     )}
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Verification</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.verification")}</Label>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {quickViewDialog.user.isEmailVerified ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Email ✓
+                          {t("admin.users.table.emailVerified")}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-gray-50">
-                          Email ✗
+                          {t("admin.users.table.emailUnverified")}
                         </Badge>
                       )}
                       {quickViewDialog.user.phone && (
                         quickViewDialog.user.isPhoneVerified ? (
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            Phone ✓
+                            {t("admin.users.table.phoneVerified")}
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-gray-50">
-                            Phone ✗
+                            {t("admin.users.table.phoneUnverified")}
                           </Badge>
                         )
                       )}
@@ -1036,14 +1037,14 @@ export default function AdminUsers() {
               <div className="border-t pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Member Since</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.memberSince")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
                       <p className="text-sm">{format(new Date(quickViewDialog.user.createdAt), "PPP")}</p>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">User ID</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t("admin.users.viewDialog.labels.userId")}</Label>
                     <p className="text-xs font-mono mt-1 text-muted-foreground">{quickViewDialog.user.id}</p>
                   </div>
                 </div>
@@ -1052,13 +1053,13 @@ export default function AdminUsers() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setQuickViewDialog({ open: false, user: null })}>
-              Close
+              {t("admin.users.viewDialog.close")}
             </Button>
             {quickViewDialog.user && (
               <Link href={`/admin/users/${quickViewDialog.user.id}`}>
                 <Button>
                   <Shield className="h-4 w-4 mr-2" />
-                  View Full Details
+                  {t("admin.users.viewDialog.viewFull")}
                 </Button>
               </Link>
             )}
@@ -1070,14 +1071,14 @@ export default function AdminUsers() {
       <Dialog open={showSeedDialog} onOpenChange={setShowSeedDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Test Users</DialogTitle>
+            <DialogTitle>{t("admin.users.testUsersDialog.title")}</DialogTitle>
             <DialogDescription>
-              This will create 7 test users with different roles and statuses for testing purposes.
+              {t("admin.users.testUsersDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="space-y-3 text-sm">
-              <p className="font-medium">Test users to be created:</p>
+              <p className="font-medium">{t("admin.users.testUsersDialog.toBeCreated")}</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>2 Clients (Анна Иванова, Дмитрий Петров)</li>
                 <li>2 Salon Owners (Ольга Смирнова, Сергей Козлов)</li>
@@ -1085,25 +1086,25 @@ export default function AdminUsers() {
                 <li>1 Blocked User (для тестирования блокировки)</li>
               </ul>
               <div className="mt-4 p-3 bg-muted rounded-lg">
-                <p className="font-medium mb-1">Login Credentials:</p>
+                <p className="font-medium mb-1">{t("admin.users.testUsersDialog.credentials")}</p>
                 <p className="text-muted-foreground">
-                  Email: <code className="text-xs">client1@test.com</code> (или любой другой)
+                  {t("admin.users.testUsersDialog.email")} <code className="text-xs">client1@test.com</code> (или любой другой)
                 </p>
                 <p className="text-muted-foreground">
-                  Password: <code className="text-xs">TestPass123!</code>
+                  {t("admin.users.testUsersDialog.password")} <code className="text-xs">TestPass123!</code>
                 </p>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSeedDialog(false)}>
-              Cancel
+              {t("admin.users.testUsersDialog.cancel")}
             </Button>
             <Button
               onClick={() => seedTestUsersMutation.mutate(false)}
               disabled={seedTestUsersMutation.isPending}
             >
-              {seedTestUsersMutation.isPending ? "Creating..." : "Create Test Users"}
+              {seedTestUsersMutation.isPending ? t("admin.users.testUsersDialog.creating") : t("admin.users.testUsersDialog.createButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

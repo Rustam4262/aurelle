@@ -19,6 +19,13 @@ export function serveStatic(app: Express) {
   const assetsPath = path.resolve(process.cwd(), "attached_assets");
   app.use("/assets", express.static(assetsPath));
 
+  // Service Worker must never be cached — browser needs to check for updates
+  app.get("/sw.js", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Service-Worker-Allowed", "/");
+    res.sendFile(path.resolve(distPath, "sw.js"));
+  });
+
   // Serve static files (assets only, excluding HTML)
   app.use((req, res, next) => {
     // Skip HTML files - we'll handle them below with cache busting

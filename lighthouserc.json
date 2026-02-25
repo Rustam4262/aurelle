@@ -1,0 +1,29 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./dist/public",
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "extraHeaders": {
+          "Accept-Language": "ru"
+        }
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.7 }],
+        "categories:accessibility": ["warn", { "minScore": 0.8 }],
+        "categories:best-practices": ["warn", { "minScore": 0.8 }],
+        "categories:seo": ["warn", { "minScore": 0.8 }],
+        "categories:pwa": ["warn", { "minScore": 0.9 }],
+        "uses-http2": "off",
+        "uses-long-cache-ttl": "off",
+        "canonical": "off"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

@@ -75,7 +75,7 @@ export function SalonHeader({ salon }: { salon: Salon }) {
             </Badge>
           </div>
           <h1 className="font-serif text-3xl md:text-4xl font-light mb-2">
-            {name || "Unnamed Salon"}
+            {name || t("marketplace.salon.unnamed")}
           </h1>
           <div className="flex flex-wrap items-center gap-4 text-white/90">
             <div className="flex items-center gap-1">

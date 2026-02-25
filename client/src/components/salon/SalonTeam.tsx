@@ -111,7 +111,7 @@ export function SalonTeam({
       ) : (
         <Card className="p-8 text-center bg-muted/30">
           <p className="text-muted-foreground">
-            {t("marketplace.salon.noMasters") || "No team members listed"}
+            {t("marketplace.salon.noMasters") || t("team.noMembers")}
           </p>
         </Card>
       )}

@@ -184,7 +184,7 @@ export default function SearchPage() {
               className="mb-4 hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
+              {t("search.backToHome")}
             </Button>
             <div className="flex items-center justify-between">
               <div>
@@ -192,7 +192,7 @@ export default function SearchPage() {
                   {t("marketplace.hero.search") || "Search Salons"}
                 </h1>
                 <p className="text-muted-foreground">
-                  Discover the best beauty salons in your area
+                  {t("search.subtitle")}
                 </p>
               </div>
               <Button
@@ -202,7 +202,7 @@ export default function SearchPage() {
                 className="lg:hidden"
               >
                 <SlidersHorizontal className="h-4 w-4 mr-2" />
-                Filters
+                {t("search.filters")}
                 {activeFiltersCount > 0 && (
                   <Badge variant="default" className="ml-2 rounded-full px-2">
                     {activeFiltersCount}
@@ -221,7 +221,7 @@ export default function SearchPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Filter className="h-5 w-5 text-primary" />
-                    Filters
+                    {t("search.filters")}
                   </h3>
                   {activeFiltersCount > 0 && (
                     <Button
@@ -230,7 +230,7 @@ export default function SearchPage() {
                       onClick={handleClearFilters}
                       className="text-primary hover:text-primary/80"
                     >
-                      Clear all
+                      {t("search.clearAll")}
                     </Button>
                   )}
                 </div>
@@ -239,12 +239,12 @@ export default function SearchPage() {
                   {/* Search Input */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">
-                      Search
+                      {t("search.searchLabel")}
                     </label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Salon name..."
+                        placeholder={t("search.salonNamePlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
@@ -256,14 +256,14 @@ export default function SearchPage() {
                   <div>
                     <label className="text-sm font-medium mb-2 flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      Location
+                      {t("search.location")}
                     </label>
                     <Select value={selectedCity} onValueChange={setSelectedCity}>
                       <SelectTrigger>
-                        <SelectValue placeholder="All Cities" />
+                        <SelectValue placeholder={t("search.allCities")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Cities</SelectItem>
+                        <SelectItem value="">{t("search.allCities")}</SelectItem>
                         {uniqueCities.map((city) => (
                           <SelectItem key={city} value={city}>
                             {city}
@@ -276,7 +276,7 @@ export default function SearchPage() {
                   {/* Service Categories */}
                   <div>
                     <label className="text-sm font-medium mb-3 block">
-                      Service Category
+                      {t("search.serviceCategory")}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {SERVICE_CATEGORIES.map((category) => (
@@ -306,7 +306,7 @@ export default function SearchPage() {
                   <div>
                     <label className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Star className="h-4 w-4 text-primary" />
-                      Minimum Rating
+                      {t("search.minRating")}
                     </label>
                     <Select value={minRating} onValueChange={setMinRating}>
                       <SelectTrigger>
@@ -329,7 +329,7 @@ export default function SearchPage() {
                     size="lg"
                   >
                     <Search className="h-4 w-4 mr-2" />
-                    Apply Filters
+                    {t("search.applyFilters")}
                   </Button>
                 </div>
               </Card>
@@ -342,10 +342,10 @@ export default function SearchPage() {
                 <div>
                   <h2 className="font-serif text-2xl text-foreground flex items-center gap-3">
                     {isLoading ? (
-                      "Loading..."
+                      t("search.loading")
                     ) : (
                       <>
-                        <span>Results</span>
+                        <span>{t("search.results")}</span>
                         <Badge variant="secondary" className="text-base font-normal">
                           {filteredAndSortedSalons.length}
                         </Badge>
@@ -354,7 +354,7 @@ export default function SearchPage() {
                   </h2>
                   {activeFiltersCount > 0 && !isLoading && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      {activeFiltersCount} {activeFiltersCount === 1 ? "filter" : "filters"} applied
+                      {t("search.filterApplied_one", { count: activeFiltersCount })}
                     </p>
                   )}
                 </div>
@@ -381,7 +381,7 @@ export default function SearchPage() {
                 <div className="mb-6 flex flex-wrap gap-2">
                   {searchQuery && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      Search: {searchQuery}
+                      {t("search.searchPrefix")} {searchQuery}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -421,7 +421,7 @@ export default function SearchPage() {
                   )}
                   {minRating !== "all" && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      ⭐ {minRating}+ Stars
+                      ⭐ {minRating}{t("search.starsLabel")}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -455,14 +455,14 @@ export default function SearchPage() {
                 <Card className="p-16 text-center border-dashed">
                   <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-30" />
                   <h3 className="font-serif text-2xl text-foreground mb-2">
-                    No salons found
+                    {t("search.noSalonsFound")}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Try adjusting your filters or search in a different area
+                    {t("search.noSalonsDesc")}
                   </p>
                   <Button onClick={handleClearFilters} variant="outline">
                     <X className="h-4 w-4 mr-2" />
-                    Clear all filters
+                    {t("search.clearAllFilters")}
                   </Button>
                 </Card>
               )}

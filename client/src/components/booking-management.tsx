@@ -205,7 +205,7 @@ export function BookingManagement() {
       style: "currency",
       currency: "UZS",
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(Number(amount) || 0);
   };
 
   const currentLang = i18n.language as "en" | "ru" | "uz";

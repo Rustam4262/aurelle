@@ -1,9 +1,52 @@
 {
-    "name": "Aurelle",
-    "short_name": "Aurelle",
-    "start_url": ".",
-    "display": "standalone",
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
-    "description": "Find your perfect salon with AURELLE."
+  "name": "AURELLE — Beauty Salons",
+  "short_name": "Aurelle",
+  "description": "Find and book the best beauty salons across Uzbekistan.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#C81D60",
+  "background_color": "#ffffff",
+  "categories": ["lifestyle", "shopping", "business"],
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/icons/icon-48.webp",
+      "sizes": "48x48",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icons/icon-72.webp",
+      "sizes": "72x72",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icons/icon-96.webp",
+      "sizes": "96x96",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icons/icon-128.webp",
+      "sizes": "128x128",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icons/icon-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-256.webp",
+      "sizes": "256x256",
+      "type": "image/webp"
+    },
+    {
+      "src": "/icons/icon-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
 }

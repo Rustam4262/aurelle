@@ -130,11 +130,11 @@ export function SalonList() {
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="text-center p-3 bg-muted rounded-md">
                   <p className="font-medium text-foreground">{salon.reviewCount || 0}</p>
-                  <p className="text-muted-foreground text-xs">Reviews</p>
+                  <p className="text-muted-foreground text-xs">{t("marketplace.owner.reviews")}</p>
                 </div>
                 <div className="text-center p-3 bg-muted rounded-md">
                   <p className="font-medium text-foreground">-</p>
-                  <p className="text-muted-foreground text-xs">Bookings</p>
+                  <p className="text-muted-foreground text-xs">{t("marketplace.owner.bookings")}</p>
                 </div>
               </div>
 
@@ -145,7 +145,7 @@ export function SalonList() {
                   data-testid={`button-manage-salon-${salon.id}`}
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  Manage Salon
+                  {t("marketplace.owner.manageSalon")}
                 </Button>
               </Link>
             </Card>

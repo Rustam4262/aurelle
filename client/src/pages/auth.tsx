@@ -314,7 +314,7 @@ export default function AuthPage() {
   if (isLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t("common.loading")}</div>
       </div>
     );
   }
@@ -322,7 +322,7 @@ export default function AuthPage() {
   if (user && profile?.exists && profile?.isProfileComplete) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Redirecting...</div>
+        <div className="animate-pulse text-muted-foreground">{t("common.redirecting")}</div>
       </div>
     );
   }

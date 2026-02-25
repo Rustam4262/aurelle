@@ -1102,7 +1102,7 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
             lastBookedAt: sql<string>`max(${bookings.createdAt})`,
           })
           .from(bookings)
-          .where(sql`${bookings.serviceId} = ANY(${serviceIds})`)
+          .where(inArray(bookings.serviceId, serviceIds))
           .groupBy(bookings.serviceId)
         : [];
 
@@ -1197,7 +1197,7 @@ router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
           .from(bookings)
           .where(
             and(
-              sql`${bookings.masterId} = ANY(${masterIds})`,
+              inArray(bookings.masterId, masterIds),
               gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
             ),
           )

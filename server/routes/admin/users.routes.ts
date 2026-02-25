@@ -2,7 +2,7 @@ import { Router, Request } from "express";
 import { db } from "../../db";
 import { users, salons, masters } from "@shared/schema";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
-import { eq, desc, asc, like, or, and, sql } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, sql, inArray } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
@@ -509,7 +509,7 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
 
     // Get users before update
     const oldUsers = await db.select().from(users).where(
-      sql`${users.id} = ANY(${sql.array(userIds)})`
+      inArray(users.id, userIds)
     );
 
     // Update all users
@@ -520,7 +520,7 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
         blockReason: reason || "Bulk blocked by admin",
         updatedAt: new Date(),
       })
-      .where(sql`${users.id} = ANY(${sql.array(userIds)})`)
+      .where(inArray(users.id, userIds))
       .returning();
 
     // Log bulk action
@@ -571,7 +571,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
         blockReason: null,
         updatedAt: new Date(),
       })
-      .where(sql`${users.id} = ANY(${sql.array(userIds)})`)
+      .where(inArray(users.id, userIds))
       .returning();
 
     // Log bulk action

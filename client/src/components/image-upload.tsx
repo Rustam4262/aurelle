@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { logger } from "@/lib/logger";
 import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface ImageUploadProps {
   value?: string;
@@ -23,19 +24,22 @@ export function ImageUpload({
   value,
   onChange,
   onRemove,
-  label = "Upload Image",
+  label,
   maxSize = 5,
   accept = "image/jpeg,image/jpg,image/png,image/webp",
   uploadType,
   className = "",
   preview = true,
 }: ImageUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(value || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const displayLabel = label ?? t("upload.uploadImage");
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,8 +48,8 @@ export function ImageUpload({
     // Проверка размера файла
     if (file.size > maxSize * 1024 * 1024) {
       toast({
-        title: "File too large",
-        description: `Maximum file size is ${maxSize}MB`,
+        title: t("upload.tooLarge"),
+        description: t("upload.maxSizeDesc", { size: maxSize }),
         variant: "destructive",
       });
       return;
@@ -54,8 +58,8 @@ export function ImageUpload({
     // Проверка типа файла
     if (!file.type.startsWith("image/")) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
+        title: t("upload.invalidType"),
+        description: t("upload.selectImageDesc"),
         variant: "destructive",
       });
       return;
@@ -119,8 +123,8 @@ export function ImageUpload({
       onChange(data.url);
 
       toast({
-        title: "Success",
-        description: "Image uploaded successfully",
+        title: t("common.success"),
+        description: t("upload.successDesc"),
       });
 
       // Reset success state after delay
@@ -131,8 +135,8 @@ export function ImageUpload({
     } catch (error) {
       logger.error("Upload error", error as Error, { source: "image-upload" });
       toast({
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: t("upload.uploadFailed"),
+        description: t("upload.failedDesc"),
         variant: "destructive",
       });
       setPreviewUrl("");
@@ -161,7 +165,7 @@ export function ImageUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {label && <Label>{label}</Label>}
+      {displayLabel && <Label>{displayLabel}</Label>}
 
       <div className="space-y-3">
         <div className="flex items-center gap-4">
@@ -185,17 +189,17 @@ export function ImageUpload({
             {uploadSuccess ? (
               <>
                 <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
-                Uploaded!
+                {t("upload.uploaded")}
               </>
             ) : uploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
+                {t("upload.uploading")}
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Choose File
+                {t("upload.chooseFile")}
               </>
             )}
           </Button>
@@ -211,7 +215,9 @@ export function ImageUpload({
         {uploading && (
           <div className="space-y-1">
             <Progress value={uploadProgress} className="h-2" />
-            <p className="text-xs text-muted-foreground text-center">{uploadProgress}% uploaded</p>
+            <p className="text-xs text-muted-foreground text-center">
+              {t("upload.progressPercent", { progress: uploadProgress })}
+            </p>
           </div>
         )}
       </div>
@@ -223,7 +229,7 @@ export function ImageUpload({
       )}
 
       <p className="text-sm text-muted-foreground">
-        Accepts: JPEG, PNG, WebP. Max size: {maxSize}MB
+        {t("upload.accepts", { size: maxSize })}
       </p>
     </div>
   );
@@ -245,6 +251,7 @@ export function MultiImageUpload({
   uploadType,
   className = "",
 }: MultiImageUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -257,8 +264,8 @@ export function MultiImageUpload({
     // Проверка лимита
     if (values.length + files.length > maxImages) {
       toast({
-        title: "Too many images",
-        description: `Maximum ${maxImages} images allowed`,
+        title: t("upload.tooManyImages"),
+        description: t("upload.maxImagesDesc", { max: maxImages }),
         variant: "destructive",
       });
       return;
@@ -302,16 +309,16 @@ export function MultiImageUpload({
       onChange([...values, ...data.urls]);
 
       toast({
-        title: "Success",
-        description: `${files.length} image(s) uploaded successfully`,
+        title: t("common.success"),
+        description: t("upload.multiSuccessDesc", { count: files.length }),
       });
 
       setTimeout(() => setUploadProgress(0), 1500);
     } catch (error) {
       logger.error("Upload error", error as Error, { source: "image-upload" });
       toast({
-        title: "Upload failed",
-        description: "Failed to upload images. Please try again.",
+        title: t("upload.uploadFailed"),
+        description: t("upload.multiFailedDesc"),
         variant: "destructive",
       });
       setUploadProgress(0);
@@ -332,7 +339,7 @@ export function MultiImageUpload({
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
         <Label>
-          Images ({values.length}/{maxImages})
+          {t("upload.imagesCount", { count: values.length, max: maxImages })}
         </Label>
 
         <Input
@@ -356,12 +363,12 @@ export function MultiImageUpload({
           {uploading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
+              {t("upload.uploading")}
             </>
           ) : (
             <>
               <Upload className="mr-2 h-4 w-4" />
-              Add Images
+              {t("upload.addImages")}
             </>
           )}
         </Button>
@@ -371,7 +378,9 @@ export function MultiImageUpload({
       {uploading && uploadProgress > 0 && (
         <div className="space-y-1">
           <Progress value={uploadProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center">Uploading {uploadProgress}%</p>
+          <p className="text-xs text-muted-foreground text-center">
+            {t("upload.uploadingPercent", { progress: uploadProgress })}
+          </p>
         </div>
       )}
 

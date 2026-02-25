@@ -3,6 +3,7 @@ import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { Button } from "@/components/ui/button";
 import { Copy, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface LocationDisplayProps {
   latitude: number;
@@ -16,17 +17,19 @@ export function LocationDisplay({
   latitude,
   longitude,
   address,
-  salonName = "Салон",
+  salonName,
   className = "",
 }: LocationDisplayProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const apiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "";
+  const displayName = salonName ?? t("location.salon");
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
     toast({
-      title: "Адрес скопирован",
-      description: "Адрес успешно скопирован в буфер обмена",
+      title: t("location.addressCopied"),
+      description: t("location.addressCopiedDesc"),
     });
   };
 
@@ -55,7 +58,7 @@ export function LocationDisplay({
             <Placemark
               geometry={[latitude, longitude]}
               properties={{
-                balloonContent: `<strong>${salonName}</strong><br/>${address}`,
+                balloonContent: `<strong>${displayName}</strong><br/>${address}`,
               }}
               options={{
                 preset: "islands#redDotIcon",
@@ -68,7 +71,7 @@ export function LocationDisplay({
       <div className="space-y-2">
         <div className="flex items-start gap-2">
           <div className="flex-1">
-            <p className="text-sm font-medium">Адрес:</p>
+            <p className="text-sm font-medium">{t("location.address")}</p>
             <p className="text-sm text-muted-foreground">{address}</p>
           </div>
           <div className="flex gap-2">
@@ -77,7 +80,7 @@ export function LocationDisplay({
               variant="outline"
               size="icon"
               onClick={copyAddress}
-              title="Скопировать адрес"
+              title={t("location.copyAddress")}
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -86,14 +89,14 @@ export function LocationDisplay({
               variant="outline"
               size="icon"
               onClick={openInYandexMaps}
-              title="Открыть в Яндекс.Картах"
+              title={t("location.openInYandex")}
             >
               <ExternalLink className="h-4 w-4" />
             </Button>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Координаты: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+          {t("location.coordinates")} {latitude.toFixed(6)}, {longitude.toFixed(6)}
         </p>
       </div>
     </div>

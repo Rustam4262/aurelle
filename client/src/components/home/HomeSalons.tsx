@@ -63,11 +63,11 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
         </div>
         <div className="p-5">
           <h3 className="font-serif text-lg text-foreground mb-1.5 line-clamp-1 group-hover:text-primary transition-colors">
-            {name || "Unnamed Salon"}
+            {name || t("marketplace.salon.unnamed")}
           </h3>
           <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-3">
             <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary/60" />
-            <span className="line-clamp-1 italic">{city || "Unknown Location"}</span>
+            <span className="line-clamp-1 italic">{city || t("marketplace.salon.unknownLocation")}</span>
           </div>
           {description && (
             <p className="text-muted-foreground text-sm line-clamp-2 mb-4 h-10 leading-relaxed font-light">

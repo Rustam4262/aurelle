@@ -89,8 +89,8 @@ export default function AdminAudit() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">Audit Logs</h1>
-        <p className="text-muted-foreground mt-2">Complete history of all admin actions</p>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.audit.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("admin.audit.subtitle")}</p>
       </div>
 
       {/* Filters */}
@@ -99,7 +99,7 @@ export default function AdminAudit() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by action..."
+              placeholder={t("admin.audit.searchPlaceholder")}
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               className="pl-9"
@@ -109,16 +109,16 @@ export default function AdminAudit() {
         <div className="w-48">
           <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by entity" />
+              <SelectValue placeholder={t("admin.audit.filterByEntity")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Entities</SelectItem>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="salon">Salon</SelectItem>
-              <SelectItem value="master">Master</SelectItem>
-              <SelectItem value="complaint">Complaint</SelectItem>
-              <SelectItem value="sanction">Sanction</SelectItem>
-              <SelectItem value="booking">Booking</SelectItem>
+              <SelectItem value="all">{t("admin.audit.allEntities")}</SelectItem>
+              <SelectItem value="user">{t("admin.audit.entities.user")}</SelectItem>
+              <SelectItem value="salon">{t("admin.audit.entities.salon")}</SelectItem>
+              <SelectItem value="master">{t("admin.audit.entities.master")}</SelectItem>
+              <SelectItem value="complaint">{t("admin.audit.entities.complaint")}</SelectItem>
+              <SelectItem value="sanction">{t("admin.audit.entities.sanction")}</SelectItem>
+              <SelectItem value="booking">{t("admin.audit.entities.booking")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -128,26 +128,26 @@ export default function AdminAudit() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Recent Actions
+            {t("admin.audit.recentActions")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t("admin.audit.loading")}</div>
           ) : !data?.logs || data.logs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No audit logs</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.audit.noLogs")}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Actor</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>IP Address</TableHead>
-                    <TableHead className="text-right">Details</TableHead>
+                    <TableHead>{t("admin.audit.table.timestamp")}</TableHead>
+                    <TableHead>{t("admin.audit.table.actor")}</TableHead>
+                    <TableHead>{t("admin.audit.table.role")}</TableHead>
+                    <TableHead>{t("admin.audit.table.action")}</TableHead>
+                    <TableHead>{t("admin.audit.table.entity")}</TableHead>
+                    <TableHead>{t("admin.audit.table.ipAddress")}</TableHead>
+                    <TableHead className="text-right">{t("admin.audit.table.details")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -161,7 +161,7 @@ export default function AdminAudit() {
                           <p className="font-medium">
                             {actorFirstName && actorLastName
                               ? `${actorFirstName} ${actorLastName}`
-                              : actorEmail || "Admin"}
+                              : actorEmail || t("admin.audit.adminFallback")}
                           </p>
                           {actorEmail && (
                             <p className="text-xs text-muted-foreground">{actorEmail}</p>
@@ -213,9 +213,9 @@ export default function AdminAudit() {
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Audit Log Details</DialogTitle>
+            <DialogTitle>{t("admin.audit.dialog.title")}</DialogTitle>
             <DialogDescription>
-              Complete information about this admin action
+              {t("admin.audit.dialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -224,46 +224,46 @@ export default function AdminAudit() {
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Action</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.action")}</Label>
                   <Badge variant="outline" className={`mt-1 ${getActionColor(selectedLog.log.action)}`}>
                     {selectedLog.log.action}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Timestamp</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.timestamp")}</Label>
                   <p className="text-sm mt-1">
                     {format(new Date(selectedLog.log.createdAt), "PPpp")}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Actor</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.actor")}</Label>
                   <p className="text-sm mt-1">
                     {selectedLog.actorFirstName && selectedLog.actorLastName
                       ? `${selectedLog.actorFirstName} ${selectedLog.actorLastName}`
-                      : selectedLog.actorEmail || "Admin"}
+                      : selectedLog.actorEmail || t("admin.audit.adminFallback")}
                   </p>
                   <p className="text-xs text-muted-foreground">{selectedLog.actorEmail}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Role</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.role")}</Label>
                   <Badge variant="secondary" className="mt-1">
                     {selectedLog.log.actorRole}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Entity Type</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.entityType")}</Label>
                   <p className="text-sm mt-1 capitalize">{selectedLog.log.entityType}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Entity ID</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.entityId")}</Label>
                   <p className="text-sm mt-1 font-mono">{selectedLog.log.entityId || "—"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">IP Address</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.ipAddress")}</Label>
                   <p className="text-sm mt-1 font-mono">{selectedLog.log.ip || "—"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">User Agent</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.userAgent")}</Label>
                   <p className="text-xs mt-1 text-muted-foreground truncate">
                     {selectedLog.log.userAgent || "—"}
                   </p>
@@ -273,7 +273,7 @@ export default function AdminAudit() {
               {/* Old Data */}
               {selectedLog.log.oldData && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Previous State</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.previousState")}</Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.oldData, null, 2)}
                   </pre>
@@ -283,7 +283,7 @@ export default function AdminAudit() {
               {/* New Data */}
               {selectedLog.log.newData && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">New State</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.newState")}</Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.newData, null, 2)}
                   </pre>
@@ -293,7 +293,7 @@ export default function AdminAudit() {
               {/* Meta */}
               {selectedLog.log.meta && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Metadata</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.metadata")}</Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.meta, null, 2)}
                   </pre>
@@ -304,7 +304,7 @@ export default function AdminAudit() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
-              Close
+              {t("admin.audit.dialog.close")}
             </Button>
           </DialogFooter>
         </DialogContent>

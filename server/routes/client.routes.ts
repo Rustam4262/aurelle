@@ -183,24 +183,18 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 router.post("/bookings", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
-    logger.info("[DEBUG] Create booking request from user: " + userId);
 
     const result = await getClientFromUser(userId);
-    logger.info("[DEBUG] Profile lookup result: " + JSON.stringify(result));
 
     if ("error" in result) {
-      logger.info("[DEBUG] Error in getClientFromUser: " + result.error);
       return res.status(result.status).json({ error: result.error });
     }
 
     if (!result.profile) {
-      logger.info("[DEBUG] No profile found for user: " + userId);
       return res
         .status(400)
         .json({ error: "Profile not found. Please complete your profile first." });
     }
-
-    logger.info("[DEBUG] Profile found: " + result.profile.id);
 
     const bookingSchema = z.object({
       salonId: z.string(),
@@ -288,16 +282,6 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Create booking
-    logger.info("[DEBUG] Creating booking with data: " + JSON.stringify({
-      clientId: result.profile.id,
-      salonId,
-      serviceId,
-      masterId: masterId || null,
-      bookingDate,
-      startTime,
-      endTime,
-    }));
-
     const [newBooking] = await db
       .insert(bookings)
       .values({
@@ -315,8 +299,6 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
         updatedAt: new Date(),
       })
       .returning();
-
-    logger.info("[DEBUG] Booking created successfully: " + JSON.stringify(newBooking));
 
     // Send confirmation email if email is configured
     const userEmail = req.user?.claims?.email;

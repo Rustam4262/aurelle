@@ -112,7 +112,7 @@ export function AvatarUpload({
     if (file.size > maxSize * 1024 * 1024) {
       toast({
         title: t("marketplace.portfolio.upload.errors.tooLarge"),
-        description: `Maximum file size is ${maxSize}MB`,
+        description: t("upload.maxSizeDesc", { size: maxSize }),
         variant: "destructive",
       });
       return;
@@ -122,7 +122,7 @@ export function AvatarUpload({
     if (!file.type.startsWith("image/")) {
       toast({
         title: t("marketplace.portfolio.upload.errors.invalidType"),
-        description: "Please select an image file",
+        description: t("upload.selectImageDesc"),
         variant: "destructive",
       });
       return;
@@ -198,7 +198,7 @@ export function AvatarUpload({
       logger.error("Upload error", error as Error, { source: "avatar-upload" });
       toast({
         title: t("marketplace.portfolio.upload.errors.uploadFailed"),
-        description: "Failed to upload image. Please try again.",
+        description: t("upload.failedDesc"),
         variant: "destructive",
       });
       setUploadProgress(0);

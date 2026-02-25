@@ -56,12 +56,6 @@ const STATUS_COLORS: Record<string, string> = {
   revoked: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  temp_block: "Temporary Block",
-  perm_block: "Permanent Block",
-  feature_restrict: "Feature Restriction",
-};
-
 export default function AdminSanctions() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -91,19 +85,19 @@ export default function AdminSanctions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/sanctions"] });
-      toast({ title: "Success", description: "Sanction revoked successfully" });
+      toast({ title: t("common.success"), description: t("admin.sanctions.toasts.revokedSuccess") });
       setShowRevokeDialog(false);
       setSelectedSanction(null);
       setRevokeReason("");
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to revoke sanction", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.sanctions.toasts.revokeFailed"), variant: "destructive" });
     },
   });
 
   const handleRevoke = () => {
     if (!selectedSanction || !revokeReason.trim()) {
-      toast({ title: "Error", description: "Please provide a revoke reason", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.sanctions.toasts.reasonRequired"), variant: "destructive" });
       return;
     }
     revokeMutation.mutate({ id: selectedSanction.id, reason: revokeReason });
@@ -123,8 +117,8 @@ export default function AdminSanctions() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">{t("marketplace.admin.sanctions.title") || "Sanctions"}</h1>
-        <p className="text-muted-foreground mt-2">{t("marketplace.admin.sanctions.subtitle") || "Manage user and salon sanctions"}</p>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.sanctions.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("admin.sanctions.subtitle")}</p>
       </div>
 
       {/* Filters */}
@@ -132,27 +126,27 @@ export default function AdminSanctions() {
         <div className="w-48">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("admin.sanctions.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="revoked">Revoked</SelectItem>
+              <SelectItem value="all">{t("admin.sanctions.allStatus")}</SelectItem>
+              <SelectItem value="active">{t("admin.sanctions.status.active")}</SelectItem>
+              <SelectItem value="expired">{t("admin.sanctions.status.expired")}</SelectItem>
+              <SelectItem value="revoked">{t("admin.sanctions.status.revoked")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="w-48">
           <Select value={targetTypeFilter} onValueChange={setTargetTypeFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by target" />
+              <SelectValue placeholder={t("admin.sanctions.filterByTarget")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Targets</SelectItem>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="salon">Salon</SelectItem>
-              <SelectItem value="master">Master</SelectItem>
-              <SelectItem value="client">Client</SelectItem>
+              <SelectItem value="all">{t("admin.sanctions.allTargets")}</SelectItem>
+              <SelectItem value="user">{t("admin.sanctions.targets.user")}</SelectItem>
+              <SelectItem value="salon">{t("admin.sanctions.targets.salon")}</SelectItem>
+              <SelectItem value="master">{t("admin.sanctions.targets.master")}</SelectItem>
+              <SelectItem value="client">{t("admin.sanctions.targets.client")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -162,25 +156,25 @@ export default function AdminSanctions() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            {t("marketplace.admin.sanctions.allSanctions") || "All Sanctions"}
+            {t("admin.sanctions.allSanctions")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t("admin.sanctions.loading")}</div>
           ) : !data?.sanctions || data.sanctions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No sanctions</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.sanctions.noSanctions")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Started</TableHead>
-                  <TableHead>Ends At</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("admin.sanctions.table.target")}</TableHead>
+                  <TableHead>{t("admin.sanctions.table.type")}</TableHead>
+                  <TableHead>{t("admin.sanctions.table.reason")}</TableHead>
+                  <TableHead>{t("admin.sanctions.table.status")}</TableHead>
+                  <TableHead>{t("admin.sanctions.table.started")}</TableHead>
+                  <TableHead>{t("admin.sanctions.table.endsAt")}</TableHead>
+                  <TableHead className="text-right">{t("admin.sanctions.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,7 +190,7 @@ export default function AdminSanctions() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {TYPE_LABELS[sanction.sanctionType] || sanction.sanctionType.replace("_", " ")}
+                        {t(`admin.sanctions.types.${sanction.sanctionType}`, sanction.sanctionType.replace("_", " "))}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -204,7 +198,7 @@ export default function AdminSanctions() {
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_COLORS[sanction.status]}>
-                        {sanction.status}
+                        {t(`admin.sanctions.status.${sanction.status}`, sanction.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -213,7 +207,7 @@ export default function AdminSanctions() {
                     <TableCell className="text-sm text-muted-foreground">
                       {sanction.endsAt
                         ? format(new Date(sanction.endsAt), "MMM d, yyyy")
-                        : "Permanent"}
+                        : t("admin.sanctions.permanent")}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -223,7 +217,7 @@ export default function AdminSanctions() {
                           onClick={() => openDetailsDialog(sanction)}
                         >
                           <Info className="h-4 w-4 mr-1" />
-                          Details
+                          {t("admin.sanctions.buttons.details")}
                         </Button>
                         {sanction.status === "active" && (
                           <Button
@@ -232,7 +226,7 @@ export default function AdminSanctions() {
                             onClick={() => openRevokeDialog(sanction)}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Revoke
+                            {t("admin.sanctions.buttons.revoke")}
                           </Button>
                         )}
                       </div>
@@ -249,74 +243,74 @@ export default function AdminSanctions() {
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Sanction Details</DialogTitle>
+            <DialogTitle>{t("admin.sanctions.detailsDialog.title")}</DialogTitle>
           </DialogHeader>
 
           {selectedSanction && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Target Type</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.targetType")}</Label>
                   <p className="text-sm mt-1 capitalize">{selectedSanction.targetType}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Target ID</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.targetId")}</Label>
                   <p className="text-sm mt-1 font-mono">{selectedSanction.targetId}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Sanction Type</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.sanctionType")}</Label>
                   <p className="text-sm mt-1">
-                    {TYPE_LABELS[selectedSanction.sanctionType] || selectedSanction.sanctionType}
+                    {t(`admin.sanctions.types.${selectedSanction.sanctionType}`, selectedSanction.sanctionType)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.status")}</Label>
                   <Badge className={`mt-1 ${STATUS_COLORS[selectedSanction.status]}`}>
-                    {selectedSanction.status}
+                    {t(`admin.sanctions.status.${selectedSanction.status}`, selectedSanction.status)}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Started At</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.startedAt")}</Label>
                   <p className="text-sm mt-1">
                     {format(new Date(selectedSanction.startsAt), "PPp")}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Ends At</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.endsAt")}</Label>
                   <p className="text-sm mt-1">
                     {selectedSanction.endsAt
                       ? format(new Date(selectedSanction.endsAt), "PPp")
-                      : "Permanent"}
+                      : t("admin.sanctions.permanent")}
                   </p>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Reason</Label>
+                <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.reason")}</Label>
                 <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedSanction.reasonText}</p>
               </div>
 
               {selectedSanction.commentToUser && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Comment to User</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.commentToUser")}</Label>
                   <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedSanction.commentToUser}</p>
                 </div>
               )}
 
               {selectedSanction.internalNote && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Internal Note</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.internalNote")}</Label>
                   <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedSanction.internalNote}</p>
                 </div>
               )}
 
               {selectedSanction.status === "revoked" && selectedSanction.revokeReason && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Revoke Reason</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.sanctions.detailsDialog.labels.revokeReason")}</Label>
                   <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedSanction.revokeReason}</p>
                   {selectedSanction.revokedAt && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Revoked on {format(new Date(selectedSanction.revokedAt), "PPp")}
+                      {t("admin.sanctions.detailsDialog.labels.revokedOn")} {format(new Date(selectedSanction.revokedAt), "PPp")}
                     </p>
                   )}
                 </div>
@@ -326,7 +320,7 @@ export default function AdminSanctions() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
-              Close
+              {t("admin.sanctions.buttons.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -336,24 +330,24 @@ export default function AdminSanctions() {
       <Dialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Revoke Sanction</DialogTitle>
+            <DialogTitle>{t("admin.sanctions.revokeDialog.title")}</DialogTitle>
             <DialogDescription>
-              Provide a reason for revoking this sanction.
+              {t("admin.sanctions.revokeDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
           {selectedSanction && (
             <div className="space-y-4 py-4">
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium">Target: {selectedSanction.targetType}</p>
+                <p className="text-sm font-medium">{t("admin.sanctions.revokeDialog.targetPrefix")} {selectedSanction.targetType}</p>
                 <p className="text-xs text-muted-foreground mt-1">{selectedSanction.reasonText}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="revoke-reason">Revoke Reason *</Label>
+                <Label htmlFor="revoke-reason">{t("admin.sanctions.revokeDialog.reasonLabel")}</Label>
                 <Textarea
                   id="revoke-reason"
-                  placeholder="Explain why this sanction is being revoked..."
+                  placeholder={t("admin.sanctions.revokeDialog.reasonPlaceholder")}
                   value={revokeReason}
                   onChange={(e) => setRevokeReason(e.target.value)}
                   rows={4}
@@ -364,14 +358,14 @@ export default function AdminSanctions() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRevokeDialog(false)}>
-              Cancel
+              {t("admin.sanctions.buttons.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleRevoke}
               disabled={revokeMutation.isPending || !revokeReason.trim()}
             >
-              {revokeMutation.isPending ? "Revoking..." : "Revoke Sanction"}
+              {revokeMutation.isPending ? t("admin.sanctions.buttons.revoking") : t("admin.sanctions.buttons.revokeButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

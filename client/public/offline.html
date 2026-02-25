@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#C81D60" />
+  <title>Нет подключения — Aurelle</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #fdf6f9;
+      color: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px rgba(200, 29, 96, 0.2);
+    }
+
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      opacity: 0.9;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    p {
+      font-size: 16px;
+      color: #6b7280;
+      line-height: 1.6;
+      max-width: 280px;
+      margin-bottom: 32px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #C81D60;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+
+    .hint {
+      margin-top: 24px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <img src="/icons/icon-192.webp" alt="Aurelle" class="logo" onerror="this.style.display='none'" />
+  <div class="icon">📡</div>
+  <h1>Нет подключения</h1>
+  <p>Проверьте интернет-соединение и попробуйте снова.</p>
+  <button class="btn" onclick="tryReload()">
+    ↺ &nbsp;Обновить страницу
+  </button>
+  <p class="hint">Или вернитесь позже</p>
+
+  <script>
+    function tryReload() {
+      window.location.reload();
+    }
+
+    // Auto-retry when connection returns
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

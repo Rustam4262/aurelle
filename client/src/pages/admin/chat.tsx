@@ -97,10 +97,10 @@ export default function AdminChat() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chat/threads"] });
       setMessageText("");
-      toast({ title: "Success", description: "Message sent" });
+      toast({ title: t("common.success"), description: t("admin.chat.toasts.messageSent") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.chat.toasts.messageFailed"), variant: "destructive" });
     },
   });
 
@@ -112,10 +112,10 @@ export default function AdminChat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chat/threads"] });
-      toast({ title: "Success", description: "Thread assigned to you" });
+      toast({ title: t("common.success"), description: t("admin.chat.toasts.assigned") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to assign thread", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.chat.toasts.assignFailed"), variant: "destructive" });
     },
   });
 
@@ -129,14 +129,14 @@ export default function AdminChat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/chat/threads"] });
-      toast({ title: "Success", description: "Thread closed" });
+      toast({ title: t("common.success"), description: t("admin.chat.toasts.closed") });
       setShowCloseDialog(false);
       setShowChatDialog(false);
       setSelectedThread(null);
       setCloseReason("");
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to close thread", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.chat.toasts.closeFailed"), variant: "destructive" });
     },
   });
 
@@ -154,7 +154,7 @@ export default function AdminChat() {
 
   const handleCloseThread = () => {
     if (!selectedThread || !closeReason.trim()) {
-      toast({ title: "Error", description: "Please provide a close reason", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("admin.chat.toasts.reasonRequired"), variant: "destructive" });
       return;
     }
     closeMutation.mutate({
@@ -177,8 +177,8 @@ export default function AdminChat() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">Support Chat</h1>
-        <p className="text-muted-foreground mt-2">Respond to user support requests</p>
+        <h1 className="text-3xl font-serif font-semibold">{t("admin.chat.title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("admin.chat.subtitle")}</p>
       </div>
 
       {/* Filters */}
@@ -186,12 +186,12 @@ export default function AdminChat() {
         <div className="w-48">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("admin.chat.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
+              <SelectItem value="all">{t("admin.chat.allStatus")}</SelectItem>
+              <SelectItem value="open">{t("admin.chat.status.open")}</SelectItem>
+              <SelectItem value="closed">{t("admin.chat.status.closed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -201,23 +201,23 @@ export default function AdminChat() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            Chat Threads
+            {t("admin.chat.threads")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {threadsLoading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t("admin.chat.loading")}</div>
           ) : !threadsData?.threads || threadsData.threads.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No chat threads</div>
+            <div className="text-center py-12 text-muted-foreground">{t("admin.chat.noThreads")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Message</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("admin.chat.table.user")}</TableHead>
+                  <TableHead>{t("admin.chat.table.status")}</TableHead>
+                  <TableHead>{t("admin.chat.table.lastMessage")}</TableHead>
+                  <TableHead>{t("admin.chat.table.created")}</TableHead>
+                  <TableHead className="text-right">{t("admin.chat.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -228,7 +228,7 @@ export default function AdminChat() {
                         <p className="font-medium">
                           {userFirstName && userLastName
                             ? `${userFirstName} ${userLastName}`
-                            : userEmail || "User"}
+                            : userEmail || t("admin.chat.userFallback")}
                         </p>
                         {userEmail && (
                           <p className="text-xs text-muted-foreground">{userEmail}</p>
@@ -237,7 +237,7 @@ export default function AdminChat() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={thread.status === "open" ? "default" : "outline"}>
-                        {thread.status}
+                        {t(`admin.chat.status.${thread.status}`, thread.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -258,7 +258,7 @@ export default function AdminChat() {
                             disabled={assignMutation.isPending}
                           >
                             <UserCheck className="h-4 w-4 mr-1" />
-                            Assign
+                            {t("admin.chat.buttons.assign")}
                           </Button>
                         )}
                         <Button
@@ -267,7 +267,7 @@ export default function AdminChat() {
                           onClick={() => openChatDialog({ thread, userFirstName, userLastName, userEmail })}
                         >
                           <MessageSquare className="h-4 w-4 mr-1" />
-                          Open
+                          {t("admin.chat.buttons.open")}
                         </Button>
                         {thread.status === "open" && (
                           <Button
@@ -276,7 +276,7 @@ export default function AdminChat() {
                             onClick={() => openCloseDialog({ thread, userFirstName, userLastName, userEmail })}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Close
+                            {t("admin.chat.buttons.close")}
                           </Button>
                         )}
                       </div>
@@ -293,11 +293,11 @@ export default function AdminChat() {
       <Dialog open={showChatDialog} onOpenChange={setShowChatDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Support Chat</DialogTitle>
+            <DialogTitle>{t("admin.chat.dialog.title")}</DialogTitle>
             <DialogDescription>
               {selectedThread && (
                 <>
-                  Chat with{" "}
+                  {t("admin.chat.dialog.chatWith")}{" "}
                   {selectedThread.userFirstName && selectedThread.userLastName
                     ? `${selectedThread.userFirstName} ${selectedThread.userLastName}`
                     : selectedThread.userEmail}
@@ -309,9 +309,9 @@ export default function AdminChat() {
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-[400px] pr-4">
               {messagesLoading ? (
-                <div className="text-center py-8">Loading messages...</div>
+                <div className="text-center py-8">{t("admin.chat.dialog.loadingMessages")}</div>
               ) : !messagesData?.messages || messagesData.messages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No messages yet</div>
+                <div className="text-center py-8 text-muted-foreground">{t("admin.chat.dialog.noMessages")}</div>
               ) : (
                 <div className="space-y-4">
                   {messagesData.messages.map(({ message, senderFirstName, senderLastName }) => (
@@ -332,8 +332,8 @@ export default function AdminChat() {
                             {senderFirstName && senderLastName
                               ? `${senderFirstName} ${senderLastName}`
                               : message.senderType === "admin"
-                                ? "Admin"
-                                : "User"}
+                                ? t("admin.chat.adminLabel")
+                                : t("admin.chat.userFallback")}
                           </p>
                           <p className="text-xs opacity-70">
                             {format(new Date(message.createdAt), "HH:mm")}
@@ -350,7 +350,7 @@ export default function AdminChat() {
           <div className="space-y-2 pt-4 border-t">
             <div className="flex gap-2">
               <Textarea
-                placeholder="Type your message..."
+                placeholder={t("admin.chat.dialog.messagePlaceholder")}
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={(e) => {
@@ -375,7 +375,7 @@ export default function AdminChat() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowChatDialog(false)}>
-              Close
+              {t("admin.chat.buttons.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -385,18 +385,18 @@ export default function AdminChat() {
       <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Close Thread</DialogTitle>
+            <DialogTitle>{t("admin.chat.dialog.closeThreadTitle")}</DialogTitle>
             <DialogDescription>
-              Provide a reason for closing this support thread.
+              {t("admin.chat.dialog.closeThreadDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="close-reason">Close Reason *</Label>
+              <Label htmlFor="close-reason">{t("admin.chat.dialog.closeReason")}</Label>
               <Textarea
                 id="close-reason"
-                placeholder="Explain why this thread is being closed..."
+                placeholder={t("admin.chat.dialog.closeReasonPlaceholder")}
                 value={closeReason}
                 onChange={(e) => setCloseReason(e.target.value)}
                 rows={4}
@@ -406,13 +406,13 @@ export default function AdminChat() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
-              Cancel
+              {t("admin.chat.buttons.cancel")}
             </Button>
             <Button
               onClick={handleCloseThread}
               disabled={closeMutation.isPending || !closeReason.trim()}
             >
-              {closeMutation.isPending ? "Closing..." : "Close Thread"}
+              {closeMutation.isPending ? t("admin.chat.buttons.closing") : t("admin.chat.buttons.closeThread")}
             </Button>
           </DialogFooter>
         </DialogContent>
