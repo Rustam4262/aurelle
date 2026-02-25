@@ -1,8 +1,8 @@
 import { Router, Request } from "express";
 import { db } from "../../db";
 import { users, salons, masters } from "@shared/schema";
-import { adminUsers, adminRoles } from "@shared/admin-schema";
-import { eq, desc, asc, like, or, and, sql, inArray } from "drizzle-orm";
+import { adminUsers } from "@shared/admin-schema";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
@@ -14,68 +14,62 @@ function getUserId(req: Request): string {
   return (req.session as any)?.passport?.user?.claims?.sub || "";
 }
 
-// Helper to determine user roles
-async function getUserRoles(userId: string): Promise<string[]> {
-  const roles: string[] = [];
+// Batch version: 3 queries for N users instead of 3N queries
+async function getBatchedUserRoles(userIds: string[]): Promise<Map<string, string[]>> {
+  const rolesMap = new Map<string, string[]>();
+  if (userIds.length === 0) return rolesMap;
 
+  // Initialize all users as "client" (default role)
+  userIds.forEach((id) => rolesMap.set(id, ["client"]));
+
+  // Query 1: find all admins in this batch
   try {
-    // Check if admin
-    try {
-      const [adminUser] = await db
-        .select()
-        .from(adminUsers)
-        .where(and(eq(adminUsers.userId, userId), eq(adminUsers.isActive, true)))
-        .limit(1);
-
-      if (adminUser) {
-        roles.push("admin");
-      }
-    } catch (error) {
-      // Admin tables may not exist, skip silently
-      logger.debug("Admin check skipped", { userId, error: String(error) });
-    }
-
-    // Check if salon owner
-    try {
-      const [salonOwner] = await db
-        .select({ id: salons.id })
-        .from(salons)
-        .where(eq(salons.ownerId, userId))
-        .limit(1);
-
-      if (salonOwner) {
-        roles.push("salon_owner");
-      }
-    } catch (error) {
-      logger.debug("Salon owner check failed", { userId, error: String(error) });
-    }
-
-    // Check if master
-    try {
-      const [master] = await db
-        .select({ id: masters.id })
-        .from(masters)
-        .where(eq(masters.userId, userId))
-        .limit(1);
-
-      if (master) {
-        roles.push("master");
-      }
-    } catch (error) {
-      logger.debug("Master check failed", { userId, error: String(error) });
-    }
-
-    // Default to client if no other roles
-    if (roles.length === 0) {
-      roles.push("client");
-    }
-  } catch (error) {
-    // Fallback to client if all checks fail
-    logger.error("getUserRoles failed completely", error as Error, { userId });
-    roles.push("client");
+    const adminList = await db
+      .select({ userId: adminUsers.userId })
+      .from(adminUsers)
+      .where(and(eq(adminUsers.isActive, true), inArray(adminUsers.userId, userIds)));
+    adminList.forEach(({ userId }) => {
+      const roles = (rolesMap.get(userId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("admin")) roles.push("admin");
+      rolesMap.set(userId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch admin check skipped", { meta: { error: String(e) } });
   }
 
-  return roles;
+  // Query 2: find all salon owners in this batch
+  try {
+    const ownerList = await db
+      .select({ ownerId: salons.ownerId })
+      .from(salons)
+      .where(inArray(salons.ownerId, userIds));
+    ownerList.forEach(({ ownerId }) => {
+      if (!ownerId) return;
+      const roles = (rolesMap.get(ownerId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("salon_owner")) roles.push("salon_owner");
+      rolesMap.set(ownerId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch salon owner check skipped", { meta: { error: String(e) } });
+  }
+
+  // Query 3: find all masters in this batch
+  try {
+    const masterList = await db
+      .select({ userId: masters.userId })
+      .from(masters)
+      .where(inArray(masters.userId, userIds));
+    masterList.forEach(({ userId }) => {
+      if (!userId) return;
+      const roles = (rolesMap.get(userId) ?? []).filter((r) => r !== "client");
+      if (!roles.includes("master")) roles.push("master");
+      rolesMap.set(userId, roles);
+    });
+  } catch (e) {
+    logger.debug("Batch master check skipped", { meta: { error: String(e) } });
+  }
+
+  return rolesMap;
 }
 
 // GET /api/admin/users - List all users with pagination and filters
@@ -167,38 +161,24 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       logger.info("After verification filter", { count: filteredUsers.length, verified });
     }
 
-    // Step 3: Apply role filter (requires async operations)
+    // Step 3: Apply role filter (3 queries total for all users via batch)
     if (role && role !== "all" && role !== "") {
       logger.info("Applying role filter", { role, usersBeforeFilter: filteredUsers.length });
 
-      const usersWithRoles = await Promise.all(
-        filteredUsers.map(async (user) => {
-          try {
-            const userRoles = await getUserRoles(user.id);
-            return { user, roles: userRoles };
-          } catch (error) {
-            logger.error("Failed to get roles for user", error as Error, { userId: user.id });
-            return { user, roles: ["client"] }; // Fallback to client
-          }
-        })
-      );
+      const roleIds = filteredUsers.map((u) => u.id);
+      const rolesMap = await getBatchedUserRoles(roleIds);
 
       if (role === "admin") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("admin"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("admin"));
       } else if (role === "salon_owner") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("salon_owner"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("salon_owner"));
       } else if (role === "master") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("master"))
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("master"));
       } else if (role === "client") {
-        filteredUsers = usersWithRoles
-          .filter(({ roles }) => roles.includes("client") && roles.length === 1)
-          .map(({ user }) => user);
+        filteredUsers = filteredUsers.filter((u) => {
+          const r = rolesMap.get(u.id) ?? ["client"];
+          return r.includes("client") && r.length === 1;
+        });
       }
 
       logger.info("After role filter", { role, usersAfterFilter: filteredUsers.length });
@@ -246,15 +226,12 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       usersOnThisPage: paginatedUsers.length,
     });
 
-    // Step 6: Transform to frontend format
-    const transformedUsers = await Promise.all(
-      paginatedUsers.map(async (user) => {
-        let userRoles: string[] = ["client"];
-        try {
-          userRoles = await getUserRoles(user.id);
-        } catch (error) {
-          logger.error("Failed to get roles during transform", error as Error, { userId: user.id });
-        }
+    // Step 6: Transform to frontend format (3 queries for the whole page)
+    const pageUserIds = paginatedUsers.map((u) => u.id);
+    const pageRolesMap = await getBatchedUserRoles(pageUserIds);
+
+    const transformedUsers = paginatedUsers.map((user) => {
+        const userRoles = pageRolesMap.get(user.id) ?? ["client"];
 
         return {
           id: user.id,
@@ -276,8 +253,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
-      })
-    );
+    });
 
     const response = {
       users: transformedUsers,
