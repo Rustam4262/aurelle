@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { User } from "@shared/models/auth";
 import { logger } from '@/lib/logger';
@@ -32,7 +32,6 @@ async function doLogout(): Promise<void> {
 }
 
 export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }) {
-  const queryClient = useQueryClient();
   const {
     data: user,
     isLoading,
@@ -47,8 +46,11 @@ export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }
   const logoutMutation = useMutation({
     mutationFn: doLogout,
     onSuccess: () => {
-      // Clear all React Query caches so stale data isn't shown after redirect
-      queryClient.clear();
+      // Full page reload clears all React Query state automatically.
+      // Do NOT call queryClient.clear() here — it causes client.tsx to
+      // re-render with user=undefined → navigate("/auth") SPA navigation fires
+      // simultaneously with this full reload, aborting lazy-loaded bundles
+      // and triggering the ErrorBoundary before the reload completes.
       window.location.href = "/auth";
     },
     onError: (error) => {
