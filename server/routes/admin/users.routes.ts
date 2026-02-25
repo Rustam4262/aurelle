@@ -87,19 +87,13 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     } = req.query;
 
     logger.info("Admin users request params", {
-      search,
-      role,
-      status,
-      verified,
-      sortBy,
-      sortOrder,
-      page,
-      pageSize,
+      source: "users-routes",
+      meta: { search, role, status, verified, sortBy, sortOrder, page, pageSize },
     });
 
     // Step 1: Get ALL users first (no filters) to see if DB has data
     const allUsersInDb = await db.select().from(users);
-    logger.info("Total users in database", { count: allUsersInDb.length });
+    logger.info("Total users in database", { source: "users-routes", meta: { count: allUsersInDb.length } });
 
     if (allUsersInDb.length === 0) {
       logger.warn("No users found in database at all!");
@@ -130,7 +124,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           phone.includes(searchTerm)
         );
       });
-      logger.info("After search filter", { count: filteredUsers.length, searchTerm });
+      logger.info("After search filter", { source: "users-routes", meta: { count: filteredUsers.length, searchTerm } });
     }
 
     // Status filter
@@ -140,7 +134,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       } else if (status === "active") {
         filteredUsers = filteredUsers.filter((user) => user.isBlocked !== true);
       }
-      logger.info("After status filter", { count: filteredUsers.length, status });
+      logger.info("After status filter", { source: "users-routes", meta: { count: filteredUsers.length, status } });
     }
 
     // Verification filter
@@ -158,12 +152,12 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
           (user) => user.emailVerified !== true && user.phoneVerified !== true
         );
       }
-      logger.info("After verification filter", { count: filteredUsers.length, verified });
+      logger.info("After verification filter", { source: "users-routes", meta: { count: filteredUsers.length, verified } });
     }
 
     // Step 3: Apply role filter (3 queries total for all users via batch)
     if (role && role !== "all" && role !== "") {
-      logger.info("Applying role filter", { role, usersBeforeFilter: filteredUsers.length });
+      logger.info("Applying role filter", { source: "users-routes", meta: { role, usersBeforeFilter: filteredUsers.length } });
 
       const roleIds = filteredUsers.map((u) => u.id);
       const rolesMap = await getBatchedUserRoles(roleIds);
@@ -181,7 +175,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
         });
       }
 
-      logger.info("After role filter", { role, usersAfterFilter: filteredUsers.length });
+      logger.info("After role filter", { source: "users-routes", meta: { role, usersAfterFilter: filteredUsers.length } });
     }
 
     // Step 4: Sort
@@ -209,7 +203,7 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       return 0;
     });
 
-    logger.info("After sorting", { sortBy, sortOrder, count: filteredUsers.length });
+    logger.info("After sorting", { source: "users-routes", meta: { sortBy, sortOrder, count: filteredUsers.length } });
 
     // Step 5: Pagination
     const total = filteredUsers.length;
@@ -219,11 +213,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
 
     logger.info("Pagination applied", {
-      total,
-      page: pageNum,
-      pageSize: pageSizeNum,
-      offset,
-      usersOnThisPage: paginatedUsers.length,
+      source: "users-routes",
+      meta: { total, page: pageNum, pageSize: pageSizeNum, offset, usersOnThisPage: paginatedUsers.length },
     });
 
     // Step 6: Transform to frontend format (3 queries for the whole page)
@@ -264,9 +255,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     };
 
     logger.info("Returning users response", {
-      usersCount: transformedUsers.length,
-      total: response.total,
-      totalPages: response.totalPages,
+      source: "users-routes",
+      meta: { usersCount: transformedUsers.length, total: response.total, totalPages: response.totalPages },
     });
 
     res.json(response);
@@ -376,7 +366,7 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
       sendUserBlockedEmail(updated.email, userName, reason || "Violation of platform rules", adminName).catch((err) => {
-        logger.error("Failed to send block email", err, { userId: updated.id, source: "users-routes" });
+        logger.error("Failed to send block email", err, { source: "users-routes", meta: { userId: updated.id } });
       });
     }
 
@@ -404,7 +394,7 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       .update(users)
       .set({
         isBlocked: false,
-        blockReason: null,
+        blockReason: sql`NULL`,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))
@@ -427,7 +417,7 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
       sendUserUnblockedEmail(updated.email, userName, adminName).catch((err) => {
-        logger.error("Failed to send unblock email", err, { userId: updated.id, source: "users-routes" });
+        logger.error("Failed to send unblock email", err, { source: "users-routes", meta: { userId: updated.id } });
       });
     }
 
@@ -483,11 +473,6 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
       return res.status(400).json({ error: "Maximum 100 users can be blocked at once" });
     }
 
-    // Get users before update
-    const oldUsers = await db.select().from(users).where(
-      inArray(users.id, userIds)
-    );
-
     // Update all users
     const updated = await db
       .update(users)
@@ -505,7 +490,7 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
       actorRole: req.admin!.roleName,
       action: "user.bulk_block",
       entityType: "user",
-      entityId: null,
+      entityId: undefined,
       meta: {
         userIds,
         count: updated.length,
@@ -544,7 +529,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
       .update(users)
       .set({
         isBlocked: false,
-        blockReason: null,
+        blockReason: sql`NULL`,
         updatedAt: new Date(),
       })
       .where(inArray(users.id, userIds))
@@ -556,7 +541,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
       actorRole: req.admin!.roleName,
       action: "user.bulk_unblock",
       entityType: "user",
-      entityId: null,
+      entityId: undefined,
       meta: {
         userIds,
         count: updated.length,
@@ -576,7 +561,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
 });
 
 // GET /api/admin/users/stats - Get user statistics
-router.get("/stats/overview", requirePermission("users.read"), async (req, res) => {
+router.get("/stats/overview", requirePermission("users.read"), async (_req, res) => {
   try {
     // Total users
     const [totalResult] = await db
