@@ -257,9 +257,8 @@ export default function ProfilePage() {
     return null;
   }
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handleLogout = () => {
+    logout();
   };
 
   const handleStartEditProfile = () => {

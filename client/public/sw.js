@@ -50,6 +50,9 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
+  // Auth endpoints: never cache — always network (session state must be fresh)
+  if (url.pathname.startsWith('/api/auth/') || url.pathname === '/api/logout') return;
+
   // 1. API: stale-while-revalidate
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(staleWhileRevalidate(request, CACHE_DYNAMIC));

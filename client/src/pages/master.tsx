@@ -67,9 +67,8 @@ export default function MasterPage() {
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handleLogout = () => {
+    logout();
   };
 
   const handleCancelBooking = () => {

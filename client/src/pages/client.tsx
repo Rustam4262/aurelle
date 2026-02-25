@@ -114,9 +114,8 @@ export default function ClientPage() {
     },
   });
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handleLogout = () => {
+    logout();
   };
 
   const handleCancelBooking = (bookingId: string) => {

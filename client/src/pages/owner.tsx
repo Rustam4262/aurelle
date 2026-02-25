@@ -92,9 +92,8 @@ export default function OwnerPage() {
     enabled: !!user && activeTab === "calendar",
   });
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handleLogout = () => {
+    logout();
   };
 
   if (authLoading) {

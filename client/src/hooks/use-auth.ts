@@ -20,24 +20,14 @@ async function fetchUser(): Promise<User | null> {
   return response.json();
 }
 
-async function logout(): Promise<void> {
-  try {
-    // Use POST for proper logout
-    const response = await fetch("/api/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+async function doLogout(): Promise<void> {
+  const response = await fetch("/api/logout", {
+    method: "POST",
+    credentials: "include",
+  });
 
-    if (response.ok) {
-      // Redirect to auth page after successful logout
-      window.location.href = "/auth";
-    } else {
-      throw new Error("Logout failed");
-    }
-  } catch (error) {
-    logger.error("Logout error", error);
-    // Fallback to GET redirect
-    window.location.href = "/api/logout";
+  if (!response.ok) {
+    throw new Error(`Logout failed: ${response.status}`);
   }
 }
 
@@ -55,9 +45,16 @@ export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }
   });
 
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: doLogout,
     onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
+      // Clear all React Query caches so stale data isn't shown after redirect
+      queryClient.clear();
+      window.location.href = "/auth";
+    },
+    onError: (error) => {
+      logger.error("Logout error", error);
+      // Fallback: GET-based logout (destroys session server-side and redirects)
+      window.location.href = "/api/logout";
     },
   });
 
