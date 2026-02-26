@@ -35,6 +35,7 @@ import {
   Car,
   Home,
   ArrowLeft,
+  PhoneCall,
 } from "lucide-react";
 import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { ru, enUS, uz } from "date-fns/locale";
@@ -328,7 +329,46 @@ export default function PublicMasterPage() {
                 )}
               </div>
 
-              {bio && <p className="text-muted-foreground">{bio}</p>}
+              {bio && <p className="text-muted-foreground mb-4">{bio}</p>}
+
+              {/* Primary CTA — always visible */}
+              <div className="flex flex-wrap gap-3 mt-4">
+                {services && services.length > 0 ? (
+                  <Button
+                    size="lg"
+                    className="gap-2 shadow-lg shadow-primary/20"
+                    onClick={() => handleBookService(services[0])}
+                  >
+                    <CalendarIcon className="h-5 w-5" />
+                    {t("publicMaster.bookNow", "Book Now")}
+                  </Button>
+                ) : (
+                  <Button size="lg" variant="outline" className="gap-2" disabled>
+                    <CalendarIcon className="h-5 w-5" />
+                    {t("publicMaster.noServicesYet", "Услуги не добавлены")}
+                  </Button>
+                )}
+                {master.phone && (
+                  <Button size="lg" variant="outline" className="gap-2" asChild>
+                    <a href={`tel:${master.phone}`}>
+                      <PhoneCall className="h-5 w-5" />
+                      {t("publicMaster.call", "Позвонить")}
+                    </a>
+                  </Button>
+                )}
+                {master.telegram && (
+                  <Button size="lg" variant="outline" className="gap-2" asChild>
+                    <a
+                      href={`https://t.me/${master.telegram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Send className="h-5 w-5" />
+                      Telegram
+                    </a>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -415,8 +455,36 @@ export default function PublicMasterPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {t("publicMaster.noServices", "No services available")}
+                  <div className="text-center py-12">
+                    <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-30" />
+                    <p className="text-muted-foreground mb-4">
+                      {t("publicMaster.noServices", "No services available")}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      {t("publicMaster.noServicesContact", "Свяжитесь с мастером напрямую для записи")}
+                    </p>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {master.phone && (
+                        <Button variant="outline" className="gap-2" asChild>
+                          <a href={`tel:${master.phone}`}>
+                            <PhoneCall className="h-4 w-4" />
+                            {master.phone}
+                          </a>
+                        </Button>
+                      )}
+                      {master.telegram && (
+                        <Button variant="outline" className="gap-2" asChild>
+                          <a
+                            href={`https://t.me/${master.telegram}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Send className="h-4 w-4" />
+                            @{master.telegram}
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -495,7 +563,7 @@ export default function PublicMasterPage() {
           {/* Sidebar */}
           <div className="space-y-4">
             <Card className="p-6 sticky top-24">
-              {services && services.length > 0 && (
+              {services && services.length > 0 ? (
                 <Button
                   className="w-full mb-6 font-medium shadow-lg shadow-primary/20"
                   size="lg"
@@ -504,6 +572,29 @@ export default function PublicMasterPage() {
                   <CalendarIcon className="h-5 w-5 mr-2" />
                   {t("publicMaster.bookNow", "Book Now")}
                 </Button>
+              ) : (
+                <div className="mb-6 space-y-2">
+                  {master.phone && (
+                    <Button className="w-full gap-2" size="lg" asChild>
+                      <a href={`tel:${master.phone}`}>
+                        <PhoneCall className="h-5 w-5" />
+                        {t("publicMaster.call", "Позвонить")}
+                      </a>
+                    </Button>
+                  )}
+                  {master.telegram && (
+                    <Button variant="outline" className="w-full gap-2" asChild>
+                      <a
+                        href={`https://t.me/${master.telegram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Send className="h-5 w-5" />
+                        Telegram
+                      </a>
+                    </Button>
+                  )}
+                </div>
               )}
 
               <div className="space-y-6">
