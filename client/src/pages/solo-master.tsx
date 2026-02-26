@@ -1,13 +1,30 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -24,7 +41,25 @@ import {
   ExternalLink,
   AlertCircle,
   LogOut,
+  Trash2,
 } from "lucide-react";
+
+const SERVICE_CATEGORIES = [
+  "Маникюр", "Педикюр", "Ресницы", "Брови",
+  "Волосы", "Макияж", "Массаж", "Спа",
+  "Эпиляция", "Косметология", "Другое",
+];
+
+interface SoloService {
+  id: string;
+  name: { en: string; ru: string; uz: string };
+  category: string;
+  priceMin: number;
+  priceMax: number | null;
+  duration: number;
+  serviceMode: string | null;
+  isActive: boolean;
+}
 
 interface MasterData {
   id: string;
@@ -49,7 +84,16 @@ export default function SoloMasterPage() {
   const { t } = useTranslation();
   const { user, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Service dialog state
+  const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
+  const [serviceName, setServiceName] = useState("");
+  const [serviceCategory, setServiceCategory] = useState("");
+  const [servicePrice, setServicePrice] = useState("");
+  const [serviceDuration, setServiceDuration] = useState("60");
+  const [serviceMode, setServiceMode] = useState("both");
 
   // Fetch master data
   const { data: masterData, isLoading: masterLoading } = useQuery<MasterData>({
@@ -72,6 +116,61 @@ export default function SoloMasterPage() {
       return res.json();
     },
     enabled: !!user && !!masterData,
+  });
+
+  // Fetch services
+  const { data: services = [], isLoading: servicesLoading } = useQuery<SoloService[]>({
+    queryKey: ["/api/solo-master/services"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/solo-master/services");
+      if (!res.ok) throw new Error("Failed to fetch services");
+      return res.json();
+    },
+    enabled: !!user && !!masterData,
+  });
+
+  const createServiceMutation = useMutation({
+    mutationFn: async () => {
+      const price = parseInt(servicePrice, 10);
+      if (!serviceName.trim() || !serviceCategory || isNaN(price) || price < 0) {
+        throw new Error("Заполните обязательные поля");
+      }
+      const res = await apiRequest("POST", "/api/solo-master/services", {
+        name: { ru: serviceName.trim(), en: serviceName.trim(), uz: serviceName.trim() },
+        category: serviceCategory,
+        priceMin: price,
+        duration: parseInt(serviceDuration, 10) || 60,
+        serviceMode,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Ошибка создания услуги");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] });
+      setServiceDialogOpen(false);
+      setServiceName("");
+      setServiceCategory("");
+      setServicePrice("");
+      setServiceDuration("60");
+      setServiceMode("both");
+      toast({ title: "Услуга добавлена" });
+    },
+    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/solo-master/services/${id}`);
+      if (!res.ok) throw new Error("Ошибка удаления");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] });
+      toast({ title: "Услуга удалена" });
+    },
+    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
 
   if (authLoading || masterLoading) {
@@ -332,18 +431,59 @@ export default function SoloMasterPage() {
                     {t("soloMaster.servicesDesc", "Services you offer to clients")}
                   </CardDescription>
                 </div>
-                <Button>
+                <Button onClick={() => setServiceDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("soloMaster.addService", "Add Service")}
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  {t(
-                    "soloMaster.noServices",
-                    "No services added yet. Add your first service to start accepting bookings.",
-                  )}
-                </div>
+                {servicesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : services.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>
+                      {t(
+                        "soloMaster.noServices",
+                        "No services added yet. Add your first service to start accepting bookings.",
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {services.map((svc) => (
+                      <div
+                        key={svc.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{svc.name.ru}</p>
+                          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                            <Badge variant="secondary" className="text-xs">{svc.category}</Badge>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {svc.duration} мин
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {svc.priceMin.toLocaleString()} UZS
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteServiceMutation.mutate(svc.id)}
+                          disabled={deleteServiceMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -397,6 +537,94 @@ export default function SoloMasterPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Service Dialog */}
+      <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{t("soloMaster.addService", "Add Service")}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="svc-name">Название услуги *</Label>
+              <Input
+                id="svc-name"
+                placeholder="Маникюр классический"
+                value={serviceName}
+                onChange={(e) => setServiceName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="svc-category">Категория *</Label>
+              <Select value={serviceCategory} onValueChange={setServiceCategory}>
+                <SelectTrigger id="svc-category" className="mt-1">
+                  <SelectValue placeholder="Выберите категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SERVICE_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="svc-price">Цена (UZS) *</Label>
+                <Input
+                  id="svc-price"
+                  type="number"
+                  placeholder="100000"
+                  value={servicePrice}
+                  onChange={(e) => setServicePrice(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="svc-duration">Длительность (мин) *</Label>
+                <Input
+                  id="svc-duration"
+                  type="number"
+                  placeholder="60"
+                  value={serviceDuration}
+                  onChange={(e) => setServiceDuration(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="svc-mode">Формат работы</Label>
+              <Select value={serviceMode} onValueChange={setServiceMode}>
+                <SelectTrigger id="svc-mode" className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="at_master">У мастера</SelectItem>
+                  <SelectItem value="mobile">Выезд</SelectItem>
+                  <SelectItem value="both">У мастера и выезд</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setServiceDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={() => createServiceMutation.mutate()}
+              disabled={createServiceMutation.isPending || !serviceName.trim() || !serviceCategory || !servicePrice}
+            >
+              {createServiceMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Добавить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
