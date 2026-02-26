@@ -3,11 +3,11 @@ import type { Transporter } from "nodemailer";
 import { logger } from "../lib/logger";
 
 // Email configuration from environment variables
-const EMAIL_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const EMAIL_PORT = parseInt(process.env.SMTP_PORT || "587");
-const EMAIL_SECURE = process.env.SMTP_SECURE === "true";
-const EMAIL_USER = process.env.SMTP_USER;
-const EMAIL_PASS = process.env.SMTP_PASS;
+const EMAIL_HOST = process.env.EMAIL_HOST || "smtp.gmail.com";
+const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || "587");
+const EMAIL_SECURE = process.env.EMAIL_PORT === "465";
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASSWORD;
 const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
 const APP_URL = process.env.APP_URL || "https://aurelle.uz";
 
@@ -16,7 +16,7 @@ let transporter: Transporter | null = null;
 // Initialize email transporter
 export function initializeEmail(): void {
   if (!EMAIL_USER || !EMAIL_PASS) {
-    logger.warn("⚠️  Email not configured - SMTP_USER or SMTP_PASS missing");
+    logger.warn("⚠️  Email not configured - EMAIL_USER or EMAIL_PASSWORD missing");
     return;
   }
 
