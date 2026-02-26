@@ -321,6 +321,8 @@ export default function AuthPage() {
         navigate("/owner");
       } else if (profile.role === "master") {
         navigate("/master");
+      } else if (profile.role === "solo_master") {
+        navigate("/solo-master");
       } else {
         navigate("/profile");
       }
