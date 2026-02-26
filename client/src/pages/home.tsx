@@ -7,6 +7,7 @@ import { HomeNavigation } from "@/components/home/HomeNavigation";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeCategories } from "@/components/home/HomeCategories";
 import { HomeSalons } from "@/components/home/HomeSalons";
+import { HomeMasters } from "@/components/home/HomeMasters";
 import { HomeMap } from "@/components/home/HomeMap";
 import { HomeStats } from "@/components/home/HomeStats";
 import { HomeTestimonials } from "@/components/home/HomeTestimonials";
@@ -28,6 +29,7 @@ export default function Home() {
           <HomeHero />
           <HomeCategories />
           <HomeSalons salons={salons} isLoading={isLoading} />
+          <HomeMasters />
           <HomeMap salons={salons} />
           <HomeStats />
           <HomeTestimonials />

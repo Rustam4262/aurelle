@@ -1,4 +1,19 @@
 {
+  "home": {
+    "masters": {
+      "title": "Frilanser masterlar",
+      "subtitle": "Uyga keluvchi yoki o'z joyida qabul qiluvchi mutaxassislar",
+      "viewAll": "Barcha masterlar",
+      "navLink": "Masterlar"
+    }
+  },
+  "master": {
+    "serviceMode": {
+      "atMaster": "Master joyida",
+      "mobile": "Uyga kelish",
+      "both": "Uyga kelish / Master joyida"
+    }
+  },
   "marketplace": {
     "nav": {
       "explore": "Salonlarni topish",
@@ -3123,7 +3138,13 @@
     "starsLabel": "+ yulduz",
     "noSalonsFound": "Salonlar topilmadi",
     "noSalonsDesc": "Filtrlarni o'zgartiring yoki boshqa hududda qidiring",
-    "clearAllFilters": "Barcha filtrlarni tozalash"
+    "clearAllFilters": "Barcha filtrlarni tozalash",
+    "tabSalons": "Salonlar",
+    "tabMasters": "Masterlar",
+    "mastersTitle": "Frilanser masterlar",
+    "masterNamePlaceholder": "Master ismi...",
+    "noMastersFound": "Masterlar topilmadi",
+    "noMastersDesc": "Qidiruv parametrlarini o'zgartiring"
   },
   "notFound": {
     "title": "404 — Sahifa topilmadi",

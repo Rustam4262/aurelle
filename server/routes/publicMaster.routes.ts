@@ -1,6 +1,6 @@
 import express from "express";
 import { db } from "../db";
-import { eq, and, desc, sql, gte, ne } from "drizzle-orm";
+import { eq, and, desc, sql, gte, ne, ilike, or } from "drizzle-orm";
 import {
   masters,
   soloMasterServices,
@@ -14,6 +14,52 @@ import {
 import { logger } from "../lib/logger";
 
 const router = express.Router();
+
+// List all active solo masters (public)
+router.get("/", async (req, res) => {
+  try {
+    const { q, city, limit = "20", offset = "0" } = req.query;
+    const limitNum = Math.min(parseInt(String(limit), 10) || 20, 100);
+    const offsetNum = parseInt(String(offset), 10) || 0;
+
+    const conditions = [eq(masters.isSoloMaster, true), eq(masters.status, "active")];
+
+    if (city && typeof city === "string" && city.trim()) {
+      conditions.push(ilike(masters.city, `%${city.trim()}%`));
+    }
+
+    if (q && typeof q === "string" && q.trim()) {
+      conditions.push(ilike(masters.name, `%${q.trim()}%`));
+    }
+
+    const rows = await db
+      .select({
+        id: masters.id,
+        name: masters.name,
+        slug: masters.slug,
+        photo: masters.photo,
+        city: masters.city,
+        address: masters.address,
+        serviceMode: masters.serviceMode,
+        specialties: masters.specialties,
+        averageRating: masters.averageRating,
+        reviewCount: masters.reviewCount,
+        experience: masters.experience,
+        instagram: masters.instagram,
+        telegram: masters.telegram,
+      })
+      .from(masters)
+      .where(and(...conditions))
+      .orderBy(desc(masters.averageRating))
+      .limit(limitNum)
+      .offset(offsetNum);
+
+    return res.json(rows);
+  } catch (error) {
+    logger.error("List public masters error:", error);
+    return res.status(500).json({ error: "Failed to list masters" });
+  }
+});
 
 // Get public master profile by slug
 router.get("/:slug", async (req, res) => {

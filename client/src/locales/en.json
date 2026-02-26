@@ -1,4 +1,19 @@
 {
+  "home": {
+    "masters": {
+      "title": "Freelance Masters",
+      "subtitle": "Professionals who work on-site or come to you",
+      "viewAll": "All masters",
+      "navLink": "Masters"
+    }
+  },
+  "master": {
+    "serviceMode": {
+      "atMaster": "At master's place",
+      "mobile": "Mobile",
+      "both": "Mobile / At master's"
+    }
+  },
   "marketplace": {
     "nav": {
       "explore": "Explore Salons",
@@ -3124,7 +3139,13 @@
     "starsLabel": "+ Stars",
     "noSalonsFound": "No salons found",
     "noSalonsDesc": "Try adjusting your filters or search in a different area",
-    "clearAllFilters": "Clear all filters"
+    "clearAllFilters": "Clear all filters",
+    "tabSalons": "Salons",
+    "tabMasters": "Masters",
+    "mastersTitle": "Freelance Masters",
+    "masterNamePlaceholder": "Master name...",
+    "noMastersFound": "No masters found",
+    "noMastersDesc": "Try adjusting your search parameters"
   },
   "notFound": {
     "title": "404 Page Not Found",

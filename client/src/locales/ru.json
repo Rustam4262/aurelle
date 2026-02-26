@@ -1,4 +1,19 @@
 {
+  "home": {
+    "masters": {
+      "title": "Мастера-фрилансеры",
+      "subtitle": "Профессионалы, которые работают на выезд или принимают у себя",
+      "viewAll": "Все мастера",
+      "navLink": "Мастера"
+    }
+  },
+  "master": {
+    "serviceMode": {
+      "atMaster": "У мастера",
+      "mobile": "Выезд",
+      "both": "Выезд / У мастера"
+    }
+  },
   "marketplace": {
     "nav": {
       "explore": "Найти салон",
@@ -3129,7 +3144,13 @@
     "starsLabel": "+ звёзд",
     "noSalonsFound": "Салоны не найдены",
     "noSalonsDesc": "Попробуйте изменить фильтры или выбрать другой район",
-    "clearAllFilters": "Сбросить все фильтры"
+    "clearAllFilters": "Сбросить все фильтры",
+    "tabSalons": "Салоны",
+    "tabMasters": "Мастера",
+    "mastersTitle": "Мастера-фрилансеры",
+    "masterNamePlaceholder": "Имя мастера...",
+    "noMastersFound": "Мастера не найдены",
+    "noMastersDesc": "Попробуйте изменить параметры поиска"
   },
   "notFound": {
     "title": "404 — Страница не найдена",

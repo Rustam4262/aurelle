@@ -15,6 +15,7 @@ import {
   MapPin,
   Star,
   SlidersHorizontal,
+  User,
 } from "lucide-react";
 import type { Salon } from "@shared/schema";
 import { SalonCard } from "@/components/home/HomeSalons";
@@ -54,6 +55,85 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
 ];
 
+type SearchTab = "salons" | "masters";
+
+interface PublicMaster {
+  id: string;
+  name: string;
+  slug: string;
+  photo: string | null;
+  city: string | null;
+  address: string | null;
+  serviceMode: string | null;
+  specialties: { en: string[]; ru: string[]; uz: string[] } | null;
+  averageRating: string | null;
+  reviewCount: number | null;
+  experience: number | null;
+  instagram: string | null;
+  telegram: string | null;
+}
+
+function MasterCard({ master }: { master: PublicMaster }) {
+  const [, navigate] = useLocation();
+  const { i18n } = useI18nTranslation();
+  const lang = i18n.language as "en" | "ru" | "uz";
+
+  const specialties = master.specialties?.[lang] ?? master.specialties?.ru ?? [];
+  const rating = parseFloat(master.averageRating || "0");
+
+  const serviceModeLabel =
+    master.serviceMode === "mobile"
+      ? "Выезд"
+      : master.serviceMode === "both"
+        ? "Выезд / У мастера"
+        : "У мастера";
+
+  return (
+    <Card
+      className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => navigate(`/master/${master.slug}`)}
+    >
+      <div className="relative h-40 bg-muted flex items-center justify-center">
+        {master.photo ? (
+          <img
+            src={master.photo}
+            alt={master.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <User className="h-16 w-16 text-muted-foreground opacity-40" />
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold text-foreground truncate">{master.name}</h3>
+        {master.city && (
+          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            {master.city}
+          </p>
+        )}
+        {specialties.length > 0 && (
+          <p className="text-xs text-muted-foreground mt-1 truncate">
+            {specialties.slice(0, 3).join(", ")}
+          </p>
+        )}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+            <span className="text-sm font-medium">{rating > 0 ? rating.toFixed(1) : "—"}</span>
+            {(master.reviewCount ?? 0) > 0 && (
+              <span className="text-xs text-muted-foreground">({master.reviewCount})</span>
+            )}
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {serviceModeLabel}
+          </Badge>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function SearchPage() {
   const { t } = useTranslation();
   const { i18n } = useI18nTranslation();
@@ -70,7 +150,9 @@ export default function SearchPage() {
   const initialCategory = searchParams.get("category") || "";
   const initialRating = searchParams.get("rating") || "all";
   const initialSort = searchParams.get("sort") || "relevance";
+  const initialTab = (searchParams.get("tab") as SearchTab) || "salons";
 
+  const [activeTab, setActiveTab] = useState<SearchTab>(initialTab);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCity, setSelectedCity] = useState(initialCity);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -79,11 +161,28 @@ export default function SearchPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch all salons
-  const { data: salons = [], isLoading } = useQuery<Salon[]>({
+  const { data: salons = [], isLoading: salonsLoading } = useQuery<Salon[]>({
     queryKey: ["/api/salons"],
     queryFn: getQueryFn({ on401: "throw" }),
     staleTime: 5 * 60 * 1000,
   });
+
+  // Fetch solo masters (only when masters tab is active)
+  const { data: mastersList = [], isLoading: mastersLoading } = useQuery<PublicMaster[]>({
+    queryKey: ["/api/masters", searchQuery, selectedCity],
+    queryFn: () =>
+      fetch(
+        `/api/masters?${new URLSearchParams({
+          ...(searchQuery ? { q: searchQuery } : {}),
+          ...(selectedCity ? { city: selectedCity } : {}),
+          limit: "60",
+        })}`,
+      ).then((r) => r.json()),
+    staleTime: 2 * 60 * 1000,
+    enabled: activeTab === "masters",
+  });
+
+  const isLoading = activeTab === "salons" ? salonsLoading : mastersLoading;
 
   // Filter and sort salons
   const filteredAndSortedSalons = useMemo(() => {
@@ -130,13 +229,23 @@ export default function SearchPage() {
     return filtered;
   }, [salons, searchQuery, selectedCity, selectedCategory, minRating, sortBy, i18n.language]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateURL();
-  };
+  // Filter masters client-side by rating
+  const filteredMasters = useMemo(() => {
+    let filtered = mastersList.filter((m) => {
+      const rating = parseFloat(m.averageRating || "0");
+      return minRating === "all" || rating >= Number(minRating);
+    });
+    if (sortBy === "rating" || sortBy === "relevance") {
+      filtered.sort((a, b) => parseFloat(b.averageRating || "0") - parseFloat(a.averageRating || "0"));
+    } else if (sortBy === "reviews") {
+      filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+    }
+    return filtered;
+  }, [mastersList, minRating, sortBy]);
 
   const updateURL = () => {
     const params = new URLSearchParams();
+    if (activeTab !== "salons") params.set("tab", activeTab);
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCity) params.set("city", selectedCity);
     if (selectedCategory) params.set("category", selectedCategory);
@@ -156,6 +265,16 @@ export default function SearchPage() {
     navigate("/search");
   };
 
+  const handleTabChange = (tab: SearchTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams();
+    if (tab !== "salons") params.set("tab", tab);
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedCity) params.set("city", selectedCity);
+    const qs = params.toString();
+    navigate(`/search${qs ? `?${qs}` : ""}`);
+  };
+
   const uniqueCities = Array.from(
     new Set(
       salons
@@ -167,8 +286,10 @@ export default function SearchPage() {
   const activeFiltersCount =
     (searchQuery ? 1 : 0) +
     (selectedCity ? 1 : 0) +
-    (selectedCategory ? 1 : 0) +
+    (selectedCategory && activeTab === "salons" ? 1 : 0) +
     (minRating !== "all" ? 1 : 0);
+
+  const resultCount = activeTab === "salons" ? filteredAndSortedSalons.length : filteredMasters.length;
 
   return (
     <>
@@ -189,7 +310,9 @@ export default function SearchPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="font-serif text-4xl text-foreground mb-2">
-                  {t("marketplace.hero.search") || "Search Salons"}
+                  {activeTab === "masters"
+                    ? t("search.mastersTitle") || "Мастера"
+                    : t("marketplace.hero.search") || "Search Salons"}
                 </h1>
                 <p className="text-muted-foreground">
                   {t("search.subtitle")}
@@ -208,6 +331,24 @@ export default function SearchPage() {
                     {activeFiltersCount}
                   </Badge>
                 )}
+              </Button>
+            </div>
+
+            {/* Tab switcher */}
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant={activeTab === "salons" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTabChange("salons")}
+              >
+                {t("search.tabSalons") || "Салоны"}
+              </Button>
+              <Button
+                variant={activeTab === "masters" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTabChange("masters")}
+              >
+                {t("search.tabMasters") || "Мастера"}
               </Button>
             </div>
           </div>
@@ -244,7 +385,11 @@ export default function SearchPage() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder={t("search.salonNamePlaceholder")}
+                        placeholder={
+                          activeTab === "masters"
+                            ? t("search.masterNamePlaceholder") || "Имя мастера..."
+                            : t("search.salonNamePlaceholder")
+                        }
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
@@ -258,49 +403,43 @@ export default function SearchPage() {
                       <MapPin className="h-4 w-4 text-primary" />
                       {t("search.location")}
                     </label>
-                    <Select value={selectedCity} onValueChange={setSelectedCity}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("search.allCities")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">{t("search.allCities")}</SelectItem>
-                        {uniqueCities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      placeholder={t("search.allCities")}
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                    />
                   </div>
 
-                  {/* Service Categories */}
-                  <div>
-                    <label className="text-sm font-medium mb-3 block">
-                      {t("search.serviceCategory")}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {SERVICE_CATEGORIES.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() =>
-                            setSelectedCategory(
-                              selectedCategory === category.id ? "" : category.id
-                            )
-                          }
-                          className={`p-3 rounded-lg border-2 transition-all text-left hover:border-primary/50 ${
-                            selectedCategory === category.id
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-border"
-                          }`}
-                        >
-                          <div className="text-2xl mb-1">{category.icon}</div>
-                          <div className="text-xs font-medium truncate">
-                            {category.labelKey}
-                          </div>
-                        </button>
-                      ))}
+                  {/* Service Categories — salons only */}
+                  {activeTab === "salons" && (
+                    <div>
+                      <label className="text-sm font-medium mb-3 block">
+                        {t("search.serviceCategory")}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {SERVICE_CATEGORIES.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() =>
+                              setSelectedCategory(
+                                selectedCategory === category.id ? "" : category.id
+                              )
+                            }
+                            className={`p-3 rounded-lg border-2 transition-all text-left hover:border-primary/50 ${
+                              selectedCategory === category.id
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-border"
+                            }`}
+                          >
+                            <div className="text-2xl mb-1">{category.icon}</div>
+                            <div className="text-xs font-medium truncate">
+                              {category.labelKey}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Rating Filter */}
                   <div>
@@ -347,7 +486,7 @@ export default function SearchPage() {
                       <>
                         <span>{t("search.results")}</span>
                         <Badge variant="secondary" className="text-base font-normal">
-                          {filteredAndSortedSalons.length}
+                          {resultCount}
                         </Badge>
                       </>
                     )}
@@ -360,7 +499,7 @@ export default function SearchPage() {
                 </div>
 
                 {/* Sort Dropdown */}
-                {filteredAndSortedSalons.length > 0 && (
+                {resultCount > 0 && (
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />
@@ -405,7 +544,7 @@ export default function SearchPage() {
                       </Button>
                     </Badge>
                   )}
-                  {selectedCategory && (
+                  {selectedCategory && activeTab === "salons" && (
                     <Badge variant="secondary" className="pl-3 pr-1">
                       {SERVICE_CATEGORIES.find(c => c.id === selectedCategory)?.icon}{" "}
                       {SERVICE_CATEGORIES.find(c => c.id === selectedCategory)?.labelKey}
@@ -441,24 +580,46 @@ export default function SearchPage() {
                   <div className="text-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
                     <p className="text-muted-foreground text-lg">
-                      {t("common.loading") || "Loading salons..."}
+                      {t("common.loading") || "Загрузка..."}
                     </p>
                   </div>
                 </div>
-              ) : filteredAndSortedSalons.length > 0 ? (
+              ) : activeTab === "salons" ? (
+                filteredAndSortedSalons.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
+                    {filteredAndSortedSalons.map((salon) => (
+                      <SalonCard key={salon.id} salon={salon} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-16 text-center border-dashed">
+                    <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-30" />
+                    <h3 className="font-serif text-2xl text-foreground mb-2">
+                      {t("search.noSalonsFound")}
+                    </h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      {t("search.noSalonsDesc")}
+                    </p>
+                    <Button onClick={handleClearFilters} variant="outline">
+                      <X className="h-4 w-4 mr-2" />
+                      {t("search.clearAllFilters")}
+                    </Button>
+                  </Card>
+                )
+              ) : filteredMasters.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
-                  {filteredAndSortedSalons.map((salon) => (
-                    <SalonCard key={salon.id} salon={salon} />
+                  {filteredMasters.map((master) => (
+                    <MasterCard key={master.id} master={master} />
                   ))}
                 </div>
               ) : (
                 <Card className="p-16 text-center border-dashed">
-                  <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-30" />
+                  <User className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-30" />
                   <h3 className="font-serif text-2xl text-foreground mb-2">
-                    {t("search.noSalonsFound")}
+                    {t("search.noMastersFound") || "Мастера не найдены"}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {t("search.noSalonsDesc")}
+                    {t("search.noMastersDesc") || "Попробуйте изменить параметры поиска"}
                   </p>
                   <Button onClick={handleClearFilters} variant="outline">
                     <X className="h-4 w-4 mr-2" />

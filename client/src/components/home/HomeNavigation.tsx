@@ -84,6 +84,15 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
                 {t("marketplace.nav.explore")}
               </span>
             </Link>
+            <Link href="/search?tab=masters">
+              <span
+                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
+                  scrolled ? "text-foreground" : "text-white/90"
+                }`}
+              >
+                {t("home.masters.navLink") || "Мастера"}
+              </span>
+            </Link>
             <Link href="/about">
               <span
                 className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
@@ -160,6 +169,11 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>
               <span className="text-foreground py-2 block font-medium hover:text-primary transition-colors">
                 {t("marketplace.nav.explore")}
+              </span>
+            </Link>
+            <Link href="/search?tab=masters" onClick={() => setMobileMenuOpen(false)}>
+              <span className="text-foreground py-2 block font-medium hover:text-primary transition-colors">
+                {t("home.masters.navLink") || "Мастера"}
               </span>
             </Link>
             <Link href="/about" onClick={() => setMobileMenuOpen(false)}>
