@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Calendar,
   Clock,
@@ -21,6 +23,7 @@ import {
   Plus,
   ExternalLink,
   AlertCircle,
+  LogOut,
 } from "lucide-react";
 
 interface MasterData {
@@ -44,7 +47,7 @@ interface DashboardStats {
 
 export default function SoloMasterPage() {
   const { t } = useTranslation();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -156,6 +159,11 @@ export default function SoloMasterPage() {
               >
                 <Settings className="h-4 w-4 mr-2" />
                 {t("soloMaster.editProfile", "Edit Profile")}
+              </Button>
+              <LanguageSwitcher variant="outline" />
+              <ThemeToggle />
+              <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
