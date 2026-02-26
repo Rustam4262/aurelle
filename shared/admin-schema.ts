@@ -163,38 +163,35 @@ export const auditLogs = pgTable(
     id: varchar("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    actorUserId: varchar("actor_user_id").notNull(), // FK to users.id (admin)
-    actorRole: varchar("actor_role", { length: 30 }).notNull(),
-    action: varchar("action", { length: 100 }).notNull(), // user.block, salon.verify, etc.
-    entityType: varchar("entity_type", { length: 50 }).notNull(), // user, salon, booking, etc.
-    entityId: varchar("entity_id"),
-    ip: varchar("ip", { length: 45 }),
+    actorUserId: varchar("actor_id", { length: 255 }).notNull(), // maps to actor_id in DB
+    action: varchar("action", { length: 100 }).notNull(),
+    entityType: varchar("entity_type", { length: 50 }).notNull(),
+    entityId: varchar("entity_id", { length: 255 }),
+    salonId: varchar("salon_id", { length: 255 }),
+    details: jsonb("details"),
+    ipAddress: varchar("ip_address", { length: 45 }),
     userAgent: text("user_agent"),
-    requestId: varchar("request_id", { length: 64 }),
-    oldData: jsonb("old_data"),
-    newData: jsonb("new_data"),
-    meta: jsonb("meta"),
+    result: varchar("result", { length: 20 }).notNull().default("success"),
+    errorMessage: text("error_message"),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
     index("idx_audit_logs_actor").on(table.actorUserId, table.createdAt),
     index("idx_audit_logs_entity").on(table.entityType, table.entityId, table.createdAt),
-    index("idx_audit_logs_action").on(table.action, table.createdAt),
   ],
 );
 
 export const insertAuditLogSchema = z.object({
   actorUserId: z.string(),
-  actorRole: z.string(),
   action: z.string(),
   entityType: z.string(),
   entityId: z.string().optional(),
-  ip: z.string().optional(),
+  salonId: z.string().optional(),
+  details: z.any().optional(),
+  ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
-  requestId: z.string().optional(),
-  oldData: z.any().optional(),
-  newData: z.any().optional(),
-  meta: z.any().optional(),
+  result: z.string().optional(),
+  errorMessage: z.string().optional(),
 });
 
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;

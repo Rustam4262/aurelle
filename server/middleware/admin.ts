@@ -136,26 +136,31 @@ export function requireAnyPermission(perms: string[]) {
  */
 export async function logAuditAction(data: {
   actorUserId: string;
-  actorRole: string;
+  actorRole?: string; // accepted for backwards compat, not stored (not in DB schema)
   action: string;
   entityType: string;
   entityId?: string;
+  salonId?: string;
   oldData?: any;
   newData?: any;
   meta?: any;
   req?: Request;
 }) {
   try {
-    const { req, ...auditData } = data;
+    const { req, actorRole: _actorRole, oldData, newData, meta, ...rest } = data;
+
+    // Merge old/new data and meta into the `details` jsonb column
+    const details =
+      oldData != null || newData != null || meta != null
+        ? { oldData, newData, meta }
+        : undefined;
 
     await db.insert(auditLogs).values({
-      ...auditData,
-      ip: req?.ip || undefined,
+      ...rest,
+      details,
+      result: "success",
+      ipAddress: req?.ip || undefined,
       userAgent: req?.get("user-agent") || undefined,
-      requestId: req?.get("x-request-id") || undefined,
-      oldData: auditData.oldData || undefined,
-      newData: auditData.newData || undefined,
-      meta: auditData.meta || undefined,
     });
   } catch (error) {
     logger.error("Failed to log audit action", error as Error, { source: "admin-middleware" });
