@@ -300,7 +300,23 @@ export default function AuthPage() {
   };
 
   useEffect(() => {
-    if (user && profile?.exists && profile?.isProfileComplete) {
+    if (!user) return;
+
+    // Restore intended destination if redirected here from a protected route
+    const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
+    if (savedRedirect) {
+      sessionStorage.removeItem("redirectAfterLogin");
+      navigate(savedRedirect);
+      return;
+    }
+
+    // Admin users go directly to admin panel
+    if (user.isAdmin) {
+      navigate("/admin");
+      return;
+    }
+
+    if (profile?.exists && profile?.isProfileComplete) {
       if (profile.role === "owner") {
         navigate("/owner");
       } else if (profile.role === "master") {
