@@ -2,14 +2,14 @@ import { Router } from "express";
 import { db } from "../../db";
 import { users, salons, masters, bookings, userActivitySessions } from "@shared/schema";
 import { complaints, sanctions } from "@shared/admin-schema";
-import { eq, sql, gte, and, isNull } from "drizzle-orm";
+import { eq, sql, gte, and, isNull, not } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 
 const router = Router();
 
 // GET /api/admin/dashboard - Main dashboard stats
-router.get("/", requirePermission("analytics.read"), async (req, res) => {
+router.get("/", requirePermission("analytics.read"), async (_req, res) => {
   try {
     // Total counts
     const [totalUsers] = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -118,7 +118,7 @@ router.get("/activity", requirePermission("analytics.read"), async (req, res) =>
 });
 
 // GET /api/admin/dashboard/online - Currently online users count
-router.get("/online", requirePermission("analytics.read"), async (req, res) => {
+router.get("/online", requirePermission("analytics.read"), async (_req, res) => {
   try {
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
@@ -182,7 +182,7 @@ router.get("/booking-trends", requirePermission("analytics.read"), async (req, r
     // Total revenue (if you have payment/price info)
     const [revenueResult] = await db
       .select({
-        total: sql<number>`COALESCE(SUM(${bookings.totalPrice}), 0)`,
+        total: sql<number>`COALESCE(SUM(${bookings.priceSnapshot}), 0)`,
       })
       .from(bookings)
       .where(
@@ -203,7 +203,7 @@ router.get("/booking-trends", requirePermission("analytics.read"), async (req, r
 });
 
 // GET /api/admin/dashboard/platform-health - Platform health metrics
-router.get("/platform-health", requirePermission("analytics.read"), async (req, res) => {
+router.get("/platform-health", requirePermission("analytics.read"), async (_req, res) => {
   try {
     // Blocked users percentage
     const [blockedStats] = await db
@@ -226,7 +226,7 @@ router.get("/platform-health", requirePermission("analytics.read"), async (req, 
         avgMinutes: sql<number>`COALESCE(AVG(${userActivitySessions.durationSeconds}) / 60, 0)`,
       })
       .from(userActivitySessions)
-      .where(isNull(userActivitySessions.logoutAt).not());
+      .where(not(isNull(userActivitySessions.logoutAt)));
 
     // Pending complaints
     const [pendingComplaints] = await db

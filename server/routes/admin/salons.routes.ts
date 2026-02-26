@@ -1,7 +1,7 @@
 import { Router, Request } from "express";
 import { db } from "../../db";
 import { salons } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 
@@ -202,7 +202,7 @@ router.post("/:id/unverify", requirePermission("salons.verify"), async (req, res
 });
 
 // GET /api/admin/salons/stats - Salon statistics
-router.get("/stats/overview", requirePermission("salons.read"), async (req, res) => {
+router.get("/stats/overview", requirePermission("salons.read"), async (_req, res) => {
   try {
     const [stats] = await db
       .select({

@@ -143,7 +143,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
               </div>
             )}
 
-            <YMaps query={{ apikey: YANDEX_MAPS_API_KEY, lang: i18n.language }}>
+            <YMaps query={{ apikey: YANDEX_MAPS_API_KEY, lang: i18n.language as "ru_RU" | "tr_TR" | "en_US" | "en_RU" | "ru_UA" | "uk_UA" }}>
               <Map
                 instanceRef={mapRef}
                 defaultState={{
@@ -163,7 +163,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                 {/* Custom Controls */}
                 <ZoomControl
                   options={{
-                    float: 'right',
+                    position: { right: 10, top: 10 },
                     size: 'small',
                   }}
                 />

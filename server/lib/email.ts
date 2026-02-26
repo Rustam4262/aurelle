@@ -38,7 +38,7 @@ export async function sendEmail(
   text?: string
 ): Promise<boolean> {
   if (!transporter) {
-    logger.warn("Email transporter not configured. Skipping email.", { source: "email-service", to, subject });
+    logger.warn("Email transporter not configured. Skipping email.", { source: "email-service", meta: { to, subject } });
     return false;
   }
 
@@ -51,10 +51,10 @@ export async function sendEmail(
       text: text || stripHtml(html),
     });
 
-    logger.info("Email sent successfully", { source: "email-service", to, subject, messageId: info.messageId });
+    logger.info("Email sent successfully", { source: "email-service", meta: { to, subject, messageId: info.messageId } });
     return true;
   } catch (error) {
-    logger.error("Failed to send email", error as Error, { source: "email-service", to, subject });
+    logger.error("Failed to send email", error as Error, { source: "email-service", meta: { to, subject } });
     return false;
   }
 }

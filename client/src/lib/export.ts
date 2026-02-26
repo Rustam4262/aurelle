@@ -156,8 +156,8 @@ export function exportToPDF<T extends Record<string, any>>(
       let formattedValue: any = rawValue;
 
       // Handle dates
-      if (rawValue instanceof Date) {
-        formattedValue = rawValue.toLocaleDateString();
+      if ((rawValue as any) instanceof Date) {
+        formattedValue = (rawValue as Date).toLocaleDateString();
       } else if (typeof rawValue === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(rawValue)) {
         formattedValue = new Date(rawValue).toLocaleDateString();
       }
@@ -178,7 +178,7 @@ export function exportToPDF<T extends Record<string, any>>(
       }
 
       // Handle objects
-      if (typeof rawValue === 'object' && rawValue !== null && !(rawValue instanceof Date)) {
+      if (typeof rawValue === 'object' && rawValue !== null && !((rawValue as any) instanceof Date)) {
         formattedValue = JSON.stringify(rawValue);
       }
 
@@ -253,7 +253,7 @@ export function exportMultiTableToPDF(
 
   let currentY = 40;
 
-  tables.forEach((table, index) => {
+  tables.forEach((table, _index) => {
     // Check if we need a new page
     if (currentY > 250) {
       doc.addPage();

@@ -1,3 +1,4 @@
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useCountUp } from "@/hooks/use-count-up";
 
@@ -21,7 +22,7 @@ function StatItem({ end, suffix = "", labelKey, delay = 0 }: StatItemProps) {
   return (
     <div className="text-center group">
       <p
-        ref={elementRef}
+        ref={elementRef as React.RefObject<HTMLParagraphElement>}
         className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter"
       >
         {value}

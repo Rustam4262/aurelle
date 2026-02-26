@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { salons, masters } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { and, isNotNull } from "drizzle-orm";
 
 const router = Router();
 
@@ -50,10 +50,10 @@ router.get("/sitemap.xml", async (_req, res) => {
     const allMasters = await db
       .select({
         slug: masters.slug,
-        updatedAt: masters.updatedAt,
+        updatedAt: masters.createdAt,
       })
       .from(masters)
-      .where(masters.slug);
+      .where(isNotNull(masters.slug));
 
     // Build sitemap XML
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>

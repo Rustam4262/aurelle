@@ -124,7 +124,7 @@ export default function SearchPage() {
     } else if (sortBy === "reviews") {
       filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
     } else if (sortBy === "newest") {
-      filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      filtered.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
     }
 
     return filtered;

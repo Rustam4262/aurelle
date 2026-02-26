@@ -117,7 +117,7 @@ router.post("/test-users", requirePermission("users.write"), async (req, res) =>
       actorRole: req.admin!.roleName,
       action: "seed.test_users",
       entityType: "user",
-      entityId: null,
+      entityId: undefined,
       meta: { created: created.length, skipped: skipped.length },
       req,
     });
