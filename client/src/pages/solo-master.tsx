@@ -27,6 +27,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useRef } from "react";
 import {
   Calendar,
   Clock,
@@ -42,6 +43,7 @@ import {
   AlertCircle,
   LogOut,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 const SERVICE_CATEGORIES = [
@@ -59,6 +61,14 @@ interface SoloService {
   duration: number;
   serviceMode: string | null;
   isActive: boolean;
+}
+
+interface PortfolioItem {
+  id: string;
+  masterId: string;
+  imageUrl: string;
+  title: { en: string; ru: string; uz: string } | null;
+  createdAt: string;
 }
 
 interface MasterData {
@@ -86,6 +96,10 @@ export default function SoloMasterPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Portfolio upload ref
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
+  const [portfolioUploading, setPortfolioUploading] = useState(false);
 
   // Service dialog state
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -172,6 +186,67 @@ export default function SoloMasterPage() {
     },
     onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
+
+  // Portfolio queries — only when masterData loaded (need masterId)
+  const { data: portfolio = [], isLoading: portfolioLoading } = useQuery<PortfolioItem[]>({
+    queryKey: ["/api/portfolio/master", masterData?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/portfolio/master/${masterData!.id}`);
+      if (!res.ok) throw new Error("Failed to fetch portfolio");
+      return res.json();
+    },
+    enabled: !!masterData?.id,
+  });
+
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const res = await apiRequest("DELETE", `/api/portfolio/${itemId}`);
+      if (!res.ok) throw new Error("Ошибка удаления фото");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterData?.id] });
+      toast({ title: "Фото удалено" });
+    },
+    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const handlePortfolioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !masterData) return;
+    setPortfolioUploading(true);
+    let successCount = 0;
+    for (const file of Array.from(files)) {
+      try {
+        // Step 1: upload file
+        const formData = new FormData();
+        formData.append("image", file);
+        const uploadRes = await fetch("/api/upload/portfolio", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        if (!uploadRes.ok) throw new Error("Ошибка загрузки файла");
+        const { url } = await uploadRes.json();
+
+        // Step 2: create portfolio item
+        const itemRes = await apiRequest("POST", "/api/portfolio", {
+          masterId: masterData.id,
+          imageUrl: url,
+        });
+        if (!itemRes.ok) throw new Error("Ошибка сохранения фото");
+        successCount++;
+      } catch (err) {
+        toast({ title: (err as Error).message, variant: "destructive" });
+      }
+    }
+    if (successCount > 0) {
+      queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterData.id] });
+      toast({ title: `Добавлено фото: ${successCount}` });
+    }
+    setPortfolioUploading(false);
+    // reset input so same files can be re-selected
+    if (portfolioInputRef.current) portfolioInputRef.current.value = "";
+  };
 
   if (authLoading || masterLoading) {
     return (
@@ -489,6 +564,15 @@ export default function SoloMasterPage() {
           </TabsContent>
 
           <TabsContent value="portfolio">
+            {/* Hidden file input — accepts images, multiple */}
+            <input
+              ref={portfolioInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handlePortfolioUpload}
+            />
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -497,18 +581,70 @@ export default function SoloMasterPage() {
                     {t("soloMaster.portfolioDesc", "Showcase your work")}
                   </CardDescription>
                 </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("soloMaster.addPhoto", "Add Photo")}
+                <Button
+                  onClick={() => portfolioInputRef.current?.click()}
+                  disabled={portfolioUploading}
+                >
+                  {portfolioUploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  {portfolioUploading ? "Загрузка..." : t("soloMaster.addPhoto", "Add Photo")}
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  {t(
-                    "soloMaster.noPortfolio",
-                    "No portfolio items yet. Add photos to showcase your work.",
-                  )}
-                </div>
+                {portfolioLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : portfolio.length === 0 ? (
+                  <div
+                    className="text-center py-16 border-2 border-dashed rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => portfolioInputRef.current?.click()}
+                  >
+                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-40" />
+                    <p className="text-muted-foreground">
+                      {t(
+                        "soloMaster.noPortfolio",
+                        "No portfolio items yet. Add photos to showcase your work.",
+                      )}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Нажмите чтобы выбрать фотографии
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {portfolio.map((item) => (
+                      <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden bg-muted">
+                        <img
+                          src={item.imageUrl}
+                          alt="Portfolio"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="h-8 w-8"
+                            onClick={() => deletePortfolioMutation.mutate(item.id)}
+                            disabled={deletePortfolioMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Add more tile */}
+                    <div
+                      className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                      onClick={() => portfolioInputRef.current?.click()}
+                    >
+                      <Plus className="h-8 w-8 text-muted-foreground opacity-50" />
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
