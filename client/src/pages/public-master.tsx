@@ -36,6 +36,8 @@ import {
   Home,
   ArrowLeft,
   PhoneCall,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { ru, enUS, uz } from "date-fns/locale";
@@ -109,6 +111,15 @@ export default function PublicMasterPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookingNotes, setBookingNotes] = useState("");
   const [isMobileBooking, setIsMobileBooking] = useState(false);
+  const [distanceInfo, setDistanceInfo] = useState<{
+    status: "idle" | "loading" | "ok" | "out_of_range" | "error";
+    distance?: number;
+    withinRange?: boolean;
+    workRadius?: number;
+    estimatedTravelTime?: number;
+    mobileExtraCharge?: number;
+    errorMsg?: string;
+  }>({ status: "idle" });
 
   // Fetch master data
   const { data: master, isLoading: masterLoading } = useQuery<MasterData>({
@@ -218,6 +229,48 @@ export default function PublicMasterPage() {
     },
   });
 
+  const checkDistance = () => {
+    if (!slug) return;
+    setDistanceInfo({ status: "loading" });
+    if (!navigator.geolocation) {
+      setDistanceInfo({ status: "error", errorMsg: "Геолокация недоступна в вашем браузере" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await apiRequest("POST", `/api/masters/${slug}/check-distance`, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            setDistanceInfo({ status: "error", errorMsg: err.error || "Ошибка проверки расстояния" });
+            return;
+          }
+          const data = await res.json();
+          setDistanceInfo({
+            status: data.withinRange ? "ok" : "out_of_range",
+            distance: data.distance,
+            withinRange: data.withinRange,
+            workRadius: data.workRadius,
+            estimatedTravelTime: data.estimatedTravelTime,
+            mobileExtraCharge: data.mobileExtraCharge,
+          });
+        } catch {
+          setDistanceInfo({ status: "error", errorMsg: "Ошибка соединения с сервером" });
+        }
+      },
+      () => {
+        setDistanceInfo({
+          status: "error",
+          errorMsg: "Не удалось определить ваше местоположение. Разрешите доступ к геолокации.",
+        });
+      },
+      { timeout: 10000 },
+    );
+  };
+
   const handleBookService = (service: ServiceData) => {
     if (!user) {
       navigate("/auth");
@@ -227,6 +280,7 @@ export default function PublicMasterPage() {
     setSelectedDate(undefined);
     setSelectedTime(null);
     setIsMobileBooking(false);
+    setDistanceInfo({ status: "idle" });
     setBookingDialogOpen(true);
   };
 
@@ -688,7 +742,7 @@ export default function PublicMasterPage() {
       </div>
 
       {/* Booking Dialog */}
-      <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+      <Dialog open={bookingDialogOpen} onOpenChange={(open) => { setBookingDialogOpen(open); if (!open) setDistanceInfo({ status: "idle" }); }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{t("publicMaster.bookService", "Book Service")}</DialogTitle>
@@ -711,7 +765,7 @@ export default function PublicMasterPage() {
                       type="button"
                       variant={!isMobileBooking ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setIsMobileBooking(false)}
+                      onClick={() => { setIsMobileBooking(false); setDistanceInfo({ status: "idle" }); }}
                     >
                       <Home className="h-4 w-4 mr-1" />
                       {t("publicMaster.atMasterLocation", "At master's location")}
@@ -720,7 +774,10 @@ export default function PublicMasterPage() {
                       type="button"
                       variant={isMobileBooking ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setIsMobileBooking(true)}
+                      onClick={() => {
+                        setIsMobileBooking(true);
+                        checkDistance();
+                      }}
                     >
                       <Car className="h-4 w-4 mr-1" />
                       {t("publicMaster.mobileService", "Mobile service")}
@@ -732,6 +789,38 @@ export default function PublicMasterPage() {
                         )}
                     </Button>
                   </div>
+
+                  {/* Distance check result */}
+                  {isMobileBooking && distanceInfo.status === "loading" && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Определяем ваше местоположение…
+                    </div>
+                  )}
+                  {isMobileBooking && distanceInfo.status === "ok" && (
+                    <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md p-2 mt-2">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>
+                        Мастер приедет к вам — вы в зоне доступа ({distanceInfo.distance} км).
+                        Время в пути ~{distanceInfo.estimatedTravelTime} мин.
+                      </span>
+                    </div>
+                  )}
+                  {isMobileBooking && distanceInfo.status === "out_of_range" && (
+                    <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-2 mt-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>
+                        Вы находитесь за пределами зоны выезда мастера ({distanceInfo.distance} км,
+                        максимум {distanceInfo.workRadius} км). Выберите визит к мастеру.
+                      </span>
+                    </div>
+                  )}
+                  {isMobileBooking && distanceInfo.status === "error" && (
+                    <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-2 mt-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>{distanceInfo.errorMsg}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -849,7 +938,12 @@ export default function PublicMasterPage() {
             </Button>
             <Button
               onClick={() => createBookingMutation.mutate()}
-              disabled={!selectedDate || !selectedTime || createBookingMutation.isPending}
+              disabled={
+                !selectedDate ||
+                !selectedTime ||
+                createBookingMutation.isPending ||
+                (isMobileBooking && distanceInfo.status === "out_of_range")
+              }
             >
               {createBookingMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {t("publicMaster.confirmBooking", "Confirm Booking")}

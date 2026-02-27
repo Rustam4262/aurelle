@@ -1047,3 +1047,28 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
 
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// ============ SCHEDULED NOTIFICATIONS (booking reminders) ============
+export const scheduledNotifications = pgTable(
+  "scheduled_notifications",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    bookingId: varchar("booking_id", { length: 255 }).notNull(),
+    type: varchar("type", { length: 50 }).notNull(),       // 'REMINDER_24H' | 'REMINDER_2H'
+    channel: varchar("channel", { length: 20 }).notNull(), // 'email' | 'sms' | 'push'
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    status: varchar("status", { length: 20 }).notNull().default("pending"), // pending|sent|failed|cancelled
+    error: text("error"),
+    dedupeKey: varchar("dedupe_key", { length: 255 }).notNull().unique(),  // '{bookingId}:{type}:{channel}'
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("idx_sn_status_time").on(table.status, table.scheduledAt),
+    index("idx_sn_booking").on(table.bookingId),
+  ],
+);
+
+export type ScheduledNotification = typeof scheduledNotifications.$inferSelect;

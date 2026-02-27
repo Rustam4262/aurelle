@@ -3,6 +3,7 @@ import type { Transporter } from "nodemailer";
 import { logger } from "../lib/logger";
 
 // Email configuration from environment variables
+const EMAIL_ENABLED = process.env.EMAIL_ENABLED !== "false"; // default true; set EMAIL_ENABLED=false to disable
 const EMAIL_HOST = process.env.EMAIL_HOST || "smtp.gmail.com";
 const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || "587");
 const EMAIL_SECURE = process.env.EMAIL_PORT === "465";
@@ -15,6 +16,10 @@ let transporter: Transporter | null = null;
 
 // Initialize email transporter
 export function initializeEmail(): void {
+  if (!EMAIL_ENABLED) {
+    logger.info("Email disabled via EMAIL_ENABLED=false");
+    return;
+  }
   if (!EMAIL_USER || !EMAIL_PASS) {
     logger.warn("⚠️  Email not configured - EMAIL_USER or EMAIL_PASSWORD missing");
     return;
@@ -37,30 +42,37 @@ export function initializeEmail(): void {
   }
 }
 
-// Check if email is configured
+// Check if email is configured and enabled
 export function isEmailConfigured(): boolean {
-  return transporter !== null;
+  return EMAIL_ENABLED && transporter !== null;
 }
 
-// Send email helper
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+// Internal send with retry (3 attempts, 1s/2s backoff)
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  if (!EMAIL_ENABLED) {
+    logger.debug("Email disabled, skipping send", { meta: { subject } });
+    return false;
+  }
   if (!transporter) {
-    logger.warn("Email not configured, skipping email send");
-    return;
+    logger.warn("Email not configured, skipping email send", { meta: { to, subject } });
+    return false;
   }
 
-  try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to,
-      subject,
-      html,
-    });
-    logger.info(`📧 Email sent to ${to}: ${subject}`);
-  } catch (error) {
-    logger.error(`Failed to send email to ${to}`, error);
-    throw error;
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await transporter.sendMail({ from: EMAIL_FROM, to, subject, html });
+      logger.info(`📧 Email sent to ${to}: ${subject}`);
+      return true;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, attempt * 1000)); // 1s, 2s backoff
+      }
+    }
   }
+  logger.error(`Failed to send email to ${to} after 3 attempts`, lastError!, { source: "email" });
+  return false;
 }
 
 // Email templates
@@ -80,7 +92,7 @@ export async function sendBookingConfirmation(
   email: string,
   data: BookingConfirmationData,
   language: string = "en",
-): Promise<void> {
+): Promise<boolean> {
   const translations = {
     en: {
       subject: "Booking Confirmation - AURELLE",
@@ -220,7 +232,7 @@ export async function sendBookingConfirmation(
     </html>
   `;
 
-  await sendEmail(email, t.subject, html);
+  return sendEmail(email, t.subject, html);
 }
 
 interface BookingCancellationData {
@@ -235,7 +247,7 @@ export async function sendBookingCancellation(
   email: string,
   data: BookingCancellationData,
   language: string = "en",
-): Promise<void> {
+): Promise<boolean> {
   const translations = {
     en: {
       subject: "Booking Cancelled - AURELLE",
@@ -354,7 +366,7 @@ export async function sendBookingCancellation(
     </html>
   `;
 
-  await sendEmail(email, t.subject, html);
+  return sendEmail(email, t.subject, html);
 }
 
 interface BookingReminderData {
@@ -371,7 +383,7 @@ export async function sendBookingReminder(
   email: string,
   data: BookingReminderData,
   language: string = "en",
-): Promise<void> {
+): Promise<boolean> {
   const translations = {
     en: {
       subject: "Booking Reminder - AURELLE",
@@ -516,5 +528,57 @@ export async function sendBookingReminder(
     </html>
   `;
 
-  await sendEmail(email, t.subject, html);
+  return sendEmail(email, t.subject, html);
+}
+
+// Password reset email
+export async function sendPasswordResetEmail(
+  email: string,
+  resetLink: string,
+  language = "ru",
+): Promise<boolean> {
+  const subjects: Record<string, string> = {
+    ru: "Сброс пароля - AURELLE",
+    uz: "Parolni tiklash - AURELLE",
+    en: "Password Reset - AURELLE",
+  };
+  const subject = subjects[language] ?? subjects.ru;
+
+  const body =
+    language === "uz"
+      ? `<h2>Parolni tiklash</h2>
+         <p>AURELLE hisobingiz parolini tiklash so'rovi qabul qilindi.</p>
+         <div style="text-align:center;margin:24px 0;">
+           <a href="${resetLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;">Parolni tiklash</a>
+         </div>
+         <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px;">Havola 1 soat davomida amal qiladi. Agar siz so'rov yubormasangiz, bu xatni e'tiborsiz qoldiring.</p>`
+      : language === "en"
+        ? `<h2>Password Reset</h2>
+           <p>We received a request to reset your AURELLE account password.</p>
+           <div style="text-align:center;margin:24px 0;">
+             <a href="${resetLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;">Reset Password</a>
+           </div>
+           <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px;">This link is valid for 1 hour. If you didn't request a password reset, please ignore this email.</p>`
+        : `<h2>Сброс пароля</h2>
+           <p>Мы получили запрос на сброс пароля вашего аккаунта AURELLE.</p>
+           <div style="text-align:center;margin:24px 0;">
+             <a href="${resetLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;">Сбросить пароль</a>
+           </div>
+           <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px;">Ссылка действительна 1 час. Если вы не запрашивали сброс пароля — проигнорируйте это письмо.</p>`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f5f5f5;}.container{max-width:600px;margin:40px auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;text-align:center;}.content{padding:30px;color:#333;}.footer{text-align:center;padding:20px;color:#6c757d;font-size:13px;}</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1 style="margin:0;font-size:28px;font-weight:300;">AURELLE</h1></div>
+    <div class="content">${body}</div>
+    <div class="footer"><a href="${APP_URL}" style="color:#667eea;text-decoration:none;">aurelle.uz</a></div>
+  </div>
+</body>
+</html>`;
+
+  return sendEmail(email, subject, html);
 }

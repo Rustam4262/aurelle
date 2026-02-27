@@ -11,6 +11,10 @@ import {
 } from "@shared/schema";
 import { isAuthenticated } from "../auth";
 import { logger } from "../lib/logger";
+import type { AuthedRequest } from "../types/authed-request";
+import { cancelBookingReminders } from "../lib/reminders";
+import { logAudit } from "../lib/audit";
+import { fireCancellationEmail } from "../lib/booking-emails";
 
 const router = express.Router();
 
@@ -124,6 +128,17 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
       .where(eq(masters.id, master.id))
       .returning();
 
+    logAudit({
+      actorId: userId,
+      action: "solo_master.profile.update",
+      entityType: "solo_master",
+      entityId: master.id,
+      details: { changes: Object.keys(updates) },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
     return res.json(updated);
   } catch (error) {
     logger.error("Update solo master profile error:", error);
@@ -204,20 +219,32 @@ router.put("/settings", isAuthenticated, async (req: any, res) => {
       .from(soloMasterSettings)
       .where(eq(soloMasterSettings.masterId, master.id));
 
+    let settingsResult;
     if (existing) {
       const [updated] = await db
         .update(soloMasterSettings)
         .set(parsed.data)
         .where(eq(soloMasterSettings.masterId, master.id))
         .returning();
-      return res.json(updated);
+      settingsResult = updated;
     } else {
       const [created] = await db
         .insert(soloMasterSettings)
         .values([{ masterId: master.id, ...parsed.data }])
         .returning();
-      return res.json(created);
+      settingsResult = created;
     }
+    logAudit({
+      actorId: userId,
+      action: "solo_master.settings.update",
+      entityType: "solo_master",
+      entityId: master.id,
+      details: { changes: parsed.data },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+    return res.json(settingsResult);
   } catch (error) {
     logger.error("Update solo master settings error:", error);
     return res.status(500).json({ error: "Failed to update settings" });
@@ -294,6 +321,17 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
       .where(eq(masterWorkingHours.masterId, master.id))
       .orderBy(masterWorkingHours.dayOfWeek);
 
+    logAudit({
+      actorId: userId,
+      action: "solo_master.schedule.update",
+      entityType: "solo_master",
+      entityId: master.id,
+      details: { days: parsed.data.hours.length },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
     return res.json(updatedHours);
   } catch (error) {
     logger.error("Update schedule error:", error);
@@ -317,6 +355,17 @@ router.post("/complete-onboarding", isAuthenticated, async (req: any, res) => {
       .set({ status: "active" })
       .where(eq(masters.id, master.id))
       .returning();
+
+    logAudit({
+      actorId: userId,
+      action: "solo_master.profile.activate",
+      entityType: "solo_master",
+      entityId: master.id,
+      details: { status: "active" },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
 
     return res.json(updated);
   } catch (error) {
@@ -462,6 +511,17 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
       ])
       .returning();
 
+    logAudit({
+      actorId: userId,
+      action: "solo_master.service.create",
+      entityType: "solo_master_service",
+      entityId: created.id,
+      details: { masterId: master.id, name: parsed.data.name, category: parsed.data.category },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
     return res.status(201).json(created);
   } catch (error) {
     logger.error("Create service error:", error);
@@ -526,6 +586,17 @@ router.put("/services/:id", isAuthenticated, async (req: any, res) => {
       .where(eq(soloMasterServices.id, id))
       .returning();
 
+    logAudit({
+      actorId: userId,
+      action: "solo_master.service.update",
+      entityType: "solo_master_service",
+      entityId: id,
+      details: { masterId: master.id, changes: Object.keys(parsed.data) },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
     return res.json(updated);
   } catch (error) {
     logger.error("Update service error:", error);
@@ -555,6 +626,17 @@ router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
     }
 
     await db.delete(soloMasterServices).where(eq(soloMasterServices.id, id));
+
+    logAudit({
+      actorId: userId,
+      action: "solo_master.service.delete",
+      entityType: "solo_master_service",
+      entityId: id,
+      details: { masterId: master.id, serviceName: service.name },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
 
     return res.json({ success: true });
   } catch (error) {
@@ -678,6 +760,16 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
       .set({ status, updatedAt: new Date() })
       .where(eq(bookings.id, id))
       .returning();
+
+    if (status === "cancelled") {
+      cancelBookingReminders(updated.id).catch((err) =>
+        logger.error("Failed to cancel reminders", {
+          source: "solo-master-routes",
+          meta: { bookingId: updated.id, error: String(err) },
+        }),
+      );
+      fireCancellationEmail(updated.id);
+    }
 
     return res.json(updated);
   } catch (error) {

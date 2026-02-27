@@ -6,6 +6,7 @@ import { createServer } from "http";
 import { initializeUploadDirectories } from "./initUploads";
 import { initializeEmail } from "./email";
 import { startSanctionExpiryJob } from "./jobs/expire-sanctions";
+import { startBookingRemindersJob } from "./jobs/booking-reminders";
 import {
   initializeSentry,
   setupSentryMiddleware,
@@ -71,9 +72,9 @@ app.use(
 app.use(
   cors({
     origin: [
-      "http://localhost:5000",
+      "http://localhost:5173", // Vite dev server
       "https://aurelle.uz",
-      "http://localhost", // Capacitor Android
+      "http://localhost", // Capacitor Android WebView (uses port-80 origin)
       "capacitor://localhost", // Capacitor iOS
     ],
     credentials: true,
@@ -185,6 +186,7 @@ app.use((req, res, next) => {
 
       // Start cron jobs
       startSanctionExpiryJob();
+      startBookingRemindersJob();
     },
   );
 })();

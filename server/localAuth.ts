@@ -5,9 +5,10 @@ import { db } from "./db";
 import { users, passwordResetTokens } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
-import { authLimiter, registerLimiter } from "./middleware/rateLimiter";
+import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLimiter";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
+import { sendPasswordResetEmail } from "./email";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -107,7 +108,7 @@ export function setupLocalAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", authLimiter, async (req: Request, res: Response) => {
+  app.post("/api/auth/login", loginLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = loginSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -166,7 +167,7 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Request password reset - generates token and sends email
-  app.post("/api/auth/request-password-reset", authLimiter, async (req: Request, res: Response) => {
+  app.post("/api/auth/request-password-reset", resetLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = requestResetSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -196,12 +197,14 @@ export function setupLocalAuth(app: Express) {
         expiresAt,
       });
 
-      // TODO: Send email with reset link
-      // For now, log the reset link (in production, send via email)
       const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
-      logger.info(`Password reset link for ${email}: ${resetLink}`, { source: "localAuth" });
 
-      // In development, include token in response (REMOVE IN PRODUCTION)
+      // Send password reset email (fire-and-forget — don't block response)
+      sendPasswordResetEmail(email, resetLink).catch((err) =>
+        logger.error("Failed to send password reset email", err as Error, { source: "localAuth" }),
+      );
+
+      // In development, include token in response for easy testing
       const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
 
       res.json({
@@ -216,7 +219,7 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Confirm password reset with token
-  app.post("/api/auth/confirm-password-reset", authLimiter, async (req: Request, res: Response) => {
+  app.post("/api/auth/confirm-password-reset", resetLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = confirmResetSchema.safeParse(req.body);
       if (!parsed.success) {

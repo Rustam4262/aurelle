@@ -31,6 +31,7 @@ import { ClientReviews } from "@/components/client/ClientReviews";
 import { ClientFavorites } from "@/components/client/ClientFavorites";
 import { ClientSupport } from "@/components/client/ClientSupport";
 import { WriteReviewDialog } from "@/components/client/WriteReviewDialog";
+import { PushNotificationSettings } from "@/components/push-notification-settings";
 import type {
   EnrichedBooking,
   EnrichedFavorite,
@@ -321,6 +322,7 @@ export default function ClientPage() {
             className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
             <ClientProfile profileData={profileData} />
+            <PushNotificationSettings />
           </TabsContent>
 
           <TabsContent

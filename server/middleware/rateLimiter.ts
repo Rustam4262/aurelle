@@ -1,28 +1,35 @@
 import rateLimit from "express-rate-limit";
 
-// Лимиты для аутентификации (строже)
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
-  max: 5, // Максимум 5 попыток
-  message: {
-    error: "Too many authentication attempts. Please try again in 15 minutes.",
-  },
+// Login: 10 attempts/min (failed ones only)
+export const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: "Too many login attempts. Please try again in 1 minute." },
   standardHeaders: true,
   legacyHeaders: false,
-  // Пропускаем успешные запросы
   skipSuccessfulRequests: true,
 });
 
-// Лимиты для регистрации (еще строже)
-export const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 час
-  max: 1000, // Высокий лимит для разработки
-  message: {
-    error: "Too many accounts created. Please try again in 1 hour.",
-  },
+// Password reset: 5 requests/min
+export const resetLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
+  message: { error: "Too many reset attempts. Please try again in 1 minute." },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Registration: 5 accounts/min per IP
+export const registerLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
+  message: { error: "Too many registration attempts. Please try again in 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Legacy alias (kept for any remaining callers)
+export const authLimiter = loginLimiter;
 
 // Лимиты для API endpoints (мягче)
 export const apiLimiter = rateLimit({

@@ -1,6 +1,6 @@
 import express from "express";
 import { db } from "../db";
-import { eq, and, desc, sql, gte, ne, ilike, or } from "drizzle-orm";
+import { eq, and, desc, sql, gte, ne, ilike, or, inArray } from "drizzle-orm";
 import {
   masters,
   soloMasterServices,
@@ -196,7 +196,7 @@ router.get("/:slug/reviews", async (req, res) => {
         ? await db
             .select({ userId: userProfiles.userId, fullName: userProfiles.fullName })
             .from(userProfiles)
-            .where(sql`${userProfiles.userId} IN ${clientIds}`)
+            .where(inArray(userProfiles.userId, clientIds))
         : [];
 
     const clientMap = new Map(clients.map((c) => [c.userId, c.fullName]));

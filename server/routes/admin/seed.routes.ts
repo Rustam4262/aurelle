@@ -17,12 +17,12 @@ router.post("/test-users", requirePermission("users.write"), async (req, res) =>
   try {
     const userId = getUserId(req);
 
-    // Safety check - only allow in development or with explicit confirmation
-    if (process.env.NODE_ENV === "production" && !req.body.confirmProduction) {
-      return res.status(403).json({
-        error: "Cannot seed test data in production without confirmation",
-        hint: "Send { confirmProduction: true } to override",
-      });
+    // Safety check: require a secret token in production
+    const seedToken = process.env.SEED_TOKEN;
+    if (process.env.NODE_ENV === "production") {
+      if (!seedToken || req.body.seedToken !== seedToken) {
+        return res.status(403).json({ error: "Forbidden: valid SEED_TOKEN required in production" });
+      }
     }
 
     const testUsers = [
@@ -129,10 +129,6 @@ router.post("/test-users", requirePermission("users.write"), async (req, res) =>
       skipped: skipped.length,
       createdUsers: created,
       skippedUsers: skipped,
-      credentials: {
-        password: "TestPass123!",
-        note: "Use any of the created emails with this password to login",
-      },
     });
   } catch (error: any) {
     logger.error("Seed test users error", error as Error, { source: "seed-routes" });

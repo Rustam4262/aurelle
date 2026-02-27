@@ -3,9 +3,21 @@ import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
 import { bookings, insertBookingSchema, userProfiles } from "@shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { createNewBookingNotification } from "../notifications";
 import { logger } from "../lib/logger";
+import type { AuthedRequest } from "../types/authed-request";
+import {
+  scheduleBookingReminders,
+  cancelBookingReminders,
+  rescheduleBookingReminders,
+} from "../lib/reminders";
+import { fireConfirmationEmail, fireCancellationEmail } from "../lib/booking-emails";
+import {
+  sendBookingCreatedSms,
+  sendBookingCancelledSms,
+  sendBookingRescheduledSms,
+} from "../sms";
 
 const router = Router();
 
@@ -13,10 +25,65 @@ const router = Router();
 router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
   try {
     const clientId = req.user.claims.sub;
-    const parsed = insertBookingSchema.safeParse({ ...req.body, clientId });
+    const body = {
+      ...req.body,
+      clientId,
+      bookingDate: req.body.bookingDate ? new Date(req.body.bookingDate) : undefined,
+    };
+    const parsed = insertBookingSchema.safeParse(body);
 
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid booking data", details: parsed.error.errors });
+    }
+
+    // Slot conflict protection (only when booking a specific master)
+    if (parsed.data.masterId) {
+      const masterId = parsed.data.masterId;
+      const bookingDate = parsed.data.bookingDate;
+      const startTime = parsed.data.startTime;
+      const endTime = parsed.data.endTime;
+
+      // 1. Exact-match idempotency: same master + date + startTime already pending/confirmed
+      const [existing] = await db
+        .select({ id: bookings.id })
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.masterId, masterId),
+            eq(bookings.bookingDate, bookingDate),
+            eq(bookings.startTime, startTime),
+            inArray(bookings.status, ["pending", "confirmed"]),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        return res.status(409).json({
+          error: "Slot already booked",
+          bookingId: existing.id,
+        });
+      }
+
+      // 2. Overlap conflict: any booking that overlaps the requested time window
+      if (endTime) {
+        const [conflict] = await db
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.masterId, masterId),
+              eq(bookings.bookingDate, bookingDate),
+              inArray(bookings.status, ["pending", "confirmed"]),
+              sql`${bookings.startTime} < ${endTime}`,
+              sql`${bookings.endTime} > ${startTime}`,
+            ),
+          )
+          .limit(1);
+
+        if (conflict) {
+          return res.status(409).json({ error: "Time slot is no longer available" });
+        }
+      }
     }
 
     const [booking] = await db
@@ -24,9 +91,9 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       .values([parsed.data as any])
       .returning();
 
-    // Create notification for the master using centralized helper
+    // Create in-app notification for the master
     if (booking.masterId) {
-      const bookingDateStr = new Date(booking.bookingDate).toISOString().split("T")[0]; // YYYY-MM-DD format
+      const bookingDateStr = new Date(booking.bookingDate).toISOString().split("T")[0];
       const notification = await createNewBookingNotification(
         db,
         booking.masterId,
@@ -37,9 +104,43 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       if (!notification) {
         logger.warn(
           `Failed to create notification for master ${booking.masterId} for booking ${booking.id}`,
+          { source: "bookings-routes" },
         );
       }
     }
+
+    // Confirmation email (fire-and-forget)
+    fireConfirmationEmail(booking.id);
+
+    // Schedule reminders (fire-and-forget)
+    scheduleBookingReminders(
+      booking.id,
+      new Date(booking.bookingDate).toISOString(),
+      booking.startTime,
+    ).catch((err) =>
+      logger.error("Failed to schedule reminders", {
+        source: "bookings-routes",
+        meta: { bookingId: booking.id, error: String(err) },
+      }),
+    );
+
+    // SMS notification (fire-and-forget)
+    void (async () => {
+      const [clientProfile] = await db
+        .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
+        .from(userProfiles)
+        .where(eq(userProfiles.id, booking.clientId));
+      if (clientProfile?.phone) {
+        const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU");
+        sendBookingCreatedSms(
+          clientProfile.phone,
+          clientProfile.fullName || "Клиент",
+          "запись",
+          dateStr,
+          booking.startTime,
+        ).catch(() => {});
+      }
+    })();
 
     return res.status(201).json(booking);
   } catch (error) {
@@ -53,7 +154,6 @@ router.get("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 
-    // Get user's profile to find their client profile ID
     const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
 
     if (!profile) {
@@ -78,7 +178,6 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
     const { id } = req.params;
     const userId = req.user.claims.sub;
 
-    // Get user's profile to find their client profile ID
     const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
 
     if (!profile) {
@@ -94,6 +193,23 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
     }
+    cancelBookingReminders(booking.id).catch((err) =>
+      logger.error("Failed to cancel reminders", {
+        source: "bookings-routes",
+        meta: { bookingId: booking.id, error: String(err) },
+      }),
+    );
+    // Cancellation email (fire-and-forget)
+    fireCancellationEmail(booking.id);
+    if (profile.phone) {
+      const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU");
+      sendBookingCancelledSms(
+        profile.phone,
+        profile.fullName || "Клиент",
+        "запись",
+        dateStr,
+      ).catch(() => {});
+    }
     return res.json(booking);
   } catch (error) {
     logger.error("Cancel booking error:", error);
@@ -101,28 +217,25 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Reschedule booking (Phase 8)
+// Reschedule booking
 router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
     const { newStartTime, newEndTime, newBookingDate, newMasterId, reason } = req.body;
     const userId = req.user.claims.sub;
 
-    // Validation
     if (!newStartTime || !newEndTime || !newBookingDate) {
       return res
         .status(400)
         .json({ error: "Missing required fields: newStartTime, newEndTime, newBookingDate" });
     }
 
-    // Get current booking
     const [currentBooking] = await db.select().from(bookings).where(eq(bookings.id, id));
 
     if (!currentBooking) {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Check if booking can be rescheduled (not cancelled or completed)
     if (currentBooking.status === "cancelled" || currentBooking.status === "completed") {
       return res.status(400).json({ error: `Cannot reschedule ${currentBooking.status} booking` });
     }
@@ -136,7 +249,6 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
           eq(bookings.masterId, newMasterId || currentBooking.masterId),
           eq(bookings.bookingDate, new Date(newBookingDate)),
           eq(bookings.status, "confirmed"),
-          // Check time overlap
           sql`(${bookings.startTime} < ${newEndTime} AND ${bookings.endTime} > ${newStartTime})`,
         ),
       );
@@ -148,7 +260,6 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
       });
     }
 
-    // Build modification history entry
     const modificationEntry = {
       timestamp: new Date().toISOString(),
       action: "reschedule",
@@ -168,7 +279,6 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
 
     const currentHistory = (currentBooking.modificationHistory || []) as any[];
 
-    // Update booking
     const [updatedBooking] = await db
       .update(bookings)
       .set({
@@ -182,6 +292,35 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
       })
       .where(eq(bookings.id, id))
       .returning();
+
+    rescheduleBookingReminders(
+      updatedBooking.id,
+      new Date(updatedBooking.bookingDate).toISOString(),
+      updatedBooking.startTime,
+    ).catch((err) =>
+      logger.error("Failed to reschedule reminders", {
+        source: "bookings-routes",
+        meta: { bookingId: updatedBooking.id, error: String(err) },
+      }),
+    );
+
+    // SMS notification for reschedule (fire-and-forget)
+    void (async () => {
+      const [clientProfile] = await db
+        .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
+        .from(userProfiles)
+        .where(eq(userProfiles.id, updatedBooking.clientId));
+      if (clientProfile?.phone) {
+        const dateStr = new Date(updatedBooking.bookingDate).toLocaleDateString("ru-RU");
+        sendBookingRescheduledSms(
+          clientProfile.phone,
+          clientProfile.fullName || "Клиент",
+          "запись",
+          dateStr,
+          updatedBooking.startTime,
+        ).catch(() => {});
+      }
+    })();
 
     return res.json(updatedBooking);
   } catch (error) {

@@ -107,16 +107,18 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      // returnNull on 401: guest users on public pages won't crash the app.
+      // Protected pages use ProtectedRoute which guarantees auth before rendering,
+      // so 401 won't happen there in normal flow. If token expires mid-session,
+      // the user gets null data gracefully instead of an ErrorBoundary.
+      queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: 1, // Retry once for transient errors
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retry: false, // don't retry 401/404 — they're expected states, not transient errors
     },
     mutations: {
-      retry: 1,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retry: false,
     },
   },
 });

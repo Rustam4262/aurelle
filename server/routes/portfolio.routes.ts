@@ -5,6 +5,7 @@ import { db } from "../db";
 import { portfolioItems, insertPortfolioItemSchema, masters } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { logAudit } from "../lib/audit";
 
 const router = Router();
 
@@ -62,7 +63,16 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       .values([parsed.data as any])
       .returning();
 
-    logger.info("[PORTFOLIO] Item added: " + JSON.stringify(item));
+    logAudit({
+      actorId: userId,
+      action: "solo_master.portfolio.add",
+      entityType: "portfolio_item",
+      entityId: item.id,
+      details: { masterId: item.masterId, imageUrl: item.imageUrl },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
     return res.status(201).json(item);
   } catch (error) {
     logger.error("Add portfolio item error:", error);
@@ -101,7 +111,16 @@ router.delete("/:itemId", isAuthenticated, async (req: any, res) => {
 
     await db.delete(portfolioItems).where(eq(portfolioItems.id, itemId));
 
-    logger.info("[PORTFOLIO] Item deleted: " + itemId);
+    logAudit({
+      actorId: userId,
+      action: "solo_master.portfolio.delete",
+      entityType: "portfolio_item",
+      entityId: itemId,
+      details: { masterId: item.masterId },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
     return res.json({ success: true });
   } catch (error) {
     logger.error("Delete portfolio item error:", error);
