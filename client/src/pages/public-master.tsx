@@ -3,7 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -31,7 +31,6 @@ import {
   Loader2,
   Instagram,
   Send,
-  ExternalLink,
   Car,
   Home,
   ArrowLeft,
@@ -39,7 +38,7 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import { format, addDays, isBefore, startOfDay } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { ru, enUS, uz } from "date-fns/locale";
 
 interface MasterData {
@@ -245,7 +244,10 @@ export default function PublicMasterPage() {
           });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            setDistanceInfo({ status: "error", errorMsg: err.error || "Ошибка проверки расстояния" });
+            setDistanceInfo({
+              status: "error",
+              errorMsg: err.error || "Ошибка проверки расстояния",
+            });
             return;
           }
           const data = await res.json();
@@ -515,7 +517,10 @@ export default function PublicMasterPage() {
                       {t("publicMaster.noServices", "No services available")}
                     </p>
                     <p className="text-sm text-muted-foreground mb-6">
-                      {t("publicMaster.noServicesContact", "Свяжитесь с мастером напрямую для записи")}
+                      {t(
+                        "publicMaster.noServicesContact",
+                        "Свяжитесь с мастером напрямую для записи",
+                      )}
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center">
                       {master.phone && (
@@ -533,8 +538,7 @@ export default function PublicMasterPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Send className="h-4 w-4" />
-                            @{master.telegram}
+                            <Send className="h-4 w-4" />@{master.telegram}
                           </a>
                         </Button>
                       )}
@@ -742,7 +746,13 @@ export default function PublicMasterPage() {
       </div>
 
       {/* Booking Dialog */}
-      <Dialog open={bookingDialogOpen} onOpenChange={(open) => { setBookingDialogOpen(open); if (!open) setDistanceInfo({ status: "idle" }); }}>
+      <Dialog
+        open={bookingDialogOpen}
+        onOpenChange={(open) => {
+          setBookingDialogOpen(open);
+          if (!open) setDistanceInfo({ status: "idle" });
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{t("publicMaster.bookService", "Book Service")}</DialogTitle>
@@ -765,7 +775,10 @@ export default function PublicMasterPage() {
                       type="button"
                       variant={!isMobileBooking ? "default" : "outline"}
                       size="sm"
-                      onClick={() => { setIsMobileBooking(false); setDistanceInfo({ status: "idle" }); }}
+                      onClick={() => {
+                        setIsMobileBooking(false);
+                        setDistanceInfo({ status: "idle" });
+                      }}
                     >
                       <Home className="h-4 w-4 mr-1" />
                       {t("publicMaster.atMasterLocation", "At master's location")}
@@ -801,8 +814,8 @@ export default function PublicMasterPage() {
                     <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md p-2 mt-2">
                       <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
                       <span>
-                        Мастер приедет к вам — вы в зоне доступа ({distanceInfo.distance} км).
-                        Время в пути ~{distanceInfo.estimatedTravelTime} мин.
+                        Мастер приедет к вам — вы в зоне доступа ({distanceInfo.distance} км). Время
+                        в пути ~{distanceInfo.estimatedTravelTime} мин.
                       </span>
                     </div>
                   )}

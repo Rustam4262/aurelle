@@ -17,10 +17,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { Search, CheckCircle, XCircle, MapPin } from "lucide-react";
 
+interface LocalizedText {
+  en?: string;
+  ru?: string;
+  uz?: string;
+}
+
 interface Salon {
   id: string;
-  name: any;
-  address: any;
+  name: LocalizedText | string;
+  address: LocalizedText | string;
   isVerified: boolean;
   ownerId: string;
   createdAt: string;
@@ -41,7 +47,7 @@ export default function AdminSalons() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: t("admin.salons.toasts.verifiedSuccess") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("admin.salons.toasts.verifyFailed"),
         description: error.message,
@@ -56,7 +62,7 @@ export default function AdminSalons() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: t("admin.salons.toasts.unverifiedSuccess") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("admin.salons.toasts.unverifyFailed"),
         description: error.message,
@@ -91,9 +97,13 @@ export default function AdminSalons() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">{t("admin.salons.loading")}</div>
+            <div className="text-center py-12 text-muted-foreground">
+              {t("admin.salons.loading")}
+            </div>
           ) : !filtered || filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">{t("admin.salons.noSalons")}</div>
+            <div className="text-center py-12 text-muted-foreground">
+              {t("admin.salons.noSalons")}
+            </div>
           ) : (
             <div className="border rounded-lg">
               <Table>

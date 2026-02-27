@@ -38,7 +38,10 @@ export function HomeHero() {
           {t("marketplace.hero.subtitle")}
         </p>
 
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        <form
+          onSubmit={handleSearch}
+          className="max-w-2xl mx-auto group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
+        >
           <div className="flex flex-col sm:flex-row gap-3 p-2 bg-white/10 backdrop-blur-xl rounded-[2rem] border border-white/20 shadow-2xl hover:shadow-pink-500/20 transition-all group-focus-within:bg-white/20 group-focus-within:border-white/40">
             <div className="flex-1 relative">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-white/70 transition-colors group-focus-within:text-white" />

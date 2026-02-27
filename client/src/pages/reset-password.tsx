@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useRoute } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,7 +66,7 @@ export default function ResetPassword() {
       } else {
         setError(data.message || t("auth.passwordResetFailed", "Failed to reset password"));
       }
-    } catch (err) {
+    } catch {
       setError(t("auth.networkError", "Network error. Please try again."));
     } finally {
       setIsLoading(false);

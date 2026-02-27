@@ -1,0 +1,32 @@
+{
+  "version": "0.2",
+  "language": "en,ru",
+  "ignorePaths": ["node_modules", "dist", "build", "*.lock", "migrations", "client/src/locales/**", "client/public/gtm-init.js"],
+  "words": [
+    "aurelle", "AURELLE", "googletagmanager",
+    "Ivanova", "Dmitry", "Petrov", "Sidorova", "Ekaterina", "Novikova", "Alexey", "Smirnov",
+    "dont", "waitlist", "Waitlist", "Balayage",
+    "Sess", "Verif", "Compl",
+    "unverify", "Unverify",
+    "wouter", "ymaps", "Toggleable", "Hoverable", "serviceworker",
+    "Placemark", "Clusterer", "apikey",
+    "networkidle", "subkey", "tablename", "indexname"
+  ],
+  "ignoreRegExpList": ["[\\u0400-\\u04FF]+"],
+  "dictionaries": ["uz-words"],
+  "dictionaryDefinitions": [
+    {
+      "name": "uz-words",
+      "addWords": true,
+      "words": [
+        "Yozilish", "uchun", "ajoyib", "Yaxshi", "vaqt", "tanlovi",
+        "slotlar", "qoldi", "gacha", "Ertalab", "Kunduzi", "Tushdan",
+        "keyin", "Kechqurun", "kun", "soat",
+        "O'zbek", "zbek",
+        "Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek",
+        "Soch", "turmagi",
+        "Nimadirdir", "noto'g'ri", "ketdi"
+      ]
+    }
+  ]
+}

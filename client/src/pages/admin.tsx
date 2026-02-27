@@ -26,7 +26,7 @@ import AdminAudit from "@/pages/admin/audit";
 import AdminActivity from "@/pages/admin/activity";
 
 // Navigation items
-const getNavItems = (t: any) => [
+const getNavItems = (t: ReturnType<typeof useTranslation>["t"]) => [
   { path: "/admin/dashboard", label: t("admin.nav.dashboard"), icon: LayoutDashboard },
   { path: "/admin/users", label: t("admin.nav.users"), icon: Users },
   { path: "/admin/salons", label: t("admin.nav.salons"), icon: Store },

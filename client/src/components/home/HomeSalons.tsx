@@ -13,9 +13,18 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
-  const name = getLocalizedText(salon.name as any, currentLang);
-  const description = getLocalizedText(salon.description as any, currentLang);
-  const city = getLocalizedText(salon.city as any, currentLang);
+  const name = getLocalizedText(
+    salon.name as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
+  const description = getLocalizedText(
+    salon.description as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
+  const city = getLocalizedText(
+    salon.city as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
 
   return (
     <Link href={`/salon/${salon.id}`}>
@@ -67,7 +76,9 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
           </h3>
           <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-3">
             <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary/60" />
-            <span className="line-clamp-1 italic">{city || t("marketplace.salon.unknownLocation")}</span>
+            <span className="line-clamp-1 italic">
+              {city || t("marketplace.salon.unknownLocation")}
+            </span>
           </div>
           {description && (
             <p className="text-muted-foreground text-sm line-clamp-2 mb-4 h-10 leading-relaxed font-light">

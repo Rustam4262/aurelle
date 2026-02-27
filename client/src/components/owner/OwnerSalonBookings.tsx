@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Calendar, Clock, Scissors, User, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Scissors, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +14,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Booking, Master } from "@shared/schema";
 
+interface EnrichedOwnerBooking extends Booking {
+  client?: { firstName: string; lastName: string } | null;
+  service?: { name: Record<string, string> | string } | null;
+}
+
 interface OwnerSalonBookingsProps {
   salonId: string;
 }
@@ -23,7 +27,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const { data: bookings } = useQuery<Booking[]>({
+  const { data: bookings } = useQuery<EnrichedOwnerBooking[]>({
     queryKey: ["/api/owner/salons", salonId, "bookings"],
   });
 
@@ -39,7 +43,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "bookings"] });
       toast({ title: t("marketplace.owner.masterAssigned") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,
@@ -55,7 +59,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
       </h3>
       {bookings && bookings.length > 0 ? (
         <div className="space-y-3">
-          {bookings.map((booking: any) => {
+          {bookings.map((booking) => {
             const assignedMaster = masters?.find((m) => m.id === booking.masterId);
             return (
               <div
@@ -76,8 +80,8 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                         <Scissors className="h-4 w-4" />
                         <span>
                           {typeof booking.service.name === "object" && booking.service.name
-                            ? (booking.service.name as any)[t("language")] ||
-                              (booking.service.name as any).en
+                            ? (booking.service.name as Record<string, string>)[t("language")] ||
+                              (booking.service.name as Record<string, string>).en
                             : booking.service.name}
                         </span>
                       </span>

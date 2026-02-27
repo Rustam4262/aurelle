@@ -23,7 +23,10 @@ export function MasterCard({
   const specs = specialties
     ? specialties[currentLang as keyof typeof specialties] || specialties.en || []
     : [];
-  const bio = getLocalizedText(master.bio as any, currentLang);
+  const bio = getLocalizedText(
+    master.bio as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
 
   return (
     <Card className="p-4 transition-all hover:shadow-md" data-testid={`card-master-${master.id}`}>

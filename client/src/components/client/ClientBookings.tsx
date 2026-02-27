@@ -48,11 +48,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
 // Helper functions (duplicated for now, could be shared)
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -148,8 +147,8 @@ export function ClientBookings({
   };
 
   const copyBookingToClipboard = async (booking: EnrichedBooking) => {
-    const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
-    const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+    const salonName = getLocalizedText(booking.salon?.name as LocalizedText, currentLang);
+    const serviceName = getLocalizedText(booking.service?.name as LocalizedText, currentLang);
     const bookingDate = new Date(booking.bookingDate).toLocaleDateString(
       currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
       { weekday: "long", day: "numeric", month: "long", year: "numeric" },
@@ -179,14 +178,14 @@ ID: ${booking.id.slice(0, 8)}
     try {
       await navigator.clipboard.writeText(bookingText);
       toast({ title: t("marketplace.client.copied") });
-    } catch (err) {
+    } catch {
       toast({ title: t("marketplace.client.copyError"), variant: "destructive" });
     }
   };
 
   const shareBooking = async (booking: EnrichedBooking) => {
-    const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
-    const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+    const salonName = getLocalizedText(booking.salon?.name as LocalizedText, currentLang);
+    const serviceName = getLocalizedText(booking.service?.name as LocalizedText, currentLang);
     const bookingDate = new Date(booking.bookingDate).toLocaleDateString(
       currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
       { weekday: "long", day: "numeric", month: "long" },
@@ -201,7 +200,7 @@ ID: ${booking.id.slice(0, 8)}
     if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch {
         copyBookingToClipboard(booking);
       }
     } else {
@@ -386,8 +385,11 @@ ID: ${booking.id.slice(0, 8)}
       ) : (
         <div className="space-y-4">
           {filteredBookings.map((booking) => {
-            const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
-            const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
+            const salonName = getLocalizedText(booking.salon?.name as LocalizedText, currentLang);
+            const serviceName = getLocalizedText(
+              booking.service?.name as LocalizedText,
+              currentLang,
+            );
             const bookingDate = new Date(booking.bookingDate);
             const isUpcoming = isUpcomingBooking(booking);
 
@@ -569,7 +571,10 @@ ID: ${booking.id.slice(0, 8)}
                   </div>
                   <div>
                     <p className="font-medium">
-                      {getLocalizedText(selectedBooking.service?.name as any, currentLang)}
+                      {getLocalizedText(
+                        selectedBooking.service?.name as LocalizedText,
+                        currentLang,
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedBooking.service?.duration} {t("marketplace.client.minutes")}
@@ -581,7 +586,7 @@ ID: ${booking.id.slice(0, 8)}
                   <Store className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <p className="font-medium">
-                      {getLocalizedText(selectedBooking.salon?.name as any, currentLang)}
+                      {getLocalizedText(selectedBooking.salon?.name as LocalizedText, currentLang)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedBooking.salon?.address}

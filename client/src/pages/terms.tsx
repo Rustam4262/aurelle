@@ -37,17 +37,18 @@ export default function TermsPage() {
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">1. Acceptance of Terms</h3>
               <p className="text-muted-foreground leading-relaxed">
-                By accessing and using the AURELLE platform ("Service"), you agree to be bound by these Terms
-                of Service. If you do not agree to these terms, please do not use our Service.
+                By accessing and using the AURELLE platform (&ldquo;Service&rdquo;), you agree to be
+                bound by these Terms of Service. If you do not agree to these terms, please do not
+                use our Service.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">2. Description of Service</h3>
               <p className="text-muted-foreground leading-relaxed">
-                AURELLE is a digital platform connecting beauty service clients with salons and independent
-                masters across Uzbekistan. We provide online booking, scheduling, and payment processing
-                services.
+                AURELLE is a digital platform connecting beauty service clients with salons and
+                independent masters across Uzbekistan. We provide online booking, scheduling, and
+                payment processing services.
               </p>
             </section>
 
@@ -55,7 +56,10 @@ export default function TermsPage() {
               <h3 className="text-2xl font-serif text-foreground">3. User Accounts</h3>
               <div className="space-y-2 text-muted-foreground leading-relaxed">
                 <p>• You must provide accurate and complete information when creating an account</p>
-                <p>• You are responsible for maintaining the confidentiality of your account credentials</p>
+                <p>
+                  • You are responsible for maintaining the confidentiality of your account
+                  credentials
+                </p>
                 <p>• You must notify us immediately of any unauthorized access to your account</p>
                 <p>• One person or entity may not maintain multiple accounts</p>
               </div>
@@ -68,11 +72,12 @@ export default function TermsPage() {
                   • Bookings are subject to availability and confirmation by the salon or master
                 </p>
                 <p>
-                  • Cancellation policies are set by individual salons and displayed at the time of booking
+                  • Cancellation policies are set by individual salons and displayed at the time of
+                  booking
                 </p>
                 <p>
-                  • Late cancellations (less than 24 hours) may incur fees as determined by the service
-                  provider
+                  • Late cancellations (less than 24 hours) may incur fees as determined by the
+                  service provider
                 </p>
                 <p>• No-shows may result in booking restrictions on your account</p>
               </div>
@@ -82,10 +87,12 @@ export default function TermsPage() {
               <h3 className="text-2xl font-serif text-foreground">5. Payments and Fees</h3>
               <div className="space-y-2 text-muted-foreground leading-relaxed">
                 <p>• All prices are displayed in Uzbek Som (UZS)</p>
-                <p>• AURELLE charges a service fee for platform usage (details provided at booking)</p>
+                <p>
+                  • AURELLE charges a service fee for platform usage (details provided at booking)
+                </p>
                 <p>• Payment methods accepted include cards and local payment systems</p>
                 <p>
-                  • Refunds are handled according to the service provider's cancellation policy
+                  • Refunds are handled according to the service provider&apos;s cancellation policy
                 </p>
               </div>
             </section>
@@ -105,33 +112,34 @@ export default function TermsPage() {
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">7. Intellectual Property</h3>
               <p className="text-muted-foreground leading-relaxed">
-                All content on the AURELLE platform, including text, graphics, logos, and software, is the
-                property of AURELLE or its content suppliers and is protected by intellectual property laws.
+                All content on the AURELLE platform, including text, graphics, logos, and software,
+                is the property of AURELLE or its content suppliers and is protected by intellectual
+                property laws.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">8. Limitation of Liability</h3>
               <p className="text-muted-foreground leading-relaxed">
-                AURELLE acts as an intermediary platform. We are not responsible for the quality, safety, or
-                legality of services provided by salons and masters. Users engage with service providers at
-                their own risk.
+                AURELLE acts as an intermediary platform. We are not responsible for the quality,
+                safety, or legality of services provided by salons and masters. Users engage with
+                service providers at their own risk.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">9. Dispute Resolution</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Any disputes arising from these Terms will be resolved through mediation or arbitration in
-                accordance with the laws of Uzbekistan.
+                Any disputes arising from these Terms will be resolved through mediation or
+                arbitration in accordance with the laws of Uzbekistan.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">10. Changes to Terms</h3>
               <p className="text-muted-foreground leading-relaxed">
-                We reserve the right to modify these Terms at any time. Continued use of the Service after
-                changes constitutes acceptance of the new Terms.
+                We reserve the right to modify these Terms at any time. Continued use of the Service
+                after changes constitutes acceptance of the new Terms.
               </p>
             </section>
 

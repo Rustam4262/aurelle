@@ -50,7 +50,7 @@ export enum ApiErrorCode {
 export interface ApiError {
   code: ApiErrorCode | string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp?: string;
   path?: string;
 }
@@ -98,21 +98,27 @@ const ERROR_MESSAGES: Record<string, string> = {
 /**
  * Parse error from various sources
  */
-export function parseApiError(error: any): ApiError {
+export function parseApiError(error: unknown): ApiError {
+  const err = error as Record<string, unknown>;
+
   // If it's already an ApiError
-  if (error?.code && error?.message) {
+  if (err?.code && err?.message) {
     return error as ApiError;
   }
 
   // If it's a fetch Response error
-  if (error?.response) {
-    const status = error.response.status;
-    const data = error.response.data || {};
+  if (err?.response) {
+    const resp = err.response as { status: number; data?: Record<string, unknown> };
+    const status = resp.status;
+    const data = resp.data || {};
 
     return {
-      code: data.code || getErrorCodeFromStatus(status),
-      message: data.message || data.error || ERROR_MESSAGES[getErrorCodeFromStatus(status)],
-      details: data.details,
+      code: (data.code as string) || getErrorCodeFromStatus(status),
+      message:
+        (data.message as string) ||
+        (data.error as string) ||
+        ERROR_MESSAGES[getErrorCodeFromStatus(status)],
+      details: data.details as Record<string, unknown> | undefined,
     };
   }
 
@@ -184,7 +190,7 @@ function getErrorCodeFromStatus(status: number): ApiErrorCode {
 /**
  * Get user-friendly error message
  */
-export function getErrorMessage(error: any): string {
+export function getErrorMessage(error: unknown): string {
   const apiError = parseApiError(error);
   return (
     ERROR_MESSAGES[apiError.code] || apiError.message || ERROR_MESSAGES[ApiErrorCode.UNKNOWN_ERROR]
@@ -195,7 +201,7 @@ export function getErrorMessage(error: any): string {
  * Centralized API Error Handler
  * Shows toast notification with user-friendly error message
  */
-export function handleApiError(error: any, customMessage?: string) {
+export function handleApiError(error: unknown, customMessage?: string) {
   const apiError = parseApiError(error);
   const message = customMessage || ERROR_MESSAGES[apiError.code] || apiError.message;
 
@@ -244,7 +250,7 @@ export const errorHandlers = {
   /**
    * Booking conflict error
    */
-  bookingConflict: (error: any) => {
+  bookingConflict: (error: unknown) => {
     const apiError = parseApiError(error);
     toast({
       variant: "destructive",
@@ -257,7 +263,7 @@ export const errorHandlers = {
   /**
    * Validation error with field details
    */
-  validation: (error: any, fields?: Record<string, string>) => {
+  validation: (error: unknown, fields?: Record<string, string>) => {
     const apiError = parseApiError(error);
     const fieldErrors = apiError.details?.fields || fields || {};
 
@@ -283,7 +289,7 @@ export const errorHandlers = {
   /**
    * Network error with retry option
    */
-  network: (error: any) => {
+  network: (error: unknown) => {
     const apiError = parseApiError(error);
     toast({
       variant: "destructive",
@@ -309,6 +315,7 @@ export const errorHandlers = {
  * Async error handler wrapper
  * Wraps async functions and handles errors automatically
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withErrorHandler<T extends (...args: any[]) => Promise<any>>(
   fn: T,
   errorMessage?: string,
@@ -327,9 +334,9 @@ export function withErrorHandler<T extends (...args: any[]) => Promise<any>>(
  * Log error to external service (Sentry)
  * Integrated with unified logger
  */
-export function logErrorToService(error: Error, errorInfo?: any) {
+export function logErrorToService(error: Error, errorInfo?: unknown) {
   logger.error("External error logged", error, {
     source: "errorService",
-    meta: errorInfo,
+    meta: errorInfo as Record<string, unknown> | undefined,
   });
 }

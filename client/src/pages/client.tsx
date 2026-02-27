@@ -4,7 +4,6 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -40,7 +39,7 @@ import type {
 } from "@/components/client/types";
 
 export default function ClientPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();

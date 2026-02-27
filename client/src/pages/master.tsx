@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useMasterData } from "@/hooks/use-master-data";
 import { useMasterMutations } from "@/hooks/use-master-mutations";
+import type { MasterWorkingHours } from "@shared/schema";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   ArrowLeft,
@@ -131,7 +132,7 @@ export default function MasterPage() {
     );
   }
 
-  const { master, salon, bookings, reviews } = masterQuery.data;
+  const { master, salon, reviews } = masterQuery.data;
   const unreadCount = notificationsQuery.data?.filter((n) => !n.isRead).length || 0;
 
   return (
@@ -219,7 +220,7 @@ export default function MasterPage() {
           >
             <MasterSchedule
               initialSchedule={scheduleQuery.data}
-              onSave={(s) => saveScheduleMutation.mutate(s)}
+              onSave={(s) => saveScheduleMutation.mutate(s as MasterWorkingHours[])}
               isSaving={saveScheduleMutation.isPending}
               isLoading={scheduleQuery.isLoading}
             />

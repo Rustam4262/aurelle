@@ -24,8 +24,6 @@ import {
   CreditCard,
   HelpCircle,
   Lightbulb,
-  Clock,
-  CheckCircle2,
   ChevronRight,
   Send,
   ArrowLeft,
@@ -78,7 +76,7 @@ export function ClientSupport() {
     queryKey: ["/api/client/support/tickets"],
   });
 
-  const { data: selectedTicket, isLoading: ticketLoading } = useQuery<TicketWithMessages>({
+  const { data: selectedTicket } = useQuery<TicketWithMessages>({
     queryKey: ["/api/client/support/tickets", selectedTicketId],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/client/support/tickets/${selectedTicketId}`);
@@ -187,9 +185,6 @@ export function ClientSupport() {
 
   // Ticket detail view
   if (selectedTicketId && selectedTicket) {
-    const CategoryIcon =
-      categoryIcons[selectedTicket.category as keyof typeof categoryIcons] || HelpCircle;
-
     return (
       <div className="space-y-4">
         {/* Header */}

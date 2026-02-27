@@ -7,13 +7,6 @@
       "navLink": "Мастера"
     }
   },
-  "master": {
-    "serviceMode": {
-      "atMaster": "У мастера",
-      "mobile": "Выезд",
-      "both": "Выезд / У мастера"
-    }
-  },
   "marketplace": {
     "nav": {
       "explore": "Найти салон",
@@ -2347,6 +2340,11 @@
     "signInToContinue": "Войти для продолжения"
   },
   "master": {
+    "serviceMode": {
+      "atMaster": "У мастера",
+      "mobile": "Выезд",
+      "both": "Выезд / У мастера"
+    },
     "title": "Панель мастера",
     "welcome": "Добро пожаловать",
     "yourSalon": "Ваш салон",

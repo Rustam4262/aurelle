@@ -61,9 +61,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
 const SERVICE_CATEGORIES = [
-  "Маникюр", "Педикюр", "Ресницы", "Брови",
-  "Волосы", "Макияж", "Массаж", "Спа",
-  "Эпиляция", "Косметология", "Другое",
+  "Маникюр",
+  "Педикюр",
+  "Ресницы",
+  "Брови",
+  "Волосы",
+  "Макияж",
+  "Массаж",
+  "Спа",
+  "Эпиляция",
+  "Косметология",
+  "Другое",
 ];
 
 interface SoloService {
@@ -138,7 +146,9 @@ export default function SoloMasterPage() {
   const [portfolioUploading, setPortfolioUploading] = useState(false);
 
   // Bookings filter
-  const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "confirmed" | "completed" | "cancelled">("all");
+  const [bookingFilter, setBookingFilter] = useState<
+    "all" | "pending" | "confirmed" | "completed" | "cancelled"
+  >("all");
   // Calendar week offset
   const [calWeekOffset, setCalWeekOffset] = useState(0);
 
@@ -555,7 +565,9 @@ export default function SoloMasterPage() {
                       <Star className="h-3.5 w-3.5 fill-amber-500" />
                       {parseFloat(masterData.averageRating).toFixed(1)}
                       {masterData.reviewCount ? (
-                        <span className="text-muted-foreground font-normal">({masterData.reviewCount})</span>
+                        <span className="text-muted-foreground font-normal">
+                          ({masterData.reviewCount})
+                        </span>
                       ) : null}
                     </span>
                   )}
@@ -669,8 +681,12 @@ export default function SoloMasterPage() {
                 <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
                   <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="font-medium text-amber-800 dark:text-amber-300">Профиль не опубликован</p>
-                    <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">Клиенты не могут найти вас в поиске. Заполните профиль и активируйте его.</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-300">
+                      Профиль не опубликован
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+                      Клиенты не могут найти вас в поиске. Заполните профиль и активируйте его.
+                    </p>
                   </div>
                 </div>
               )}
@@ -687,9 +703,13 @@ export default function SoloMasterPage() {
                     </div>
                     <div>
                       <p className="font-medium text-amber-800 dark:text-amber-300">
-                        {stats!.pendingBookings} {stats!.pendingBookings === 1 ? "новая запись" : "новых записи"} ожидают подтверждения
+                        {stats!.pendingBookings}{" "}
+                        {stats!.pendingBookings === 1 ? "новая запись" : "новых записи"} ожидают
+                        подтверждения
                       </p>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">Нажмите чтобы перейти к записям</p>
+                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                        Нажмите чтобы перейти к записям
+                      </p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -700,7 +720,9 @@ export default function SoloMasterPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Сегодня</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Сегодня
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stats?.todayBookings || 0}</div>
@@ -709,7 +731,9 @@ export default function SoloMasterPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Неделя</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Неделя
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stats?.weekBookings || 0}</div>
@@ -718,19 +742,27 @@ export default function SoloMasterPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Выручка / месяц</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Выручка / месяц
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{(stats?.monthRevenue || 0).toLocaleString()}</div>
+                    <div className="text-2xl font-bold">
+                      {(stats?.monthRevenue || 0).toLocaleString()}
+                    </div>
                     <p className="text-xs text-muted-foreground">UZS</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Ожидают</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Ожидают
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className={`text-2xl font-bold ${(stats?.pendingBookings || 0) > 0 ? "text-amber-600" : ""}`}>
+                    <div
+                      className={`text-2xl font-bold ${(stats?.pendingBookings || 0) > 0 ? "text-amber-600" : ""}`}
+                    >
                       {stats?.pendingBookings || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">записей</p>
@@ -744,9 +776,17 @@ export default function SoloMasterPage() {
                   const checks = [
                     { label: "Фото профиля", done: !!masterData.photo, tab: "settings" },
                     { label: "Услуги добавлены", done: services.length > 0, tab: "services" },
-                    { label: "О себе заполнено", done: !!(masterData.bio?.ru || editBio), tab: "settings" },
+                    {
+                      label: "О себе заполнено",
+                      done: !!(masterData.bio?.ru || editBio),
+                      tab: "settings",
+                    },
                     { label: "Город указан", done: !!masterData.city, tab: "settings" },
-                    { label: "Телефон или Telegram", done: !!(masterData.phone || masterData.telegram), tab: "settings" },
+                    {
+                      label: "Телефон или Telegram",
+                      done: !!(masterData.phone || masterData.telegram),
+                      tab: "settings",
+                    },
                     { label: "Портфолио добавлено", done: portfolio.length > 0, tab: "portfolio" },
                   ];
                   const done = checks.filter((c) => c.done).length;
@@ -756,7 +796,11 @@ export default function SoloMasterPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-base">Заполненность профиля</CardTitle>
-                          <span className={`text-sm font-semibold ${pct === 100 ? "text-green-600" : pct >= 60 ? "text-amber-600" : "text-red-500"}`}>{pct}%</span>
+                          <span
+                            className={`text-sm font-semibold ${pct === 100 ? "text-green-600" : pct >= 60 ? "text-amber-600" : "text-red-500"}`}
+                          >
+                            {pct}%
+                          </span>
                         </div>
                         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                           <div
@@ -777,8 +821,14 @@ export default function SoloMasterPage() {
                             ) : (
                               <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                             )}
-                            <span className={`text-sm ${c.done ? "text-foreground" : "text-muted-foreground"}`}>{c.label}</span>
-                            {!c.done && <span className="text-xs text-primary ml-auto">Добавить →</span>}
+                            <span
+                              className={`text-sm ${c.done ? "text-foreground" : "text-muted-foreground"}`}
+                            >
+                              {c.label}
+                            </span>
+                            {!c.done && (
+                              <span className="text-xs text-primary ml-auto">Добавить →</span>
+                            )}
                           </button>
                         ))}
                       </CardContent>
@@ -802,39 +852,62 @@ export default function SoloMasterPage() {
                       <div className="flex justify-center py-4">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       </div>
-                    ) : (() => {
-                      const upcoming = masterBookings
-                        .filter((b) => b.status !== "cancelled" && b.status !== "completed")
-                        .sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime())
-                        .slice(0, 4);
-                      if (upcoming.length === 0) return (
-                        <p className="text-sm text-muted-foreground text-center py-4">Нет предстоящих записей</p>
-                      );
-                      return (
-                        <div className="space-y-2.5">
-                          {upcoming.map((b) => {
-                            const svc = services.find((s) => s.id === b.soloMasterServiceId);
-                            const date = new Date(b.bookingDate);
-                            const isToday = date.toDateString() === new Date().toDateString();
-                            const dateStr = isToday ? "Сегодня" : date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-                            return (
-                              <div key={b.id} className="flex items-center gap-3 text-sm">
-                                <div className={`shrink-0 text-center w-10 rounded-md py-0.5 ${isToday ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                                  <div className="text-xs font-semibold leading-none">{dateStr}</div>
+                    ) : (
+                      (() => {
+                        const upcoming = masterBookings
+                          .filter((b) => b.status !== "cancelled" && b.status !== "completed")
+                          .sort(
+                            (a, b) =>
+                              new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime(),
+                          )
+                          .slice(0, 4);
+                        if (upcoming.length === 0)
+                          return (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Нет предстоящих записей
+                            </p>
+                          );
+                        return (
+                          <div className="space-y-2.5">
+                            {upcoming.map((b) => {
+                              const svc = services.find((s) => s.id === b.soloMasterServiceId);
+                              const date = new Date(b.bookingDate);
+                              const isToday = date.toDateString() === new Date().toDateString();
+                              const dateStr = isToday
+                                ? "Сегодня"
+                                : date.toLocaleDateString("ru-RU", {
+                                    day: "numeric",
+                                    month: "short",
+                                  });
+                              return (
+                                <div key={b.id} className="flex items-center gap-3 text-sm">
+                                  <div
+                                    className={`shrink-0 text-center w-10 rounded-md py-0.5 ${isToday ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                                  >
+                                    <div className="text-xs font-semibold leading-none">
+                                      {dateStr}
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate font-medium">
+                                      {svc?.name?.ru || "Услуга"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {b.startTime}–{b.endTime}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${b.status === "pending" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"}`}
+                                  >
+                                    {b.status === "pending" ? "Ожидает" : "Подтверждена"}
+                                  </span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="truncate font-medium">{svc?.name?.ru || "Услуга"}</p>
-                                  <p className="text-xs text-muted-foreground">{b.startTime}–{b.endTime}</p>
-                                </div>
-                                <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${b.status === "pending" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"}`}>
-                                  {b.status === "pending" ? "Ожидает" : "Подтверждена"}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -842,7 +915,9 @@ export default function SoloMasterPage() {
               {/* Quick Actions */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t("soloMaster.quickActions", "Quick Actions")}</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("soloMaster.quickActions", "Quick Actions")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-3">
                   <Button onClick={() => setActiveTab("services")}>
@@ -879,13 +954,21 @@ export default function SoloMasterPage() {
                     <CardDescription>Записи по дням недели</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => setCalWeekOffset((o) => o - 1)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCalWeekOffset((o) => o - 1)}
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setCalWeekOffset(0)}>
                       Сегодня
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => setCalWeekOffset((o) => o + 1)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCalWeekOffset((o) => o + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -920,26 +1003,37 @@ export default function SoloMasterPage() {
                           const isToday = day.toDateString() === today.toDateString();
                           const dayBookings = masterBookings.filter((b) => {
                             const bd = new Date(b.bookingDate);
-                            return bd.toDateString() === day.toDateString() && b.status !== "cancelled";
+                            return (
+                              bd.toDateString() === day.toDateString() && b.status !== "cancelled"
+                            );
                           });
                           return (
                             <div
                               key={idx}
                               className={`rounded-lg border p-2 min-h-[80px] ${isToday ? "border-primary bg-primary/5" : "border-border"}`}
                             >
-                              <div className={`text-xs font-semibold mb-1 ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                              <div
+                                className={`text-xs font-semibold mb-1 ${isToday ? "text-primary" : "text-muted-foreground"}`}
+                              >
                                 {DAY_NAMES[idx]} {day.getDate()}
                               </div>
                               {dayBookings.length === 0 ? (
-                                <div className="text-xs text-muted-foreground/50 text-center py-2">—</div>
+                                <div className="text-xs text-muted-foreground/50 text-center py-2">
+                                  —
+                                </div>
                               ) : (
                                 <div className="space-y-1">
                                   {dayBookings.map((b) => {
-                                    const svc = services.find((s) => s.id === b.soloMasterServiceId);
+                                    const svc = services.find(
+                                      (s) => s.id === b.soloMasterServiceId,
+                                    );
                                     const colors: Record<string, string> = {
-                                      pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-                                      confirmed: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-                                      completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+                                      pending:
+                                        "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+                                      confirmed:
+                                        "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+                                      completed:
+                                        "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
                                     };
                                     return (
                                       <div
@@ -974,19 +1068,29 @@ export default function SoloMasterPage() {
                   </div>
                   {/* Filter pills */}
                   <div className="flex gap-2 flex-wrap">
-                    {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map((f) => (
-                      <button
-                        key={f}
-                        onClick={() => setBookingFilter(f)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          bookingFilter === f
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}
-                      >
-                        {{ all: "Все", pending: "Ожидают", confirmed: "Подтверждены", completed: "Завершены", cancelled: "Отменены" }[f]}
-                      </button>
-                    ))}
+                    {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map(
+                      (f) => (
+                        <button
+                          key={f}
+                          onClick={() => setBookingFilter(f)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            bookingFilter === f
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                        >
+                          {
+                            {
+                              all: "Все",
+                              pending: "Ожидают",
+                              confirmed: "Подтверждены",
+                              completed: "Завершены",
+                              cancelled: "Отменены",
+                            }[f]
+                          }
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -995,119 +1099,158 @@ export default function SoloMasterPage() {
                   <div className="flex justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : (() => {
-                  const filtered = bookingFilter === "all"
-                    ? masterBookings
-                    : masterBookings.filter((b) => b.status === bookingFilter);
-                  if (filtered.length === 0) return (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                      <p>Записей пока нет</p>
-                    </div>
-                  );
-                  return (
-                    <div className="space-y-3">
-                      {filtered.map((booking) => {
-                        const date = new Date(booking.bookingDate);
-                        const dateStr = date.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
-                        const svc = services.find((s) => s.id === booking.soloMasterServiceId);
-                        const statusColors: Record<string, string> = {
-                          pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-                          confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-                          completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-                          cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-                        };
-                        const statusLabel: Record<string, string> = {
-                          pending: "Ожидает", confirmed: "Подтверждена", completed: "Завершена", cancelled: "Отменена",
-                        };
-                        return (
-                          <div key={booking.id} className="border rounded-lg p-4 space-y-3">
-                            <div className="flex items-start justify-between gap-3 flex-wrap">
-                              <div>
-                                <p className="font-medium">{svc?.name?.ru || "Услуга"}</p>
-                                <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="h-3.5 w-3.5" />
-                                    {dateStr}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3.5 w-3.5" />
-                                    {booking.startTime}–{booking.endTime}
-                                  </span>
-                                  {booking.isMobileBooking && (
+                ) : (
+                  (() => {
+                    const filtered =
+                      bookingFilter === "all"
+                        ? masterBookings
+                        : masterBookings.filter((b) => b.status === bookingFilter);
+                    if (filtered.length === 0)
+                      return (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                          <p>Записей пока нет</p>
+                        </div>
+                      );
+                    return (
+                      <div className="space-y-3">
+                        {filtered.map((booking) => {
+                          const date = new Date(booking.bookingDate);
+                          const dateStr = date.toLocaleDateString("ru-RU", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          });
+                          const svc = services.find((s) => s.id === booking.soloMasterServiceId);
+                          const statusColors: Record<string, string> = {
+                            pending:
+                              "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                            confirmed:
+                              "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+                            completed:
+                              "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+                            cancelled:
+                              "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+                          };
+                          const statusLabel: Record<string, string> = {
+                            pending: "Ожидает",
+                            confirmed: "Подтверждена",
+                            completed: "Завершена",
+                            cancelled: "Отменена",
+                          };
+                          return (
+                            <div key={booking.id} className="border rounded-lg p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-3 flex-wrap">
+                                <div>
+                                  <p className="font-medium">{svc?.name?.ru || "Услуга"}</p>
+                                  <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
                                     <span className="flex items-center gap-1">
-                                      <MapPin className="h-3.5 w-3.5" />
-                                      Выезд
+                                      <Calendar className="h-3.5 w-3.5" />
+                                      {dateStr}
                                     </span>
-                                  )}
-                                  {booking.priceSnapshot != null && (
-                                    <span className="font-medium text-foreground">
-                                      {booking.priceSnapshot.toLocaleString()} UZS
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="h-3.5 w-3.5" />
+                                      {booking.startTime}–{booking.endTime}
                                     </span>
+                                    {booking.isMobileBooking && (
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="h-3.5 w-3.5" />
+                                        Выезд
+                                      </span>
+                                    )}
+                                    {booking.priceSnapshot != null && (
+                                      <span className="font-medium text-foreground">
+                                        {booking.priceSnapshot.toLocaleString()} UZS
+                                      </span>
+                                    )}
+                                  </div>
+                                  {booking.notes && (
+                                    <p className="text-xs text-muted-foreground mt-1 italic">
+                                      &ldquo;{booking.notes}&rdquo;
+                                    </p>
                                   )}
                                 </div>
-                                {booking.notes && (
-                                  <p className="text-xs text-muted-foreground mt-1 italic">"{booking.notes}"</p>
-                                )}
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${statusColors[booking.status] || ""}`}
+                                >
+                                  {statusLabel[booking.status] || booking.status}
+                                </span>
                               </div>
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${statusColors[booking.status] || ""}`}>
-                                {statusLabel[booking.status] || booking.status}
-                              </span>
+                              {/* Action buttons */}
+                              {booking.status === "pending" && (
+                                <div className="flex gap-2 pt-1">
+                                  <Button
+                                    size="sm"
+                                    className="gap-1.5"
+                                    onClick={() =>
+                                      updateBookingStatusMutation.mutate({
+                                        id: booking.id,
+                                        status: "confirmed",
+                                      })
+                                    }
+                                    disabled={updateBookingStatusMutation.isPending}
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                    Подтвердить
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-1.5 text-destructive hover:text-destructive"
+                                    onClick={() =>
+                                      updateBookingStatusMutation.mutate({
+                                        id: booking.id,
+                                        status: "cancelled",
+                                      })
+                                    }
+                                    disabled={updateBookingStatusMutation.isPending}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5" />
+                                    Отменить
+                                  </Button>
+                                </div>
+                              )}
+                              {booking.status === "confirmed" && (
+                                <div className="flex gap-2 pt-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-1.5"
+                                    onClick={() =>
+                                      updateBookingStatusMutation.mutate({
+                                        id: booking.id,
+                                        status: "completed",
+                                      })
+                                    }
+                                    disabled={updateBookingStatusMutation.isPending}
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                    Завершить
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="gap-1.5 text-destructive hover:text-destructive"
+                                    onClick={() =>
+                                      updateBookingStatusMutation.mutate({
+                                        id: booking.id,
+                                        status: "cancelled",
+                                      })
+                                    }
+                                    disabled={updateBookingStatusMutation.isPending}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5" />
+                                    Отменить
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                            {/* Action buttons */}
-                            {booking.status === "pending" && (
-                              <div className="flex gap-2 pt-1">
-                                <Button
-                                  size="sm"
-                                  className="gap-1.5"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "confirmed" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <CheckCircle className="h-3.5 w-3.5" />
-                                  Подтвердить
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1.5 text-destructive hover:text-destructive"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  Отменить
-                                </Button>
-                              </div>
-                            )}
-                            {booking.status === "confirmed" && (
-                              <div className="flex gap-2 pt-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1.5"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "completed" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <CheckCircle className="h-3.5 w-3.5" />
-                                  Завершить
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="gap-1.5 text-destructive hover:text-destructive"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  Отменить
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1150,15 +1293,21 @@ export default function SoloMasterPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className={`font-medium truncate ${!svc.isActive ? "text-muted-foreground line-through" : ""}`}>
+                            <p
+                              className={`font-medium truncate ${!svc.isActive ? "text-muted-foreground line-through" : ""}`}
+                            >
                               {svc.name.ru}
                             </p>
                             {!svc.isActive && (
-                              <Badge variant="secondary" className="text-xs shrink-0">Пауза</Badge>
+                              <Badge variant="secondary" className="text-xs shrink-0">
+                                Пауза
+                              </Badge>
                             )}
                           </div>
                           <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                            <Badge variant="secondary" className="text-xs">{svc.category}</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {svc.category}
+                            </Badge>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
                               {svc.duration} мин
@@ -1172,9 +1321,15 @@ export default function SoloMasterPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={svc.isActive ? "text-green-600 hover:text-amber-500" : "text-muted-foreground hover:text-green-600"}
+                            className={
+                              svc.isActive
+                                ? "text-green-600 hover:text-amber-500"
+                                : "text-muted-foreground hover:text-green-600"
+                            }
                             title={svc.isActive ? "Поставить на паузу" : "Включить услугу"}
-                            onClick={() => toggleServiceMutation.mutate({ id: svc.id, isActive: !svc.isActive })}
+                            onClick={() =>
+                              toggleServiceMutation.mutate({ id: svc.id, isActive: !svc.isActive })
+                            }
                             disabled={toggleServiceMutation.isPending}
                           >
                             <Power className="h-4 w-4" />
@@ -1251,7 +1406,10 @@ export default function SoloMasterPage() {
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {portfolio.map((item) => (
-                      <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <div
+                        key={item.id}
+                        className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
+                      >
                         <img
                           src={item.imageUrl}
                           alt="Portfolio"
@@ -1319,9 +1477,7 @@ export default function SoloMasterPage() {
                           setScheduleHours(updated);
                         }}
                       />
-                      <span className="w-28 text-sm font-medium shrink-0">
-                        {DAY_NAMES[dayNum]}
-                      </span>
+                      <span className="w-28 text-sm font-medium shrink-0">{DAY_NAMES[dayNum]}</span>
                       {slot.isOpen ? (
                         <div className="flex items-center gap-2 flex-1">
                           <input
@@ -1357,9 +1513,7 @@ export default function SoloMasterPage() {
                   onClick={() => updateScheduleMutation.mutate()}
                   disabled={updateScheduleMutation.isPending || scheduleHours.length === 0}
                 >
-                  {updateScheduleMutation.isPending && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                  {updateScheduleMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                   Сохранить расписание
                 </Button>
               </CardContent>
@@ -1531,7 +1685,9 @@ export default function SoloMasterPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {SERVICE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1583,7 +1739,12 @@ export default function SoloMasterPage() {
             </Button>
             <Button
               onClick={() => createServiceMutation.mutate()}
-              disabled={createServiceMutation.isPending || !serviceName.trim() || !serviceCategory || !servicePrice}
+              disabled={
+                createServiceMutation.isPending ||
+                !serviceName.trim() ||
+                !serviceCategory ||
+                !servicePrice
+              }
             >
               {createServiceMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Добавить

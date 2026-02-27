@@ -7,13 +7,6 @@
       "navLink": "Masters"
     }
   },
-  "master": {
-    "serviceMode": {
-      "atMaster": "At master's place",
-      "mobile": "Mobile",
-      "both": "Mobile / At master's"
-    }
-  },
   "marketplace": {
     "nav": {
       "explore": "Explore Salons",
@@ -2345,6 +2338,11 @@
     "signInToContinue": "Sign In to Continue"
   },
   "master": {
+    "serviceMode": {
+      "atMaster": "At master's place",
+      "mobile": "Mobile",
+      "both": "Mobile / At master's"
+    },
     "title": "Master Dashboard",
     "welcome": "Welcome",
     "yourSalon": "Your Salon",

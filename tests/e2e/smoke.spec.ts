@@ -53,7 +53,7 @@ async function assertPageHealthy(page: Page, errors: string[], pageName: string)
 
   // Фильтруем — в URL и data-атрибутах могут быть похожие паттерны
   const visibleRawKeys = rawKeys.filter(
-    (k) => !k.includes("http") && !k.includes("googleapis"),
+    (k: string) => !k.includes("http") && !k.includes("googleapis"),
   );
 
   if (visibleRawKeys.length > 0) {
@@ -108,7 +108,7 @@ test.describe("Smoke — Protected cabinets (unauthenticated)", () => {
     const hasLoginPrompt = await page
       .getByText(/войти|login|sign in/i)
       .count()
-      .then((c) => c > 0);
+      .then((c: number) => c > 0);
 
     expect(
       isOnAuth || hasLoginPrompt,
@@ -127,7 +127,7 @@ test.describe("Smoke — Protected cabinets (unauthenticated)", () => {
     const hasLoginPrompt = await page
       .getByText(/войти|login|sign in/i)
       .count()
-      .then((c) => c > 0);
+      .then((c: number) => c > 0);
 
     expect(
       isOnAuth || hasLoginPrompt,
@@ -146,7 +146,7 @@ test.describe("Smoke — Protected cabinets (unauthenticated)", () => {
     const hasLoginPrompt = await page
       .getByText(/войти|login|sign in|доступ запрещён/i)
       .count()
-      .then((c) => c > 0);
+      .then((c: number) => c > 0);
 
     expect(
       isOnAuth || hasLoginPrompt,
@@ -169,7 +169,7 @@ test.describe("Smoke — CSP & Resources", () => {
     const cspViolations: string[] = [];
 
     // Ловим CSP violations
-    page.on("console", (msg) => {
+    page.on("console", (msg: ConsoleMessage) => {
       if (
         msg.type() === "error" &&
         msg.text().toLowerCase().includes("content security policy")

@@ -15,8 +15,14 @@ export function ServiceCard({
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
-  const name = getLocalizedText(service.name as any, currentLang);
-  const description = getLocalizedText(service.description as any, currentLang);
+  const name = getLocalizedText(
+    service.name as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
+  const description = getLocalizedText(
+    service.description as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
 
   return (
     <Card

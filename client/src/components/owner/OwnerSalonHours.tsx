@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Save, Clock } from "lucide-react";
+import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,14 +60,16 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
   }, [savedHours]);
 
   const saveHoursMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      hours: { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }[];
+    }) => {
       return apiRequest("POST", `/api/owner/salons/${salonId}/hours`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "hours"] });
       toast({ title: t("marketplace.owner.hoursSaved") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,

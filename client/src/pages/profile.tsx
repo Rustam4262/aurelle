@@ -26,7 +26,6 @@ import {
   XCircle,
   Edit,
   MessageSquare,
-  TrendingUp,
   Wallet,
   CheckCircle,
   Loader2,
@@ -41,6 +40,27 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+
+type LocalizedName = string | { en?: string; ru?: string; uz?: string };
+
+interface ClientBooking {
+  id: string;
+  status: string;
+  salonId: string;
+  bookingDate: string;
+  startTime: string;
+  priceSnapshot?: number;
+  salon?: { name: LocalizedName };
+  service?: { name: LocalizedName };
+  master?: { name: string };
+}
+
+interface ClientProfile {
+  fullName?: string;
+  phone?: string;
+  city?: string;
+  avatarUrl?: string;
+}
 
 interface Review {
   id: string;
@@ -99,7 +119,7 @@ export default function ProfilePage() {
   }>({ open: false });
 
   // Fetch client profile
-  const { data: profile } = useQuery<any>({
+  const { data: profile } = useQuery<ClientProfile>({
     queryKey: ["/api/client/profile"],
     queryFn: async () => {
       try {
@@ -113,7 +133,7 @@ export default function ProfilePage() {
   });
 
   // Fetch bookings
-  const { data: bookings } = useQuery<any[]>({
+  const { data: bookings } = useQuery<ClientBooking[]>({
     queryKey: ["/api/client/bookings"],
     enabled: !!user,
   });
@@ -313,9 +333,10 @@ export default function ProfilePage() {
     return hoursDiff <= 24;
   };
 
-  const getLocalizedName = (name: any) => {
+  const getLocalizedName = (name: LocalizedName | null | undefined) => {
     if (typeof name === "object" && name) {
-      return name[i18n.language] || name.en || name.ru || "";
+      const lang = i18n.language as keyof typeof name;
+      return name[lang] || name.en || name.ru || "";
     }
     return name || "";
   };
@@ -351,7 +372,10 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 {(profile?.avatarUrl || user.profileImageUrl) && (
-                  <AvatarImage src={profile?.avatarUrl || user.profileImageUrl} alt="" />
+                  <AvatarImage
+                    src={profile?.avatarUrl || user.profileImageUrl || undefined}
+                    alt=""
+                  />
                 )}
                 <AvatarFallback>
                   {profile?.fullName?.[0] || user.firstName?.[0] || user.email?.[0] || "U"}

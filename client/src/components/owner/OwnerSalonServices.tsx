@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2, Scissors } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,13 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
   });
 
   const createServiceMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      name: { en: string; ru: string; uz: string };
+      category: string;
+      priceMin: number;
+      priceMax: number | null;
+      duration: number;
+    }) => {
       return apiRequest("POST", `/api/owner/salons/${salonId}/services`, data);
     },
     onSuccess: () => {
@@ -72,7 +78,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
         duration: "60",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,
@@ -89,7 +95,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "services"] });
       toast({ title: t("marketplace.owner.serviceDeleted") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message || t("marketplace.owner.deleteServiceError"),
@@ -232,7 +238,10 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
               >
                 <div>
                   <p className="font-medium text-foreground">
-                    {getLocalizedText(service.name as any, currentLang)}
+                    {getLocalizedText(
+                      service.name as { en: string; ru: string; uz: string },
+                      currentLang,
+                    )}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t(`marketplace.categories.${service.category}`)} • {service.duration}{" "}

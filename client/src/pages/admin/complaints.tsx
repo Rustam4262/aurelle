@@ -91,13 +91,17 @@ export default function AdminComplaints() {
       toast({ title: t("common.success"), description: t("admin.complaints.toasts.assigned") });
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.complaints.toasts.assignFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.complaints.toasts.assignFailed"),
+        variant: "destructive",
+      });
     },
   });
 
   // Resolve complaint mutation
   const resolveMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
       const res = await apiRequest("PATCH", `/api/admin/complaints/${id}/resolve`, data);
       return res.json();
     },
@@ -110,7 +114,11 @@ export default function AdminComplaints() {
       setDecision("no_action");
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.complaints.toasts.resolveFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.complaints.toasts.resolveFailed"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -128,7 +136,11 @@ export default function AdminComplaints() {
       setSelectedComplaint(null);
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.complaints.toasts.rejectFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.complaints.toasts.rejectFailed"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -149,7 +161,11 @@ export default function AdminComplaints() {
 
   const handleReject = () => {
     if (!selectedComplaint || !resolutionComment.trim()) {
-      toast({ title: t("common.error"), description: t("admin.complaints.toasts.reasonRequired"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.complaints.toasts.reasonRequired"),
+        variant: "destructive",
+      });
       return;
     }
     rejectMutation.mutate({
@@ -221,7 +237,9 @@ export default function AdminComplaints() {
           {isLoading ? (
             <div className="text-center py-12">{t("admin.complaints.loading")}</div>
           ) : !data?.complaints || data.complaints.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">{t("admin.complaints.noComplaints")}</div>
+            <div className="text-center py-12 text-muted-foreground">
+              {t("admin.complaints.noComplaints")}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -231,80 +249,104 @@ export default function AdminComplaints() {
                   <TableHead>{t("admin.complaints.table.target")}</TableHead>
                   <TableHead>{t("admin.complaints.table.status")}</TableHead>
                   <TableHead>{t("admin.complaints.table.date")}</TableHead>
-                  <TableHead className="text-right">{t("admin.complaints.table.actions")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("admin.complaints.table.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.complaints.map(({ complaint, complainantFirstName, complainantLastName, complainantEmail }) => (
-                  <TableRow key={complaint.id}>
-                    <TableCell>
-                      <p className="font-medium">
-                        {complainantFirstName && complainantLastName
-                          ? `${complainantFirstName} ${complainantLastName}`
-                          : complainantEmail || t("admin.complaints.anonymousFallback")}
-                      </p>
-                      {complainantEmail && (
-                        <p className="text-xs text-muted-foreground">{complainantEmail}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {t(`admin.complaints.categories.${complaint.category}`, complaint.category)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm">
-                        {complaint.targetType}: {complaint.targetId.slice(0, 8)}...
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate max-w-xs">
-                        {complaint.description}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_COLORS[complaint.status]}>
-                        {t(`admin.complaints.status.${complaint.status}`, complaint.status.replace("_", " "))}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(complaint.createdAt), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {complaint.status === "open" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAssign(complaint.id)}
-                            disabled={assignMutation.isPending}
-                          >
-                            <UserCheck className="h-4 w-4 mr-1" />
-                            {t("admin.complaints.buttons.assign")}
-                          </Button>
+                {data.complaints.map(
+                  ({ complaint, complainantFirstName, complainantLastName, complainantEmail }) => (
+                    <TableRow key={complaint.id}>
+                      <TableCell>
+                        <p className="font-medium">
+                          {complainantFirstName && complainantLastName
+                            ? `${complainantFirstName} ${complainantLastName}`
+                            : complainantEmail || t("admin.complaints.anonymousFallback")}
+                        </p>
+                        {complainantEmail && (
+                          <p className="text-xs text-muted-foreground">{complainantEmail}</p>
                         )}
-                        {complaint.status === "in_review" && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => openResolveDialog({ complaint, complainantFirstName, complainantLastName, complainantEmail })}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              {t("admin.complaints.buttons.resolve")}
-                            </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {t(
+                            `admin.complaints.categories.${complaint.category}`,
+                            complaint.category,
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm">
+                          {complaint.targetType}: {complaint.targetId.slice(0, 8)}...
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate max-w-xs">
+                          {complaint.description}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_COLORS[complaint.status]}>
+                          {t(
+                            `admin.complaints.status.${complaint.status}`,
+                            complaint.status.replace("_", " "),
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(complaint.createdAt), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {complaint.status === "open" && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openRejectDialog({ complaint, complainantFirstName, complainantLastName, complainantEmail })}
+                              onClick={() => handleAssign(complaint.id)}
+                              disabled={assignMutation.isPending}
                             >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              {t("admin.complaints.buttons.reject")}
+                              <UserCheck className="h-4 w-4 mr-1" />
+                              {t("admin.complaints.buttons.assign")}
                             </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          )}
+                          {complaint.status === "in_review" && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                  openResolveDialog({
+                                    complaint,
+                                    complainantFirstName,
+                                    complainantLastName,
+                                    complainantEmail,
+                                  })
+                                }
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                {t("admin.complaints.buttons.resolve")}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  openRejectDialog({
+                                    complaint,
+                                    complainantFirstName,
+                                    complainantLastName,
+                                    complainantEmail,
+                                  })
+                                }
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                {t("admin.complaints.buttons.reject")}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
               </TableBody>
             </Table>
           )}
@@ -320,7 +362,9 @@ export default function AdminComplaints() {
               {selectedComplaint && (
                 <>
                   <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">{t("admin.complaints.resolveDialog.description")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.complaints.resolveDialog.description")}
+                    </p>
                     <p className="text-sm mt-1">{selectedComplaint.complaint.description}</p>
                   </div>
                 </>
@@ -336,9 +380,15 @@ export default function AdminComplaints() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="no_action">{t("admin.complaints.resolveDialog.decisions.none")}</SelectItem>
-                  <SelectItem value="warning">{t("admin.complaints.resolveDialog.decisions.warning")}</SelectItem>
-                  <SelectItem value="sanction_applied">{t("admin.complaints.resolveDialog.decisions.sanction")}</SelectItem>
+                  <SelectItem value="no_action">
+                    {t("admin.complaints.resolveDialog.decisions.none")}
+                  </SelectItem>
+                  <SelectItem value="warning">
+                    {t("admin.complaints.resolveDialog.decisions.warning")}
+                  </SelectItem>
+                  <SelectItem value="sanction_applied">
+                    {t("admin.complaints.resolveDialog.decisions.sanction")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -360,25 +410,30 @@ export default function AdminComplaints() {
               {t("admin.complaints.buttons.cancel")}
             </Button>
             <Button onClick={handleResolve} disabled={resolveMutation.isPending}>
-              {resolveMutation.isPending ? t("admin.complaints.buttons.resolving") : t("admin.complaints.resolveDialog.resolveButton")}
+              {resolveMutation.isPending
+                ? t("admin.complaints.buttons.resolving")
+                : t("admin.complaints.resolveDialog.resolveButton")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Reject Dialog */}
-      <Dialog open={!!selectedComplaint && !showResolveDialog} onOpenChange={() => setSelectedComplaint(null)}>
+      <Dialog
+        open={!!selectedComplaint && !showResolveDialog}
+        onOpenChange={() => setSelectedComplaint(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("admin.complaints.rejectDialog.title")}</DialogTitle>
-            <DialogDescription>
-              {t("admin.complaints.rejectDialog.description")}
-            </DialogDescription>
+            <DialogDescription>{t("admin.complaints.rejectDialog.description")}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="reject-reason">{t("admin.complaints.rejectDialog.reasonLabel")}</Label>
+              <Label htmlFor="reject-reason">
+                {t("admin.complaints.rejectDialog.reasonLabel")}
+              </Label>
               <Textarea
                 id="reject-reason"
                 placeholder={t("admin.complaints.rejectDialog.reasonPlaceholder")}
@@ -393,8 +448,14 @@ export default function AdminComplaints() {
             <Button variant="outline" onClick={() => setSelectedComplaint(null)}>
               {t("admin.complaints.buttons.cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending || !resolutionComment.trim()}>
-              {rejectMutation.isPending ? t("admin.complaints.buttons.rejecting") : t("admin.complaints.rejectDialog.rejectButton")}
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={rejectMutation.isPending || !resolutionComment.trim()}
+            >
+              {rejectMutation.isPending
+                ? t("admin.complaints.buttons.rejecting")
+                : t("admin.complaints.rejectDialog.rejectButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

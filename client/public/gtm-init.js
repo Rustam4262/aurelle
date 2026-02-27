@@ -14,7 +14,7 @@
 // Google Analytics 4
 window.dataLayer = window.dataLayer || [];
 function gtag() {
-  dataLayer.push(arguments);
+  window.dataLayer.push(arguments);
 }
 gtag("js", new Date());
 gtag("config", "G-2NNQ2EXYV3");

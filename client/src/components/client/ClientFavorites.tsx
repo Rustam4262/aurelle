@@ -12,10 +12,9 @@ import { Heart, Star, MapPin, Calendar, ExternalLink, Store, User } from "lucide
 import { FavoriteCardSkeleton } from "@/components/skeletons";
 import type { EnrichedFavorite, EnrichedMasterFavorite } from "./types";
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -93,9 +92,9 @@ export function ClientFavorites({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {favorites.map((favorite) => {
-          const salonName = getLocalizedText(favorite.salon?.name as any, currentLang);
+          const salonName = getLocalizedText(favorite.salon?.name as LocalizedText, currentLang);
           const salonDescription = getLocalizedText(
-            favorite.salon?.description as any,
+            favorite.salon?.description as LocalizedText,
             currentLang,
           );
           const coverImage = favorite.salon?.photos?.[0];
@@ -209,7 +208,7 @@ export function ClientFavorites({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {masterFavorites.map((favorite) => {
-          const salonName = getLocalizedText(favorite.salon?.name as any, currentLang);
+          const salonName = getLocalizedText(favorite.salon?.name as LocalizedText, currentLang);
 
           return (
             <Card
@@ -234,7 +233,7 @@ export function ClientFavorites({
                         <p className="text-sm text-muted-foreground truncate">
                           {
                             getLocalizedText(
-                              favorite.master.specialties as any,
+                              favorite.master.specialties as unknown as LocalizedText,
                               currentLang,
                             )?.split(",")[0]
                           }

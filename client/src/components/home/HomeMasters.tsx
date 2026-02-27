@@ -47,7 +47,10 @@ function MasterPreviewCard({ master }: { master: PublicMaster }) {
           )}
           {rating > 0 && (
             <div className="absolute bottom-3 left-3 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-              <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm shadow-sm py-1 font-semibold text-primary">
+              <Badge
+                variant="secondary"
+                className="bg-white/95 backdrop-blur-sm shadow-sm py-1 font-semibold text-primary"
+              >
                 <Star className="h-3 w-3 fill-primary text-primary mr-1" />
                 {rating.toFixed(1)}
               </Badge>

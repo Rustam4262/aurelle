@@ -7,13 +7,6 @@
       "navLink": "Masterlar"
     }
   },
-  "master": {
-    "serviceMode": {
-      "atMaster": "Master joyida",
-      "mobile": "Uyga kelish",
-      "both": "Uyga kelish / Master joyida"
-    }
-  },
   "marketplace": {
     "nav": {
       "explore": "Salonlarni topish",
@@ -2343,6 +2336,11 @@
     "signInToContinue": "Davom etish uchun kiring"
   },
   "master": {
+    "serviceMode": {
+      "atMaster": "Master joyida",
+      "mobile": "Uyga kelish",
+      "both": "Uyga kelish / Master joyida"
+    },
     "title": "Usta paneli",
     "welcome": "Xush kelibsiz",
     "yourSalon": "Sizning saloningiz",

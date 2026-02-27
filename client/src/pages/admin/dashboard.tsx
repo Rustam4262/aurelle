@@ -1,10 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Store, Calendar, AlertCircle, Shield, TrendingUp, Activity, UserCheck, Clock } from "lucide-react";
+import {
+  Users,
+  Store,
+  Calendar,
+  AlertCircle,
+  Shield,
+  TrendingUp,
+  Activity,
+  UserCheck,
+  Clock,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useState, useEffect } from "react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useState } from "react";
 
 interface DashboardStats {
   stats: {
@@ -53,7 +70,7 @@ interface PlatformHealthResponse {
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
-  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
+  const [refreshInterval] = useState(30000); // 30 seconds
 
   // Main stats
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -80,7 +97,9 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-serif font-semibold">{t("marketplace.admin.dashboard.title")}</h1>
+        <h1 className="text-3xl font-serif font-semibold">
+          {t("marketplace.admin.dashboard.title")}
+        </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i}>
@@ -101,7 +120,9 @@ export default function AdminDashboard() {
     {
       title: t("marketplace.admin.dashboard.totalUsers"),
       value: stats?.stats.users.total || 0,
-      subtitle: t("marketplace.admin.dashboard.newThisWeek", { count: stats?.stats.users.newLastWeek || 0 }),
+      subtitle: t("marketplace.admin.dashboard.newThisWeek", {
+        count: stats?.stats.users.newLastWeek || 0,
+      }),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
@@ -109,7 +130,9 @@ export default function AdminDashboard() {
     {
       title: t("marketplace.admin.dashboard.salons"),
       value: stats?.stats.salons.total || 0,
-      subtitle: t("marketplace.admin.dashboard.verified", { count: stats?.stats.salons.verified || 0 }),
+      subtitle: t("marketplace.admin.dashboard.verified", {
+        count: stats?.stats.salons.verified || 0,
+      }),
       icon: Store,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
@@ -151,7 +174,9 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold text-foreground">{t("marketplace.admin.dashboard.title")}</h1>
+        <h1 className="text-3xl font-serif font-semibold text-foreground">
+          {t("marketplace.admin.dashboard.title")}
+        </h1>
         <p className="text-muted-foreground mt-2">{t("marketplace.admin.dashboard.subtitle")}</p>
       </div>
 
@@ -210,21 +235,29 @@ export default function AdminDashboard() {
               <AreaChart data={userGrowth.growth}>
                 <defs>
                   <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  tickFormatter={(value) =>
+                    new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  }
                 />
                 <YAxis />
                 <Tooltip
                   labelFormatter={(value) => new Date(value).toLocaleDateString()}
                   formatter={(value: number) => [value, t("admin.dashboard.newUsersLabel")]}
                 />
-                <Area type="monotone" dataKey="count" stroke="#3b82f6" fillOpacity={1} fill="url(#colorUsers)" />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#3b82f6"
+                  fillOpacity={1}
+                  fill="url(#colorUsers)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -251,8 +284,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-blue-600" />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.activeSessions")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.activeSessDesc")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.dashboard.metrics.activeSessions")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.activeSessDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-blue-600">
@@ -265,7 +302,9 @@ export default function AdminDashboard() {
                   <Clock className="h-4 w-4 text-purple-600" />
                   <div>
                     <p className="text-sm font-medium">{t("admin.dashboard.metrics.avgSession")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.avgSessDesc")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.avgSessDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-purple-600">
@@ -277,8 +316,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-green-600" />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.emailVerified")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.emailVerifDesc")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.dashboard.metrics.emailVerified")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.emailVerifDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-green-600">
@@ -290,8 +333,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-teal-600" />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.phoneVerified")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.phoneVerifDesc")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.dashboard.metrics.phoneVerified")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.phoneVerifDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-teal-600">
@@ -303,8 +350,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-orange-600" />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.pendingComplaints")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.pendingComplDesc")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.dashboard.metrics.pendingComplaints")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.pendingComplDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-orange-600">
@@ -316,8 +367,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-red-600" />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.dashboard.metrics.blockedUsers")}</p>
-                    <p className="text-xs text-muted-foreground">{t("admin.dashboard.metrics.blockedUsersDesc")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.dashboard.metrics.blockedUsers")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.dashboard.metrics.blockedUsersDesc")}
+                    </p>
                   </div>
                 </div>
                 <div className="text-xl font-bold text-red-600">

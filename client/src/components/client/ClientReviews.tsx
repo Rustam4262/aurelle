@@ -19,10 +19,9 @@ import { MessageSquare, Star, Edit, Trash2, Loader2, Clock, PenLine } from "luci
 import { ClientReviewSkeleton } from "@/components/skeletons";
 import type { EnrichedReview, EnrichedBooking } from "./types";
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -158,8 +157,11 @@ export function ClientReviews({
           </div>
           <div className="space-y-3">
             {pendingReviewBookings.map((booking) => {
-              const serviceName = getLocalizedText(booking.service?.name as any, currentLang);
-              const salonName = getLocalizedText(booking.salon?.name as any, currentLang);
+              const serviceName = getLocalizedText(
+                booking.service?.name as LocalizedText,
+                currentLang,
+              );
+              const salonName = getLocalizedText(booking.salon?.name as LocalizedText, currentLang);
               return (
                 <div
                   key={booking.id}
@@ -194,7 +196,7 @@ export function ClientReviews({
 
       {/* Existing Reviews */}
       {reviews.map((review) => {
-        const salonName = getLocalizedText(review.salon?.name as any, currentLang);
+        const salonName = getLocalizedText(review.salon?.name as LocalizedText, currentLang);
         const canEdit = canEditReview(review);
 
         return (

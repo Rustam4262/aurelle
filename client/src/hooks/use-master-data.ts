@@ -38,15 +38,12 @@ export interface MasterStats {
 export function useMasterData(activeTab: string) {
   const { user } = useAuth();
 
-  const masterQuery = useQuery<
-    | {
-        master: Master;
-        salon: Salon;
-        bookings: Booking[];
-        reviews: Review[];
-      }
-    | null
-  >({
+  const masterQuery = useQuery<{
+    master: Master;
+    salon: Salon;
+    bookings: Booking[];
+    reviews: Review[];
+  } | null>({
     queryKey: ["/api/master/me"],
     enabled: !!user,
     staleTime: 60000,

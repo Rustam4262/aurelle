@@ -42,9 +42,9 @@ interface AuditLog {
     createdAt: string;
     ip?: string;
     userAgent?: string;
-    oldData?: any;
-    newData?: any;
-    meta?: any;
+    oldData?: unknown;
+    newData?: unknown;
+    meta?: unknown;
   };
   actorFirstName: string;
   actorLastName: string;
@@ -61,7 +61,9 @@ const ACTION_COLORS: Record<string, string> = {
 
 function getActionColor(action: string): string {
   const actionType = action.split(".")[1] || action;
-  return ACTION_COLORS[actionType] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+  return (
+    ACTION_COLORS[actionType] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+  );
 }
 
 export default function AdminAudit() {
@@ -174,7 +176,10 @@ export default function AdminAudit() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`font-mono text-xs ${getActionColor(log.action)}`}>
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-xs ${getActionColor(log.action)}`}
+                        >
                           {log.action}
                         </Badge>
                       </TableCell>
@@ -195,7 +200,9 @@ export default function AdminAudit() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openDetailsDialog({ log, actorFirstName, actorLastName, actorEmail })}
+                          onClick={() =>
+                            openDetailsDialog({ log, actorFirstName, actorLastName, actorEmail })
+                          }
                         >
                           <Info className="h-4 w-4" />
                         </Button>
@@ -214,9 +221,7 @@ export default function AdminAudit() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("admin.audit.dialog.title")}</DialogTitle>
-            <DialogDescription>
-              {t("admin.audit.dialog.description")}
-            </DialogDescription>
+            <DialogDescription>{t("admin.audit.dialog.description")}</DialogDescription>
           </DialogHeader>
 
           {selectedLog && (
@@ -224,19 +229,28 @@ export default function AdminAudit() {
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.action")}</Label>
-                  <Badge variant="outline" className={`mt-1 ${getActionColor(selectedLog.log.action)}`}>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.action")}
+                  </Label>
+                  <Badge
+                    variant="outline"
+                    className={`mt-1 ${getActionColor(selectedLog.log.action)}`}
+                  >
                     {selectedLog.log.action}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.timestamp")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.timestamp")}
+                  </Label>
                   <p className="text-sm mt-1">
                     {format(new Date(selectedLog.log.createdAt), "PPpp")}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.actor")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.actor")}
+                  </Label>
                   <p className="text-sm mt-1">
                     {selectedLog.actorFirstName && selectedLog.actorLastName
                       ? `${selectedLog.actorFirstName} ${selectedLog.actorLastName}`
@@ -245,25 +259,35 @@ export default function AdminAudit() {
                   <p className="text-xs text-muted-foreground">{selectedLog.actorEmail}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.role")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.role")}
+                  </Label>
                   <Badge variant="secondary" className="mt-1">
                     {selectedLog.log.actorRole}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.entityType")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.entityType")}
+                  </Label>
                   <p className="text-sm mt-1 capitalize">{selectedLog.log.entityType}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.entityId")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.entityId")}
+                  </Label>
                   <p className="text-sm mt-1 font-mono">{selectedLog.log.entityId || "—"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.ipAddress")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.ipAddress")}
+                  </Label>
                   <p className="text-sm mt-1 font-mono">{selectedLog.log.ip || "—"}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.userAgent")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.userAgent")}
+                  </Label>
                   <p className="text-xs mt-1 text-muted-foreground truncate">
                     {selectedLog.log.userAgent || "—"}
                   </p>
@@ -271,9 +295,11 @@ export default function AdminAudit() {
               </div>
 
               {/* Old Data */}
-              {selectedLog.log.oldData && (
+              {!!selectedLog.log.oldData && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.previousState")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.previousState")}
+                  </Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.oldData, null, 2)}
                   </pre>
@@ -281,9 +307,11 @@ export default function AdminAudit() {
               )}
 
               {/* New Data */}
-              {selectedLog.log.newData && (
+              {!!selectedLog.log.newData && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.newState")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.newState")}
+                  </Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.newData, null, 2)}
                   </pre>
@@ -291,9 +319,11 @@ export default function AdminAudit() {
               )}
 
               {/* Meta */}
-              {selectedLog.log.meta && (
+              {!!selectedLog.log.meta && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">{t("admin.audit.dialog.labels.metadata")}</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {t("admin.audit.dialog.labels.metadata")}
+                  </Label>
                   <pre className="mt-2 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {JSON.stringify(selectedLog.log.meta, null, 2)}
                   </pre>

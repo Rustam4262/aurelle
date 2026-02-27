@@ -65,7 +65,10 @@ export default function OwnerSalonPage() {
     );
   }
 
-  const salonName = getLocalizedText(salon.name as any, currentLang);
+  const salonName = getLocalizedText(
+    salon.name as { en: string; ru: string; uz: string },
+    currentLang,
+  );
 
   return (
     <div className="min-h-screen bg-background">

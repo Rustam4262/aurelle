@@ -1,6 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import { logger } from '@/lib/logger';
+import { logger } from "@/lib/logger";
 
 // Import translations with explicit JSON type
 import en from "../locales/en.json";
@@ -9,10 +9,12 @@ import uz from "../locales/uz.json";
 
 // Debug logging
 if (typeof window !== "undefined") {
-  console.log('[i18n] Loading translations...', {
-    en: typeof en === 'object' && en !== null,
-    ru: typeof ru === 'object' && ru !== null,
-    uz: typeof uz === 'object' && uz !== null,
+  logger.debug("[i18n] Loading translations...", {
+    meta: {
+      en: typeof en === "object" && en !== null,
+      ru: typeof ru === "object" && ru !== null,
+      uz: typeof uz === "object" && uz !== null,
+    },
   });
 }
 
@@ -20,7 +22,7 @@ const savedLanguage =
   typeof window !== "undefined" ? localStorage.getItem("language") || "ru" : "ru";
 
 if (typeof window !== "undefined") {
-  console.log('[i18n] Selected language:', savedLanguage);
+  logger.debug("[i18n] Selected language:", { meta: { lang: savedLanguage } });
 }
 
 i18n.use(initReactI18next).init({
@@ -36,7 +38,7 @@ i18n.use(initReactI18next).init({
   },
   missingKeyHandler: (lngs, ns, key) => {
     // Log missing keys for debugging
-    console.warn(`[i18n] Missing key: ${key}, language: ${i18n.language}`);
+    logger.warn(`[i18n] Missing key: ${key}, language: ${i18n.language}`);
   },
   returnEmptyString: false,
   debug: false,

@@ -222,7 +222,7 @@
  * - focused or not (this is not handled with these utilities)
  *
  * Even without handling focused or not, this is six possible combinations that
- * need to be distinguished from eachother visually.
+ * need to be distinguished from each other visually.
  */
 @layer utilities {
   /* Performance optimizations for smooth animations */

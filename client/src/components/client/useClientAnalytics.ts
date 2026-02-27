@@ -2,10 +2,9 @@ import { useMemo } from "react";
 import type { EnrichedBooking } from "./types";
 import { useTranslation } from "react-i18next";
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -81,7 +80,8 @@ export function useClientAnalytics({ bookings }: ClientAnalyticsProps) {
     // Service breakdown
     const serviceStats: { name: string; count: number; amount: number }[] = [];
     completedBookings.forEach((b) => {
-      const serviceName = getLocalizedText(b.service?.name as any, currentLang) || "Unknown";
+      const serviceName =
+        getLocalizedText(b.service?.name as LocalizedText, currentLang) || "Unknown";
       const existing = serviceStats.find((s) => s.name === serviceName);
       if (existing) {
         existing.count++;

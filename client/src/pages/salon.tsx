@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useSalonData } from "@/hooks/use-salon-data";
 import { useSalonBooking } from "@/hooks/use-salon-booking";
-import { formatCurrency, getLocalizedText } from "@/lib/i18n";
+import { getLocalizedText } from "@/lib/i18n";
+import type { Service, Master } from "@shared/schema";
 import { MapPin, Phone, Calendar, Scissors, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,9 +40,7 @@ export default function SalonPage() {
     bookingDialogOpen,
     setBookingDialogOpen,
     selectedService,
-    setSelectedService,
     selectedMaster,
-    setSelectedMaster,
     bookingDate,
     setBookingDate,
     bookingTime,
@@ -53,7 +52,7 @@ export default function SalonPage() {
     handleSubmitBooking,
   } = useSalonBooking(id);
 
-  const onBook = (service: any, master?: any) => {
+  const onBook = (service: Service, master?: Master) => {
     if (!user) {
       navigate("/auth");
       return;
@@ -87,7 +86,10 @@ export default function SalonPage() {
     );
   }
 
-  const address = getLocalizedText(salon.address as any, currentLang);
+  const address = getLocalizedText(
+    salon.address as unknown as { en: string; ru: string; uz: string },
+    currentLang,
+  );
 
   return (
     <div className="min-h-screen bg-background">

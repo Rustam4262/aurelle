@@ -6,7 +6,10 @@ export function HomeCTA() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-32 bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden" data-testid="section-cta">
+    <section
+      className="py-32 bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden"
+      data-testid="section-cta"
+    >
       {/* Background decorations */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none animate-pulse" />
       <div className="absolute top-0 left-0 w-64 h-64 bg-pink-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -89,9 +88,7 @@ export default function AdminActivity() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-serif font-semibold">{t("admin.activity.title")}</h1>
-        <p className="text-muted-foreground mt-2">
-          {t("admin.activity.subtitle")}
-        </p>
+        <p className="text-muted-foreground mt-2">{t("admin.activity.subtitle")}</p>
       </div>
 
       {/* Online Users Card */}
@@ -128,9 +125,7 @@ export default function AdminActivity() {
                           ? `${user.firstName} ${user.lastName}`
                           : user.email}
                       </p>
-                      {user.email && (
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                      )}
+                      {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
                     </div>
                     <Badge variant="outline" className="text-xs">
                       {user.deviceType}
@@ -139,11 +134,13 @@ export default function AdminActivity() {
                   <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     <span>
-                      {t("admin.activity.activePrefix")} {formatDistanceToNow(new Date(user.lastActivityAt), { addSuffix: true })}
+                      {t("admin.activity.activePrefix")}{" "}
+                      {formatDistanceToNow(new Date(user.lastActivityAt), { addSuffix: true })}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {t("admin.activity.loggedInPrefix")} {formatDistanceToNow(new Date(user.loginAt), { addSuffix: true })}
+                    {t("admin.activity.loggedInPrefix")}{" "}
+                    {formatDistanceToNow(new Date(user.loginAt), { addSuffix: true })}
                   </div>
                 </div>
               ))}
@@ -177,7 +174,9 @@ export default function AdminActivity() {
           {sessionsLoading ? (
             <div className="text-center py-12">{t("admin.activity.loadingSessions")}</div>
           ) : !sessionsData?.sessions || sessionsData.sessions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">{t("admin.activity.noSessions")}</div>
+            <div className="text-center py-12 text-muted-foreground">
+              {t("admin.activity.noSessions")}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -191,69 +190,76 @@ export default function AdminActivity() {
                     <TableHead>{t("admin.activity.table.device")}</TableHead>
                     <TableHead>{t("admin.activity.table.browser")}</TableHead>
                     <TableHead>{t("admin.activity.table.ipAddress")}</TableHead>
-                    <TableHead className="text-right">{t("admin.activity.table.actions")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("admin.activity.table.actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sessionsData.sessions.map(({ session, userEmail, userFirstName, userLastName }) => (
-                    <TableRow key={session.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {userFirstName && userLastName
-                              ? `${userFirstName} ${userLastName}`
-                              : userEmail || t("admin.activity.table.user")}
-                          </p>
-                          {userEmail && (
-                            <p className="text-xs text-muted-foreground">{userEmail}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {session.logoutAt ? (
-                          <Badge variant="outline">{t("admin.activity.status.ended")}</Badge>
-                        ) : (
-                          <Badge variant="default" className="bg-green-600">
-                            {t("admin.activity.status.active")}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(session.loginAt), "MMM d, HH:mm")}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(new Date(session.lastActivityAt), { addSuffix: true })}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {session.logoutAt
-                          ? formatDuration(session.durationSeconds)
-                          : formatDuration(
-                              Math.floor(
-                                (new Date().getTime() - new Date(session.loginAt).getTime()) / 1000
-                              )
+                  {sessionsData.sessions.map(
+                    ({ session, userEmail, userFirstName, userLastName }) => (
+                      <TableRow key={session.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {userFirstName && userLastName
+                                ? `${userFirstName} ${userLastName}`
+                                : userEmail || t("admin.activity.table.user")}
+                            </p>
+                            {userEmail && (
+                              <p className="text-xs text-muted-foreground">{userEmail}</p>
                             )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs capitalize">
-                          {session.deviceType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {session.browser}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground font-mono">
-                        {session.ipAddress || "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                            {session.actionsCount} {t("admin.activity.actionsCount")}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {session.logoutAt ? (
+                            <Badge variant="outline">{t("admin.activity.status.ended")}</Badge>
+                          ) : (
+                            <Badge variant="default" className="bg-green-600">
+                              {t("admin.activity.status.active")}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(session.loginAt), "MMM d, HH:mm")}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(new Date(session.lastActivityAt), {
+                            addSuffix: true,
+                          })}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {session.logoutAt
+                            ? formatDuration(session.durationSeconds)
+                            : formatDuration(
+                                Math.floor(
+                                  (new Date().getTime() - new Date(session.loginAt).getTime()) /
+                                    1000,
+                                ),
+                              )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs capitalize">
+                            {session.deviceType}
                           </Badge>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {session.browser}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-mono">
+                          {session.ipAddress || "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              <TrendingUp className="h-3 w-3 mr-1" />
+                              {session.actionsCount} {t("admin.activity.actionsCount")}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ),
+                  )}
                 </TableBody>
               </Table>
             </div>

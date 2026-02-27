@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error("ErrorBoundary caught error", error, {
       source: "ui-error-boundary",
-      meta: errorInfo,
+      meta: errorInfo as unknown as Record<string, unknown>,
     });
 
     this.setState({

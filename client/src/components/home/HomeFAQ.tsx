@@ -15,64 +15,65 @@ const faqData: FAQItem[] = [
     id: 1,
     category: "client",
     questionKey: "marketplace.home.faq.client.q1",
-    answerKey: "marketplace.home.faq.client.a1"
+    answerKey: "marketplace.home.faq.client.a1",
   },
   {
     id: 2,
     category: "client",
     questionKey: "marketplace.home.faq.client.q2",
-    answerKey: "marketplace.home.faq.client.a2"
+    answerKey: "marketplace.home.faq.client.a2",
   },
   {
     id: 3,
     category: "salon",
     questionKey: "marketplace.home.faq.salon.q1",
-    answerKey: "marketplace.home.faq.salon.a1"
+    answerKey: "marketplace.home.faq.salon.a1",
   },
   {
     id: 4,
     category: "salon",
     questionKey: "marketplace.home.faq.salon.q2",
-    answerKey: "marketplace.home.faq.salon.a2"
+    answerKey: "marketplace.home.faq.salon.a2",
   },
   {
     id: 5,
     category: "master",
     questionKey: "marketplace.home.faq.master.q1",
-    answerKey: "marketplace.home.faq.master.a1"
+    answerKey: "marketplace.home.faq.master.a1",
   },
   {
     id: 6,
     category: "client",
     questionKey: "marketplace.home.faq.client.q3",
-    answerKey: "marketplace.home.faq.client.a3"
+    answerKey: "marketplace.home.faq.client.a3",
   },
   {
     id: 7,
     category: "salon",
     questionKey: "marketplace.home.faq.salon.q3",
-    answerKey: "marketplace.home.faq.salon.a3"
+    answerKey: "marketplace.home.faq.salon.a3",
   },
   {
     id: 8,
     category: "master",
     questionKey: "marketplace.home.faq.master.q2",
-    answerKey: "marketplace.home.faq.master.a2"
-  }
+    answerKey: "marketplace.home.faq.master.a2",
+  },
 ];
 
 export function HomeFAQ() {
   const { t } = useTranslation();
   const [openId, setOpenId] = useState<number | null>(null);
-  const [activeCategory, setActiveCategory] = useState<"all" | "client" | "salon" | "master">("all");
+  const [activeCategory, setActiveCategory] = useState<"all" | "client" | "salon" | "master">(
+    "all",
+  );
 
   const toggleAccordion = (id: number) => {
     setOpenId(openId === id ? null : id);
   };
 
-  const filteredFAQ = activeCategory === "all"
-    ? faqData
-    : faqData.filter(item => item.category === activeCategory);
+  const filteredFAQ =
+    activeCategory === "all" ? faqData : faqData.filter((item) => item.category === activeCategory);
 
   const categories = [
     { id: "all", label: t("marketplace.home.faq.categories.all"), icon: "❓" },
@@ -127,7 +128,7 @@ export function HomeFAQ() {
                   : "hover:shadow-lg hover:border-primary/20"
               }`}
               style={{
-                animationDelay: `${index * 50}ms`
+                animationDelay: `${index * 50}ms`,
               }}
             >
               <button
@@ -155,9 +156,7 @@ export function HomeFAQ() {
               >
                 <div className="px-6 pb-6 pt-2">
                   <div className="w-12 h-0.5 bg-gradient-to-r from-primary to-pink-500 mb-4 rounded-full"></div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t(item.answerKey)}
-                  </p>
+                  <p className="text-muted-foreground leading-relaxed">{t(item.answerKey)}</p>
                 </div>
               </div>
             </Card>

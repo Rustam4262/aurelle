@@ -61,7 +61,10 @@ export function SalonBookingDialog({
           {selectedService && (
             <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
               <p className="font-medium text-foreground">
-                {getLocalizedText(selectedService.name as any, currentLang)}
+                {getLocalizedText(
+                  selectedService.name as { en?: string; ru?: string; uz?: string },
+                  currentLang,
+                )}
               </p>
               <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                 <span>

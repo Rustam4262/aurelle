@@ -4,7 +4,6 @@
  */
 
 import { db } from "../server/db";
-import { users, salons, userActivitySessions } from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 async function testIntegration() {
@@ -185,9 +184,9 @@ async function testIntegration() {
   // Test 6: Check sample data counts
   console.log("\n6️⃣  Checking data counts...");
   try {
-    const [usersCount] = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-    const [salonsCount] = await db.execute(sql`SELECT COUNT(*) as count FROM salons`);
-    const [sessionsCount] = await db.execute(
+    const usersCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
+    const salonsCount = await db.execute(sql`SELECT COUNT(*) as count FROM salons`);
+    const sessionsCount = await db.execute(
       sql`SELECT COUNT(*) as count FROM user_activity_sessions`
     );
 
@@ -204,7 +203,7 @@ async function testIntegration() {
   // Test 7: Check for blocked users
   console.log("\n7️⃣  Checking blocked users...");
   try {
-    const [blockedCount] = await db.execute(
+    const blockedCount = await db.execute(
       sql`SELECT COUNT(*) as count FROM users WHERE is_blocked = true`
     );
 
@@ -218,7 +217,7 @@ async function testIntegration() {
   // Test 8: Check verified salons
   console.log("\n8️⃣  Checking verified salons...");
   try {
-    const [verifiedCount] = await db.execute(
+    const verifiedCount = await db.execute(
       sql`SELECT COUNT(*) as count FROM salons WHERE is_verified = true`
     );
 

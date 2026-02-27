@@ -17,7 +17,14 @@ export function useSalonBooking(salonId: string | undefined) {
   const [bookingNotes, setBookingNotes] = useState("");
 
   const createBookingMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      salonId: string | undefined;
+      serviceId: string;
+      masterId: string | null;
+      bookingDate: string;
+      startTime: string;
+      notes: string;
+    }) => {
       return apiRequest("POST", "/api/client/bookings", data);
     },
     onSuccess: () => {
@@ -29,7 +36,7 @@ export function useSalonBooking(salonId: string | undefined) {
         description: t("marketplace.salon.bookingSuccess"),
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.salon.bookingFailed"),
         description: error.message,

@@ -13,10 +13,9 @@ import { Star, Scissors, User, Calendar, Loader2 } from "lucide-react";
 import type { EnrichedBooking } from "./types";
 import { useState, useEffect } from "react";
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -63,7 +62,7 @@ export function WriteReviewDialog({
         <DialogHeader>
           <DialogTitle>{t("marketplace.client.writeReview")}</DialogTitle>
           <DialogDescription>
-            {booking && getLocalizedText(booking.salon?.name as any, currentLang)}
+            {booking && getLocalizedText(booking.salon?.name as LocalizedText, currentLang)}
           </DialogDescription>
         </DialogHeader>
         {booking && (
@@ -73,7 +72,7 @@ export function WriteReviewDialog({
               <div className="flex items-center gap-2 mb-1">
                 <Scissors className="h-4 w-4 text-primary" />
                 <span className="font-medium">
-                  {getLocalizedText(booking.service?.name as any, currentLang)}
+                  {getLocalizedText(booking.service?.name as LocalizedText, currentLang)}
                 </span>
               </div>
               {booking.master && (

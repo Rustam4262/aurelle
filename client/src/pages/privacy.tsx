@@ -37,9 +37,10 @@ export default function PrivacyPage() {
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">1. Introduction</h3>
               <p className="text-muted-foreground leading-relaxed">
-                AURELLE ("we", "us", or "our") respects your privacy and is committed to protecting your
-                personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your
-                information when you use our platform.
+                AURELLE (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) respects your
+                privacy and is committed to protecting your personal data. This Privacy Policy
+                explains how we collect, use, disclose, and safeguard your information when you use
+                our platform.
               </p>
             </section>
 
@@ -47,7 +48,9 @@ export default function PrivacyPage() {
               <h3 className="text-2xl font-serif text-foreground">2. Information We Collect</h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-foreground mb-2">2.1 Information You Provide</h4>
+                  <h4 className="font-semibold text-foreground mb-2">
+                    2.1 Information You Provide
+                  </h4>
                   <div className="space-y-1 text-muted-foreground leading-relaxed">
                     <p>• Name, email address, and phone number</p>
                     <p>• Profile information and photos</p>
@@ -59,7 +62,9 @@ export default function PrivacyPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-foreground mb-2">2.2 Automatically Collected Information</h4>
+                  <h4 className="font-semibold text-foreground mb-2">
+                    2.2 Automatically Collected Information
+                  </h4>
                   <div className="space-y-1 text-muted-foreground leading-relaxed">
                     <p>• Device information (type, operating system, browser)</p>
                     <p>• IP address and approximate location</p>
@@ -71,7 +76,9 @@ export default function PrivacyPage() {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-2xl font-serif text-foreground">3. How We Use Your Information</h3>
+              <h3 className="text-2xl font-serif text-foreground">
+                3. How We Use Your Information
+              </h3>
               <div className="space-y-2 text-muted-foreground leading-relaxed">
                 <p>We use your information to:</p>
                 <p>• Provide and maintain our Service</p>
@@ -86,7 +93,9 @@ export default function PrivacyPage() {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-2xl font-serif text-foreground">4. Information Sharing and Disclosure</h3>
+              <h3 className="text-2xl font-serif text-foreground">
+                4. Information Sharing and Disclosure
+              </h3>
               <div className="space-y-4">
                 <p className="text-muted-foreground leading-relaxed">
                   We may share your information with:
@@ -95,24 +104,27 @@ export default function PrivacyPage() {
                 <div>
                   <h4 className="font-semibold text-foreground mb-2">4.1 Service Providers</h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    When you make a booking, we share necessary information (name, phone, booking details) with
-                    the salon or master to fulfill the service.
+                    When you make a booking, we share necessary information (name, phone, booking
+                    details) with the salon or master to fulfill the service.
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-foreground mb-2">4.2 Third-Party Service Providers</h4>
+                  <h4 className="font-semibold text-foreground mb-2">
+                    4.2 Third-Party Service Providers
+                  </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    We work with trusted partners for payment processing, analytics, email delivery, and other
-                    essential services. These partners are bound by confidentiality agreements.
+                    We work with trusted partners for payment processing, analytics, email delivery,
+                    and other essential services. These partners are bound by confidentiality
+                    agreements.
                   </p>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-foreground mb-2">4.3 Legal Requirements</h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    We may disclose your information if required by law, court order, or government regulations,
-                    or to protect our rights and safety.
+                    We may disclose your information if required by law, court order, or government
+                    regulations, or to protect our rights and safety.
                   </p>
                 </div>
               </div>
@@ -158,41 +170,44 @@ export default function PrivacyPage() {
                 <p>• Deliver personalized content and advertisements</p>
               </div>
               <p className="text-muted-foreground leading-relaxed mt-3">
-                You can control cookies through your browser settings, but some features may not function
-                properly if cookies are disabled.
+                You can control cookies through your browser settings, but some features may not
+                function properly if cookies are disabled.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">8. Data Retention</h3>
               <p className="text-muted-foreground leading-relaxed">
-                We retain your personal data for as long as necessary to provide our Service and comply with
-                legal obligations. When data is no longer needed, we securely delete or anonymize it.
+                We retain your personal data for as long as necessary to provide our Service and
+                comply with legal obligations. When data is no longer needed, we securely delete or
+                anonymize it.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-2xl font-serif text-foreground">9. Children's Privacy</h3>
+              <h3 className="text-2xl font-serif text-foreground">9. Children&apos;s Privacy</h3>
               <p className="text-muted-foreground leading-relaxed">
-                AURELLE is not intended for users under 16 years of age. We do not knowingly collect data from
-                children. If you believe we have inadvertently collected such data, please contact us
-                immediately.
+                AURELLE is not intended for users under 16 years of age. We do not knowingly collect
+                data from children. If you believe we have inadvertently collected such data, please
+                contact us immediately.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-2xl font-serif text-foreground">10. International Data Transfers</h3>
+              <h3 className="text-2xl font-serif text-foreground">
+                10. International Data Transfers
+              </h3>
               <p className="text-muted-foreground leading-relaxed">
-                Your data may be transferred to and processed in countries other than Uzbekistan. We ensure
-                appropriate safeguards are in place for such transfers.
+                Your data may be transferred to and processed in countries other than Uzbekistan. We
+                ensure appropriate safeguards are in place for such transfers.
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">11. Changes to This Policy</h3>
               <p className="text-muted-foreground leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of significant changes
-                by email or through a prominent notice on our platform.
+                We may update this Privacy Policy from time to time. We will notify you of
+                significant changes by email or through a prominent notice on our platform.
               </p>
             </section>
 

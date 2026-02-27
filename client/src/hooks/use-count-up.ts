@@ -42,7 +42,7 @@ export function useCountUp({
           }
         });
       },
-      { threshold: 0.3 } // Trigger when 30% visible
+      { threshold: 0.3 }, // Trigger when 30% visible
     );
 
     if (elementRef.current) {

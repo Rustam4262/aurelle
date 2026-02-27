@@ -692,7 +692,9 @@ export default function AuthPage() {
                         data-testid="input-password"
                       />
                       {authMode === "register" && (
-                        <p className="text-xs text-muted-foreground">{t("marketplace.auth.passwordMinLength")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("marketplace.auth.passwordMinLength")}
+                        </p>
                       )}
                     </div>
 

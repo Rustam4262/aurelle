@@ -57,7 +57,7 @@ export function initializeSentry() {
     profilesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
 
     // Before sending events, filter and modify them
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Don't send errors in development unless explicitly enabled
       if (!import.meta.env.PROD && !import.meta.env.VITE_SENTRY_FORCE_ENABLE) {
         return null;
@@ -123,7 +123,7 @@ export function initializeSentry() {
 /**
  * Capture an exception manually
  */
-export function captureException(error: Error, context?: Record<string, any>) {
+export function captureException(error: Error, context?: Record<string, unknown>) {
   if (context) {
     Sentry.setContext("error_context", context);
   }
@@ -162,7 +162,7 @@ export function addBreadcrumb(breadcrumb: {
   message: string;
   category?: string;
   level?: Sentry.SeverityLevel;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }) {
   Sentry.addBreadcrumb({
     message: breadcrumb.message,

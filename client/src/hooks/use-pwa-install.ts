@@ -19,11 +19,11 @@ export function usePWAInstall(): PWAInstallState {
 
   const isIOS =
     /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) &&
-    !(window as any).MSStream;
+    !(window as Window & { MSStream?: unknown }).MSStream;
 
   const isInStandaloneMode =
     window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as any).standalone === true;
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
   useEffect(() => {
     if (isInStandaloneMode) {

@@ -82,9 +82,15 @@ export function SalonList() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {salons.map((salon) => {
-          const name = getLocalizedText(salon.name as any, currentLang);
-          const city = getLocalizedText(salon.city as any, currentLang);
-          const status = (salon as any).status || "draft";
+          const name = getLocalizedText(
+            salon.name as { en?: string; ru?: string; uz?: string },
+            currentLang,
+          );
+          const city = getLocalizedText(
+            salon.city as { en?: string; ru?: string; uz?: string },
+            currentLang,
+          );
+          const status = salon.status || "draft";
 
           const getStatusBadge = () => {
             switch (status) {

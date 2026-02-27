@@ -10,7 +10,7 @@ type LogLevel = "info" | "warn" | "error" | "debug";
 
 interface LogOptions {
   source?: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 const isDevelopment = import.meta.env.DEV;
@@ -34,9 +34,11 @@ function isLoggingEnabled(level: LogLevel): boolean {
 export function info(message: string, options: LogOptions = {}): void {
   if (!isLoggingEnabled("info")) return;
 
+  // eslint-disable-next-line no-console
   console.log(`[INFO]${options.source ? ` [${options.source}]` : ""} ${message}`);
 
   if (options.meta) {
+    // eslint-disable-next-line no-console
     console.log(options.meta);
   }
 
@@ -74,11 +76,7 @@ export function warn(message: string, options: LogOptions = {}): void {
 /**
  * Log error message and capture to Sentry
  */
-export function error(
-  message: string,
-  err?: Error | unknown,
-  options: LogOptions = {},
-): void {
+export function error(message: string, err?: Error | unknown, options: LogOptions = {}): void {
   if (!isLoggingEnabled("error")) return;
 
   console.error(`[ERROR]${options.source ? ` [${options.source}]` : ""} ${message}`);
@@ -114,9 +112,11 @@ export function error(
 export function debug(message: string, options: LogOptions = {}): void {
   if (!isDevelopment) return;
 
+  // eslint-disable-next-line no-console
   console.debug(`[DEBUG]${options.source ? ` [${options.source}]` : ""} ${message}`);
 
   if (options.meta) {
+    // eslint-disable-next-line no-console
     console.debug(options.meta);
   }
 }

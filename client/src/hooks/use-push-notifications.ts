@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { logger } from '@/lib/logger';
+import { logger } from "@/lib/logger";
 
 // Convert base64 string to Uint8Array for VAPID key
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -53,7 +53,7 @@ export function usePushNotifications() {
         const response = await apiRequest("GET", "/api/push/vapid-public-key");
         const data = (await response.json()) as VapidKeyResponse;
         return data.publicKey;
-      } catch (error) {
+      } catch {
         logger.info("Push notifications not configured on server");
         return null;
       }
@@ -87,7 +87,7 @@ export function usePushNotifications() {
       // Subscribe to push notifications
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
       });
 
       // Send subscription to server
@@ -106,7 +106,7 @@ export function usePushNotifications() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/push/subscriptions"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to enable notifications",
         description: error.message,
@@ -145,7 +145,7 @@ export function usePushNotifications() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/push/subscriptions"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to disable notifications",
         description: error.message,
@@ -165,7 +165,7 @@ export function usePushNotifications() {
         description: "Check if you received it!",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to send test notification",
         description: error.message,

@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import type { MasterWorkingHours } from "@shared/schema";
 
 export function useMasterMutations() {
   const { t } = useTranslation();
@@ -51,7 +52,7 @@ export function useMasterMutations() {
   });
 
   const saveScheduleMutation = useMutation({
-    mutationFn: async (scheduleData: any[]) => {
+    mutationFn: async (scheduleData: MasterWorkingHours[]) => {
       return apiRequest("PUT", "/api/master/schedule", scheduleData);
     },
     onSuccess: () => {

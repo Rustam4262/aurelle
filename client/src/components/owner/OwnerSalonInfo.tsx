@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
-import { Camera, MapPin, Star, Plus, Save } from "lucide-react";
+import { Camera, MapPin, Star, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,18 +23,8 @@ interface OwnerSalonInfoProps {
   salon: Salon;
 }
 
-function getLocalizedText(
-  obj: { en: string; ru: string; uz: string } | null | undefined,
-  lang: string,
-): string {
-  if (!obj) return "";
-  const langKey = lang as keyof typeof obj;
-  return obj[langKey] || obj.en || "";
-}
-
 export function OwnerSalonInfo({ salon }: OwnerSalonInfoProps) {
-  const { t, i18n } = useTranslation();
-  const currentLang = i18n.language;
+  const { t } = useTranslation();
   const { toast } = useToast();
   const salonId = salon.id;
 
@@ -72,7 +62,7 @@ export function OwnerSalonInfo({ salon }: OwnerSalonInfoProps) {
       setPhotoDialogOpen(false);
       toast({ title: t("marketplace.owner.photosUpdated") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,
@@ -94,7 +84,7 @@ export function OwnerSalonInfo({ salon }: OwnerSalonInfoProps) {
       setLocationDialogOpen(false);
       toast({ title: t("marketplace.owner.locationUpdated") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,

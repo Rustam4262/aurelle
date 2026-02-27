@@ -83,14 +83,14 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
         fullName: profileData.fullName || "",
         phone: profileData.phone || "",
         avatarUrl: profileData.avatarUrl || "",
-        city: (profileData as any).city || "",
-        gender: (profileData as any).gender || "",
-        birthday: (profileData as any).birthday || "",
-        notifyEmail: (profileData as any).notifyEmail ?? true,
-        notifyReminder24h: (profileData as any).notifyReminder24h ?? true,
-        notifyReminder2h: (profileData as any).notifyReminder2h ?? true,
-        notifyBookingUpdates: (profileData as any).notifyBookingUpdates ?? true,
-        notifyPromotions: (profileData as any).notifyPromotions ?? false,
+        city: profileData.city || "",
+        gender: profileData.gender || "",
+        birthday: profileData.birthday || "",
+        notifyEmail: profileData.notifyEmail ?? true,
+        notifyReminder24h: profileData.notifyReminder24h ?? true,
+        notifyReminder2h: profileData.notifyReminder2h ?? true,
+        notifyBookingUpdates: profileData.notifyBookingUpdates ?? true,
+        notifyPromotions: profileData.notifyPromotions ?? false,
       });
     }
   }, [profileData, form]);

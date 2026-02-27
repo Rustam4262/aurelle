@@ -54,7 +54,11 @@ export function MasterSchedule({
     }
   }, [initialSchedule]);
 
-  const updateScheduleDay = (dayOfWeek: number, field: keyof ScheduleDay, value: any) => {
+  const updateScheduleDay = (
+    dayOfWeek: number,
+    field: keyof ScheduleDay,
+    value: ScheduleDay[keyof ScheduleDay],
+  ) => {
     setSchedule((prev) =>
       prev.map((day) => (day.dayOfWeek === dayOfWeek ? { ...day, [field]: value } : day)),
     );

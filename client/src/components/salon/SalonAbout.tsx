@@ -34,7 +34,10 @@ export function SalonAbout({ salon, hours }: { salon: Salon; hours: WorkingHours
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
-  const description = getLocalizedText(salon.description as any, currentLang);
+  const description = getLocalizedText(
+    salon.description as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -59,7 +62,10 @@ export function SalonAbout({ salon, hours }: { salon: Salon; hours: WorkingHours
               latitude={Number(salon.latitude)}
               longitude={Number(salon.longitude)}
               address={salon.address}
-              salonName={getLocalizedText(salon.name as any, currentLang)}
+              salonName={getLocalizedText(
+                salon.name as { en?: string; ru?: string; uz?: string },
+                currentLang,
+              )}
             />
           </div>
         </div>

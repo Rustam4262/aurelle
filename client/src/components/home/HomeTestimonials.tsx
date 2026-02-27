@@ -14,7 +14,7 @@ interface Testimonial {
   serviceKey: string;
 }
 
-const getTestimonials = (t: any): Testimonial[] => [
+const getTestimonials = (): Testimonial[] => [
   {
     id: 1,
     nameKey: "marketplace.home.testimonials.t1.name",
@@ -22,7 +22,7 @@ const getTestimonials = (t: any): Testimonial[] => [
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anna",
     rating: 5,
     textKey: "marketplace.home.testimonials.t1.text",
-    serviceKey: "marketplace.home.testimonials.t1.service"
+    serviceKey: "marketplace.home.testimonials.t1.service",
   },
   {
     id: 2,
@@ -31,7 +31,7 @@ const getTestimonials = (t: any): Testimonial[] => [
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dmitry",
     rating: 5,
     textKey: "marketplace.home.testimonials.t2.text",
-    serviceKey: "marketplace.home.testimonials.t2.service"
+    serviceKey: "marketplace.home.testimonials.t2.service",
   },
   {
     id: 3,
@@ -40,7 +40,7 @@ const getTestimonials = (t: any): Testimonial[] => [
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
     rating: 5,
     textKey: "marketplace.home.testimonials.t3.text",
-    serviceKey: "marketplace.home.testimonials.t3.service"
+    serviceKey: "marketplace.home.testimonials.t3.service",
   },
   {
     id: 4,
@@ -49,7 +49,7 @@ const getTestimonials = (t: any): Testimonial[] => [
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kate",
     rating: 5,
     textKey: "marketplace.home.testimonials.t4.text",
-    serviceKey: "marketplace.home.testimonials.t4.service"
+    serviceKey: "marketplace.home.testimonials.t4.service",
   },
   {
     id: 5,
@@ -58,13 +58,13 @@ const getTestimonials = (t: any): Testimonial[] => [
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
     rating: 5,
     textKey: "marketplace.home.testimonials.t5.text",
-    serviceKey: "marketplace.home.testimonials.t5.service"
-  }
+    serviceKey: "marketplace.home.testimonials.t5.service",
+  },
 ];
 
 export function HomeTestimonials() {
   const { t } = useTranslation();
-  const testimonials = getTestimonials(t);
+  const testimonials = getTestimonials();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -132,7 +132,7 @@ export function HomeTestimonials() {
 
               {/* Testimonial Text */}
               <blockquote className="text-lg md:text-xl text-foreground mb-8 leading-relaxed font-light italic">
-                "{t(currentTestimonial.textKey)}"
+                &ldquo;{t(currentTestimonial.textKey)}&rdquo;
               </blockquote>
 
               {/* Author Info */}
@@ -149,9 +149,7 @@ export function HomeTestimonials() {
                   <h4 className="font-semibold text-lg text-foreground">
                     {t(currentTestimonial.nameKey)}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t(currentTestimonial.roleKey)}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t(currentTestimonial.roleKey)}</p>
                   <p className="text-xs text-primary font-medium mt-0.5">
                     {t(currentTestimonial.serviceKey)}
                   </p>
@@ -209,19 +207,27 @@ export function HomeTestimonials() {
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">10,000+</div>
-            <div className="text-sm text-muted-foreground">{t("marketplace.home.testimonials.stats.happyClients")}</div>
+            <div className="text-sm text-muted-foreground">
+              {t("marketplace.home.testimonials.stats.happyClients")}
+            </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">500+</div>
-            <div className="text-sm text-muted-foreground">{t("marketplace.home.testimonials.stats.beautySalons")}</div>
+            <div className="text-sm text-muted-foreground">
+              {t("marketplace.home.testimonials.stats.beautySalons")}
+            </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">4.9</div>
-            <div className="text-sm text-muted-foreground">{t("marketplace.home.testimonials.stats.avgRating")}</div>
+            <div className="text-sm text-muted-foreground">
+              {t("marketplace.home.testimonials.stats.avgRating")}
+            </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">50K+</div>
-            <div className="text-sm text-muted-foreground">{t("marketplace.home.testimonials.stats.bookingsCompleted")}</div>
+            <div className="text-sm text-muted-foreground">
+              {t("marketplace.home.testimonials.stats.bookingsCompleted")}
+            </div>
           </div>
         </div>
       </div>

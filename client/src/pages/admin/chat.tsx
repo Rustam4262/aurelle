@@ -4,7 +4,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -91,7 +90,9 @@ export default function AdminChat() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ threadId, text }: { threadId: string; text: string }) => {
-      const res = await apiRequest("POST", `/api/admin/chat/threads/${threadId}/messages`, { text });
+      const res = await apiRequest("POST", `/api/admin/chat/threads/${threadId}/messages`, {
+        text,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -100,7 +101,11 @@ export default function AdminChat() {
       toast({ title: t("common.success"), description: t("admin.chat.toasts.messageSent") });
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.chat.toasts.messageFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.chat.toasts.messageFailed"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -115,7 +120,11 @@ export default function AdminChat() {
       toast({ title: t("common.success"), description: t("admin.chat.toasts.assigned") });
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.chat.toasts.assignFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.chat.toasts.assignFailed"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -136,7 +145,11 @@ export default function AdminChat() {
       setCloseReason("");
     },
     onError: () => {
-      toast({ title: t("common.error"), description: t("admin.chat.toasts.closeFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.chat.toasts.closeFailed"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -154,7 +167,11 @@ export default function AdminChat() {
 
   const handleCloseThread = () => {
     if (!selectedThread || !closeReason.trim()) {
-      toast({ title: t("common.error"), description: t("admin.chat.toasts.reasonRequired"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("admin.chat.toasts.reasonRequired"),
+        variant: "destructive",
+      });
       return;
     }
     closeMutation.mutate({
@@ -208,7 +225,9 @@ export default function AdminChat() {
           {threadsLoading ? (
             <div className="text-center py-12">{t("admin.chat.loading")}</div>
           ) : !threadsData?.threads || threadsData.threads.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">{t("admin.chat.noThreads")}</div>
+            <div className="text-center py-12 text-muted-foreground">
+              {t("admin.chat.noThreads")}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -230,9 +249,7 @@ export default function AdminChat() {
                             ? `${userFirstName} ${userLastName}`
                             : userEmail || t("admin.chat.userFallback")}
                         </p>
-                        {userEmail && (
-                          <p className="text-xs text-muted-foreground">{userEmail}</p>
-                        )}
+                        {userEmail && <p className="text-xs text-muted-foreground">{userEmail}</p>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -264,7 +281,9 @@ export default function AdminChat() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openChatDialog({ thread, userFirstName, userLastName, userEmail })}
+                          onClick={() =>
+                            openChatDialog({ thread, userFirstName, userLastName, userEmail })
+                          }
                         >
                           <MessageSquare className="h-4 w-4 mr-1" />
                           {t("admin.chat.buttons.open")}
@@ -273,7 +292,9 @@ export default function AdminChat() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openCloseDialog({ thread, userFirstName, userLastName, userEmail })}
+                            onClick={() =>
+                              openCloseDialog({ thread, userFirstName, userLastName, userEmail })
+                            }
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             {t("admin.chat.buttons.close")}
@@ -311,7 +332,9 @@ export default function AdminChat() {
               {messagesLoading ? (
                 <div className="text-center py-8">{t("admin.chat.dialog.loadingMessages")}</div>
               ) : !messagesData?.messages || messagesData.messages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">{t("admin.chat.dialog.noMessages")}</div>
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("admin.chat.dialog.noMessages")}
+                </div>
               ) : (
                 <div className="space-y-4">
                   {messagesData.messages.map(({ message, senderFirstName, senderLastName }) => (
@@ -386,9 +409,7 @@ export default function AdminChat() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("admin.chat.dialog.closeThreadTitle")}</DialogTitle>
-            <DialogDescription>
-              {t("admin.chat.dialog.closeThreadDescription")}
-            </DialogDescription>
+            <DialogDescription>{t("admin.chat.dialog.closeThreadDescription")}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -412,7 +433,9 @@ export default function AdminChat() {
               onClick={handleCloseThread}
               disabled={closeMutation.isPending || !closeReason.trim()}
             >
-              {closeMutation.isPending ? t("admin.chat.buttons.closing") : t("admin.chat.buttons.closeThread")}
+              {closeMutation.isPending
+                ? t("admin.chat.buttons.closing")
+                : t("admin.chat.buttons.closeThread")}
             </Button>
           </DialogFooter>
         </DialogContent>

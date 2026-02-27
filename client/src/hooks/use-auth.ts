@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { User } from "@shared/models/auth";
-import { logger } from '@/lib/logger';
+import { logger } from "@/lib/logger";
 
 async function fetchUser(): Promise<User | null> {
   const response = await fetch("/api/auth/user", {

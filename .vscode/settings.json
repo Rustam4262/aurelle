@@ -1,12 +1,17 @@
 {
+  "css.lint.unknownAtRules": "ignore",
+  "css.lint.emptyRules": "ignore",
   "yaml.schemas": {},
   "yaml.customTags": ["!ENV scalar", "!ENV sequence"],
   "yaml.validate": false,
   "yaml.schemaStore.enable": false,
   "yaml.format.enable": true,
   "files.associations": {
-    ".github/workflows/*.yml": "github-actions-workflow"
+    ".github/workflows/*.yml": "github-actions-workflow",
+    "scripts/*.sql": "sql",
+    "migrations/*.sql": "sql"
   },
+  "mssql.connections": [],
   "[github-actions-workflow]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },

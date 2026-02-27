@@ -34,7 +34,7 @@ export default function ForgotPassword() {
       } else {
         setError(data.message || t("auth.passwordResetFailed", "Failed to send reset email"));
       }
-    } catch (err) {
+    } catch {
       setError(t("auth.networkError", "Network error. Please try again."));
     } finally {
       setIsLoading(false);

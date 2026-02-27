@@ -2,10 +2,9 @@ import { useState, useMemo } from "react";
 import type { EnrichedBooking } from "./types";
 import { useTranslation } from "react-i18next";
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
+type LocalizedText = { en?: string; ru?: string; uz?: string };
+
+function getLocalizedText(obj: LocalizedText | null | undefined, lang: string): string {
   if (!obj) return "";
   const langKey = lang as keyof typeof obj;
   return obj[langKey] || obj.en || "";
@@ -31,7 +30,7 @@ export function useBookingFilters({ bookings }: UseBookingFiltersProps) {
     if (!bookings) return [];
     const services = new Map<string, string>();
     bookings.forEach((b) => {
-      const serviceName = getLocalizedText(b.service?.name as any, currentLang);
+      const serviceName = getLocalizedText(b.service?.name as LocalizedText, currentLang);
       if (serviceName && b.serviceId) {
         services.set(b.serviceId, serviceName);
       }
@@ -92,8 +91,14 @@ export function useBookingFilters({ bookings }: UseBookingFiltersProps) {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter((b) => {
-        const salonName = getLocalizedText(b.salon?.name as any, currentLang).toLowerCase();
-        const serviceName = getLocalizedText(b.service?.name as any, currentLang).toLowerCase();
+        const salonName = getLocalizedText(
+          b.salon?.name as LocalizedText,
+          currentLang,
+        ).toLowerCase();
+        const serviceName = getLocalizedText(
+          b.service?.name as LocalizedText,
+          currentLang,
+        ).toLowerCase();
         const masterName = (b.master?.name || "").toLowerCase();
         return (
           salonName.includes(query) || serviceName.includes(query) || masterName.includes(query)

@@ -27,9 +27,12 @@ export function MasterAnalytics({ stats, isLoading }: MasterAnalyticsProps) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
-  const getLocalizedText = (obj: any, lang: string) => {
+  const getLocalizedText = (
+    obj: { en?: string; ru?: string; uz?: string } | null | undefined,
+    lang: string,
+  ) => {
     if (!obj) return "";
-    return obj[lang] || obj.en || "";
+    return obj[lang as keyof typeof obj] || obj.en || "";
   };
 
   if (isLoading) {

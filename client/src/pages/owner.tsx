@@ -4,37 +4,30 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
 import type { Salon, Booking, Service, Master } from "@shared/schema";
 import {
   ArrowLeft,
-  Plus,
   Store,
   Calendar,
   CalendarDays,
   CalendarRange,
   Users,
-  Star,
   Scissors,
   LogOut,
-  BarChart3,
   Bell,
   Zap,
   User,
 } from "lucide-react";
 import { BookingCalendar } from "@/components/booking-calendar";
 import { CalendarWeekView } from "@/components/calendar-week-view";
-import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OwnerDashboardOverview } from "@/components/owner-dashboard-overview";
 import { ServiceManagement } from "@/components/service-management";
 import { MasterManagement } from "@/components/master-management";
 import { BookingManagement } from "@/components/booking-management";
-import { SalonCreationWizard } from "@/components/salon-creation-wizard";
 import { SalonList } from "@/components/owner/SalonList";
 import { RevenueAnalytics } from "@/components/revenue-analytics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,29 +48,18 @@ interface EnrichedBooking extends Booking {
   clientName?: string;
 }
 
-function getLocalizedText(
-  obj: { en?: string; ru?: string; uz?: string } | null | undefined,
-  lang: string,
-): string {
-  if (!obj) return "";
-  const langKey = lang as keyof typeof obj;
-  return obj[langKey] || obj.en || "";
-}
-
 function goToAuth() {
   window.location.href = "/auth";
 }
 
 export default function OwnerPage() {
-  const { t, i18n } = useTranslation();
-  const currentLang = i18n.language;
+  const { t } = useTranslation();
   const { user, isLoading: authLoading, logout } = useAuth({ requireAuth: true });
   const [, navigate] = useLocation();
-  const [showAddSalon, setShowAddSalon] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [calendarView, setCalendarView] = useState<"day" | "week">("day");
 
-  const { data: salons, isLoading: salonsLoading } = useQuery<Salon[]>({
+  const { data: salons } = useQuery<Salon[]>({
     queryKey: ["/api/owner/salons"],
     enabled: !!user,
   });
@@ -127,9 +109,7 @@ export default function OwnerPage() {
           <Card className="p-8 text-center">
             <Store className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="font-serif text-xl text-foreground mb-2">{t("owner.registerSalon")}</h2>
-            <p className="text-muted-foreground mb-6">
-              {t("owner.registerSalonDesc")}
-            </p>
+            <p className="text-muted-foreground mb-6">{t("owner.registerSalonDesc")}</p>
             <Button onClick={goToAuth} className="w-full" data-testid="button-login-owner">
               {t("owner.signInToContinue")}
             </Button>
@@ -157,12 +137,19 @@ export default function OwnerPage() {
             {/* Quick Actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" data-testid="button-quick-actions">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  data-testid="button-quick-actions"
+                >
                   <Zap className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>{t("marketplace.owner.quickActions", "Quick Actions")}</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {t("marketplace.owner.quickActions", "Quick Actions")}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setActiveTab("bookings")}>
                   <Calendar className="h-4 w-4 mr-2" />
@@ -184,7 +171,12 @@ export default function OwnerPage() {
             </DropdownMenu>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative" data-testid="button-notifications">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              data-testid="button-notifications"
+            >
               <Bell className="h-5 w-5" />
               {/* Badge for pending bookings - you can connect this to real data */}
               <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
@@ -197,9 +189,16 @@ export default function OwnerPage() {
             {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full" data-testid="button-profile">
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full"
+                  data-testid="button-profile"
+                >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || "User"} />
+                    <AvatarImage
+                      src={user?.profileImageUrl || ""}
+                      alt={user?.firstName || "User"}
+                    />
                     <AvatarFallback>
                       {user?.firstName?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
                     </AvatarFallback>
@@ -210,7 +209,9 @@ export default function OwnerPage() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : t("marketplace.client.unnamed", "Unnamed")}
+                      {user?.firstName
+                        ? `${user.firstName} ${user.lastName || ""}`
+                        : t("marketplace.client.unnamed", "Unnamed")}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
@@ -221,7 +222,10 @@ export default function OwnerPage() {
                   {t("marketplace.client.editProfile", "My Profile")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive"
+                >
                   <LogOut className="h-4 w-4 mr-2" />
                   {t("marketplace.profile.signOut")}
                 </DropdownMenuItem>
@@ -233,10 +237,7 @@ export default function OwnerPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-4 md:px-6 md:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <OwnerDashboardNavigation
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
+          <OwnerDashboardNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
           <TabsContent value="dashboard" className="space-y-6">
             <OwnerDashboardOverview />

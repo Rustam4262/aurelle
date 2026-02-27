@@ -95,11 +95,7 @@ function MasterCard({ master }: { master: PublicMaster }) {
     >
       <div className="relative h-40 bg-muted flex items-center justify-center">
         {master.photo ? (
-          <img
-            src={master.photo}
-            alt={master.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={master.photo} alt={master.name} className="w-full h-full object-cover" />
         ) : (
           <User className="h-16 w-16 text-muted-foreground opacity-40" />
         )}
@@ -186,10 +182,11 @@ export default function SearchPage() {
 
   // Filter and sort salons
   const filteredAndSortedSalons = useMemo(() => {
-    let filtered = salons.filter((salon) => {
-      const salonName = getLocalizedText(salon.name as any, i18n.language);
-      const salonCity = getLocalizedText(salon.city as any, i18n.language);
-      const salonDesc = getLocalizedText(salon.description as any, i18n.language);
+    const filtered = salons.filter((salon) => {
+      type L10n = { en?: string; ru?: string; uz?: string };
+      const salonName = getLocalizedText(salon.name as unknown as L10n, i18n.language);
+      const salonCity = getLocalizedText(salon.city as unknown as L10n, i18n.language);
+      const salonDesc = getLocalizedText(salon.description as unknown as L10n, i18n.language);
       const queryLower = searchQuery.toLowerCase();
 
       // Text search
@@ -200,8 +197,7 @@ export default function SearchPage() {
 
       // City filter
       const cityMatch =
-        !selectedCity ||
-        salonCity.toLowerCase().includes(selectedCity.toLowerCase());
+        !selectedCity || salonCity.toLowerCase().includes(selectedCity.toLowerCase());
 
       // Category filter (check if salon description mentions the category)
       const categoryMatch =
@@ -211,8 +207,7 @@ export default function SearchPage() {
 
       // Rating filter
       const rating = Number(salon.averageRating) || 0;
-      const ratingMatch =
-        minRating === "all" || rating >= Number(minRating);
+      const ratingMatch = minRating === "all" || rating >= Number(minRating);
 
       return textMatch && cityMatch && categoryMatch && ratingMatch;
     });
@@ -231,12 +226,14 @@ export default function SearchPage() {
 
   // Filter masters client-side by rating
   const filteredMasters = useMemo(() => {
-    let filtered = mastersList.filter((m) => {
+    const filtered = mastersList.filter((m) => {
       const rating = parseFloat(m.averageRating || "0");
       return minRating === "all" || rating >= Number(minRating);
     });
     if (sortBy === "rating" || sortBy === "relevance") {
-      filtered.sort((a, b) => parseFloat(b.averageRating || "0") - parseFloat(a.averageRating || "0"));
+      filtered.sort(
+        (a, b) => parseFloat(b.averageRating || "0") - parseFloat(a.averageRating || "0"),
+      );
     } else if (sortBy === "reviews") {
       filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
     }
@@ -275,21 +272,14 @@ export default function SearchPage() {
     navigate(`/search${qs ? `?${qs}` : ""}`);
   };
 
-  const uniqueCities = Array.from(
-    new Set(
-      salons
-        .map((s) => getLocalizedText(s.city as any, i18n.language))
-        .filter(Boolean)
-    )
-  ).sort();
-
   const activeFiltersCount =
     (searchQuery ? 1 : 0) +
     (selectedCity ? 1 : 0) +
     (selectedCategory && activeTab === "salons" ? 1 : 0) +
     (minRating !== "all" ? 1 : 0);
 
-  const resultCount = activeTab === "salons" ? filteredAndSortedSalons.length : filteredMasters.length;
+  const resultCount =
+    activeTab === "salons" ? filteredAndSortedSalons.length : filteredMasters.length;
 
   return (
     <>
@@ -314,9 +304,7 @@ export default function SearchPage() {
                     ? t("search.mastersTitle") || "Мастера"
                     : t("marketplace.hero.search") || "Search Salons"}
                 </h1>
-                <p className="text-muted-foreground">
-                  {t("search.subtitle")}
-                </p>
+                <p className="text-muted-foreground">{t("search.subtitle")}</p>
               </div>
               <Button
                 variant="outline"
@@ -422,7 +410,7 @@ export default function SearchPage() {
                             key={category.id}
                             onClick={() =>
                               setSelectedCategory(
-                                selectedCategory === category.id ? "" : category.id
+                                selectedCategory === category.id ? "" : category.id,
                               )
                             }
                             className={`p-3 rounded-lg border-2 transition-all text-left hover:border-primary/50 ${
@@ -432,9 +420,7 @@ export default function SearchPage() {
                             }`}
                           >
                             <div className="text-2xl mb-1">{category.icon}</div>
-                            <div className="text-xs font-medium truncate">
-                              {category.labelKey}
-                            </div>
+                            <div className="text-xs font-medium truncate">{category.labelKey}</div>
                           </button>
                         ))}
                       </div>
@@ -462,11 +448,7 @@ export default function SearchPage() {
                   </div>
 
                   {/* Apply Button */}
-                  <Button
-                    onClick={updateURL}
-                    className="w-full"
-                    size="lg"
-                  >
+                  <Button onClick={updateURL} className="w-full" size="lg">
                     <Search className="h-4 w-4 mr-2" />
                     {t("search.applyFilters")}
                   </Button>
@@ -546,8 +528,8 @@ export default function SearchPage() {
                   )}
                   {selectedCategory && activeTab === "salons" && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      {SERVICE_CATEGORIES.find(c => c.id === selectedCategory)?.icon}{" "}
-                      {SERVICE_CATEGORIES.find(c => c.id === selectedCategory)?.labelKey}
+                      {SERVICE_CATEGORIES.find((c) => c.id === selectedCategory)?.icon}{" "}
+                      {SERVICE_CATEGORIES.find((c) => c.id === selectedCategory)?.labelKey}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -560,7 +542,8 @@ export default function SearchPage() {
                   )}
                   {minRating !== "all" && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      ⭐ {minRating}{t("search.starsLabel")}
+                      ⭐ {minRating}
+                      {t("search.starsLabel")}
                       <Button
                         variant="ghost"
                         size="sm"

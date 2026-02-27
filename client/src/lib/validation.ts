@@ -8,7 +8,7 @@ export interface ValidationRule {
   minLength?: { value: number; message: string };
   maxLength?: { value: number; message: string };
   pattern?: { value: RegExp; message: string };
-  validate?: (value: any) => boolean | string;
+  validate?: (value: unknown) => boolean | string;
 }
 
 export interface ValidationErrors {
@@ -116,7 +116,7 @@ export function getPasswordError(password: string): string | null {
 /**
  * Required field validation
  */
-export function validateRequired(value: any, fieldName?: string): string | null {
+export function validateRequired(value: unknown, fieldName?: string): string | null {
   if (!value || (typeof value === "string" && value.trim() === "")) {
     return `${fieldName || "Это поле"} обязательно для заполнения`;
   }
@@ -227,7 +227,7 @@ export class FormValidator {
   /**
    * Validate a field with rules
    */
-  validateField(fieldName: string, value: any, rules: ValidationRule): string | null {
+  validateField(fieldName: string, value: unknown, rules: ValidationRule): string | null {
     // Required validation
     if (rules.required) {
       const message = typeof rules.required === "string" ? rules.required : undefined;
@@ -299,7 +299,7 @@ export class FormValidator {
   /**
    * Validate multiple fields
    */
-  validateFields(fields: Record<string, { value: any; rules: ValidationRule }>) {
+  validateFields(fields: Record<string, { value: unknown; rules: ValidationRule }>) {
     this.errors = {};
 
     for (const [fieldName, field] of Object.entries(fields)) {
@@ -417,7 +417,7 @@ export const ValidationRules = {
 
   price: {
     required: true,
-    validate: (value: any) => {
+    validate: (value: unknown) => {
       const num = Number(value);
       if (isNaN(num) || num <= 0) {
         return "Цена должна быть положительным числом";
@@ -428,7 +428,7 @@ export const ValidationRules = {
 
   duration: {
     required: true,
-    validate: (value: any) => {
+    validate: (value: unknown) => {
       const num = Number(value);
       if (isNaN(num) || num <= 0) {
         return "Длительность должна быть положительным числом";

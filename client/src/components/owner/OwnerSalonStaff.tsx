@@ -10,6 +10,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Master } from "@shared/schema";
 
+interface CreateMasterData {
+  name: string;
+  specialties: { en: string[]; ru: string[]; uz: string[] };
+  experience: number;
+  email?: string;
+  password?: string;
+}
+
 interface OwnerSalonStaffProps {
   salonId: string;
 }
@@ -31,7 +39,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
   });
 
   const createMasterMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CreateMasterData) => {
       return apiRequest("POST", `/api/owner/salons/${salonId}/masters`, data);
     },
     onSuccess: () => {
@@ -39,7 +47,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
       toast({ title: t("marketplace.owner.masterAdded") });
       setNewMaster({ name: "", specialties: "", experience: "", email: "", password: "" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message,
@@ -56,7 +64,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "masters"] });
       toast({ title: t("marketplace.owner.masterDeleted") });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: t("marketplace.owner.error"),
         description: error.message || t("marketplace.owner.deleteMasterError"),
@@ -67,7 +75,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
 
   const handleAddMaster = (e: React.FormEvent) => {
     e.preventDefault();
-    const masterData: any = {
+    const masterData: CreateMasterData = {
       name: newMaster.name,
       specialties: {
         en: newMaster.specialties.split(",").map((s) => s.trim()),
@@ -193,9 +201,9 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
                   <p className="text-sm text-muted-foreground">
                     {master.experience} {t("marketplace.owner.yearsExp")}
                   </p>
-                  {(master as any).email && (
+                  {master.email && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {(master as any).email} ({t("marketplace.owner.hasLogin")})
+                      {master.email} ({t("marketplace.owner.hasLogin")})
                     </p>
                   )}
                 </div>

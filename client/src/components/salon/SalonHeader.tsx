@@ -11,8 +11,14 @@ export function SalonHeader({ salon }: { salon: Salon }) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
 
-  const name = getLocalizedText(salon.name as any, currentLang);
-  const city = getLocalizedText(salon.city as any, currentLang);
+  const name = getLocalizedText(
+    salon.name as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
+  const city = getLocalizedText(
+    salon.city as { en?: string; ru?: string; uz?: string },
+    currentLang,
+  );
 
   return (
     <div className="relative">

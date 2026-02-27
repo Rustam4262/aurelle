@@ -37,7 +37,7 @@ export default function Home() {
           <HomeCTA />
         </main>
 
-      <HomeFooter />
+        <HomeFooter />
       </div>
     </>
   );
