@@ -42,6 +42,9 @@ i18n.use(initReactI18next).init({
   },
   returnEmptyString: false,
   debug: false,
+  // Sync init: all translations are bundled (no HTTP fetch), so async init
+  // causes a race where i18n fires setState mid-render → React Error #321.
+  initImmediate: false,
 });
 
 export const formatCurrency = (amount: number): string => {
