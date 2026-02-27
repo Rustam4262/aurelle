@@ -672,10 +672,8 @@ export default function AuthPage() {
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">{t("marketplace.auth.password")}</Label>
                         {authMode === "login" && (
-                          <Link href="/auth/forgot-password">
-                            <a className="text-xs text-primary hover:underline">
-                              {t("auth.forgotPassword", "Forgot Password?")}
-                            </a>
+                          <Link href="/auth/forgot-password" className="text-xs text-primary hover:underline">
+                            {t("auth.forgotPassword", "Forgot Password?")}
                           </Link>
                         )}
                       </div>

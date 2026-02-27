@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ProtectedRoute } from "@/components/protected-route";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { Loader2 } from "lucide-react";
 
@@ -65,14 +66,30 @@ function Router() {
           <Route path="/profile">
             <Redirect to="/client" />
           </Route>
-          <Route path="/owner" component={OwnerPage} />
-          <Route path="/owner/salon/:id" component={OwnerSalonPage} />
-          <Route path="/master" component={MasterPage} />
-          <Route path="/client" component={ClientPage} />
-          <Route path="/solo-master" component={SoloMasterPage} />
-          <Route path="/solo-master/onboarding" component={SoloMasterOnboardingPage} />
-          <Route path="/admin" component={AdminPage} />
-          <Route path="/admin/:rest*" component={AdminPage} />
+          <Route path="/owner">
+            <ProtectedRoute><OwnerPage /></ProtectedRoute>
+          </Route>
+          <Route path="/owner/salon/:id">
+            <ProtectedRoute><OwnerSalonPage /></ProtectedRoute>
+          </Route>
+          <Route path="/master">
+            <ProtectedRoute><MasterPage /></ProtectedRoute>
+          </Route>
+          <Route path="/client">
+            <ProtectedRoute><ClientPage /></ProtectedRoute>
+          </Route>
+          <Route path="/solo-master">
+            <ProtectedRoute><SoloMasterPage /></ProtectedRoute>
+          </Route>
+          <Route path="/solo-master/onboarding">
+            <ProtectedRoute><SoloMasterOnboardingPage /></ProtectedRoute>
+          </Route>
+          <Route path="/admin">
+            <ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>
+          </Route>
+          <Route path="/admin/:rest*">
+            <ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>
+          </Route>
           <Route path="/master/:slug" component={PublicMasterPage} />
           <Route component={NotFound} />
         </Switch>
