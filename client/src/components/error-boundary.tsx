@@ -1,11 +1,11 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { withTranslation, WithTranslation } from "react-i18next";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
+import i18n from "@/lib/i18n";
 
-interface Props extends WithTranslation {
+interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
@@ -20,13 +20,11 @@ interface State {
 
 /**
  * ErrorBoundary Component
- * Catches JavaScript errors anywhere in the child component tree
- * Displays a fallback UI instead of crashing the whole app
+ * Catches JavaScript errors anywhere in the child component tree.
  *
- * Usage:
- * <ErrorBoundary>
- *   <YourComponent />
- * </ErrorBoundary>
+ * NOTE: Uses i18n.t() directly (not useTranslation hook) to avoid
+ * React Error #321 — calling setState during render when withTranslation()
+ * HOC subscribes to i18n inside the error recovery cycle.
  */
 class ErrorBoundaryComponent extends Component<Props, State> {
   constructor(props: Props) {
@@ -40,7 +38,6 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // Update state so the next render will show the fallback UI
     return {
       hasError: true,
       error,
@@ -49,25 +46,18 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console
     logger.error("ErrorBoundary caught an error", error, {
       source: "error-boundary",
-      meta: errorInfo,
+      meta: errorInfo as unknown as Record<string, unknown>,
     });
 
-    // Update state with error details
-    this.setState({
-      error,
-      errorInfo,
-    });
+    this.setState({ error, errorInfo });
 
-    // Call optional error handler
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
   }
 
-  // Reset error state when children change (e.g., navigation)
   componentDidUpdate(prevProps: Props) {
     if (this.state.hasError && prevProps.children !== this.props.children) {
       this.setState({
@@ -94,12 +84,14 @@ class ErrorBoundaryComponent extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default fallback UI
+      // Use i18n.t() directly — NOT useTranslation() hook — so we never
+      // trigger a React state update from inside the error boundary render.
+      const t = i18n.t.bind(i18n);
+
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-6">
           <Card className="max-w-lg w-full p-8 text-center">
@@ -110,18 +102,17 @@ class ErrorBoundaryComponent extends Component<Props, State> {
             </div>
 
             <h1 className="text-2xl font-serif font-semibold text-foreground mb-2">
-              {this.props.t("errorBoundary.title")}
+              {t("errorBoundary.title", "Что-то пошло не так")}
             </h1>
 
             <p className="text-muted-foreground mb-6">
-              {this.props.t("errorBoundary.description")}
+              {t("errorBoundary.description", "Произошла непредвиденная ошибка.")}
             </p>
 
-            {/* Show error details in development */}
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm font-medium text-destructive mb-2">
-                  {this.props.t("errorBoundary.technicalDetails")}
+                  {t("errorBoundary.technicalDetails", "Технические детали")}
                 </summary>
                 <div className="bg-muted p-4 rounded-md text-xs overflow-auto max-h-48">
                   <p className="font-mono text-destructive mb-2">{this.state.error.toString()}</p>
@@ -137,12 +128,12 @@ class ErrorBoundaryComponent extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button onClick={this.handleReset} variant="outline" className="gap-2">
                 <RefreshCcw className="h-4 w-4" />
-                {this.props.t("errorBoundary.tryAgain")}
+                {t("errorBoundary.tryAgain", "Попробовать снова")}
               </Button>
 
               <Button onClick={this.handleGoHome} className="gap-2">
                 <Home className="h-4 w-4" />
-                {this.props.t("errorBoundary.goHome")}
+                {t("errorBoundary.goHome", "На главную")}
               </Button>
             </div>
           </Card>
@@ -154,9 +145,10 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 }
 
+export const ErrorBoundary = ErrorBoundaryComponent;
+
 /**
  * Hook-based error boundary for functional components
- * Note: This is a workaround since hooks can't catch errors in children
  */
 export function useErrorHandler() {
   const [error, setError] = React.useState<Error | null>(null);
@@ -174,22 +166,17 @@ export function useErrorHandler() {
  * Compact ErrorFallback for smaller sections
  */
 export function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
-  // Import useTranslation at top level
-  const { useTranslation } = require("react-i18next");
-  const { t } = useTranslation();
+  const t = i18n.t.bind(i18n);
 
   return (
     <Card className="p-6 text-center">
       <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-      <h3 className="font-medium text-foreground mb-2">{t("errorBoundary.errorLoading")}</h3>
-      <p className="text-sm text-muted-foreground mb-4">{error.message || t("errorBoundary.somethingWentWrong")}</p>
+      <h3 className="font-medium text-foreground mb-2">{t("errorBoundary.errorLoading", "Ошибка загрузки")}</h3>
+      <p className="text-sm text-muted-foreground mb-4">{error.message || t("errorBoundary.somethingWentWrong", "Что-то пошло не так")}</p>
       <Button size="sm" variant="outline" onClick={resetError}>
         <RefreshCcw className="h-4 w-4 mr-2" />
-        {t("errorBoundary.retry")}
+        {t("errorBoundary.retry", "Повторить")}
       </Button>
     </Card>
   );
 }
-
-// Export ErrorBoundary with translation HOC
-export const ErrorBoundary = withTranslation()(ErrorBoundaryComponent);

@@ -45,6 +45,11 @@ i18n.use(initReactI18next).init({
   // Sync init: all translations are bundled (no HTTP fetch), so async init
   // causes a race where i18n fires setState mid-render → React Error #321.
   initImmediate: false,
+  react: {
+    // Disable Suspense mode: lazy-loaded pages inside <Suspense> trigger
+    // React Error #321 when react-i18next tries to suspend during render.
+    useSuspense: false,
+  },
 });
 
 export const formatCurrency = (amount: number): string => {
