@@ -5,6 +5,7 @@ import { db } from "./db";
 import { users, userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "./lib/logger";
+import { trackUserLogin } from "./middleware/activity";
 
 // Store verification codes temporarily (in production, use Redis)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -146,7 +147,7 @@ export function setupPhoneAuth(app: Express) {
         });
       }
 
-      // Create session
+      // Create session (same pattern as localAuth.ts)
       const sessionUser = {
         claims: {
           sub: userId,
@@ -161,11 +162,13 @@ export function setupPhoneAuth(app: Express) {
         expires_at: Math.floor(Date.now() / 1000) + 30 * 24 * 3600, // 30 days
       };
 
-      (req as any).login(sessionUser, (err: any) => {
+      (req.session as any).passport = { user: sessionUser };
+      req.session.save((err) => {
         if (err) {
-          logger.error("Login error", err);
+          logger.error("Session save error", err as Error, { source: "phoneAuth" });
           return res.status(500).json({ error: "Failed to create session" });
         }
+        trackUserLogin(userId, req);
         return res.json({ success: true, user: sessionUser.claims });
       });
     } catch (error) {
