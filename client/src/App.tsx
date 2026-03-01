@@ -23,6 +23,7 @@ const SearchPage = lazy(() => import("@/pages/search"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const ForgotPasswordPage = lazy(() => import("@/pages/forgot-password"));
 const ResetPasswordPage = lazy(() => import("@/pages/reset-password"));
+const AcceptInvitationPage = lazy(() => import("@/pages/accept-invitation"));
 // ProfilePage removed - /profile now redirects to /client
 const OwnerPage = lazy(() => import("@/pages/owner"));
 const OwnerSalonPage = lazy(() => import("@/pages/owner-salon"));
@@ -62,6 +63,7 @@ function Router() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
           <Route path="/auth/reset-password" component={ResetPasswordPage} />
+          <Route path="/accept-invitation" component={AcceptInvitationPage} />
           <Route path="/profile">
             <Redirect to="/client" />
           </Route>

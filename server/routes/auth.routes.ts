@@ -3,6 +3,8 @@ import { isYandexConfigured } from "../yandexAuth";
 import { isGoogleConfigured } from "../googleAuth";
 import { isGitHubConfigured } from "../githubAuth";
 import { isPhoneAuthConfigured } from "../phoneAuth";
+import { isAuthenticated } from "../auth";
+import { createWsToken } from "../lib/websocket";
 import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -133,6 +135,16 @@ router.get("/logout", (req: any, res) => {
   } else {
     return res.redirect("/auth");
   }
+});
+
+/**
+ * GET /api/auth/ws-token
+ * Returns a one-time 30-second token for WebSocket authentication.
+ */
+router.get("/auth/ws-token", isAuthenticated, (req: any, res) => {
+  const userId = req.user.claims.sub as string;
+  const token = createWsToken(userId);
+  return res.json({ token });
 });
 
 // Auth providers status endpoint

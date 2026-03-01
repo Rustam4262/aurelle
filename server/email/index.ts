@@ -349,6 +349,28 @@ export async function sendUserUnblockedEmail(
   return sendEmail(userEmail, "Your AURELLE Account Has Been Reinstated", html);
 }
 
+export async function sendManagerInvitationEmail(
+  toEmail: string,
+  salon: { name: { ru: string; en: string; uz: string } },
+  token: string,
+): Promise<boolean> {
+  const salonName = salon.name.ru || salon.name.en || "салон";
+  const inviteUrl = `${APP_URL()}/accept-invitation?token=${token}`;
+  const html = adminEmailHtml(`Приглашение в команду`, "#667eea", `
+    <p>Вас приглашают стать менеджером салона <strong>${salonName}</strong> на платформе AURELLE.</p>
+    <div style="background:#e8f0fe;border-left:4px solid #667eea;padding:15px;margin:20px 0;color:#3d4db7">
+      Нажмите кнопку ниже, чтобы принять приглашение. Ссылка действительна <strong>24 часа</strong>.
+    </div>
+    <a href="${inviteUrl}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;margin:20px 0;font-size:16px;font-weight:600">
+      Принять приглашение
+    </a>
+    <p style="color:#6c757d;font-size:13px;margin-top:24px">
+      Если вы не ожидали это приглашение — просто проигнорируйте это письмо.
+    </p>
+  `);
+  return sendEmail(toEmail, `Приглашение в команду ${salonName} — AURELLE`, html);
+}
+
 // ─── Template helpers ─────────────────────────────────────────────────────────
 
 interface BookingTranslations {
