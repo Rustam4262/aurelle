@@ -1,29 +1,43 @@
 /**
  * SMS notification module (Twilio Messages API)
- * Mirrors server/email/index.ts patterns.
  *
- * Uses TWILIO_FROM (separate from TWILIO_SERVICE_SID used for OTP).
- * Set SMS_ENABLED=false to disable all SMS without removing credentials.
+ * Rules:
+ *  - If SMS disabled/misconfigured → all sends return false, log debug
+ *  - sendSms never throws — callers get Promise<boolean>
+ *  - 3 retries with 1s/2s backoff on Twilio failures
+ *  - Phone numbers logged as last-4 only (never full number)
  */
 
 import twilio from "twilio";
 import { logger } from "../lib/logger";
+import { getSmsConfig, getSmsConfigStatus } from "../config/sms";
 
-const SMS_ENABLED = process.env.SMS_ENABLED !== "false";
-const TWILIO_FROM = process.env.TWILIO_FROM || "";
+export { getSmsConfigStatus } from "../config/sms";
 
-let twilioClient: ReturnType<typeof twilio> | null = null;
+// ─── Client singleton ─────────────────────────────────────────────────────────
+
+let _client: ReturnType<typeof twilio> | null = null;
+let _initDone = false;
 
 function getClient(): ReturnType<typeof twilio> | null {
-  if (!SMS_ENABLED) return null;
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !TWILIO_FROM) {
-    return null;
+  if (!_initDone) {
+    _initDone = true;
+    const cfg = getSmsConfig();
+    if (cfg) {
+      _client = twilio(cfg.accountSid, cfg.authToken);
+    } else {
+      const status = getSmsConfigStatus();
+      logger.warn(`SMS disabled: ${status.reason}`, { source: "sms" });
+    }
   }
-  if (!twilioClient) {
-    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  }
-  return twilioClient;
+  return _client;
 }
+
+export function isSmsEnabled(): boolean {
+  return getSmsConfigStatus().enabled;
+}
+
+// ─── Phone normalization ──────────────────────────────────────────────────────
 
 /** Normalize to E.164. Assumes Uzbek numbers if no country code. */
 function normalizePhone(phone: string): string {
@@ -31,38 +45,54 @@ function normalizePhone(phone: string): string {
   if (digits.startsWith("998") && digits.length === 12) return `+${digits}`;
   if (digits.startsWith("0") && digits.length === 10) return `+998${digits.slice(1)}`;
   if (digits.length === 9) return `+998${digits}`;
-  // International: keep as-is with +
   return phone.startsWith("+") ? phone : `+${digits}`;
 }
 
-async function sendSms(to: string, text: string): Promise<boolean> {
+/** Return last 4 digits only for safe logging */
+function maskPhone(normalized: string): string {
+  return `***${normalized.slice(-4)}`;
+}
+
+// ─── Core send (3 retries) ────────────────────────────────────────────────────
+
+async function sendSms(to: string, body: string, type = "sms"): Promise<boolean> {
   const client = getClient();
   if (!client) {
-    logger.debug("SMS disabled or not configured — skipping", { source: "sms" });
+    logger.debug("SMS not configured — skipping", { source: "sms", meta: { type } });
     return false;
   }
 
+  const cfg = getSmsConfig()!;
   const normalized = normalizePhone(to);
+  const masked = maskPhone(normalized);
+
+  let lastErr: Error | null = null;
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       await client.messages.create({
-        from: TWILIO_FROM,
+        from: cfg.fromNumber,
         to: normalized,
-        body: text,
+        body,
+      });
+      logger.info("sms_sent", {
+        source: "sms",
+        meta: { type, to: masked, attempt },
       });
       return true;
-    } catch (err: any) {
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
       if (attempt < 3) {
         await new Promise((r) => setTimeout(r, attempt * 1000));
-      } else {
-        logger.error("SMS send failed after 3 attempts", {
-          source: "sms",
-          meta: { to: normalized, error: String(err) },
-        });
       }
     }
   }
+
+  const errCode = (lastErr as any)?.code;
+  logger.error("sms_failed", lastErr!, {
+    source: "sms",
+    meta: { type, to: masked, code: errCode },
+  });
   return false;
 }
 
@@ -75,13 +105,11 @@ function bookingCreatedText(
   time: string,
   lang = "ru",
 ): string {
-  if (lang === "uz") {
-    return `Salom, ${clientName}! Sizning ${serviceName} xizmati uchun yozuvingiz tasdiqlandi. Sana: ${date}, ${time}. AURELLE`;
-  }
-  if (lang === "en") {
-    return `Hi ${clientName}! Your booking for ${serviceName} has been confirmed. Date: ${date} at ${time}. AURELLE`;
-  }
-  return `Здравствуйте, ${clientName}! Ваша запись на ${serviceName} подтверждена. Дата: ${date} в ${time}. AURELLE`;
+  if (lang === "uz")
+    return `Salom, ${clientName}! ${serviceName} uchun yozuvingiz tasdiqlandi. ${date}, ${time}. AURELLE`;
+  if (lang === "en")
+    return `Hi ${clientName}! Your booking for ${serviceName} is confirmed. ${date} at ${time}. AURELLE`;
+  return `Здравствуйте, ${clientName}! Запись на ${serviceName} подтверждена. ${date} в ${time}. AURELLE`;
 }
 
 function bookingCancelledText(
@@ -90,13 +118,11 @@ function bookingCancelledText(
   date: string,
   lang = "ru",
 ): string {
-  if (lang === "uz") {
+  if (lang === "uz")
     return `${clientName}, ${date} sanasidagi ${serviceName} yozuvi bekor qilindi. AURELLE`;
-  }
-  if (lang === "en") {
+  if (lang === "en")
     return `${clientName}, your booking for ${serviceName} on ${date} has been cancelled. AURELLE`;
-  }
-  return `${clientName}, ваша запись на ${serviceName} (${date}) отменена. AURELLE`;
+  return `${clientName}, запись на ${serviceName} (${date}) отменена. AURELLE`;
 }
 
 function bookingRescheduledText(
@@ -106,13 +132,11 @@ function bookingRescheduledText(
   newTime: string,
   lang = "ru",
 ): string {
-  if (lang === "uz") {
-    return `${clientName}, ${serviceName} yozuvingiz yangi sanaga ko'chirildi: ${newDate}, ${newTime}. AURELLE`;
-  }
-  if (lang === "en") {
-    return `${clientName}, your booking for ${serviceName} was rescheduled to ${newDate} at ${newTime}. AURELLE`;
-  }
-  return `${clientName}, ваша запись на ${serviceName} перенесена: ${newDate} в ${newTime}. AURELLE`;
+  if (lang === "uz")
+    return `${clientName}, ${serviceName} yozuvingiz ko'chirildi: ${newDate}, ${newTime}. AURELLE`;
+  if (lang === "en")
+    return `${clientName}, your ${serviceName} booking was rescheduled to ${newDate} at ${newTime}. AURELLE`;
+  return `${clientName}, запись на ${serviceName} перенесена: ${newDate} в ${newTime}. AURELLE`;
 }
 
 function bookingReminderText(
@@ -123,13 +147,11 @@ function bookingReminderText(
   hoursUntil: number,
   lang = "ru",
 ): string {
-  if (lang === "uz") {
-    return `${clientName}, eslatma: ${serviceName} yozuvingiz ${hoursUntil} soatdan keyin. Sana: ${date}, ${time}. AURELLE`;
-  }
-  if (lang === "en") {
-    return `${clientName}, reminder: your appointment for ${serviceName} is in ${hoursUntil} hours. ${date} at ${time}. AURELLE`;
-  }
-  return `${clientName}, напоминаем: запись на ${serviceName} через ${hoursUntil} ч. ${date} в ${time}. AURELLE`;
+  if (lang === "uz")
+    return `${clientName}, eslatma: ${serviceName} ${hoursUntil} soatdan keyin. ${date}, ${time}. AURELLE`;
+  if (lang === "en")
+    return `${clientName}, reminder: ${serviceName} in ${hoursUntil} hours. ${date} at ${time}. AURELLE`;
+  return `${clientName}, напоминаем: ${serviceName} через ${hoursUntil} ч. ${date} в ${time}. AURELLE`;
 }
 
 // ─── Exported senders ─────────────────────────────────────────────────────────
@@ -142,7 +164,7 @@ export async function sendBookingCreatedSms(
   time: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingCreatedText(clientName, serviceName, date, time, lang));
+  return sendSms(phone, bookingCreatedText(clientName, serviceName, date, time, lang), "booking_created");
 }
 
 export async function sendBookingCancelledSms(
@@ -152,7 +174,7 @@ export async function sendBookingCancelledSms(
   date: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingCancelledText(clientName, serviceName, date, lang));
+  return sendSms(phone, bookingCancelledText(clientName, serviceName, date, lang), "booking_cancelled");
 }
 
 export async function sendBookingRescheduledSms(
@@ -163,7 +185,7 @@ export async function sendBookingRescheduledSms(
   newTime: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingRescheduledText(clientName, serviceName, newDate, newTime, lang));
+  return sendSms(phone, bookingRescheduledText(clientName, serviceName, newDate, newTime, lang), "booking_rescheduled");
 }
 
 export async function sendBookingReminderSms(
@@ -178,9 +200,6 @@ export async function sendBookingReminderSms(
   return sendSms(
     phone,
     bookingReminderText(clientName, serviceName, date, time, hoursUntil, lang),
+    `reminder_${hoursUntil}h`,
   );
-}
-
-export function isSmsEnabled(): boolean {
-  return SMS_ENABLED && !!process.env.TWILIO_ACCOUNT_SID && !!TWILIO_FROM;
 }

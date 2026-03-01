@@ -129,7 +129,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       const [clientProfile] = await db
         .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
         .from(userProfiles)
-        .where(eq(userProfiles.id, booking.clientId));
+        .where(eq(userProfiles.userId, booking.clientId));
       if (clientProfile?.phone) {
         const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU");
         sendBookingCreatedSms(
@@ -309,7 +309,7 @@ router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
       const [clientProfile] = await db
         .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
         .from(userProfiles)
-        .where(eq(userProfiles.id, updatedBooking.clientId));
+        .where(eq(userProfiles.userId, updatedBooking.clientId));
       if (clientProfile?.phone) {
         const dateStr = new Date(updatedBooking.bookingDate).toLocaleDateString("ru-RU");
         sendBookingRescheduledSms(

@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { getEmailConfigStatus } from "../config/email";
 import { verifyTransport } from "../email";
+import { getSmsConfigStatus } from "../config/sms";
 
 const router = Router();
 
@@ -77,6 +78,19 @@ router.get("/health/email", async (req, res) => {
     status,
     ...cfg,
     smtpVerified,
+  });
+});
+
+/**
+ * SMS Health Check
+ * Returns Twilio config status. Credentials validated at startup via getSmsConfig().
+ * Live API verify not done here (avoids Twilio API calls on every health check).
+ */
+router.get("/health/sms", (req, res) => {
+  const cfg = getSmsConfigStatus();
+  return res.status(cfg.enabled ? 200 : 200).json({
+    status: cfg.enabled ? "ok" : "disabled",
+    ...cfg,
   });
 });
 
