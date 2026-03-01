@@ -3,8 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AreaChart,
   Area,
@@ -30,7 +36,62 @@ import { useWebSocket } from "@/hooks/use-websocket";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type Scope = "platform" | "salon" | "master" | "client";
 type Window = "24h" | "7d" | "30d";
+
+interface RoleConfig {
+  title: string;
+  webhookCardLabel: string;
+  showWebhookErrors: boolean;
+  showProviderBreakdown: boolean;
+  showTopErrors: boolean;
+  pendingCardLabel: string;
+  pendingHighlight: boolean;
+  successRateProminent: boolean;
+}
+
+const ROLE_CONFIG: Record<Scope, RoleConfig> = {
+  platform: {
+    title: "Здоровье платежей платформы",
+    webhookCardLabel: "Ошибки вебхуков",
+    showWebhookErrors: true,
+    showProviderBreakdown: true,
+    showTopErrors: true,
+    pendingCardLabel: "В ожидании",
+    pendingHighlight: false,
+    successRateProminent: false,
+  },
+  salon: {
+    title: "Оплаты салона",
+    webhookCardLabel: "Ошибки провайдера",
+    showWebhookErrors: true,
+    showProviderBreakdown: true,
+    showTopErrors: true,
+    pendingCardLabel: "Ожидает",
+    pendingHighlight: false,
+    successRateProminent: true,
+  },
+  master: {
+    title: "Оплаты по моим записям",
+    webhookCardLabel: "",
+    showWebhookErrors: false,
+    showProviderBreakdown: false,
+    showTopErrors: false,
+    pendingCardLabel: "В ожидании подтверждения",
+    pendingHighlight: true,
+    successRateProminent: false,
+  },
+  client: {
+    title: "Оплаты за мои записи",
+    webhookCardLabel: "",
+    showWebhookErrors: false,
+    showProviderBreakdown: false,
+    showTopErrors: false,
+    pendingCardLabel: "Ожидает",
+    pendingHighlight: false,
+    successRateProminent: false,
+  },
+};
 
 interface HealthData {
   windowHours: number;
@@ -77,8 +138,9 @@ interface RecentData {
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface PaymentHealthWidgetProps {
-  scope: "platform" | "salon" | "master" | "client";
+  scope: Scope;
   salonId?: string;
+  salons?: Array<{ id: string; name: { en: string; ru: string; uz: string } }>;
   className?: string;
 }
 
@@ -116,13 +178,26 @@ function formatBucket(bucket: string, bucketType: "hour" | "day"): string {
   }
 }
 
+function getSalonName(name: { en: string; ru: string; uz: string }): string {
+  return name.ru || name.en || name.uz || "";
+}
+
+function successRateColor(rate: number): string {
+  if (rate >= 0.9) return "text-green-600 dark:text-green-400";
+  if (rate >= 0.7) return "text-yellow-600 dark:text-yellow-400";
+  return "text-red-600 dark:text-red-400";
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealthWidgetProps) {
+export function PaymentHealthWidget({ scope, salonId: salonIdProp, salons, className }: PaymentHealthWidgetProps) {
   const [win, setWin] = useState<Window>("24h");
+  const [selectedSalonId, setSelectedSalonId] = useState<string | undefined>(undefined);
   const { on, off } = useWebSocket();
 
-  const qs = salonId ? `&salonId=${salonId}` : "";
+  const config = ROLE_CONFIG[scope];
+  const effectiveSalonId = selectedSalonId ?? salonIdProp;
+  const qs = effectiveSalonId ? `&salonId=${effectiveSalonId}` : "";
 
   const {
     data,
@@ -130,7 +205,7 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
     error,
     refetch,
   } = useQuery<HealthData>({
-    queryKey: ["/api/payments/health", win, salonId],
+    queryKey: ["/api/payments/health", win, effectiveSalonId],
     queryFn: () =>
       apiRequest("GET", `/api/payments/health?window=${win}${qs}`).then((r) => r.json()),
     staleTime: 30_000,
@@ -138,7 +213,7 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
   });
 
   const { data: series, refetch: refetchSeries } = useQuery<TimeseriesData>({
-    queryKey: ["/api/payments/health/timeseries", win, salonId],
+    queryKey: ["/api/payments/health/timeseries", win, effectiveSalonId],
     queryFn: () =>
       apiRequest("GET", `/api/payments/health/timeseries?window=${win}${qs}`).then((r) => r.json()),
     staleTime: 30_000,
@@ -146,7 +221,7 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
   });
 
   const { data: recent, refetch: refetchRecent } = useQuery<RecentData>({
-    queryKey: ["/api/payments/health/recent", salonId],
+    queryKey: ["/api/payments/health/recent", effectiveSalonId],
     queryFn: () =>
       apiRequest("GET", `/api/payments/health/recent?limit=20${qs}`).then((r) => r.json()),
     staleTime: 30_000,
@@ -164,7 +239,7 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
     return () => off("payment_status_changed", handler);
   }, [on, off, refetch, refetchSeries, refetchRecent]);
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-12 ${className ?? ""}`}>
@@ -181,7 +256,7 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
     );
   }
 
-  // ── Payments disabled ─────────────────────────────────────────────────────
+  // ── Payments disabled ──────────────────────────────────────────────────────
   if (data && !data.enabled) {
     return (
       <div className={`rounded-xl border border-dashed border-muted-foreground/30 p-8 text-center ${className ?? ""}`}>
@@ -195,6 +270,8 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
   }
 
   const c = data?.counts ?? { succeeded: 0, failed: 0, pending: 0, cancelled: 0 };
+  const byProvider = data?.byProvider ?? {};
+  const topErrors = data?.topErrors ?? [];
   const bucketType = series?.bucket ?? (win === "24h" ? "hour" : "day");
 
   const chartData = (series?.timeseries ?? []).map((p) => ({
@@ -202,13 +279,19 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
     label: formatBucket(p.bucket, bucketType),
   }));
 
-  const statCards = [
+  const showSalonSelector = scope === "salon" && salons && salons.length > 1;
+  const showProviderColumn = scope === "platform" || scope === "salon";
+  const isPendingHighlighted = config.pendingHighlight && c.pending > 0;
+
+  // ── Stat cards ────────────────────────────────────────────────────────────
+  const baseCards = [
     {
       label: "Успешно",
       value: c.succeeded,
       icon: CheckCircle2,
       color: "text-green-600 dark:text-green-400",
       bg: "bg-green-50 dark:bg-green-900/20",
+      highlight: false,
     },
     {
       label: "Ошибок",
@@ -216,50 +299,98 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
       icon: XCircle,
       color: "text-red-600 dark:text-red-400",
       bg: "bg-red-50 dark:bg-red-900/20",
+      highlight: false,
     },
     {
-      label: "Ожидает",
+      label: config.pendingCardLabel,
       value: c.pending,
       icon: Clock,
-      color: "text-yellow-600 dark:text-yellow-400",
-      bg: "bg-yellow-50 dark:bg-yellow-900/20",
-    },
-    {
-      label: "Webhook ошибок",
-      value: data?.webhookErrors ?? 0,
-      icon: AlertTriangle,
-      color: "text-orange-600 dark:text-orange-400",
-      bg: "bg-orange-50 dark:bg-orange-900/20",
+      color: isPendingHighlighted
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-yellow-600 dark:text-yellow-400",
+      bg: isPendingHighlighted
+        ? "bg-amber-50 dark:bg-amber-900/20"
+        : "bg-yellow-50 dark:bg-yellow-900/20",
+      highlight: isPendingHighlighted,
     },
   ];
 
+  const statCards = config.showWebhookErrors
+    ? [
+        ...baseCards,
+        {
+          label: config.webhookCardLabel,
+          value: data?.webhookErrors ?? 0,
+          icon: AlertTriangle,
+          color: "text-orange-600 dark:text-orange-400",
+          bg: "bg-orange-50 dark:bg-orange-900/20",
+          highlight: false,
+        },
+      ]
+    : baseCards;
+
+  const gridCols = statCards.length === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3";
+
   return (
     <div className={`space-y-4 ${className ?? ""}`}>
-      {/* Header + window toggle */}
-      <div className="flex items-center justify-between">
+
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <h3 className="text-base font-semibold">{config.title}</h3>
         <div className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-base font-semibold">Платежи</h3>
-        </div>
-        <div className="flex gap-1">
-          {(["24h", "7d", "30d"] as Window[]).map((w) => (
-            <Button
-              key={w}
-              variant={win === w ? "default" : "ghost"}
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setWin(w)}
+          {showSalonSelector && (
+            <Select
+              value={selectedSalonId ?? "__all__"}
+              onValueChange={(v) => setSelectedSalonId(v === "__all__" ? undefined : v)}
             >
-              {w}
-            </Button>
-          ))}
+              <SelectTrigger className="h-7 text-xs w-36">
+                <SelectValue placeholder="Все салоны" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Все салоны</SelectItem>
+                {salons!.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {getSalonName(s.name)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="flex gap-1">
+            {(["24h", "7d", "30d"] as Window[]).map((w) => (
+              <Button
+                key={w}
+                variant={win === w ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setWin(w)}
+              >
+                {w}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Pending alert — master/solo-master only */}
+      {isPendingHighlighted && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-4 py-3">
+          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <span className="text-sm text-amber-800 dark:text-amber-300">
+            {c.pending === 1
+              ? "1 платёж ожидает подтверждения"
+              : `${c.pending} платежей ожидают подтверждения`}
+          </span>
+        </div>
+      )}
+
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className={`grid ${gridCols} gap-3`}>
         {statCards.map((card) => (
-          <Card key={card.label}>
+          <Card
+            key={card.label}
+            className={card.highlight ? "border-amber-300 dark:border-amber-700" : ""}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">{card.label}</span>
@@ -267,7 +398,9 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
                   <card.icon className={`h-3.5 w-3.5 ${card.color}`} />
                 </div>
               </div>
-              <div className="text-2xl font-bold">{card.value}</div>
+              <div className={`text-2xl font-bold ${card.highlight ? "text-amber-600 dark:text-amber-400" : ""}`}>
+                {card.value}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -290,7 +423,9 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
               <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Успешность</span>
             </div>
-            <div className="text-xl font-bold">
+            <div
+              className={`font-bold ${config.successRateProminent ? "text-2xl" : "text-xl"} ${successRateColor(data?.successRate ?? 0)}`}
+            >
               {((data?.successRate ?? 0) * 100).toFixed(1)}%
             </div>
           </CardContent>
@@ -351,6 +486,68 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
         </Card>
       )}
 
+      {/* Provider breakdown — admin / owner only */}
+      {config.showProviderBreakdown && Object.keys(byProvider).length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Разбивка по провайдеру
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-2 text-left text-muted-foreground font-medium">Провайдер</th>
+                    <th className="px-4 py-2 text-right text-muted-foreground font-medium">Успешно</th>
+                    <th className="px-4 py-2 text-right text-muted-foreground font-medium">Ошибок</th>
+                    <th className="px-4 py-2 text-right text-muted-foreground font-medium">Ожидает</th>
+                    <th className="px-4 py-2 text-right text-muted-foreground font-medium">Выручка</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(byProvider).map(([provider, stats]) => (
+                    <tr key={provider} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="px-4 py-2 capitalize font-medium">{provider}</td>
+                      <td className="px-4 py-2 text-right text-green-600 dark:text-green-400">{stats.succeeded}</td>
+                      <td className="px-4 py-2 text-right text-red-600 dark:text-red-400">{stats.failed}</td>
+                      <td className="px-4 py-2 text-right text-yellow-600 dark:text-yellow-400">{stats.pending}</td>
+                      <td className="px-4 py-2 text-right font-medium">{formatUzs(stats.gross)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top errors — admin / owner only */}
+      {config.showTopErrors && topErrors.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+              Частые ошибки
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {topErrors.map((err, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-muted-foreground truncate flex-1">
+                  {err.message || "Неизвестная ошибка"}
+                </span>
+                <span className="shrink-0 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 font-medium">
+                  ×{err.count}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent payments table */}
       {(recent?.payments?.length ?? 0) > 0 && (
         <Card>
@@ -363,7 +560,9 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
                 <thead>
                   <tr className="border-b border-border">
                     <th className="px-4 py-2 text-left text-muted-foreground font-medium">Статус</th>
-                    <th className="px-4 py-2 text-left text-muted-foreground font-medium">Провайдер</th>
+                    {showProviderColumn && (
+                      <th className="px-4 py-2 text-left text-muted-foreground font-medium">Провайдер</th>
+                    )}
                     <th className="px-4 py-2 text-right text-muted-foreground font-medium">Сумма</th>
                     <th className="px-4 py-2 text-left text-muted-foreground font-medium">Дата</th>
                     <th className="px-4 py-2 text-left text-muted-foreground font-medium">Ошибка</th>
@@ -373,7 +572,9 @@ export function PaymentHealthWidget({ scope, salonId, className }: PaymentHealth
                   {(recent?.payments ?? []).map((p) => (
                     <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                       <td className="px-4 py-2">{statusBadge(p.status)}</td>
-                      <td className="px-4 py-2 capitalize text-muted-foreground">{p.provider}</td>
+                      {showProviderColumn && (
+                        <td className="px-4 py-2 capitalize text-muted-foreground">{p.provider}</td>
+                      )}
                       <td className="px-4 py-2 text-right font-medium">{formatUzs(p.amountUzs)}</td>
                       <td className="px-4 py-2 text-muted-foreground">
                         {p.createdAt

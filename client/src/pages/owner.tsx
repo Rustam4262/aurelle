@@ -344,7 +344,13 @@ export default function OwnerPage() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
-            <PaymentHealthWidget scope="salon" />
+            <PaymentHealthWidget
+              scope="salon"
+              salons={salons?.map((s) => ({
+                id: s.id,
+                name: s.name as { en: string; ru: string; uz: string },
+              }))}
+            />
           </TabsContent>
         </Tabs>
       </div>
