@@ -1,8 +1,9 @@
 /**
  * CLI: send a test SMS to verify Twilio config.
  *
- * Usage:
- *   TO_PHONE=+998XXXXXXXXX tsx scripts/test-sms.ts
+ * Usage (from project root):
+ *   TO_PHONE=+998XXXXXXXXX npx tsx scripts/test-sms.ts
+ *   TO_PHONE=+998XXXXXXXXX ./node_modules/.bin/tsx scripts/test-sms.ts
  *
  * Env vars loaded from .env automatically via dotenv/config.
  */
@@ -15,7 +16,7 @@ async function main() {
   const to = process.env.TO_PHONE;
   if (!to) {
     console.error("Error: TO_PHONE env var is required.");
-    console.error("Usage: TO_PHONE=+998XXXXXXXXX tsx scripts/test-sms.ts");
+    console.error("Usage: TO_PHONE=+998XXXXXXXXX npx tsx scripts/test-sms.ts");
     process.exit(1);
   }
 

@@ -7,7 +7,7 @@ This is separate from phone OTP authentication (which uses Twilio Verify + `TWIL
 
 ## Architecture
 
-```
+```text
 booking created/cancelled/rescheduled
         │
         ▼ fire-and-forget (void async IIFE)
@@ -22,35 +22,38 @@ Twilio → client's phone number
 
 ## Environment Variables
 
-| Variable              | Required | Description                                          |
-| --------------------- | -------- | ---------------------------------------------------- |
-| `TWILIO_ACCOUNT_SID`  | Yes      | Twilio Account SID (starts with `AC`)                |
-| `TWILIO_AUTH_TOKEN`   | Yes      | Twilio Auth Token                                    |
-| `TWILIO_FROM`         | Yes      | Sender number in E.164 format (e.g. `+12025551234`) |
-| `SMS_ENABLED`         | No       | Set to `false` to disable all SMS. Default: `true`  |
+| Variable             | Required | Description                                          |
+| -------------------- | -------- | ---------------------------------------------------- |
+| `TWILIO_ACCOUNT_SID` | Yes      | Twilio Account SID (starts with `AC`)                |
+| `TWILIO_AUTH_TOKEN`  | Yes      | Twilio Auth Token                                    |
+| `TWILIO_FROM`        | Yes      | Sender number in E.164 format (e.g. `+12025551234`)  |
+| `SMS_ENABLED`        | No       | Set to `false` to disable all SMS. Default: `true`   |
 
 > `TWILIO_SERVICE_SID` is only for phone OTP auth — not needed here.
 
 ## Enabling SMS in Production
 
-1. Create a Twilio account at https://twilio.com
+1. Create a Twilio account at <https://twilio.com>
 2. Buy a phone number (or use a Messaging Service SID as sender)
 3. Add to `/var/www/aurelle/.env`:
-   ```
+
+   ```bash
    TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    TWILIO_AUTH_TOKEN=your-auth-token
    TWILIO_FROM=+12025551234
    SMS_ENABLED=true
    ```
-4. Reload the app: `pm2 reload aurelle-production`
+
+4. Reload the app: `pm2 reload aurelle-production --update-env`
 5. Smoke test:
+
    ```bash
    # Check config status (no auth required):
    curl https://aurelle.uz/api/health/sms
 
-   # Send a live test SMS:
+   # Send a live test SMS (tsx is in node_modules, not global PATH):
    cd /var/www/aurelle
-   TO_PHONE=+998XXXXXXXXX tsx scripts/test-sms.ts
+   TO_PHONE=+998XXXXXXXXX npx tsx scripts/test-sms.ts
    ```
 
 ## Health Check
@@ -58,6 +61,7 @@ Twilio → client's phone number
 `GET /api/health/sms` — no auth required.
 
 **Response when enabled:**
+
 ```json
 {
   "status": "ok",
@@ -70,12 +74,13 @@ Twilio → client's phone number
 ```
 
 **Response when disabled/misconfigured:**
+
 ```json
 {
   "status": "disabled",
   "enabled": false,
   "ok": false,
-  "reason": "Missing env vars: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM",
+  "reason": "Missing required env vars: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM",
   "provider": "twilio",
   "fromNumber": null
 }
@@ -93,12 +98,12 @@ Set `SMS_ENABLED=false` in `.env` and reload. All send functions return `false` 
 
 The SMS module normalizes Uzbek numbers automatically:
 
-| Input            | Normalized     |
-| ---------------- | -------------- |
-| `998901234567`   | `+998901234567`|
-| `0901234567`     | `+998901234567`|
-| `901234567`      | `+998901234567`|
-| `+998901234567`  | `+998901234567`|
+| Input            | Normalized      |
+| ---------------- | --------------- |
+| `998901234567`   | `+998901234567` |
+| `0901234567`     | `+998901234567` |
+| `901234567`      | `+998901234567` |
+| `+998901234567`  | `+998901234567` |
 
 For non-Uzbek numbers, include the country code (e.g. `+7...`, `+1...`).
 
@@ -111,13 +116,13 @@ For non-Uzbek numbers, include the country code (e.g. `+7...`, `+1...`).
 
 ## Troubleshooting
 
-| Symptom                          | Likely cause                                        |
-| -------------------------------- | --------------------------------------------------- |
-| `/api/health/sms` returns `disabled` | Env vars missing or `SMS_ENABLED=false`         |
-| SMS not delivered                | Wrong `TWILIO_FROM` format or unverified trial number |
-| Twilio error `21608`             | Trial account — recipient number not verified       |
-| Twilio error `21211`             | Invalid `to` number format                          |
-| No SMS on booking but no error   | `clientProfile.phone` is null in DB                |
+| Symptom                              | Likely cause                                          |
+| ------------------------------------ | ----------------------------------------------------- |
+| `/api/health/sms` returns `disabled` | Env vars missing or `SMS_ENABLED=false`               |
+| SMS not delivered                    | Wrong `TWILIO_FROM` format or unverified trial number |
+| Twilio error `21608`                 | Trial account — recipient number not verified         |
+| Twilio error `21211`                 | Invalid `to` number format                            |
+| No SMS on booking but no error       | `clientProfile.phone` is null in DB                   |
 
 **Trial account limitation**: Twilio trial accounts can only send to verified numbers.
-Upgrade to a paid account or verify the recipient at https://twilio.com/console/phone-numbers/verified.
+Upgrade to a paid account or verify the recipient at <https://twilio.com/console/phone-numbers/verified>.
