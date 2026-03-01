@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
 import i18n from "@/lib/i18n";
+import { captureException } from "@/lib/sentry";
 
 interface Props {
   children: ReactNode;
@@ -50,6 +51,8 @@ class ErrorBoundaryComponent extends Component<Props, State> {
       source: "error-boundary",
       meta: errorInfo as unknown as Record<string, unknown>,
     });
+
+    captureException(error, { componentStack: errorInfo.componentStack ?? undefined });
 
     this.setState({ error, errorInfo });
 

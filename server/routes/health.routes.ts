@@ -5,6 +5,7 @@ import { logger } from "../lib/logger";
 import { getEmailConfigStatus } from "../config/email";
 import { verifyTransport } from "../email";
 import { getSmsConfigStatus } from "../config/sms";
+import * as Sentry from "@sentry/node";
 
 const router = Router();
 
@@ -92,6 +93,38 @@ router.get("/health/sms", (req, res) => {
     status: cfg.enabled ? "ok" : "disabled",
     ...cfg,
   });
+});
+
+/**
+ * Sentry Health Check
+ * Returns Sentry config status. Never exposes the DSN value.
+ */
+router.get("/health/sentry", (_req, res) => {
+  const dsnPresent = !!process.env.SENTRY_DSN;
+  return res.status(200).json({
+    enabled: dsnPresent,
+    dsnPresent,
+    environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
+    release: process.env.SENTRY_RELEASE || `aurelle-backend@${process.env.APP_VERSION || "1.0.0"}`,
+  });
+});
+
+/**
+ * Sentry Test Endpoint (protected by SENTRY_DEBUG_TOKEN or SEED_TOKEN)
+ * Throws a test error so you can verify events appear in the Sentry dashboard.
+ * Usage: curl -H "x-debug-token: <token>" https://aurelle.uz/api/debug/sentry-test
+ */
+router.get("/debug/sentry-test", (req, res) => {
+  const token = req.headers["x-debug-token"] as string | undefined;
+  const expected = process.env.SENTRY_DEBUG_TOKEN || process.env.SEED_TOKEN;
+
+  if (!expected || token !== expected) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const error = new Error("Sentry test error — triggered via /api/debug/sentry-test");
+  Sentry.captureException(error);
+  throw error;
 });
 
 /**

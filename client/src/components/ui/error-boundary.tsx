@@ -4,6 +4,7 @@ import { Button } from "./button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/sentry";
 
 interface Props {
   children: ReactNode;
@@ -41,6 +42,8 @@ export class ErrorBoundary extends Component<Props, State> {
       meta: errorInfo as unknown as Record<string, unknown>,
     });
 
+    captureException(error, { componentStack: errorInfo.componentStack ?? undefined });
+
     this.setState({
       error,
       errorInfo,
@@ -48,9 +51,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
-
-    // TODO: Send to Sentry
-    // Sentry.captureException(error, { contexts: { react: errorInfo } });
   }
 
   handleReset = () => {

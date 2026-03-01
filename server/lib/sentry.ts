@@ -43,10 +43,48 @@ export function initializeSentry() {
     profilesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1.0,
 
     // Before sending events, filter and modify them
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Don't send errors in development unless explicitly enabled
       if (process.env.NODE_ENV !== "production" && !process.env.SENTRY_FORCE_ENABLE) {
         return null;
+      }
+
+      // Scrub sensitive data from request
+      if (event.request) {
+        // Remove sensitive headers (auth tokens, cookies)
+        if (event.request.headers) {
+          const headers = { ...event.request.headers } as Record<string, string>;
+          delete headers["authorization"];
+          delete headers["cookie"];
+          delete headers["x-api-key"];
+          event.request.headers = headers;
+        }
+
+        // Scrub sensitive fields from request body
+        if (event.request.data && typeof event.request.data === "object") {
+          const sensitiveFields = [
+            "password",
+            "passwordHash",
+            "newPassword",
+            "confirmPassword",
+            "token",
+            "authToken",
+            "resetToken",
+            "accessToken",
+            "refreshToken",
+            "secret",
+            "apiKey",
+            "authToken",
+          ];
+          const data = { ...(event.request.data as Record<string, unknown>) };
+          for (const field of sensitiveFields) {
+            if (field in data) data[field] = "[Filtered]";
+          }
+          event.request.data = data;
+        }
+
+        // Never send cookies
+        delete event.request.cookies;
       }
 
       // Add server context

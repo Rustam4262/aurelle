@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { User } from "@shared/models/auth";
 import { logger } from "@/lib/logger";
+import { setUser as setSentryUser } from "@/lib/sentry";
 
 async function fetchUser(): Promise<User | null> {
   const response = await fetch("/api/auth/user", {
@@ -59,6 +60,22 @@ export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }
       window.location.href = "/api/logout";
     },
   });
+
+  // Sync user identity to Sentry for error context
+  useEffect(() => {
+    if (!isLoading) {
+      if (user) {
+        setSentryUser({
+          id: user.id,
+          email: user.email ?? undefined,
+          username: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
+          role: user.isAdmin ? "admin" : undefined,
+        });
+      } else {
+        setSentryUser(null);
+      }
+    }
+  }, [user, isLoading]);
 
   // Auto-redirect to auth page if user is not authenticated and requireAuth is true
   useEffect(() => {
