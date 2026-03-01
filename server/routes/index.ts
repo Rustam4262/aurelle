@@ -18,6 +18,10 @@ import adminRoutes from "./admin.routes";
 import soloMasterRoutes from "./soloMaster.routes";
 import publicMasterRoutes from "./publicMaster.routes";
 import featureFlagsRoutes from "./featureFlags.routes";
+import invitationsRoutes from "./invitations.routes";
+import paymentsRoutes from "./payments.routes";
+import paymeWebhookRoutes from "./webhooks/payme.routes";
+import clickWebhookRoutes from "./webhooks/click.routes";
 
 const router = Router();
 
@@ -30,6 +34,7 @@ router.use("/feature-flags", featureFlagsRoutes);
 // Public routes (no /api prefix needed, added in main routes.ts)
 router.use("/", authRoutes);
 router.use("/", contactRoutes);
+router.use("/invitations", invitationsRoutes);
 
 // User routes
 router.use("/", usersRoutes);
@@ -56,5 +61,10 @@ router.use("/solo-master", soloMasterRoutes);
 
 // Admin panel (requires admin authentication)
 router.use("/admin", adminRoutes);
+
+// Payments
+router.use("/payments", paymentsRoutes);
+router.use("/webhooks/payme", paymeWebhookRoutes);
+router.use("/webhooks/click", clickWebhookRoutes);
 
 export default router;

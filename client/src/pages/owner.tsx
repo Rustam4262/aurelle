@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "@/hooks/use-websocket";
 import type { Salon, Booking, Service, Master } from "@shared/schema";
 import {
   ArrowLeft,
@@ -58,6 +59,18 @@ export default function OwnerPage() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [calendarView, setCalendarView] = useState<"day" | "week">("day");
+  const queryClient = useQueryClient();
+  const { on, off } = useWebSocket();
+
+  // Real-time: refresh bookings + dashboard when a new booking arrives
+  useEffect(() => {
+    const handler = () => {
+      void queryClient.invalidateQueries({ queryKey: ["/api/owner/bookings"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/owner/dashboard"] });
+    };
+    on("new_booking", handler);
+    return () => off("new_booking", handler);
+  }, [on, off, queryClient]);
 
   const { data: salons } = useQuery<Salon[]>({
     queryKey: ["/api/owner/salons"],

@@ -38,6 +38,9 @@ export const salons = pgTable(
     status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused
     averageRating: decimal("average_rating", { precision: 2, scale: 1 }).default("0"),
     reviewCount: integer("review_count").default(0),
+    // Payment settings (opt-in per salon)
+    paymentEnabled: boolean("payment_enabled").default(false),
+    depositPercent: integer("deposit_percent").default(0), // 0=full, 1-99=deposit %
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -371,6 +374,7 @@ export const bookings = pgTable(
     clientLongitude: decimal("client_longitude", { precision: 10, scale: 7 }),
     estimatedTravelTime: integer("estimated_travel_time"), // in minutes
     mobileExtraCharge: integer("mobile_extra_charge").default(0), // extra charge for mobile service
+    paymentStatus: varchar("payment_status", { length: 20 }).default("not_required"), // not_required | pending | paid | refunded
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -998,6 +1002,8 @@ export const salonManagers = pgTable(
     status: varchar("status", { length: 20 }).default("pending"), // pending, active, revoked
     revokedAt: timestamp("revoked_at"),
     revokedBy: varchar("revoked_by"),
+    invitationToken: varchar("invitation_token").unique(),
+    invitationExpiresAt: timestamp("invitation_expires_at"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -1019,6 +1025,35 @@ export const insertSalonManagerSchema = createInsertSchema(salonManagers).omit({
 
 export type InsertSalonManager = z.infer<typeof insertSalonManagerSchema>;
 export type SalonManager = typeof salonManagers.$inferSelect;
+
+// ============ PAYMENTS ============
+export const payments = pgTable(
+  "payments",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    bookingId: varchar("booking_id").notNull(),
+    provider: varchar("provider", { length: 20 }).notNull(), // "payme" | "click"
+    externalId: varchar("external_id"), // Provider's transaction/order ID
+    orderId: varchar("order_id").unique().notNull(), // Our internal order ID (sent to provider)
+    amountUzs: integer("amount_uzs").notNull(),
+    type: varchar("type", { length: 20 }).notNull(), // "full" | "deposit"
+    status: varchar("status", { length: 20 }).default("pending"), // pending | succeeded | failed | cancelled | refunded
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_payments_booking").on(table.bookingId),
+    index("idx_payments_order").on(table.orderId),
+    index("idx_payments_status").on(table.status),
+    index("idx_payments_provider").on(table.provider),
+  ],
+);
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
 
 // ============ PASSWORD RESET TOKENS ============
 export const passwordResetTokens = pgTable(

@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 import { db } from "../db";
+import { sendManagerInvitationEmail } from "../email";
 import bcrypt from "bcrypt";
 import {
   salons,
@@ -31,7 +32,7 @@ import {
   DEFAULT_MANAGER_PERMISSIONS,
 } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
-import { eq, and, desc, inArray, gte, lte, lt, ne, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, gte, lte, lt, ne, sql, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
 import { createNewBookingNotification } from "../notifications";
@@ -2504,11 +2505,26 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
         bookings: stats.bookings,
       }));
 
+    // Count clients whose very first booking (ever, in any of owner's salons) falls today
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const newClientRows = await db
+      .select({ clientId: bookings.clientId })
+      .from(bookings)
+      .where(and(inArray(bookings.salonId, salonIds), isNotNull(bookings.clientId)))
+      .groupBy(bookings.clientId)
+      .having(
+        and(
+          gte(sql<Date>`MIN(${bookings.bookingDate})`, today),
+          lte(sql<Date>`MIN(${bookings.bookingDate})`, tomorrow),
+        ),
+      );
+    const newClientsToday = newClientRows.length;
+
     return res.json({
       today: {
         revenue: todayRevenue,
         bookings: todayBookings.length,
-        newClients: 0, // TODO: implement new client tracking
+        newClients: newClientsToday,
         completionRate: Math.round(todayCompletionRate),
       },
       week: {
@@ -3894,8 +3910,20 @@ router.post(
         result: "success",
       });
 
-      // TODO: Send email notification to invited user
-      // await sendManagerInvitationEmail(email, salon, ownerId);
+      // Generate invitation token and send email (fire-and-forget)
+      const inviteToken = randomBytes(32).toString("hex");
+      const inviteExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+      void db
+        .update(salonManagers)
+        .set({ invitationToken: inviteToken, invitationExpiresAt: inviteExpiry })
+        .where(eq(salonManagers.id, manager.id))
+        .then(() => sendManagerInvitationEmail(email, salon, inviteToken))
+        .catch((err: unknown) =>
+          logger.error("Failed to send manager invitation email", err instanceof Error ? err : new Error(String(err)), {
+            source: "owner-routes",
+            meta: { managerId: manager.id, email },
+          }),
+        );
 
       return res.status(201).json(manager);
     } catch (error) {

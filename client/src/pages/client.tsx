@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { UserProfile } from "@shared/schema";
 import {
@@ -43,8 +44,23 @@ export default function ClientPage() {
   const { user, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { on, off } = useWebSocket();
 
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Real-time: refresh bookings when status changes (confirmed / cancelled)
+  useEffect(() => {
+    const handler = () => {
+      void queryClient.invalidateQueries({ queryKey: ["/api/client/bookings"] });
+    };
+    on("booking_confirmed", handler);
+    on("booking_cancelled", handler);
+    return () => {
+      off("booking_confirmed", handler);
+      off("booking_cancelled", handler);
+    };
+  }, [on, off, queryClient]);
 
   // State for actions lifted up
   const [writeReviewDialogOpen, setWriteReviewDialogOpen] = useState(false);

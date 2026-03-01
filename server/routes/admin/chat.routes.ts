@@ -6,6 +6,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { insertChatMessageSchema } from "@shared/admin-schema";
 import { logger } from "../../lib/logger";
+import { broadcast, broadcastToUser } from "../../lib/websocket";
 
 const router = Router();
 
@@ -93,14 +94,17 @@ router.post("/threads/:id/messages", requirePermission("chat.write"), async (req
 
     const [newMessage] = await db.insert(chatMessages).values(validatedData).returning();
 
-    // Update thread's last message time
-    await db
+    // Update thread's last message time + fetch thread's userId for WS
+    const [thread] = await db
       .update(chatThreads)
-      .set({
-        lastMessageAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(chatThreads.id, id));
+      .set({ lastMessageAt: new Date(), updatedAt: new Date() })
+      .where(eq(chatThreads.id, id))
+      .returning({ userId: chatThreads.userId });
+
+    // WebSocket: notify all admins + the thread's user
+    const payload = { threadId: id, message: newMessage, senderId: userId };
+    broadcast("admin", "chat_message", payload);
+    if (thread?.userId) broadcastToUser(thread.userId, "chat_message", payload);
 
     res.status(201).json({ message: newMessage });
   } catch (error: any) {

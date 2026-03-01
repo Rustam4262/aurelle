@@ -13,6 +13,7 @@ import {
   rescheduleBookingReminders,
 } from "../lib/reminders";
 import { fireConfirmationEmail, fireCancellationEmail } from "../lib/booking-emails";
+import { broadcast, broadcastToUser } from "../lib/websocket";
 import {
   sendBookingCreatedSms,
   sendBookingCancelledSms,
@@ -141,6 +142,21 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
         ).catch(() => {});
       }
     })();
+
+    // WebSocket: notify salon owner + confirm to client
+    broadcast(`salon_${booking.salonId}`, "new_booking", {
+      bookingId: booking.id,
+      salonId: booking.salonId,
+      time: booking.startTime,
+      date: booking.bookingDate,
+    });
+    if (booking.clientId) {
+      broadcastToUser(booking.clientId, "booking_confirmed", {
+        bookingId: booking.id,
+        salonId: booking.salonId,
+        time: booking.startTime,
+      });
+    }
 
     return res.status(201).json(booking);
   } catch (error) {
