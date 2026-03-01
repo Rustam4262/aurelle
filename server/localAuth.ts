@@ -3,7 +3,7 @@ import crypto from "crypto";
 import type { Express, Request, Response } from "express";
 import { db } from "./db";
 import { users, passwordResetTokens } from "@shared/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLimiter";
 import { logger } from "./lib/logger";
@@ -236,7 +236,7 @@ export function setupLocalAuth(app: Express) {
           and(
             eq(passwordResetTokens.token, token),
             gt(passwordResetTokens.expiresAt, new Date()),
-            eq(passwordResetTokens.usedAt, null as any),
+            isNull(passwordResetTokens.usedAt),
           ),
         )
         .limit(1);
