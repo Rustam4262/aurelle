@@ -17,13 +17,12 @@ import contactRoutes from "./contact.routes";
 import adminRoutes from "./admin.routes";
 import soloMasterRoutes from "./soloMaster.routes";
 import publicMasterRoutes from "./publicMaster.routes";
-import healthRoutes from "./health.routes";
 import featureFlagsRoutes from "./featureFlags.routes";
 
 const router = Router();
 
-// Health check (public, no authentication required)
-router.use("/", healthRoutes);
+// NOTE: healthRoutes is mounted directly in server/routes.ts (before the rate limiter).
+// Do NOT add it here — it would be a duplicate and would be rate-limited.
 
 // Feature flags (public, no authentication required)
 router.use("/feature-flags", featureFlagsRoutes);
