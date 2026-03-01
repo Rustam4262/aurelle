@@ -1040,6 +1040,13 @@ export const payments = pgTable(
     amountUzs: integer("amount_uzs").notNull(),
     type: varchar("type", { length: 20 }).notNull(), // "full" | "deposit"
     status: varchar("status", { length: 20 }).default("pending"), // pending | succeeded | failed | cancelled | refunded
+    // Scope columns (denormalized from booking for fast scoped queries)
+    salonId: varchar("salon_id"),
+    masterId: varchar("master_id"),
+    clientId: varchar("client_id"),
+    // Error tracking
+    errorCode: varchar("error_code", { length: 100 }),
+    errorMessage: text("error_message"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -1049,6 +1056,10 @@ export const payments = pgTable(
     index("idx_payments_order").on(table.orderId),
     index("idx_payments_status").on(table.status),
     index("idx_payments_provider").on(table.provider),
+    index("idx_payments_created").on(table.createdAt),
+    index("idx_payments_salon").on(table.salonId, table.createdAt),
+    index("idx_payments_master").on(table.masterId, table.createdAt),
+    index("idx_payments_client").on(table.clientId, table.createdAt),
   ],
 );
 
@@ -1107,3 +1118,30 @@ export const scheduledNotifications = pgTable(
 );
 
 export type ScheduledNotification = typeof scheduledNotifications.$inferSelect;
+
+// ============ WEBHOOK EVENTS (payment audit trail) ============
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    provider: varchar("provider", { length: 20 }).notNull(), // "payme" | "click"
+    eventType: varchar("event_type", { length: 100 }),
+    orderId: varchar("order_id"),
+    receivedAt: timestamp("received_at").defaultNow(),
+    processedAt: timestamp("processed_at"),
+    ok: boolean("ok").notNull().default(false),
+    httpStatus: integer("http_status"),
+    error: text("error"),
+    // Sanitized payload — no provider secrets
+    raw: jsonb("raw").$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    index("idx_we_received").on(table.receivedAt),
+    index("idx_we_provider").on(table.provider, table.receivedAt),
+    index("idx_we_ok").on(table.ok, table.receivedAt),
+  ],
+);
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect;

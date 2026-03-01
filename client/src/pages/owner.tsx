@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OwnerDashboardNavigation } from "@/components/owner-dashboard-navigation";
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
 
 interface EnrichedBooking extends Booking {
   salon?: Salon;
@@ -340,6 +341,10 @@ export default function OwnerPage() {
                 })) || []
               }
             />
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            <PaymentHealthWidget scope="salon" />
           </TabsContent>
         </Tabs>
       </div>

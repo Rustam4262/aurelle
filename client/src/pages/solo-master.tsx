@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -942,6 +943,8 @@ export default function SoloMasterPage() {
                   )}
                 </CardContent>
               </Card>
+
+              <PaymentHealthWidget scope="master" />
             </div>
           </TabsContent>
 

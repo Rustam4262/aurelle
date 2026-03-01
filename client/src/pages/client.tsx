@@ -30,6 +30,7 @@ import { ClientBookings } from "@/components/client/ClientBookings";
 import { ClientReviews } from "@/components/client/ClientReviews";
 import { ClientFavorites } from "@/components/client/ClientFavorites";
 import { ClientSupport } from "@/components/client/ClientSupport";
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { WriteReviewDialog } from "@/components/client/WriteReviewDialog";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
 import type {
@@ -292,6 +293,7 @@ export default function ClientPage() {
               favorites={favoritesData}
               onNavigateToTab={setActiveTab}
             />
+            <PaymentHealthWidget scope="client" />
           </TabsContent>
 
           <TabsContent

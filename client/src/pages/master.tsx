@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 // Sub-components
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { MasterOverview } from "@/components/master/MasterOverview";
 import { MasterNotifications } from "@/components/master/MasterNotifications";
 import { MasterSchedule } from "@/components/master/MasterSchedule";
@@ -272,9 +273,10 @@ export default function MasterPage() {
 
           <TabsContent
             value="analytics"
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6"
           >
             <MasterAnalytics stats={statsQuery.data} isLoading={statsQuery.isLoading} />
+            <PaymentHealthWidget scope="master" />
           </TabsContent>
         </Tabs>
       </div>

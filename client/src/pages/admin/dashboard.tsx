@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Users,
@@ -265,6 +266,17 @@ export default function AdminDashboard() {
               {t("admin.dashboard.noGrowthData")}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Payment Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("admin.dashboard.paymentHealth")}</CardTitle>
+          <CardDescription>{t("admin.dashboard.paymentHealthSubtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PaymentHealthWidget scope="platform" />
         </CardContent>
       </Card>
 

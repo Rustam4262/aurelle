@@ -13,6 +13,7 @@ import {
     Users,
     Store,
     LayoutDashboard,
+    CreditCard,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -62,6 +63,11 @@ export function OwnerDashboardNavigation({
             value: "analytics",
             label: t("marketplace.analytics.title", "Analytics"),
             icon: BarChart3,
+        },
+        {
+            value: "payments",
+            label: t("owner.payments", "Payments"),
+            icon: CreditCard,
         },
     ];
 
