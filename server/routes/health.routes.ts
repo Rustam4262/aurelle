@@ -2,6 +2,8 @@ import { Router } from "express";
 import { db } from "../db";
 import { sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { getEmailConfigStatus } from "../config/email";
+import { verifyTransport } from "../email";
 
 const router = Router();
 
@@ -52,6 +54,30 @@ router.get("/health", async (req, res) => {
       responseTime: `${Date.now() - startTime}ms`,
     });
   }
+});
+
+/**
+ * Email Health Check
+ * Returns SMTP config status + live verify (60s cached). Never exposes password.
+ */
+router.get("/health/email", async (req, res) => {
+  const cfg = getEmailConfigStatus();
+
+  if (!cfg.enabled) {
+    return res.status(200).json({
+      status: "disabled",
+      ...cfg,
+      smtpVerified: false,
+    });
+  }
+
+  const smtpVerified = await verifyTransport();
+  const status = smtpVerified ? "ok" : "degraded";
+  return res.status(smtpVerified ? 200 : 503).json({
+    status,
+    ...cfg,
+    smtpVerified,
+  });
 });
 
 /**
