@@ -1767,7 +1767,52 @@
         "pendingComplDesc": "Require attention",
         "blockedUsers": "Blocked Users",
         "blockedUsersDesc": "Percentage blocked"
-      }
+      },
+      "period": { "24h": "24h", "7d": "7d", "30d": "30d", "90d": "90d" },
+      "refresh": "Refresh",
+      "newInPeriod": "+{{count}} in period",
+      "prevPeriod": "prev: {{count}}",
+      "errorLoading": "Failed to load data",
+      "retry": "Retry",
+      "actionCenter": {
+        "title": "Requires Attention",
+        "noItems": "No tasks require attention",
+        "unverifiedSalons": "Unverified salons",
+        "pendingComplaints": "Complaints pending",
+        "paymentErrors": "Payment errors (24h)",
+        "expiringToday": "Sanctions expiring today",
+        "goTo": "View"
+      },
+      "funnel": {
+        "title": "Conversion Funnel",
+        "subtitle": "For selected period",
+        "signups": "Registrations",
+        "bookingsCreated": "Bookings created",
+        "bookingsCompleted": "Bookings confirmed",
+        "noData": "No data for this period"
+      },
+      "growthSeries": {
+        "users": "Users",
+        "salons": "Salons",
+        "bookings": "Bookings"
+      },
+      "tooltip": {
+        "users": "Total registered accounts",
+        "salons": "Total salons on platform",
+        "masters": "Total master profiles",
+        "bookings": "Total bookings all time",
+        "complaints": "Complaints with status 'open'",
+        "sanctions": "Active sanctions (not expired)",
+        "online": "Sessions active in last 10 minutes"
+      },
+      "paymentHealth": "Payment Health",
+      "paymentHealthSubtitle": "Transaction status and errors"
+    },
+    "navGroup": {
+      "users": "Users",
+      "moderation": "Moderation",
+      "support": "Support",
+      "system": "System"
     },
     "users": {
       "title": "User Management",

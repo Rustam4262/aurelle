@@ -1766,7 +1766,52 @@
         "pendingComplDesc": "E'tibor talab qiladi",
         "blockedUsers": "Bloklangan foydalanuvchilar",
         "blockedUsersDesc": "Bloklangan foizi"
-      }
+      },
+      "period": { "24h": "24s", "7d": "7k", "30d": "30k", "90d": "90k" },
+      "refresh": "Yangilash",
+      "newInPeriod": "+{{count}} davrda",
+      "prevPeriod": "oldingi: {{count}}",
+      "errorLoading": "Ma'lumotlarni yuklashda xatolik",
+      "retry": "Qayta urinish",
+      "actionCenter": {
+        "title": "E'tibor talab qiladi",
+        "noItems": "Diqqat talab qiladigan vazifalar yo'q",
+        "unverifiedSalons": "Tasdiqlanmagan salonlar",
+        "pendingComplaints": "Kutilayotgan shikoyatlar",
+        "paymentErrors": "To'lov xatolari (24s)",
+        "expiringToday": "Bugun tugaydigan sanktsiyalar",
+        "goTo": "O'tish"
+      },
+      "funnel": {
+        "title": "Konversiya voronkasi",
+        "subtitle": "Tanlangan davr uchun",
+        "signups": "Ro'yxatdan o'tishlar",
+        "bookingsCreated": "Bronlar yaratildi",
+        "bookingsCompleted": "Bronlar tasdiqlandi",
+        "noData": "Bu davr uchun ma'lumot yo'q"
+      },
+      "growthSeries": {
+        "users": "Foydalanuvchilar",
+        "salons": "Salonlar",
+        "bookings": "Bronlar"
+      },
+      "tooltip": {
+        "users": "Jami ro'yxatdan o'tgan hisoblar",
+        "salons": "Platformadagi jami salonlar",
+        "masters": "Jami usta profillari",
+        "bookings": "Barcha vaqt uchun jami bronlar",
+        "complaints": "\"Ochiq\" statusidagi shikoyatlar",
+        "sanctions": "Faol sanktsiyalar (muddati o'tmagan)",
+        "online": "So'nggi 10 daqiqada faol sessiyalar"
+      },
+      "paymentHealth": "To'lovlar salomatligi",
+      "paymentHealthSubtitle": "Tranzaksiya holati va xatoliklar"
+    },
+    "navGroup": {
+      "users": "Foydalanuvchilar",
+      "moderation": "Moderatsiya",
+      "support": "Qo'llab-quvvatlash",
+      "system": "Tizim"
     },
     "users": {
       "title": "Foydalanuvchilarni boshqarish",
