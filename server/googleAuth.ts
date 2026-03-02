@@ -5,6 +5,7 @@ import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
 import { oauthLimiter } from "./middleware/rateLimiter";
 import { captureException } from "./lib/sentry";
+import { trackUserLogin } from "./middleware/activity";
 
 function getGoogleCredentials(): { clientID: string; clientSecret: string } | null {
   const clientID = process.env.GOOGLE_CLIENT_ID;
@@ -44,7 +45,7 @@ export async function setupGoogleAuth(app: Express) {
       logger.warn("[OAuth] Google not configured — GOOGLE_CLIENT_SECRET looks like a placeholder (too short)");
     }
 
-    // Register fallback routes so unconfigured provider returns a clear error instead of 404
+    // Fallback routes so unconfigured provider returns a clear error instead of 404
     app.get("/api/auth/google", (_req, res) => {
       res.redirect("/auth?error=provider_not_configured");
     });
@@ -99,7 +100,7 @@ export async function setupGoogleAuth(app: Express) {
               },
               access_token: accessToken,
               refresh_token: refreshToken,
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
+              expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
             };
 
             done(null, user);
@@ -137,21 +138,43 @@ export async function setupGoogleAuth(app: Express) {
     ensureGoogleStrategy(req);
     passport.authenticate(`google:${req.hostname}`, (err: any, user: any) => {
       if (err || !user) {
+        logger.warn(`[OAuth] Google callback failed: ${err?.message ?? "no user returned"}`, {
+          source: "google-oauth",
+          meta: { error: String(err ?? "no user") },
+        });
         return res.redirect("/auth?error=google_auth_failed");
       }
-      req.logIn(user, (loginErr) => {
-        if (loginErr) return res.redirect("/auth?error=google_auth_failed");
 
-        const role = (req.session as any).oauthRole as string | undefined;
-        const redirect = (req.session as any).oauthRedirect as string | undefined;
-        delete (req.session as any).oauthRole;
-        delete (req.session as any).oauthRedirect;
+      const role = (req.session as any).oauthRole as string | undefined;
+      const redirect = (req.session as any).oauthRedirect as string | undefined;
+      delete (req.session as any).oauthRole;
+      delete (req.session as any).oauthRedirect;
+
+      // Persist session the same way localAuth does — passport.initialize() is not used
+      // in this app, so req.logIn() is not available. Write directly to session.
+      (req.session as any).passport = { user };
+
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          logger.warn(`[OAuth] Google session save failed: ${saveErr.message}`, {
+            source: "google-oauth",
+          });
+          return res.redirect("/auth?error=google_auth_failed");
+        }
+
+        // Track login activity
+        const userId = user?.claims?.sub;
+        if (userId) trackUserLogin(userId, req);
 
         const dest = isAllowedRedirect(redirect)
           ? redirect!
           : role
             ? `/auth?role=${encodeURIComponent(role)}`
             : "/auth";
+
+        logger.info(`[OAuth] Google login OK — sub=${userId ?? "unknown"} → ${dest}`, {
+          source: "google-oauth",
+        });
         res.redirect(dest);
       });
     })(req, res, next);
