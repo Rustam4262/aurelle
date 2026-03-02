@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -342,7 +343,9 @@ export default function AdminPage() {
 
   return (
     <AdminLayout>
-      <PageComponent />
+      <ErrorBoundary key={location}>
+        <PageComponent />
+      </ErrorBoundary>
     </AdminLayout>
   );
 }

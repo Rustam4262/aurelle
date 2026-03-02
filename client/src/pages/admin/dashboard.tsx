@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
 import { PaymentHealthWidget } from "@/components/payment-health-widget";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -116,6 +117,7 @@ interface KpiCardProps {
   tooltipText: string;
   accentClass?: string;
   isOnline?: boolean;
+  href?: string;
 }
 
 function KpiCard({
@@ -130,11 +132,12 @@ function KpiCard({
   tooltipText,
   accentClass,
   isOnline,
+  href,
 }: KpiCardProps) {
   const isPositive = delta !== undefined && delta >= 0;
 
-  return (
-    <Card className={accentClass}>
+  const cardContent = (
+    <Card className={`${accentClass ?? ""} ${href ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div className="flex items-center gap-1.5">
@@ -184,6 +187,11 @@ function KpiCard({
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link href={href}>{cardContent}</Link>;
+  }
+  return cardContent;
 }
 
 interface ActionItemProps {
@@ -399,6 +407,7 @@ export default function AdminDashboard() {
             color="text-blue-600"
             bgColor="bg-blue-100 dark:bg-blue-900/30"
             tooltipText={t("admin.dashboard.tooltip.users")}
+            href="/admin/users"
           />
 
           {/* Salons */}
@@ -412,6 +421,7 @@ export default function AdminDashboard() {
             color="text-purple-600"
             bgColor="bg-purple-100 dark:bg-purple-900/30"
             tooltipText={t("admin.dashboard.tooltip.salons")}
+            href="/admin/salons"
           />
 
           {/* Masters */}
@@ -451,6 +461,7 @@ export default function AdminDashboard() {
                 ? "border-l-4 border-l-red-500"
                 : undefined
             }
+            href="/admin/complaints"
           />
 
           {/* Active Sanctions */}
@@ -466,6 +477,7 @@ export default function AdminDashboard() {
                 ? "border-l-4 border-l-amber-500"
                 : undefined
             }
+            href="/admin/sanctions"
           />
 
           {/* Online Now — spans 2 cols */}
@@ -783,7 +795,13 @@ export default function AdminDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentHealthWidget scope="platform" />
+          <ErrorBoundary fallback={
+            <p className="py-4 text-sm text-muted-foreground text-center">
+              Данные о платежах временно недоступны
+            </p>
+          }>
+            <PaymentHealthWidget scope="platform" />
+          </ErrorBoundary>
         </CardContent>
       </Card>
     </div>

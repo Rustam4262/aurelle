@@ -1767,7 +1767,12 @@
         "blockedUsers": "Bloklangan foydalanuvchilar",
         "blockedUsersDesc": "Bloklangan foizi"
       },
-      "period": { "24h": "24s", "7d": "7k", "30d": "30k", "90d": "90k" },
+      "period": {
+        "24h": "24s",
+        "7d": "7k",
+        "30d": "30k",
+        "90d": "90k"
+      },
       "refresh": "Yangilash",
       "newInPeriod": "+{{count}} davrda",
       "prevPeriod": "oldingi: {{count}}",
@@ -1825,7 +1830,13 @@
       "allStatuses": "Barcha holatlar",
       "active": "Faol",
       "blocked": "Bloklangan",
-      "verification": "Tasdiqlash",
+      "verification": {
+        "all": "Barchasi",
+        "fullyVerified": "To'liq tasdiqlangan",
+        "emailVerified": "Email tasdiqlangan",
+        "phoneVerified": "Telefon tasdiqlangan",
+        "unverified": "Tasdiqlanmagan"
+      },
       "allVerification": "Hammasi",
       "emailVerified": "Email tasdiqlangan",
       "phoneVerified": "Telefon tasdiqlangan",
