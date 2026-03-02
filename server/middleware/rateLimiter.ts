@@ -65,6 +65,15 @@ export const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// OAuth: 20 attempts per 15 minutes per IP (protects Google/Yandex start routes)
+export const oauthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { error: "Too many OAuth attempts. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Глобальный лимит для всех запросов
 export const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 минута

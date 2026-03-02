@@ -3,6 +3,8 @@ import { Strategy as YandexStrategy } from "passport-yandex";
 import type { Express } from "express";
 import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
+import { oauthLimiter } from "./middleware/rateLimiter";
+import { captureException } from "./lib/sentry";
 
 function getYandexCredentials() {
   const clientID = process.env.YANDEX_CLIENT_ID;
@@ -18,6 +20,12 @@ function getYandexCredentials() {
   }
 
   return { clientID, clientSecret };
+}
+
+function isAllowedRedirect(path?: string): boolean {
+  if (!path) return false;
+  // Same-origin only: must start with / but not // (protocol-relative), no ://
+  return /^\/[^/]/.test(path) && !path.includes("://");
 }
 
 export async function setupYandexAuth(app: Express) {
@@ -62,7 +70,7 @@ export async function setupYandexAuth(app: Express) {
               ? `https://avatars.yandex.net/get-yapic/${profile._json.default_avatar_id}/islands-200`
               : undefined;
 
-            await authStorage.upsertUser({
+            const { userId } = await authStorage.upsertUser({
               id: `yandex:${profile.id}`,
               email,
               firstName,
@@ -72,7 +80,7 @@ export async function setupYandexAuth(app: Express) {
 
             const user = {
               claims: {
-                sub: `yandex:${profile.id}`,
+                sub: userId,
                 email,
                 first_name: firstName,
                 last_name: lastName,
@@ -85,6 +93,7 @@ export async function setupYandexAuth(app: Express) {
 
             done(null, user);
           } catch (error) {
+            captureException(error as Error, { source: "yandex-oauth" });
             done(error);
           }
         },
@@ -95,16 +104,43 @@ export async function setupYandexAuth(app: Express) {
     }
   };
 
-  app.get("/api/auth/yandex", (req, res, next) => {
+  app.get("/api/auth/yandex", oauthLimiter, (req, res, next) => {
     ensureYandexStrategy(req);
+
+    const role = typeof req.query.role === "string" ? req.query.role : undefined;
+    const redirect = typeof req.query.redirect === "string" ? req.query.redirect : undefined;
+
+    if (role && ["client", "owner", "solo_master"].includes(role)) {
+      (req.session as any).oauthRole = role;
+    }
+    if (isAllowedRedirect(redirect)) {
+      (req.session as any).oauthRedirect = redirect;
+    }
+
     passport.authenticate(`yandex:${req.hostname}`)(req, res, next);
   });
 
   app.get("/api/auth/yandex/callback", (req, res, next) => {
     ensureYandexStrategy(req);
-    passport.authenticate(`yandex:${req.hostname}`, {
-      successRedirect: "/auth",
-      failureRedirect: "/auth?error=yandex_auth_failed",
+    passport.authenticate(`yandex:${req.hostname}`, (err: any, user: any) => {
+      if (err || !user) {
+        return res.redirect("/auth?error=yandex_auth_failed");
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) return res.redirect("/auth?error=yandex_auth_failed");
+
+        const role = (req.session as any).oauthRole as string | undefined;
+        const redirect = (req.session as any).oauthRedirect as string | undefined;
+        delete (req.session as any).oauthRole;
+        delete (req.session as any).oauthRedirect;
+
+        const dest = isAllowedRedirect(redirect)
+          ? redirect!
+          : role
+            ? `/auth?role=${encodeURIComponent(role)}`
+            : "/auth";
+        res.redirect(dest);
+      });
     })(req, res, next);
   });
 

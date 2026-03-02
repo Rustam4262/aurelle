@@ -27,14 +27,6 @@ function YandexIcon({ className }: { className?: string }) {
   );
 }
 
-function loginWithYandex() {
-  window.location.href = "/api/auth/yandex";
-}
-
-function loginWithGoogle() {
-  window.location.href = "/api/auth/google";
-}
-
 function loginWithGitHub() {
   window.location.href = "/api/auth/github";
 }
@@ -72,6 +64,9 @@ export default function AuthPage() {
     phone: "",
     city: "",
   });
+
+  // Role extracted from URL ?role= param — used to pre-select role and pass to OAuth
+  const [urlRole, setUrlRole] = useState<string | null>(null);
 
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [emailAuthData, setEmailAuthData] = useState({
@@ -298,6 +293,16 @@ export default function AuthPage() {
       code: phoneAuthData.code,
     });
   };
+
+  // Read ?role= from URL on mount — pre-selects role in profile form and passes to OAuth
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get("role");
+    if (roleParam === "client" || roleParam === "owner" || roleParam === "solo_master") {
+      setUrlRole(roleParam);
+      setSelectedRole(roleParam);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -596,7 +601,10 @@ export default function AuthPage() {
                     className="w-full"
                     size="lg"
                     variant="outline"
-                    onClick={loginWithGoogle}
+                    onClick={() => {
+                      const q = urlRole ? `?role=${encodeURIComponent(urlRole)}` : "";
+                      window.location.href = `/api/auth/google${q}`;
+                    }}
                     data-testid="button-login-google"
                   >
                     <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
@@ -608,7 +616,10 @@ export default function AuthPage() {
                     className="w-full"
                     size="lg"
                     variant="outline"
-                    onClick={loginWithYandex}
+                    onClick={() => {
+                      const q = urlRole ? `?role=${encodeURIComponent(urlRole)}` : "";
+                      window.location.href = `/api/auth/yandex${q}`;
+                    }}
                     data-testid="button-login-yandex"
                   >
                     <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
