@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { exportToExcel, exportToPDF } from "@/lib/export";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -113,16 +115,43 @@ export default function AdminUsers() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Search & Filters
-  const [search, setSearch] = useState("");
+  // Search & Filters — initialized from URL query params
+  const [search, setSearch] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.get("q") || "";
+  });
   const debouncedSearch = useDebounce(search, 500);
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [verificationFilter, setVerificationFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.get("role") || "all";
+  });
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.get("status") || "all";
+  });
+  const [verificationFilter, setVerificationFilter] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.get("verification") || "all";
+  });
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState<number>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return Math.max(1, parseInt(p.get("page") || "1") || 1);
+  });
   const pageSize = 20;
+
+  // Sync active filters back to URL (uses debouncedSearch so URL only updates after typing stops)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    if (roleFilter !== "all") params.set("role", roleFilter);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (verificationFilter !== "all") params.set("verification", verificationFilter);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, [debouncedSearch, roleFilter, statusFilter, verificationFilter, page]);
 
   // Bulk selection
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -381,18 +410,20 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b -mx-8 px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-semibold text-foreground">
+          <h1 className="text-2xl font-serif font-semibold text-foreground">
             {t("admin.users.title")}
           </h1>
-          <p className="text-muted-foreground mt-2">
-            {t("admin.users.subtitle")} {data?.total || 0} {t("admin.users.totalCount")}
-            {selectedUsers.size > 0 && ` • ${selectedUsers.size} ${t("admin.users.selectedCount")}`}
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {data?.total != null
+              ? `${data.total} ${t("admin.users.totalCount")}`
+              : t("admin.users.subtitle")}
+            {selectedUsers.size > 0 && ` · ${selectedUsers.size} ${t("admin.users.selectedCount")}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -624,9 +655,55 @@ export default function AdminUsers() {
               </Button>
             </div>
           ) : isLoading ? (
-            <div className="text-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">{t("admin.users.loadingUsers")}</p>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12" />
+                    <TableHead>{t("admin.users.table.user")}</TableHead>
+                    <TableHead>{t("admin.users.table.contact")}</TableHead>
+                    <TableHead>{t("admin.users.table.role")}</TableHead>
+                    <TableHead>{t("admin.users.table.status")}</TableHead>
+                    <TableHead>{t("admin.users.table.verification")}</TableHead>
+                    <TableHead>{t("admin.users.table.joined")}</TableHead>
+                    <TableHead className="text-right">{t("admin.users.table.actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...Array(10)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-36" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+                      <TableCell>
+                        <div className="flex gap-1.5">
+                          <Skeleton className="h-6 w-6 rounded-full" />
+                          <Skeleton className="h-6 w-6 rounded-full" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-8 w-8 rounded ml-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           ) : !filteredUsers || filteredUsers.length === 0 ? (
             <div className="text-center py-12">
@@ -645,6 +722,7 @@ export default function AdminUsers() {
                       setSearch("");
                       setRoleFilter("all");
                       setStatusFilter("all");
+                      setVerificationFilter("all");
                       setPage(1);
                     }}
                   >
@@ -784,32 +862,55 @@ export default function AdminUsers() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {user.isEmailVerified ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-green-50 text-green-700 border-green-200 text-xs"
-                              >
-                                {t("admin.users.table.emailVerified")}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-gray-50 text-xs">
-                                {t("admin.users.table.emailUnverified")}
-                              </Badge>
-                            )}
-                            {user.phone &&
-                              (user.isPhoneVerified ? (
-                                <Badge
-                                  variant="outline"
-                                  className="bg-green-50 text-green-700 border-green-200 text-xs"
-                                >
-                                  {t("admin.users.table.phoneVerified")}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-gray-50 text-xs">
-                                  {t("admin.users.table.phoneUnverified")}
-                                </Badge>
-                              ))}
+                          <div className="flex items-center gap-1.5">
+                            <TooltipProvider delayDuration={0}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className={`inline-flex items-center justify-center h-6 w-6 rounded-full border ${
+                                      user.isEmailVerified
+                                        ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400"
+                                        : "bg-muted border-muted-foreground/20 text-muted-foreground"
+                                    }`}
+                                  >
+                                    <Mail className="h-3 w-3" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  {t(
+                                    user.isEmailVerified
+                                      ? "admin.users.table.emailVerified"
+                                      : "admin.users.table.emailUnverified",
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider delayDuration={0}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className={`inline-flex items-center justify-center h-6 w-6 rounded-full border ${
+                                      !user.phone
+                                        ? "opacity-25 bg-muted border-muted-foreground/20 text-muted-foreground"
+                                        : user.isPhoneVerified
+                                          ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400"
+                                          : "bg-muted border-muted-foreground/20 text-muted-foreground"
+                                    }`}
+                                  >
+                                    <Phone className="h-3 w-3" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  {!user.phone
+                                    ? "—"
+                                    : t(
+                                        user.isPhoneVerified
+                                          ? "admin.users.table.phoneVerified"
+                                          : "admin.users.table.phoneUnverified",
+                                      )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         </TableCell>
                         <TableCell>

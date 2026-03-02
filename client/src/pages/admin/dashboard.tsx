@@ -598,7 +598,21 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            {growthData && growthData.growth.length > 0 ? (
+            {!growthData ? (
+              /* Skeleton bars while data loads */
+              <div className="h-[240px] flex flex-col gap-3 pt-2">
+                <div className="flex items-end gap-1.5 flex-1 px-2">
+                  {[35, 55, 40, 70, 50, 80, 60, 90, 65, 75, 45, 85].map((h, i) => (
+                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="flex justify-between px-2 pb-1">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-3 w-10" />
+                  ))}
+                </div>
+              </div>
+            ) : growthData.growth.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={growthData.growth} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <defs>
@@ -638,9 +652,7 @@ export default function AdminDashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[240px] flex items-center justify-center text-sm text-muted-foreground">
-                {growthData
-                  ? t("admin.dashboard.funnel.noData")
-                  : t("admin.dashboard.noGrowthData") || "Нет данных"}
+                {t("admin.dashboard.funnel.noData")}
               </div>
             )}
           </CardContent>

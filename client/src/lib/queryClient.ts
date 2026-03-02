@@ -7,6 +7,12 @@ import { logger } from "./logger";
 // Otherwise (Web), use relative path (proxy or same origin)
 const BASE_URL = Capacitor.isNativePlatform() ? "https://aurelle.uz" : "";
 
+/** Abort fetch after 15 seconds to avoid hanging requests. */
+const FETCH_TIMEOUT_MS = 15_000;
+
+/** Prevent multiple simultaneous admin 401 redirects firing in parallel queries. */
+let _adminRedirectInProgress = false;
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     // Special handling for not found
@@ -29,15 +35,24 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(`${BASE_URL}${url}`, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  await throwIfResNotOk(res);
-  return res;
+  try {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -70,12 +85,33 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
       }
 
       const fullUrl = url.startsWith("/") ? `${BASE_URL}${url}` : url;
-      const res = await fetch(fullUrl, {
-        credentials: "include",
-      });
 
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+      let res: Response;
+      try {
+        res = await fetch(fullUrl, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        throw fetchErr;
+      }
+
+      // 401 handling: redirect admin routes to /auth, else return null
+      if (res.status === 401) {
+        if (
+          url.includes("/api/admin/") &&
+          !_adminRedirectInProgress &&
+          typeof window !== "undefined"
+        ) {
+          _adminRedirectInProgress = true;
+          window.location.replace("/auth");
+        }
+        if (unauthorizedBehavior === "returnNull") return null;
       }
 
       if (!res.ok) {
