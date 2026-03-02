@@ -6,7 +6,7 @@ import { logger } from "./lib/logger";
 import { oauthLimiter } from "./middleware/rateLimiter";
 import { captureException } from "./lib/sentry";
 
-function getGoogleCredentials() {
+function getGoogleCredentials(): { clientID: string; clientSecret: string } | null {
   const clientID = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -15,7 +15,6 @@ function getGoogleCredentials() {
   }
 
   if (clientID.length < 10 || clientSecret.length < 10) {
-    logger.warn("Google OAuth credentials appear to be invalid");
     return null;
   }
 
@@ -32,9 +31,26 @@ export async function setupGoogleAuth(app: Express) {
   const credentials = getGoogleCredentials();
 
   if (!credentials) {
-    logger.info(
-      "Google OAuth not configured - missing or invalid GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET",
-    );
+    const clientID = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!clientID || clientID.trim() === "") {
+      logger.warn("[OAuth] Google not configured — GOOGLE_CLIENT_ID is missing or empty in .env");
+    } else if (clientID.length < 10) {
+      logger.warn("[OAuth] Google not configured — GOOGLE_CLIENT_ID looks like a placeholder (too short)");
+    } else if (!clientSecret || clientSecret.trim() === "") {
+      logger.warn("[OAuth] Google not configured — GOOGLE_CLIENT_SECRET is missing or empty in .env");
+    } else {
+      logger.warn("[OAuth] Google not configured — GOOGLE_CLIENT_SECRET looks like a placeholder (too short)");
+    }
+
+    // Register fallback routes so unconfigured provider returns a clear error instead of 404
+    app.get("/api/auth/google", (_req, res) => {
+      res.redirect("/auth?error=provider_not_configured");
+    });
+    app.get("/api/auth/google/callback", (_req, res) => {
+      res.redirect("/auth?error=provider_not_configured");
+    });
     return;
   }
 
@@ -141,7 +157,7 @@ export async function setupGoogleAuth(app: Express) {
     })(req, res, next);
   });
 
-  logger.info("Google OAuth configured successfully");
+  logger.info("[OAuth] Google configured successfully");
 }
 
 export function isGoogleConfigured(): boolean {

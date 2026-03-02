@@ -608,7 +608,7 @@ export default function AuthPage() {
                     data-testid="button-login-google"
                   >
                     <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
-                    {t("marketplace.auth.signInWithGoogle")}
+                    {t("marketplace.auth.signInWithGoogle", "Продолжить с Google")}
                   </Button>
                 )}
                 {providers?.yandex && (
@@ -623,7 +623,7 @@ export default function AuthPage() {
                     data-testid="button-login-yandex"
                   >
                     <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
-                    {t("marketplace.auth.signInWithYandex")}
+                    {t("marketplace.auth.signInWithYandex", "Продолжить с Яндекс")}
                   </Button>
                 )}
                 {providers?.github && (
@@ -637,6 +637,14 @@ export default function AuthPage() {
                     <SiGithub className="mr-2 h-5 w-5" />
                     {t("marketplace.auth.signInWithGitHub")}
                   </Button>
+                )}
+                {!providers?.google && !providers?.yandex && !providers?.github && (
+                  <p className="text-center text-sm text-muted-foreground py-4" data-testid="social-auth-unavailable">
+                    {t(
+                      "marketplace.auth.socialAuthUnavailable",
+                      "Социальная авторизация временно недоступна",
+                    )}
+                  </p>
                 )}
               </TabsContent>
 

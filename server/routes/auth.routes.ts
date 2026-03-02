@@ -149,13 +149,17 @@ router.get("/auth/ws-token", isAuthenticated, (req: any, res) => {
 
 // Auth providers status endpoint
 router.get("/auth/providers", (_req, res) => {
-  res.json({
+  const status = {
     local: true,
     yandex: isYandexConfigured(),
     google: isGoogleConfigured(),
     github: isGitHubConfigured(),
     phone: isPhoneAuthConfigured(),
+  };
+  logger.debug(`[OAuth] Providers status: ${JSON.stringify({ google: status.google, yandex: status.yandex, github: status.github })}`, {
+    source: "auth-routes",
   });
+  res.json(status);
 });
 
 export default router;
