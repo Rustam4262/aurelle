@@ -26,7 +26,7 @@ export function SalonCard({ salon, onPress }: SalonCardProps) {
         source={
           salon.coverImageUrl
             ? { uri: salon.coverImageUrl }
-            : require("../../../assets/salon-placeholder.png")
+            : require("../../../assets/icon.png")
         }
         className="w-full h-44"
         contentFit="cover"

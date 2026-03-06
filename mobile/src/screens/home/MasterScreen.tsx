@@ -57,7 +57,7 @@ export function MasterScreen({ navigation, route }: Props) {
             source={
               master.avatarUrl
                 ? { uri: master.avatarUrl }
-                : require("../../../assets/avatar-placeholder.png")
+                : require("../../../assets/icon.png")
             }
             className="w-28 h-28 rounded-full"
             contentFit="cover"

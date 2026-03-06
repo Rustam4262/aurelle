@@ -58,7 +58,7 @@ export function SalonScreen({ navigation, route }: Props) {
           source={
             salon.coverImageUrl
               ? { uri: salon.coverImageUrl }
-              : require("../../../assets/salon-placeholder.png")
+              : require("../../../assets/icon.png")
           }
           className="w-full h-56"
           contentFit="cover"
@@ -151,7 +151,7 @@ export function SalonScreen({ navigation, route }: Props) {
                       source={
                         master.avatarUrl
                           ? { uri: master.avatarUrl }
-                          : require("../../../assets/avatar-placeholder.png")
+                          : require("../../../assets/icon.png")
                       }
                       className="w-16 h-16 rounded-full"
                       contentFit="cover"
