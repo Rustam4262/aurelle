@@ -141,9 +141,9 @@ router.get("/logout", (req: any, res) => {
  * GET /api/auth/ws-token
  * Returns a one-time 30-second token for WebSocket authentication.
  */
-router.get("/auth/ws-token", isAuthenticated, (req: any, res) => {
+router.get("/auth/ws-token", isAuthenticated, async (req: any, res) => {
   const userId = req.user.claims.sub as string;
-  const token = createWsToken(userId);
+  const token = await createWsToken(userId);
   return res.json({ token });
 });
 

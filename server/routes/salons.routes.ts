@@ -14,6 +14,7 @@ import {
 } from "@shared/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { trackEvent } from "../lib/analytics";
 
 const router = Router();
 
@@ -25,6 +26,14 @@ router.get("/", async (req, res) => {
     const query = db.select().from(salons).where(eq(salons.isActive, true));
 
     const result = await query.orderBy(desc(salons.averageRating));
+
+    trackEvent({
+      eventName: "search_performed",
+      userId: (req as any).user?.claims?.sub ?? null,
+      req,
+      properties: { city: city ?? null, resultCount: result.length },
+    });
+
     return res.json(result);
   } catch (error) {
     logger.error("Get salons error:", error);

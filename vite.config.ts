@@ -4,6 +4,15 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 
+// Release name used by both sentryVitePlugin (uploads source maps) and injected into
+// the browser bundle so the SDK sends the exact same string.
+// Priority: VITE_SENTRY_RELEASE → SENTRY_RELEASE → package version fallback.
+// In CI: set VITE_SENTRY_RELEASE=aurelle@$(git rev-parse --short HEAD) — one var covers both.
+const SENTRY_RELEASE_NAME =
+  process.env.VITE_SENTRY_RELEASE ||
+  process.env.SENTRY_RELEASE ||
+  `aurelle@${process.env.npm_package_version || "1.0.0"}`;
+
 export default defineConfig({
   plugins: [
     react(),
@@ -16,9 +25,7 @@ export default defineConfig({
           project: process.env.SENTRY_PROJECT,
           authToken: process.env.SENTRY_AUTH_TOKEN,
           release: {
-            name:
-              process.env.SENTRY_RELEASE ||
-              `aurelle@${process.env.npm_package_version || "1.0.0"}`,
+            name: SENTRY_RELEASE_NAME,
             uploadLegacySourcemaps: {
               paths: ["dist/public"],
             },

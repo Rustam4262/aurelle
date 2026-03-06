@@ -5,13 +5,25 @@ import { logger } from "../lib/logger";
 import { getEmailConfigStatus } from "../config/email";
 import { verifyTransport } from "../email";
 import { getSmsConfigStatus } from "../config/sms";
+import { getRedisConfigStatus } from "../config/redis";
+import { isRedisConnected } from "../lib/redis";
 import * as Sentry from "@sentry/node";
 
 const router = Router();
 
 /**
+ * Ping — ultra-lightweight liveness probe.
+ * No DB query. Safe to poll every 30 seconds from uptime monitors.
+ * Returns 200 {"status":"ok"} always (process is alive if you get a response).
+ */
+router.get("/health/ping", (_req, res) => {
+  res.json({ status: "ok", ts: new Date().toISOString() });
+});
+
+/**
  * Health Check Endpoint
- * Returns application health status and system information
+ * Returns application health status and system information.
+ * Returns 503 if the database is unreachable.
  */
 router.get("/health", async (req, res) => {
   const startTime = Date.now();
@@ -92,6 +104,32 @@ router.get("/health/sms", (req, res) => {
   return res.status(cfg.enabled ? 200 : 200).json({
     status: cfg.enabled ? "ok" : "disabled",
     ...cfg,
+  });
+});
+
+/**
+ * Redis Health Check
+ * Returns Redis connection status. Never exposes the connection URL/password.
+ */
+router.get("/health/redis", (_req, res) => {
+  const cfg = getRedisConfigStatus();
+  if (!cfg.configured) {
+    return res.status(200).json({
+      status: "disabled",
+      configured: false,
+      sessionStore: "postgresql",
+      reason: cfg.reason,
+    });
+  }
+  const connected = isRedisConnected();
+  return res.status(connected ? 200 : 503).json({
+    status: connected ? "ok" : "degraded",
+    configured: true,
+    connected,
+    host: cfg.host,
+    keyPrefix: cfg.keyPrefix,
+    sessionTtlDays: Math.round(cfg.sessionTtlSeconds / 86400),
+    sessionStore: connected ? "redis" : "postgresql (fallback)",
   });
 });
 

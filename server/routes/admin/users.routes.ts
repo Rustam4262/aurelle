@@ -2,7 +2,7 @@ import { Router, Request } from "express";
 import { db } from "../../db";
 import { users, salons, masters } from "@shared/schema";
 import { adminUsers } from "@shared/admin-schema";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, or, sql, inArray, ilike, desc, asc, count } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
@@ -72,197 +72,139 @@ async function getBatchedUserRoles(userIds: string[]): Promise<Map<string, strin
   return rolesMap;
 }
 
-// GET /api/admin/users - List all users with pagination and filters
+// GET /api/admin/users — List users with server-side filtering, sorting, pagination.
+// All filtering happens in PostgreSQL — no full table scan into JS memory.
 router.get("/", requirePermission("users.read"), async (req, res) => {
   try {
     const {
-      search = "",
-      role = "",
-      status = "",
-      verified = "",
-      sortBy = "createdAt",
+      search    = "",
+      role      = "",
+      status    = "",
+      verified  = "",
+      sortBy    = "createdAt",
       sortOrder = "desc",
-      page = "1",
-      pageSize = "20",
-    } = req.query;
+      page      = "1",
+      pageSize  = "20",
+    } = req.query as Record<string, string>;
 
-    logger.info("Admin users request params", {
-      source: "users-routes",
-      meta: { search, role, status, verified, sortBy, sortOrder, page, pageSize },
-    });
+    const pageNum     = Math.max(1, parseInt(page) || 1);
+    const pageSizeNum = Math.max(1, Math.min(100, parseInt(pageSize) || 20));
+    const offsetVal   = (pageNum - 1) * pageSizeNum;
 
-    // Step 1: Get ALL users first (no filters) to see if DB has data
-    const allUsersInDb = await db.select().from(users);
-    logger.info("Total users in database", { source: "users-routes", meta: { count: allUsersInDb.length } });
+    // ── Build WHERE conditions ──────────────────────────────────────────────
+    const conditions = [];
 
-    if (allUsersInDb.length === 0) {
-      logger.warn("No users found in database at all!");
-      return res.json({
-        users: [],
-        total: 0,
-        page: 1,
-        pageSize: 20,
-        totalPages: 0,
-      });
+    // Full-text style search: ILIKE on email / first_name / last_name / phone
+    if (search.trim()) {
+      const q = `%${search.trim()}%`;
+      conditions.push(
+        or(
+          ilike(users.email, q),
+          ilike(users.firstName, q),
+          ilike(users.lastName, q),
+          ilike(users.phoneNumber, q),
+        ),
+      );
     }
 
-    // Step 2: Apply basic filters (status, search, verified)
-    let filteredUsers = [...allUsersInDb];
+    // Status (blocked / active)
+    if (status === "blocked") conditions.push(eq(users.isBlocked, true));
+    else if (status === "active") conditions.push(eq(users.isBlocked, false));
 
-    // Search filter
-    if (search && typeof search === "string" && search.trim()) {
-      const searchTerm = search.toLowerCase().trim();
-      filteredUsers = filteredUsers.filter((user) => {
-        const email = (user.email || "").toLowerCase();
-        const firstName = (user.firstName || "").toLowerCase();
-        const lastName = (user.lastName || "").toLowerCase();
-        const phone = (user.phoneNumber || "").toLowerCase();
-        return (
-          email.includes(searchTerm) ||
-          firstName.includes(searchTerm) ||
-          lastName.includes(searchTerm) ||
-          phone.includes(searchTerm)
-        );
-      });
-      logger.info("After search filter", { source: "users-routes", meta: { count: filteredUsers.length, searchTerm } });
+    // Verification
+    if (verified === "email") {
+      conditions.push(eq(users.emailVerified, true));
+    } else if (verified === "phone") {
+      conditions.push(eq(users.phoneVerified, true));
+    } else if (verified === "both") {
+      conditions.push(and(eq(users.emailVerified, true), eq(users.phoneVerified, true)));
+    } else if (verified === "none") {
+      conditions.push(and(eq(users.emailVerified, false), eq(users.phoneVerified, false)));
     }
 
-    // Status filter
-    if (status && status !== "all" && status !== "") {
-      if (status === "blocked") {
-        filteredUsers = filteredUsers.filter((user) => user.isBlocked === true);
-      } else if (status === "active") {
-        filteredUsers = filteredUsers.filter((user) => user.isBlocked !== true);
-      }
-      logger.info("After status filter", { source: "users-routes", meta: { count: filteredUsers.length, status } });
-    }
-
-    // Verification filter
-    if (verified && verified !== "all" && verified !== "") {
-      if (verified === "email") {
-        filteredUsers = filteredUsers.filter((user) => user.emailVerified === true);
-      } else if (verified === "phone") {
-        filteredUsers = filteredUsers.filter((user) => user.phoneVerified === true);
-      } else if (verified === "both") {
-        filteredUsers = filteredUsers.filter(
-          (user) => user.emailVerified === true && user.phoneVerified === true
-        );
-      } else if (verified === "none") {
-        filteredUsers = filteredUsers.filter(
-          (user) => user.emailVerified !== true && user.phoneVerified !== true
-        );
-      }
-      logger.info("After verification filter", { source: "users-routes", meta: { count: filteredUsers.length, verified } });
-    }
-
-    // Step 3: Apply role filter (3 queries total for all users via batch)
-    if (role && role !== "all" && role !== "") {
-      logger.info("Applying role filter", { source: "users-routes", meta: { role, usersBeforeFilter: filteredUsers.length } });
-
-      const roleIds = filteredUsers.map((u) => u.id);
-      const rolesMap = await getBatchedUserRoles(roleIds);
-
+    // Role — derived from 3 separate tables, handled via SQL subqueries
+    if (role && role !== "all") {
       if (role === "admin") {
-        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("admin"));
+        conditions.push(
+          sql`${users.id} IN (SELECT user_id FROM admin_users WHERE is_active = true)`,
+        );
       } else if (role === "salon_owner") {
-        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("salon_owner"));
+        conditions.push(
+          sql`${users.id} IN (SELECT owner_id FROM salons WHERE owner_id IS NOT NULL)`,
+        );
       } else if (role === "master") {
-        filteredUsers = filteredUsers.filter((u) => rolesMap.get(u.id)?.includes("master"));
+        conditions.push(
+          sql`${users.id} IN (SELECT user_id FROM masters WHERE user_id IS NOT NULL)`,
+        );
       } else if (role === "client") {
-        filteredUsers = filteredUsers.filter((u) => {
-          const r = rolesMap.get(u.id) ?? ["client"];
-          return r.includes("client") && r.length === 1;
-        });
+        conditions.push(
+          sql`${users.id} NOT IN (SELECT user_id FROM admin_users WHERE is_active = true)`,
+        );
+        conditions.push(
+          sql`${users.id} NOT IN (SELECT owner_id FROM salons WHERE owner_id IS NOT NULL)`,
+        );
+        conditions.push(
+          sql`${users.id} NOT IN (SELECT user_id FROM masters WHERE user_id IS NOT NULL)`,
+        );
       }
-
-      logger.info("After role filter", { source: "users-routes", meta: { role, usersAfterFilter: filteredUsers.length } });
     }
 
-    // Step 4: Sort
-    const sortColumn = sortBy as string;
-    const sortDirection = sortOrder === "asc" ? 1 : -1;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    filteredUsers.sort((a, b) => {
-      let aVal: any = a[sortColumn as keyof typeof a];
-      let bVal: any = b[sortColumn as keyof typeof b];
+    // ── Sort column map ─────────────────────────────────────────────────────
+    const SORT_COLS: Record<string, typeof users.createdAt | typeof users.lastLoginAt | typeof users.email | typeof users.firstName> = {
+      createdAt:   users.createdAt,
+      lastLoginAt: users.lastLoginAt,
+      email:       users.email,
+      firstName:   users.firstName,
+    };
+    const sortCol = SORT_COLS[sortBy] ?? users.createdAt;
+    const order   = sortOrder === "asc" ? asc(sortCol) : desc(sortCol);
 
-      // Handle null/undefined
-      if (aVal === null || aVal === undefined) aVal = "";
-      if (bVal === null || bVal === undefined) bVal = "";
+    // ── COUNT + paginated SELECT in parallel ────────────────────────────────
+    const [countResult, pageUsers] = await Promise.all([
+      db.select({ count: count() }).from(users).where(whereClause),
+      db.select().from(users).where(whereClause).orderBy(order).limit(pageSizeNum).offset(offsetVal),
+    ]);
 
-      // Handle dates
-      if (aVal instanceof Date) aVal = aVal.getTime();
-      if (bVal instanceof Date) bVal = bVal.getTime();
+    const total = Number(countResult[0].count);
 
-      // Handle strings
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+    // ── Batch role resolution for just this page (3 queries) ───────────────
+    const pageRolesMap = await getBatchedUserRoles(pageUsers.map((u) => u.id));
 
-      if (aVal < bVal) return -1 * sortDirection;
-      if (aVal > bVal) return 1 * sortDirection;
-      return 0;
+    const transformedUsers = pageUsers.map((user) => {
+      const userRoles = pageRolesMap.get(user.id) ?? ["client"];
+      return {
+        id:              user.id,
+        email:           user.email,
+        firstName:       user.firstName,
+        lastName:        user.lastName,
+        fullName:        `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
+        phone:           user.phoneNumber,
+        role:            userRoles[0] || "client",
+        roles:           userRoles,
+        status:          user.isBlocked ? "blocked" : "active",
+        isBlocked:       user.isBlocked || false,
+        blockReason:     user.blockReason,
+        lastLoginAt:     user.lastLoginAt,
+        lastActivityAt:  user.lastActivityAt,
+        loginCount:      user.loginCount || 0,
+        isEmailVerified: user.emailVerified || false,
+        isPhoneVerified: user.phoneVerified || false,
+        createdAt:       user.createdAt,
+        updatedAt:       user.updatedAt,
+      };
     });
 
-    logger.info("After sorting", { source: "users-routes", meta: { sortBy, sortOrder, count: filteredUsers.length } });
-
-    // Step 5: Pagination
-    const total = filteredUsers.length;
-    const pageNum = Math.max(1, parseInt(page as string) || 1);
-    const pageSizeNum = Math.max(1, Math.min(100, parseInt(pageSize as string) || 20));
-    const offset = (pageNum - 1) * pageSizeNum;
-    const paginatedUsers = filteredUsers.slice(offset, offset + pageSizeNum);
-
-    logger.info("Pagination applied", {
-      source: "users-routes",
-      meta: { total, page: pageNum, pageSize: pageSizeNum, offset, usersOnThisPage: paginatedUsers.length },
-    });
-
-    // Step 6: Transform to frontend format (3 queries for the whole page)
-    const pageUserIds = paginatedUsers.map((u) => u.id);
-    const pageRolesMap = await getBatchedUserRoles(pageUserIds);
-
-    const transformedUsers = paginatedUsers.map((user) => {
-        const userRoles = pageRolesMap.get(user.id) ?? ["client"];
-
-        return {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
-          phone: user.phoneNumber,
-          role: userRoles[0] || "client",
-          roles: userRoles,
-          status: user.isBlocked ? "blocked" : "active",
-          isBlocked: user.isBlocked || false,
-          blockReason: user.blockReason,
-          lastLoginAt: user.lastLoginAt,
-          lastActivityAt: user.lastActivityAt,
-          loginCount: user.loginCount || 0,
-          isEmailVerified: user.emailVerified || false,
-          isPhoneVerified: user.phoneVerified || false,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        };
-    });
-
-    const response = {
+    res.json({
       users: transformedUsers,
       total,
-      page: pageNum,
-      pageSize: pageSizeNum,
+      page:       pageNum,
+      pageSize:   pageSizeNum,
       totalPages: Math.ceil(total / pageSizeNum),
-    };
-
-    logger.info("Returning users response", {
-      source: "users-routes",
-      meta: { usersCount: transformedUsers.length, total: response.total, totalPages: response.totalPages },
     });
-
-    res.json(response);
   } catch (error: any) {
     logger.error("List users error", error as Error, { source: "users-routes" });
-    console.error("Admin users detailed error:", error);
     res.status(500).json({
       error: "Failed to fetch users",
       details: process.env.NODE_ENV === "development" ? error.message : undefined,

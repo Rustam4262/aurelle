@@ -5,6 +5,7 @@ import { users } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
+import { invalidateDashboardCache } from "../../lib/cache";
 
 const router = Router();
 
@@ -199,6 +200,7 @@ router.patch("/:id/resolve", requirePermission("complaints.resolve"), async (req
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.json({ complaint: updated, sanctionId });
   } catch (error: any) {
     logger.error("Resolve complaint error", error as Error, { source: "complaints-routes" });
@@ -242,6 +244,7 @@ router.patch("/:id/reject", requirePermission("complaints.resolve"), async (req,
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.json({ complaint: updated });
   } catch (error: any) {
     logger.error("Reject complaint error", error as Error, { source: "complaints-routes" });

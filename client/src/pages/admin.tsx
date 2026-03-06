@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   LayoutDashboard,
   Users,
@@ -21,14 +22,47 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminUsers from "@/pages/admin/users";
-import AdminSalons from "@/pages/admin/salons";
-import AdminComplaints from "@/pages/admin/complaints";
-import AdminSanctions from "@/pages/admin/sanctions";
-import AdminChat from "@/pages/admin/chat";
-import AdminAudit from "@/pages/admin/audit";
-import AdminActivity from "@/pages/admin/activity";
+
+// Each admin sub-page is a separate async chunk — loaded on first navigation to that route.
+// recharts (~200 KB gz) is pulled in only by dashboard; xlsx+jspdf only by users.
+const AdminDashboard  = lazy(() => import("@/pages/admin/dashboard"));
+const AdminUsers      = lazy(() => import("@/pages/admin/users"));
+const AdminSalons     = lazy(() => import("@/pages/admin/salons"));
+const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
+const AdminSanctions  = lazy(() => import("@/pages/admin/sanctions"));
+const AdminChat       = lazy(() => import("@/pages/admin/chat"));
+const AdminAudit      = lazy(() => import("@/pages/admin/audit"));
+const AdminActivity   = lazy(() => import("@/pages/admin/activity"));
+
+// Route → component map (declared at module level — one instance, never re-created on render)
+const ROUTE_MAP = {
+  "/admin/dashboard":  AdminDashboard,
+  "/admin/users":      AdminUsers,
+  "/admin/salons":     AdminSalons,
+  "/admin/activity":   AdminActivity,
+  "/admin/complaints": AdminComplaints,
+  "/admin/sanctions":  AdminSanctions,
+  "/admin/chat":       AdminChat,
+  "/admin/audit":      AdminAudit,
+} as const;
+
+// Generic skeleton shown while a sub-page chunk is loading for the first time
+function AdminPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-9 w-28" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="h-72 rounded-lg" />
+    </div>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -332,19 +366,14 @@ export default function AdminPage() {
     return null;
   }
 
-  let PageComponent = AdminDashboard;
-  if (location === "/admin/users")       PageComponent = AdminUsers;
-  else if (location === "/admin/salons") PageComponent = AdminSalons;
-  else if (location === "/admin/activity") PageComponent = AdminActivity;
-  else if (location === "/admin/complaints") PageComponent = AdminComplaints;
-  else if (location === "/admin/sanctions")  PageComponent = AdminSanctions;
-  else if (location === "/admin/chat")       PageComponent = AdminChat;
-  else if (location === "/admin/audit")      PageComponent = AdminAudit;
+  const PageComponent = ROUTE_MAP[location as keyof typeof ROUTE_MAP] ?? AdminDashboard;
 
   return (
     <AdminLayout>
       <ErrorBoundary key={location}>
-        <PageComponent />
+        <Suspense fallback={<AdminPageSkeleton />}>
+          <PageComponent />
+        </Suspense>
       </ErrorBoundary>
     </AdminLayout>
   );

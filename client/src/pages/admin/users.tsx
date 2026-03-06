@@ -4,7 +4,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { exportToExcel, exportToPDF } from "@/lib/export";
+// xlsx + jspdf are loaded on-demand when the user clicks Export — not part of the initial chunk
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -324,14 +324,13 @@ export default function AdminUsers() {
     setSelectAll(false);
   };
 
-  // Export to CSV
-  const exportToExcelFile = () => {
+  // Export to Excel — xlsx is loaded lazily on first click
+  const exportToExcelFile = async () => {
     if (!data?.users || data.users.length === 0) {
       toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
       return;
     }
 
-    // Prepare data for Excel export
     const exportData = data.users.map((user) => ({
       ID: user.id,
       "Full Name": user.fullName,
@@ -349,8 +348,8 @@ export default function AdminUsers() {
       "Block Reason": user.blockReason || "",
     }));
 
-    // Export to Excel
     const filename = `users_export_${format(new Date(), "yyyy-MM-dd_HHmm")}`;
+    const { exportToExcel } = await import("@/lib/export");
     exportToExcel(exportData, filename, "Users");
 
     toast({
@@ -359,14 +358,13 @@ export default function AdminUsers() {
     });
   };
 
-  // Export to PDF
-  const exportToPDFFile = () => {
+  // Export to PDF — jspdf is loaded lazily on first click
+  const exportToPDFFile = async () => {
     if (!data?.users || data.users.length === 0) {
       toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
       return;
     }
 
-    // Prepare data for PDF export
     const exportData = data.users.map((user) => ({
       Name: user.fullName,
       Email: user.email,
@@ -379,6 +377,7 @@ export default function AdminUsers() {
     }));
 
     const filename = `users_report_${format(new Date(), "yyyy-MM-dd_HHmm")}`;
+    const { exportToPDF } = await import("@/lib/export");
     exportToPDF(exportData, filename, "AURELLE Users Report", {
       orientation: "landscape",
     });

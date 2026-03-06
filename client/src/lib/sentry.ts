@@ -26,10 +26,12 @@ export function initializeSentry() {
     // Environment (production, staging, development)
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE || "development",
 
-    // Release version for tracking
+    // Release version for tracking.
+    // Must match the release name used by sentryVitePlugin in vite.config.ts so that
+    // uploaded source maps are found for events from this SDK.
     release:
       import.meta.env.VITE_SENTRY_RELEASE ||
-      `aurelle-frontend@${import.meta.env.VITE_APP_VERSION || "1.0.0"}`,
+      `aurelle@${import.meta.env.VITE_APP_VERSION || "1.0.0"}`,
 
     // Integrations
     integrations: [

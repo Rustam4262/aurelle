@@ -1,4 +1,7 @@
 name: Deploy to Production
+
+# Triggers on every push to main (after PR is merged).
+# Can also be triggered manually via workflow_dispatch.
 on:
   push:
     branches:
@@ -11,120 +14,44 @@ on:
         default: "Manual production deployment"
 
 env:
-  NODE_VERSION: "20"
-  PM2_APP_NAME: "aurelle-production"
+  PM2_APP_NAME: aurelle-production
+  DEPLOY_DIR: /var/www/aurelle
+  HEALTH_URL: http://localhost:5000/api/health/ping
 
 jobs:
-  # Job 1: Build and prepare
-  build:
-    name: Build & Prepare Deployment
+  # ── 1. Pre-deploy checks (BLOCKING) ─────────────────────────────────────────
+  # Deploy will NOT start if either of these fails.
+  checks:
+    name: Pre-deploy checks
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run TypeScript check
+      - name: TypeScript type-check
         run: npm run check
-        continue-on-error: true  # Allow deployment while TS errors are being fixed
+        # HARD GATE — no continue-on-error
 
-      - name: Run tests (when ready)
-        run: |
-          if grep -q '"test"' package.json; then
-            npm test
-          else
-            echo "No tests configured - skipping"
-          fi
-        continue-on-error: false
+      - name: Security audit (high severity)
+        run: npm audit --audit-level=high
+        # Blocks on HIGH/CRITICAL CVEs only
 
-      - name: Build project
-        run: npm run build
-        env:
-          NODE_ENV: production
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_RELEASE: aurelle@${{ github.sha }}
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-          VITE_SENTRY_ENVIRONMENT: production
-          VITE_SENTRY_RELEASE: aurelle@${{ github.sha }}
-          VITE_APP_VERSION: ${{ github.sha }}
-
-      - name: Create Sentry release
-        continue-on-error: true
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        run: |
-          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-            echo "⏭️ Skipping Sentry release (no auth token configured)"
-            exit 0
-          fi
-
-          # Install Sentry CLI
-          curl -sL https://sentry.io/get-cli/ | bash
-
-          RELEASE_VERSION="aurelle@${{ github.sha }}"
-
-          # Create release
-          sentry-cli releases new $RELEASE_VERSION
-
-          # Associate commits
-          sentry-cli releases set-commits $RELEASE_VERSION --auto || echo "Failed to set commits"
-
-          # Finalize release
-          sentry-cli releases finalize $RELEASE_VERSION
-
-          echo "✅ Sentry release created: $RELEASE_VERSION"
-
-      - name: Create deployment package
-        run: |
-          mkdir -p deploy
-          cp -r dist deploy/
-          cp package.json package-lock.json deploy/
-          cp -r migrations deploy/ || echo "No migrations directory"
-          tar -czf deploy.tar.gz -C deploy .
-
-      - name: Upload deployment artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-build
-          path: deploy.tar.gz
-          retention-days: 30
-
-  # Job 2: Deploy to production (auto-deploy without approval)
-  deploy-production:
-    name: Deploy to Production
+  # ── 2. Deploy ────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to production
     runs-on: ubuntu-latest
-    needs: build
+    needs: checks  # only runs if pre-deploy checks pass
 
     steps:
-      - name: Download deployment artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-
-      - name: Upload deployment package to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT || 22 }}
-          source: "deploy.tar.gz"
-          target: "/tmp/"
-
-      - name: Deploy to production server
+      # ── Pull & build on server ───────────────────────────────────────────────
+      - name: Pull, build, reload
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -132,75 +59,36 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_PORT || 22 }}
           script: |
-            set -e
+            set -euo pipefail
+            cd ${{ env.DEPLOY_DIR }}
 
-            # Configuration
-            APP_DIR="/var/www/aurelle-production"
-            BACKUP_DIR="/var/www/aurelle-production-backups"
-            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            echo "==> Saving current commit for rollback"
+            git rev-parse HEAD > /tmp/aurelle_prev_commit
+            echo "Previous: $(cat /tmp/aurelle_prev_commit)"
 
-            echo "🚀 Starting deployment to production..."
+            echo "==> git pull"
+            git pull origin main
 
-            # Create backup of current version
-            if [ -d "$APP_DIR" ]; then
-              echo "📦 Creating backup (for rollback)..."
-              mkdir -p $BACKUP_DIR
+            echo "==> npm ci"
+            npm ci
 
-              # Create full backup with timestamp
-              cp -r $APP_DIR $BACKUP_DIR/backup_$TIMESTAMP
+            echo "==> npm run build"
+            NODE_ENV=production \
+              VITE_SENTRY_RELEASE="aurelle@$(git rev-parse --short HEAD)" \
+              SENTRY_RELEASE="aurelle@$(git rev-parse --short HEAD)" \
+              npm run build
 
-              # Create/update 'latest' symlink for quick rollback
-              rm -f $BACKUP_DIR/latest
-              ln -s $BACKUP_DIR/backup_$TIMESTAMP $BACKUP_DIR/latest
-
-              # Keep only last 10 backups
-              cd $BACKUP_DIR
-              ls -t | grep "backup_" | tail -n +11 | xargs -r rm -rf
-            fi
-
-            # Create app directory if not exists
-            mkdir -p $APP_DIR
-
-            # Extract new version
-            echo "📂 Extracting deployment package..."
-            cd $APP_DIR
-            tar -xzf /tmp/deploy.tar.gz
-            rm /tmp/deploy.tar.gz
-
-            # Install production dependencies
-            echo "📥 Installing production dependencies..."
-            npm ci --production --ignore-scripts
-
-            # Backup current database (safety)
-            echo "💾 Creating database backup..."
-            export PGPASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
-            pg_dump -h ${{ secrets.PRODUCTION_DB_HOST }} \
-                    -U ${{ secrets.PRODUCTION_DB_USER }} \
-                    -d ${{ secrets.PRODUCTION_DB_NAME }} \
-                    > $BACKUP_DIR/db_backup_$TIMESTAMP.sql || echo "Database backup failed"
-
-            # Run database migrations
-            echo "🗄️  Running database migrations..."
-            export DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}"
-            npx drizzle-kit push --config=drizzle.config.ts
-
-            # Restart PM2 application with zero-downtime reload
-            echo "🔄 Restarting application (zero-downtime)..."
-            pm2 describe ${{ env.PM2_APP_NAME }} > /dev/null 2>&1
-            if [ $? -eq 0 ]; then
-              pm2 reload ${{ env.PM2_APP_NAME }} --update-env
-            else
-              pm2 start dist/index.cjs --name ${{ env.PM2_APP_NAME }} -i max
-            fi
-
+            echo "==> pm2 reload"
+            pm2 reload ${{ env.PM2_APP_NAME }} --update-env
             pm2 save
 
-            echo "✅ Deployment completed successfully!"
-            echo "📝 Backup location: $BACKUP_DIR/backup_$TIMESTAMP"
+            echo "==> Deploy done. Commit: $(git rev-parse HEAD)"
 
-      - name: Wait for application to stabilize
-        run: sleep 15
+      # ── Wait for PM2 to settle ───────────────────────────────────────────────
+      - name: Wait for process to stabilize
+        run: sleep 12
 
+      # ── Health check with retries ────────────────────────────────────────────
       - name: Health check
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -209,63 +97,98 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_PORT || 22 }}
           script: |
-            set -e
+            set -euo pipefail
 
-            echo "🏥 Running health checks..."
+            MAX_RETRIES=6
+            DELAY=5
 
-            # Check PM2 process status
-            PM2_STATUS=$(pm2 jlist | jq -r '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .pm2_env.status')
+            echo "==> PM2 status"
+            PM2_STATUS=$(pm2 jlist | jq -r \
+              '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .pm2_env.status')
+            if [ "$PM2_STATUS" != "online" ]; then
+              echo "ERROR: PM2 is '$PM2_STATUS'"
+              pm2 logs ${{ env.PM2_APP_NAME }} --lines 80 --nostream --err
+              exit 1
+            fi
+            echo "PM2: online"
 
-            if [ "$PM2_STATUS" = "online" ]; then
-              echo "✅ PM2 process is online"
-            else
-              echo "❌ PM2 process status: $PM2_STATUS"
-              pm2 logs ${{ env.PM2_APP_NAME }} --lines 100 --err
+            echo "==> HTTP health check ($MAX_RETRIES retries, ${DELAY}s each)"
+            for i in $(seq 1 $MAX_RETRIES); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                     ${{ env.HEALTH_URL }} 2>/dev/null || echo "000")
+              if [ "$CODE" = "200" ]; then
+                echo "Attempt $i: HTTP 200 OK"
+                exit 0
+              fi
+              echo "Attempt $i/$MAX_RETRIES: HTTP $CODE — retrying in ${DELAY}s..."
+              sleep $DELAY
+            done
+
+            echo "ERROR: health check failed after $MAX_RETRIES attempts"
+            pm2 logs ${{ env.PM2_APP_NAME }} --lines 80 --nostream
+            exit 1
+
+      # ── Auto-rollback on health check failure ────────────────────────────────
+      - name: Auto-rollback
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd ${{ env.DEPLOY_DIR }}
+
+            PREV=$(cat /tmp/aurelle_prev_commit 2>/dev/null || echo "")
+            if [ -z "$PREV" ]; then
+              echo "ERROR: no rollback commit saved"
               exit 1
             fi
 
-            # Check HTTP health endpoint
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "000")
+            echo "==> Rolling back to $PREV"
+            git checkout "$PREV"
+            npm ci --prefer-offline
+            NODE_ENV=production npm run build
+            pm2 reload ${{ env.PM2_APP_NAME }} --update-env
+            pm2 save
 
-            if [ "$RESPONSE" = "200" ]; then
-              echo "✅ Health check passed (HTTP 200)"
-            else
-              echo "❌ Health check failed (HTTP $RESPONSE)"
-              pm2 logs ${{ env.PM2_APP_NAME }} --lines 100
-              exit 1
-            fi
+            sleep 8
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                   ${{ env.HEALTH_URL }} 2>/dev/null || echo "000")
+            echo "Post-rollback health: HTTP $CODE"
 
-            # Check response time
-            RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' http://localhost:5000/)
-            echo "⏱️  Response time: ${RESPONSE_TIME}s"
+      # ── Telegram notifications ───────────────────────────────────────────────
+      - name: Telegram — success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ Deploy succeeded — aurelle.uz
 
-            # Check memory usage
-            MEMORY=$(pm2 jlist | jq -r '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .monit.memory')
-            MEMORY_MB=$((MEMORY / 1024 / 1024))
-            echo "💾 Memory usage: ${MEMORY_MB}MB"
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            if [ $MEMORY_MB -gt 1024 ]; then
-              echo "⚠️  High memory usage detected"
-            fi
+      - name: Telegram — failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚨 Deploy FAILED — aurelle.uz
 
-            echo "✅ All health checks passed!"
+            Auto-rollback was attempted.
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      - name: Smoke tests
-        run: |
-          echo "🧪 Running smoke tests..."
-
-          # Test homepage
-          curl -f https://aurelle.uz/ || exit 1
-
-          # Test API health endpoint (if exists)
-          curl -f https://aurelle.uz/api/health || echo "Health endpoint not available"
-
-          # Test API salons endpoint
-          curl -f https://aurelle.uz/api/salons || exit 1
-
-          echo "✅ Smoke tests passed!"
-
-      - name: Notify Sentry of deployment
+      # ── Sentry deployment marker ─────────────────────────────────────────────
+      - name: Sentry deployment marker
         if: success()
         continue-on-error: true
         env:
@@ -274,114 +197,33 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
           if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-            echo "⏭️ Skipping Sentry deployment notification (no auth token configured)"
+            echo "Skipping (SENTRY_AUTH_TOKEN not set)"
             exit 0
           fi
+          curl -sL https://sentry.io/get-cli/ | bash
+          REL="aurelle@$(echo '${{ github.sha }}' | cut -c1-7)"
+          sentry-cli releases new "$REL" || true
+          sentry-cli releases set-commits "$REL" --auto || true
+          sentry-cli releases finalize "$REL" || true
+          sentry-cli releases deploys "$REL" new -e production || true
 
-          # Sentry CLI should already be installed from earlier step
-          RELEASE_VERSION="aurelle@${{ github.sha }}"
-
-          # Create deployment notification
-          sentry-cli releases deploys $RELEASE_VERSION new -e production
-
-          echo "✅ Sentry notified of production deployment"
-
-      - name: Send Telegram notification on success
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            🎉 Production Deployment Successful
-
-            Repository: ${{ github.repository }}
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Author: ${{ github.actor }}
-            Approved by: ${{ github.actor }}
-
-            Environment: aurelle.uz
-            Deployment time: ${{ github.event.head_commit.timestamp }}
-
-            ✅ All health checks passed
-            🌐 Site is live and operational
-
-      - name: Send Telegram notification on failure
-        if: failure()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            🚨 CRITICAL: Production Deployment Failed
-
-            Repository: ${{ github.repository }}
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Author: ${{ github.actor }}
-
-            ⚠️ Rollback may be required!
-
-            Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            To rollback, run: gh workflow run rollback.yml
-
-      - name: Send Slack notification
-        if: always()
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          payload: |
-            {
-              "text": "${{ job.status == 'success' && '🎉' || '🚨' }} Production Deployment ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Production Deployment ${{ job.status }}*\n\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Environment:* aurelle.uz"
-                  }
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "View Logs"
-                      },
-                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    },
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "Visit Production"
-                      },
-                      "url": "https://aurelle.uz"
-                    },
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "${{ job.status == 'failure' && 'Rollback' || 'Monitor' }}"
-                      },
-                      "url": "https://github.com/${{ github.repository }}/actions/workflows/rollback.yml"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
-      - name: Create deployment tag
-        if: success()
+  # ── 3. External smoke test (from GitHub runner, not the server) ──────────────
+  smoke:
+    name: External smoke test
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Homepage reachable
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          TAG_NAME="production-$(date +%Y%m%d-%H%M%S)"
-          git tag -a $TAG_NAME -m "Production deployment: ${{ github.sha }}"
-          git push origin $TAG_NAME
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" https://aurelle.uz/)
+          [ "$CODE" = "200" ] && echo "OK" || (echo "Homepage: HTTP $CODE"; exit 1)
+
+      - name: API health ping
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" https://aurelle.uz/api/health/ping)
+          [ "$CODE" = "200" ] && echo "OK" || (echo "Health ping: HTTP $CODE"; exit 1)
+
+      - name: API health DB check
+        run: |
+          STATUS=$(curl -sf https://aurelle.uz/api/health | jq -r '.status' 2>/dev/null || echo "error")
+          [ "$STATUS" = "healthy" ] && echo "DB OK" || (echo "DB health: $STATUS"; exit 1)

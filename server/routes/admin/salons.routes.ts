@@ -4,6 +4,7 @@ import { salons } from "@shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
+import { invalidateDashboardCache } from "../../lib/cache";
 
 const router = Router();
 
@@ -143,6 +144,7 @@ router.post("/:id/verify", requirePermission("salons.verify"), async (req, res) 
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.json({
       salon: updated,
       message: "Salon verified successfully",
@@ -191,6 +193,7 @@ router.post("/:id/unverify", requirePermission("salons.verify"), async (req, res
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.json({
       salon: updated,
       message: "Salon verification removed successfully",

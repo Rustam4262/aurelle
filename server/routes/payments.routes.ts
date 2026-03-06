@@ -8,6 +8,7 @@ import { getPaymentProvider } from "../payments";
 import { logger } from "../lib/logger";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { calculateFee } from "../lib/billing";
 
 const router = Router();
 
@@ -140,6 +141,9 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
       return res.status(422).json({ error: "Invalid payment amount" });
     }
 
+    // Calculate and snapshot platform fee (fire-safe: returns 0% on config errors)
+    const fee = await calculateFee(amountUzs, booking.salonId);
+
     const orderId = randomUUID();
     const returnUrl = `${process.env.APP_URL ?? "https://aurelle.uz"}/client`;
 
@@ -159,6 +163,11 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
         externalId: externalId || null,
         orderId,
         amountUzs,
+        // Fee snapshot — locked in at creation so rate changes don't affect history
+        grossAmountUzs: fee.grossAmountUzs,
+        feePercent: String(fee.feePercent),
+        platformFeeUzs: fee.platformFeeUzs,
+        netAmountUzs: fee.netAmountUzs,
         type,
         status: "pending",
         salonId: booking.salonId ?? null,
@@ -169,7 +178,16 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
 
     logger.info("Payment created", {
       source: "payments",
-      meta: { orderId, bookingId, amountUzs, type, userId },
+      meta: {
+        orderId,
+        bookingId,
+        amountUzs,
+        type,
+        userId,
+        feePercent: fee.feePercent,
+        platformFeeUzs: fee.platformFeeUzs,
+        netAmountUzs: fee.netAmountUzs,
+      },
     });
 
     return res.json({ paymentUrl, orderId, paymentId: payment.id });

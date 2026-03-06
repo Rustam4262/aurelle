@@ -1,27 +1,25 @@
-name: CI - Continuous Integration
+name: CI
+
+# Runs on every PR to main/develop and on pushes to non-main branches.
+# main is handled by deploy-production.yml (which runs its own checks first).
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - "feature/**"
   pull_request:
     branches:
       - main
       - develop
+  push:
+    branches-ignore:
+      - main  # main deploys via deploy-production.yml
 
 jobs:
-  # Job 1: Run TypeScript checks and tests
-  test:
-    name: TypeScript Check & Tests
+  # ── 1. TypeScript type-check (BLOCKING — PR cannot merge without this) ──────
+  typecheck:
+    name: TypeScript
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
@@ -29,40 +27,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run TypeScript type check
+      - name: Type-check (tsc --noEmit)
         run: npm run check
-        continue-on-error: true  # Allow CI to pass while TS errors are being fixed
+        # NO continue-on-error — this is a hard gate
 
-      - name: Run tests (when ready)
-        run: |
-          if [ -f "package.json" ] && grep -q '"test"' package.json; then
-            npm test
-          else
-            echo "No tests configured yet - skipping"
-          fi
-        continue-on-error: true
-
-      - name: Check for linting (if configured)
-        run: |
-          if [ -f "package.json" ] && grep -q '"lint"' package.json; then
-            npm run lint
-          else
-            echo "No linting configured - skipping"
-          fi
-        continue-on-error: true
-
-  # Job 2: Build the project
-  build:
-    name: Build Project
+  # ── 2. Security audit (BLOCKING — high-severity CVEs block the PR) ──────────
+  security:
+    name: Security audit
     runs-on: ubuntu-latest
-    needs: test
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
@@ -70,50 +46,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project
-        run: npm run build
+      - name: npm audit (high severity)
+        run: npm audit --audit-level=high
+        # Blocks on HIGH and CRITICAL CVEs only — moderate/low are advisory
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist/
-          retention-days: 7
-
-      - name: Check build size
-        run: |
-          echo "Build size:"
-          du -sh dist/
-          echo "Build files:"
-          ls -lh dist/
-
-  # Job 3: Security audit
-  security:
-    name: Security Audit
+  # ── 3. ESLint (advisory — informs but does not block) ───────────────────────
+  lint:
+    name: ESLint
     runs-on: ubuntu-latest
-
+    needs: typecheck  # only run lint if tsc passes (avoids noisy lint errors from type errors)
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check for vulnerabilities
-        run: |
-          npm audit --json > audit-report.json || true
-          cat audit-report.json
-
-      - name: Upload security report
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-audit
-          path: audit-report.json
-          retention-days: 30
+      - name: ESLint
+        run: npm run lint
+        continue-on-error: true  # advisory: reported in PR but does not block merge

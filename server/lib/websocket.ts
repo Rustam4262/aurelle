@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { Server as HttpServer } from "http";
 import { randomBytes } from "crypto";
+import { createClient } from "redis";
+import { getRedisClient } from "./redis";
+import { getRedisConfig } from "../config/redis";
 import { logger } from "./logger";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -15,28 +18,65 @@ interface WsToken {
   expiresAt: number;
 }
 
+interface BroadcastMessage {
+  room: string;
+  event: string;
+  data: unknown;
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
 
-/** Short-lived tokens: token → { userId, expiresAt } */
+/** In-memory token fallback (used when Redis is not configured) */
 const wsTokens = new Map<string, WsToken>();
 
-/** Room → set of connected sockets */
+/** Room → set of connected sockets (local to this worker) */
 const rooms = new Map<string, Set<AuthedWebSocket>>();
 
 let wss: WebSocketServer | null = null;
 
+/**
+ * Dedicated subscriber client for Redis pub/sub.
+ * A subscribed connection cannot issue regular commands, so it must be separate
+ * from the shared getRedisClient() connection.
+ */
+let wsSubscriber: ReturnType<typeof createClient> | null = null;
+
 // ─── Token management ────────────────────────────────────────────────────────
 
-/** Generate a one-time WS auth token for a user (30 second TTL). */
-export function createWsToken(userId: string): string {
+const WS_TOKEN_PREFIX = "aurelle:wstoken:";
+const WS_TOKEN_TTL_SECS = 31;
+
+/**
+ * Generate a one-time WS auth token for a user (30-second TTL).
+ *
+ * Stored in Redis when available so that any cluster worker can validate the
+ * token regardless of which worker handled the HTTP token-request.
+ * Falls back to in-memory Map when Redis is not configured.
+ */
+export async function createWsToken(userId: string): Promise<string> {
   const token = randomBytes(24).toString("hex");
-  wsTokens.set(token, { userId, expiresAt: Date.now() + 30_000 });
-  // Auto-cleanup after expiry
-  setTimeout(() => wsTokens.delete(token), 31_000);
+  const client = getRedisClient();
+
+  if (client) {
+    await client.set(`${WS_TOKEN_PREFIX}${token}`, userId, { EX: WS_TOKEN_TTL_SECS });
+  } else {
+    wsTokens.set(token, { userId, expiresAt: Date.now() + 30_000 });
+    setTimeout(() => wsTokens.delete(token), 31_000);
+  }
+
   return token;
 }
 
-function consumeWsToken(token: string): string | null {
+async function consumeWsToken(token: string): Promise<string | null> {
+  const client = getRedisClient();
+
+  if (client) {
+    // getDel is atomic: get + delete in one round-trip (one-time use guaranteed)
+    const userId = await client.getDel(`${WS_TOKEN_PREFIX}${token}`);
+    return userId ?? null;
+  }
+
+  // In-memory fallback
   const entry = wsTokens.get(token);
   if (!entry) return null;
   wsTokens.delete(token); // one-time use
@@ -66,13 +106,78 @@ function send(ws: WebSocket, event: string, data: unknown) {
   }
 }
 
-// ─── Public broadcast API ─────────────────────────────────────────────────────
+// ─── Local broadcast (this worker only) ──────────────────────────────────────
 
-/** Broadcast an event to all sockets in a room. */
-export function broadcast(room: string, event: string, data: unknown): void {
+function broadcastLocal(room: string, event: string, data: unknown): void {
   const members = rooms.get(room);
   if (!members) return;
   for (const ws of Array.from(members)) send(ws, event, data);
+}
+
+// ─── Redis pub/sub (cross-worker) ─────────────────────────────────────────────
+
+const WS_BROADCAST_CHANNEL = "aurelle:ws:broadcast";
+
+async function setupRedisPubSub(): Promise<void> {
+  const config = getRedisConfig();
+  if (!config) return; // Redis not configured — broadcasts are worker-local only
+
+  try {
+    // Subscriber needs its own dedicated connection (subscribe mode is exclusive)
+    wsSubscriber = createClient({ url: config.url });
+
+    wsSubscriber.on("error", (err) => {
+      logger.warn("WS Redis subscriber error", {
+        source: "websocket",
+        meta: { error: String(err) },
+      });
+    });
+
+    await wsSubscriber.connect();
+
+    await wsSubscriber.subscribe(WS_BROADCAST_CHANNEL, (message) => {
+      try {
+        const { room, event, data } = JSON.parse(message) as BroadcastMessage;
+        broadcastLocal(room, event, data);
+      } catch {
+        // Ignore malformed pub/sub messages
+      }
+    });
+
+    logger.info("WS Redis pub/sub subscriber connected", { source: "websocket" });
+  } catch (err) {
+    logger.warn("WS Redis pub/sub unavailable — broadcasts are worker-local", {
+      source: "websocket",
+      meta: { error: String(err) },
+    });
+    wsSubscriber = null;
+  }
+}
+
+// ─── Public broadcast API ─────────────────────────────────────────────────────
+
+/**
+ * Broadcast an event to all sockets in a room.
+ *
+ * With Redis: publishes to the aurelle:ws:broadcast channel — every cluster
+ * worker receives the message and delivers it to its local room members.
+ * Without Redis: delivers only to sockets connected to this worker.
+ */
+export function broadcast(room: string, event: string, data: unknown): void {
+  const client = getRedisClient();
+
+  if (client) {
+    const msg = JSON.stringify({ room, event, data });
+    client.publish(WS_BROADCAST_CHANNEL, msg).catch((err) => {
+      logger.warn("WS broadcast publish failed — delivering locally", {
+        source: "websocket",
+        meta: { room, error: String(err) },
+      });
+      broadcastLocal(room, event, data);
+    });
+  } else {
+    broadcastLocal(room, event, data);
+  }
 }
 
 /** Broadcast an event to the personal room of a specific user. */
@@ -82,10 +187,13 @@ export function broadcastToUser(userId: string, event: string, data: unknown): v
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-export function setupWebSocket(httpServer: HttpServer): void {
+export async function setupWebSocket(httpServer: HttpServer): Promise<void> {
+  // Set up Redis pub/sub before accepting WS connections
+  await setupRedisPubSub();
+
   wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
-  wss.on("connection", (rawWs, req) => {
+  wss.on("connection", async (rawWs, req) => {
     const ws = rawWs as AuthedWebSocket;
     ws.rooms = new Set();
 
@@ -97,7 +205,15 @@ export function setupWebSocket(httpServer: HttpServer): void {
       return;
     }
 
-    const userId = consumeWsToken(token);
+    let userId: string | null;
+    try {
+      userId = await consumeWsToken(token);
+    } catch (err) {
+      logger.error("WS token validation error", err as Error, { source: "websocket" });
+      ws.close(4001, "Token validation failed");
+      return;
+    }
+
     if (!userId) {
       ws.close(4001, "Invalid or expired token");
       return;
@@ -115,7 +231,7 @@ export function setupWebSocket(httpServer: HttpServer): void {
         const msg = JSON.parse(String(raw)) as { event?: string; room?: string };
         // Client can join named rooms by sending { event: "join", room: "salon_123" }
         if (msg.event === "join" && msg.room) {
-          // Only allow joining salon_ rooms (ownership checked by server separately)
+          // Only allow joining salon_ and admin rooms
           if (/^(salon_|admin)/.test(msg.room)) {
             joinRoom(ws, msg.room);
           }
@@ -138,5 +254,5 @@ export function setupWebSocket(httpServer: HttpServer): void {
     send(ws, "connected", { userId });
   });
 
-  logger.info("WebSocket server initialized at /ws");
+  logger.info("WebSocket server initialized at /ws", { source: "websocket" });
 }

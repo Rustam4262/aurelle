@@ -317,6 +317,46 @@ export async function sendPasswordResetEmail(
   return sendEmail(email, subject, html);
 }
 
+export async function sendEmailVerificationEmail(
+  email: string,
+  verifyLink: string,
+  language = "ru",
+): Promise<boolean> {
+  const subjects: Record<string, string> = {
+    ru: "Подтвердите email — AURELLE",
+    uz: "Emailni tasdiqlang — AURELLE",
+    en: "Verify your email — AURELLE",
+  };
+  const bodies: Record<string, string> = {
+    ru: `<h2>Подтверждение email</h2><p>Добро пожаловать в AURELLE! Подтвердите свой email, чтобы получить полный доступ к аккаунту.</p>
+         <div style="text-align:center;margin:24px 0"><a href="${verifyLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600">Подтвердить email</a></div>
+         <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px">Ссылка действительна 24 часа. Если вы не регистрировались — проигнорируйте письмо.</p>`,
+    uz: `<h2>Emailni tasdiqlash</h2><p>AURELLE ga xush kelibsiz! To'liq kirish uchun emailingizni tasdiqlang.</p>
+         <div style="text-align:center;margin:24px 0"><a href="${verifyLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600">Emailni tasdiqlash</a></div>
+         <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px">Havola 24 soat davomida amal qiladi.</p>`,
+    en: `<h2>Verify your email</h2><p>Welcome to AURELLE! Please verify your email address to get full access to your account.</p>
+         <div style="text-align:center;margin:24px 0"><a href="${verifyLink}" style="display:inline-block;background:#667eea;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600">Verify Email</a></div>
+         <p style="background:#f8f9fa;border-left:4px solid #6c757d;padding:12px;color:#555;font-size:14px">Link valid for 24 hours. Ignore if you didn't sign up.</p>`,
+  };
+
+  const subject = subjects[language] ?? subjects.ru;
+  const body = bodies[language] ?? bodies.ru;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f5f5f5}
+.wrap{max-width:600px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.hdr{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:30px;text-align:center}
+.hdr h1{margin:0;font-size:28px;font-weight:300}.body{padding:30px;color:#333}
+.ftr{text-align:center;padding:20px;color:#6c757d;font-size:13px}</style></head>
+<body><div class="wrap">
+  <div class="hdr"><h1>AURELLE</h1></div>
+  <div class="body">${body}</div>
+  <div class="ftr"><a href="${APP_URL()}" style="color:#667eea;text-decoration:none">aurelle.uz</a></div>
+</div></body></html>`;
+
+  return sendEmail(email, subject, html);
+}
+
 export async function sendUserBlockedEmail(
   userEmail: string,
   userName: string,

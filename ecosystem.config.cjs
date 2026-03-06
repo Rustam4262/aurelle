@@ -2,9 +2,9 @@
 module.exports = {
   apps: [
     {
-      name: "aurelle",
+      name: "aurelle-production",
       script: "dist/index.cjs",
-      instances: "max", // Используем все доступные CPU
+      instances: "max", // All available CPU cores
       exec_mode: "cluster",
 
       // Environment variables
@@ -35,7 +35,7 @@ module.exports = {
       watch: false, // Don't watch in production
       ignore_watch: ["node_modules", "logs", ".git"],
 
-      // Graceful shutdown
+      // Graceful shutdown — app sends process.send('ready') after listen()
       kill_timeout: 5000,
       wait_ready: true,
       listen_timeout: 10000,
@@ -51,7 +51,7 @@ module.exports = {
       repo: "git@github.com:Rustam4262/aurelle.git",
       path: "/var/www/aurelle",
       "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env production --name aurelle && pm2 save",
+        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env production && pm2 save",
       "pre-setup": "apt-get install git -y",
     },
     staging: {
@@ -61,7 +61,7 @@ module.exports = {
       repo: "git@github.com:Rustam4262/aurelle.git",
       path: "/var/www/aurelle-staging",
       "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env staging --name aurelle-staging && pm2 save",
+        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env staging && pm2 save",
       "pre-setup": "apt-get install git -y",
     },
   },

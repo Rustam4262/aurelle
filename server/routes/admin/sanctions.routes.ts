@@ -5,6 +5,7 @@ import { insertSanctionSchema, insertSanctionReasonCodeSchema } from "@shared/ad
 import { eq, and, desc } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
+import { invalidateDashboardCache } from "../../lib/cache";
 
 const router = Router();
 
@@ -73,6 +74,7 @@ router.post("/", requirePermission("sanctions.create"), async (req, res) => {
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.status(201).json({ sanction: newSanction });
   } catch (error: any) {
     logger.error("Create sanction error", error as Error, { source: "sanctions-routes" });
@@ -122,6 +124,7 @@ router.patch("/:id/revoke", requirePermission("sanctions.revoke"), async (req, r
       req,
     });
 
+    invalidateDashboardCache().catch(() => {});
     res.json({ sanction: updatedSanction });
   } catch (error: any) {
     logger.error("Revoke sanction error", error as Error, { source: "sanctions-routes" });

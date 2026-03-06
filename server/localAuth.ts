@@ -2,13 +2,14 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import type { Express, Request, Response } from "express";
 import { db } from "./db";
-import { users, passwordResetTokens } from "@shared/schema";
+import { users, passwordResetTokens, emailVerificationTokens } from "@shared/schema";
 import { eq, and, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLimiter";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
-import { sendPasswordResetEmail } from "./email";
+import { trackEvent } from "./lib/analytics";
+import { sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -88,6 +89,14 @@ export function setupLocalAuth(app: Express) {
 
         // Track user registration/login activity
         trackUserLogin(newUser.id, req);
+
+        // Track product analytics event (fire-and-forget)
+        trackEvent({ eventName: "registration_complete", userId: newUser.id, req });
+
+        // Send email verification (fire-and-forget — never blocks registration)
+        sendVerificationEmail(newUser.id, email).catch((e) =>
+          logger.error("Failed to send verification email", e as Error, { source: "localAuth" }),
+        );
 
         res.json({
           success: true,
@@ -269,5 +278,88 @@ export function setupLocalAuth(app: Express) {
     }
   });
 
+  // Verify email with token
+  app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
+    const { token } = req.query;
+    if (!token || typeof token !== "string" || token.length !== 64) {
+      return res.status(400).json({ message: "Invalid verification token" });
+    }
+
+    try {
+      const [record] = await db
+        .select()
+        .from(emailVerificationTokens)
+        .where(
+          and(
+            eq(emailVerificationTokens.token, token),
+            gt(emailVerificationTokens.expiresAt, new Date()),
+            isNull(emailVerificationTokens.usedAt),
+          ),
+        )
+        .limit(1);
+
+      if (!record) {
+        return res.status(400).json({ message: "Invalid or expired verification link" });
+      }
+
+      await Promise.all([
+        db.update(users).set({ emailVerified: true }).where(eq(users.id, record.userId)),
+        db
+          .update(emailVerificationTokens)
+          .set({ usedAt: new Date() })
+          .where(eq(emailVerificationTokens.id, record.id)),
+      ]);
+
+      logger.info("Email verified", { source: "localAuth", meta: { userId: record.userId } });
+
+      // Redirect to profile with success indicator
+      return res.redirect("/?emailVerified=1");
+    } catch (error) {
+      logger.error("Email verification error", error as Error, { source: "localAuth" });
+      return res.status(500).json({ message: "Email verification failed" });
+    }
+  });
+
+  // Resend verification email (rate-limited)
+  app.post("/api/auth/resend-verification", resetLimiter, async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ message: "Email required" });
+    }
+
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+      // Always return success to prevent email enumeration
+      if (!user || user.emailVerified) {
+        return res.json({ success: true, message: "If eligible, a verification email has been sent" });
+      }
+
+      await sendVerificationEmail(user.id, email);
+
+      res.json({ success: true, message: "If eligible, a verification email has been sent" });
+    } catch (error) {
+      logger.error("Resend verification error", error as Error, { source: "localAuth" });
+      res.status(500).json({ message: "Failed to send verification email" });
+    }
+  });
+
   logger.info("Local auth (login/password) configured successfully", { source: "localAuth" });
+}
+
+// ─── Internal helper ──────────────────────────────────────────────────────────
+
+async function sendVerificationEmail(userId: string, email: string): Promise<void> {
+  const token = crypto.randomBytes(32).toString("hex"); // 64 hex chars
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  await db.insert(emailVerificationTokens).values({ userId, token, expiresAt });
+
+  const verifyLink = `${process.env.APP_URL || "http://localhost:5000"}/api/auth/verify-email?token=${token}`;
+
+  const ok = await sendEmailVerificationEmail(email, verifyLink);
+  logger.info("Verification email dispatched", {
+    source: "localAuth",
+    meta: { userId, email, sent: ok },
+  });
 }
