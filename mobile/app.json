@@ -39,12 +39,14 @@
           "icon": "./assets/notification-icon.png",
           "color": "#C81D60"
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-localization"
     ],
     "extra": {
       "apiBaseUrl": "https://aurelle.uz",
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "b6eaf528-5b79-4145-befb-c80f7b93c63c"
       }
     }
   }
