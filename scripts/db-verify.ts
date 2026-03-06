@@ -28,8 +28,12 @@ const REQUIRED_TABLES = [
   "salons",
   "masters",
   "services",
-  "service_categories",
   "portfolio_items",
+  "salon_working_hours",
+  "salon_breaks",
+  "master_services",
+  "master_portfolio",
+  "master_working_hours",
 
   // Bookings
   "bookings",
@@ -50,15 +54,16 @@ const REQUIRED_TABLES = [
   // Admin RBAC
   "admin_users",
   "admin_roles",
-  "admin_role_permissions",
-  "admin_user_roles",
+
+  // Subscriptions
+  "subscription_plans",
+  "salon_subscriptions",
 
   // Moderation
   "sanctions",
   "complaints",
   "audit_logs",
   "chat_messages",
-  "user_activity",
 ] as const;
 
 async function main(): Promise<void> {
