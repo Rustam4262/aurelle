@@ -14,11 +14,14 @@ import {
   salonSettings,
   supportTickets,
   supportMessages,
+  bookingDrafts,
 } from "@shared/schema";
 import { eq, and, desc, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { sendBookingConfirmation, sendBookingCancellation, isEmailConfigured } from "../email";
+import { invalidateDashboardCache } from "../lib/cache";
+import { trackEvent } from "../lib/analytics";
 
 const router = Router();
 
@@ -356,6 +359,15 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       }
     }
 
+    invalidateDashboardCache().catch(() => {});
+    trackEvent({
+      eventName: "booking_started",
+      userId,
+      req,
+      properties: { salonId, serviceId, masterId: masterId ?? null, bookingId: newBooking.id },
+    });
+    // Clear any resume-booking draft for this user (booking succeeded)
+    void db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId)).catch(() => {});
     return res.status(201).json(newBooking);
   } catch (error) {
     logger.error("Create booking error:", error);
@@ -520,6 +532,7 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       }
     }
 
+    invalidateDashboardCache().catch(() => {});
     return res.json(updated);
   } catch (error) {
     logger.error("Cancel client booking error:", error);
@@ -1098,6 +1111,95 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
   } catch (error) {
     logger.error("Close support ticket error:", error);
     return res.status(500).json({ error: "Failed to close ticket" });
+  }
+});
+
+// ─── Booking Drafts (Resume Booking) ─────────────────────────────────────────
+
+const draftSchema = z.object({
+  salonId:       z.string().optional(),
+  serviceId:     z.string().optional(),
+  masterId:      z.string().optional(),
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  properties:    z.record(z.unknown()).optional(),
+});
+
+/**
+ * GET /api/bookings/draft
+ * Returns the current user's active booking draft (if not expired).
+ */
+router.get("/bookings/draft", isAuthenticated, async (req: any, res) => {
+  const userId: string = req.user.claims.sub;
+  try {
+    const [draft] = await db
+      .select()
+      .from(bookingDrafts)
+      .where(and(eq(bookingDrafts.userId, userId)))
+      .limit(1);
+
+    if (!draft || new Date(draft.expiresAt) < new Date()) {
+      return res.json({ draft: null });
+    }
+    return res.json({ draft });
+  } catch (err) {
+    logger.error("Get booking draft error", err as Error);
+    return res.status(500).json({ error: "Failed to get draft" });
+  }
+});
+
+/**
+ * POST /api/bookings/draft
+ * Save or update a booking draft. Expires in 24 hours.
+ * One draft per user — overwrites any existing draft.
+ */
+router.post("/bookings/draft", isAuthenticated, async (req: any, res) => {
+  const userId: string = req.user.claims.sub;
+  const parsed = draftSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid draft data", details: parsed.error.errors });
+  }
+
+  try {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    const { salonId, serviceId, masterId, scheduledDate, scheduledTime, properties } = parsed.data;
+
+    // Delete existing draft first (one-per-user upsert)
+    await db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId));
+
+    const [draft] = await db
+      .insert(bookingDrafts)
+      .values({
+        userId,
+        salonId:       salonId       ?? null,
+        serviceId:     serviceId     ?? null,
+        masterId:      masterId      ?? null,
+        scheduledDate: scheduledDate ?? null,
+        scheduledTime: scheduledTime ?? null,
+        properties:    properties    ?? {},
+        expiresAt,
+      })
+      .returning();
+
+    return res.json({ draft });
+  } catch (err) {
+    logger.error("Save booking draft error", err as Error);
+    return res.status(500).json({ error: "Failed to save draft" });
+  }
+});
+
+/**
+ * DELETE /api/bookings/draft
+ * Clear the user's booking draft (e.g. user cancelled the booking flow).
+ */
+router.delete("/bookings/draft", isAuthenticated, async (req: any, res) => {
+  const userId: string = req.user.claims.sub;
+  try {
+    await db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId));
+    return res.json({ ok: true });
+  } catch (err) {
+    logger.error("Delete booking draft error", err as Error);
+    return res.status(500).json({ error: "Failed to delete draft" });
   }
 });
 

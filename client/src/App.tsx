@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { UpgradeModal } from "@/components/upgrade-modal";
 import { Loader2 } from "lucide-react";
 
 // Eager load Home page (first page users see)
@@ -36,6 +37,7 @@ const AdminPage = lazy(() => import("@/pages/admin"));
 const SoloMasterPage = lazy(() => import("@/pages/solo-master"));
 const SoloMasterOnboardingPage = lazy(() => import("@/pages/solo-master-onboarding"));
 const PublicMasterPage = lazy(() => import("@/pages/public-master"));
+const PricingPage = lazy(() => import("@/pages/pricing"));
 
 // Loading fallback component
 function PageLoader() {
@@ -76,6 +78,7 @@ function Router() {
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/:rest*" component={AdminPage} />
           <Route path="/master/:slug" component={PublicMasterPage} />
+          <Route path="/pricing" component={PricingPage} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>
@@ -93,6 +96,7 @@ function App() {
               <SkipToContent />
               <Toaster />
               <PWAInstallPrompt />
+              <UpgradeModal />
               <Router />
             </TooltipProvider>
           </QueryClientProvider>

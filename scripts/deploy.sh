@@ -1,184 +1,184 @@
-#!/bin/bash
-# deploy.sh — Production deploy script for AURELLE
-# Usage: ./scripts/deploy.sh [--skip-build] [--skip-smoke] [--branch main]
+#!/usr/bin/env bash
+# =============================================================================
+# scripts/deploy.sh — Blue/Green deployment for AURELLE (no Docker)
+#
+# Expected layout on server after setup-blue-green.sh:
+#   /var/www/
+#   ├── aurelle-blue/       # slot A — full git clone
+#   ├── aurelle-green/      # slot B — full git clone
+#   ├── aurelle -> ./aurelle-blue   # symlink; nginx root & PM2 cwd always here
+#   └── aurelle-shared/
+#       ├── .env            # single source of truth for secrets
+#       └── uploads/        # user-uploaded files (shared across slots)
+#
+# Usage:
+#   bash scripts/deploy.sh
+#   BRANCH=develop bash scripts/deploy.sh
+#   DEPLOY_ENV=staging bash scripts/deploy.sh
+#   bash scripts/deploy.sh --skip-smoke
+# =============================================================================
+
 set -euo pipefail
 
-# ─── Config ──────────────────────────────────────────────────────────────────
-APP_DIR="${APP_DIR:-/var/www/aurelle}"
-APP_NAME="${APP_NAME:-aurelle}"
+# ── Configurable ──────────────────────────────────────────────────────────────
+SLOTS_DIR="${SLOTS_DIR:-/var/www}"
+SLOT_BLUE="${SLOTS_DIR}/aurelle-blue"
+SLOT_GREEN="${SLOTS_DIR}/aurelle-green"
+CURRENT="${SLOTS_DIR}/aurelle"           # symlink — nginx & PM2 always use this
+SHARED_DIR="${SLOTS_DIR}/aurelle-shared"
+ECOSYSTEM="ecosystem.config.cjs"
+DEPLOY_ENV="${DEPLOY_ENV:-production}"
 BRANCH="${BRANCH:-main}"
-HEALTH_URL="${HEALTH_URL:-https://aurelle.uz/api/health}"
-SMOKE_URL="${SMOKE_URL:-https://aurelle.uz}"
-HEALTH_TIMEOUT=30
-SKIP_BUILD=false
-SKIP_SMOKE=false
+APP_PORT="${APP_PORT:-5000}"
+APP_URL="${APP_URL:-http://127.0.0.1:${APP_PORT}}"
+HEALTH_RETRIES="${HEALTH_RETRIES:-12}"
+HEALTH_DELAY_S="${HEALTH_DELAY_S:-5}"
+SKIP_SMOKE="${SKIP_SMOKE:-false}"
+for arg in "$@"; do [[ "$arg" == "--skip-smoke" ]] && SKIP_SMOKE=true; done
+# ─────────────────────────────────────────────────────────────────────────────
 
-# ─── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
-log()     { echo -e "${GREEN}[$(date +%H:%M:%S)] ✅ $*${NC}"; }
-warn()    { echo -e "${YELLOW}[$(date +%H:%M:%S)] ⚠️  $*${NC}"; }
-err()     { echo -e "${RED}[$(date +%H:%M:%S)] ❌ $*${NC}" >&2; }
-info()    { echo -e "${CYAN}[$(date +%H:%M:%S)] ℹ  $*${NC}"; }
+log()     { echo -e "${GREEN}[$(date +%H:%M:%S)] $*${NC}"; }
+warn()    { echo -e "${YELLOW}[$(date +%H:%M:%S)] ⚠  $*${NC}"; }
 section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}"; }
+fail()    { echo -e "${RED}[$(date +%H:%M:%S)] ✗ FAIL: $*${NC}" >&2; exit 1; }
 
-# ─── Parse args ──────────────────────────────────────────────────────────────
-for arg in "$@"; do
-  case "$arg" in
-    --skip-build) SKIP_BUILD=true ;;
-    --skip-smoke) SKIP_SMOKE=true ;;
-    --branch=*)   BRANCH="${arg#*=}" ;;
-  esac
-done
-
-# ─── Pre-flight ──────────────────────────────────────────────────────────────
+# ── 0. Pre-flight ─────────────────────────────────────────────────────────────
 section "Pre-flight"
-log "Starting deploy → branch: $BRANCH, app: $APP_NAME"
+[[ -L "$CURRENT" ]] || fail \
+  "$CURRENT must be a symlink. Run 'bash scripts/setup-blue-green.sh' first."
+command -v pm2  >/dev/null 2>&1 || fail "pm2 not in PATH"
+command -v curl >/dev/null 2>&1 || fail "curl not in PATH"
+command -v npm  >/dev/null 2>&1 || fail "npm not in PATH"
 
-if [ ! -d "$APP_DIR" ]; then
-  err "App directory not found: $APP_DIR"
-  err "Set APP_DIR env variable to the correct path"
-  exit 1
+# ── 1. Resolve active / inactive slots ────────────────────────────────────────
+ACTIVE_REAL=$(readlink -f "$CURRENT")
+if   [[ "$ACTIVE_REAL" == "$SLOT_BLUE" ]];  then
+  ACTIVE="$SLOT_BLUE";  ACTIVE_NAME="blue"
+  INACTIVE="$SLOT_GREEN"; INACTIVE_NAME="green"
+elif [[ "$ACTIVE_REAL" == "$SLOT_GREEN" ]]; then
+  ACTIVE="$SLOT_GREEN"; ACTIVE_NAME="green"
+  INACTIVE="$SLOT_BLUE";  INACTIVE_NAME="blue"
+else
+  fail "Active slot path '$ACTIVE_REAL' is neither blue nor green"
+fi
+log "Active=$ACTIVE_NAME  →  target=$INACTIVE_NAME"
+
+# ── 2. Clone inactive slot if missing (first deploy to this slot) ─────────────
+if [[ ! -d "$INACTIVE" ]]; then
+  section "Clone"
+  REPO=$(git -C "$ACTIVE" remote get-url origin 2>/dev/null) \
+    || fail "Cannot determine repo URL from active slot"
+  log "Cloning into $INACTIVE_NAME ($REPO)"
+  git clone --branch "$BRANCH" "$REPO" "$INACTIVE"
 fi
 
-cd "$APP_DIR"
-
-# ─── Save rollback point ─────────────────────────────────────────────────────
-PREV_COMMIT=$(git rev-parse HEAD)
-PREV_SHORT=$(git rev-parse --short HEAD)
-info "Current: $PREV_SHORT — $(git log -1 --format='%s')"
-echo "$PREV_COMMIT" > /tmp/aurelle_prev_commit
-
-# ─── Pull code ───────────────────────────────────────────────────────────────
+# ── 3. Update code in inactive slot ───────────────────────────────────────────
 section "Code"
-log "Pulling $BRANCH..."
+cd "$INACTIVE"
 git fetch origin
 git checkout "$BRANCH"
-git pull origin "$BRANCH"
+git reset --hard "origin/$BRANCH"
+COMMIT=$(git rev-parse --short HEAD)
+COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+log "Commit: $COMMIT  $COMMIT_MSG"
 
-RELEASE=$(git rev-parse --short HEAD)
-RELEASE_FULL=$(git rev-parse HEAD)
-
-if [ "$PREV_COMMIT" = "$RELEASE_FULL" ]; then
-  warn "No new commits. Continuing deploy anyway."
-fi
-
-info "Deploying: $RELEASE — $(git log -1 --format='%s')"
-info "Author:    $(git log -1 --format='%an <%ae>')"
-info "Date:      $(git log -1 --format='%ci')"
-
-# ─── Update .env with release ─────────────────────────────────────────────────
-# Sentry release tracking: передаём commit hash как release
-if grep -q "VITE_SENTRY_RELEASE=" .env 2>/dev/null; then
-  sed -i "s/VITE_SENTRY_RELEASE=.*/VITE_SENTRY_RELEASE=aurelle@${RELEASE}/" .env
-  sed -i "s/SENTRY_RELEASE=.*/SENTRY_RELEASE=aurelle@${RELEASE}/" .env
+# ── 4. Link shared .env (secrets live outside git, shared between slots) ──────
+section ".env"
+if [[ -f "${SHARED_DIR}/.env" ]]; then
+  ln -sf "${SHARED_DIR}/.env" "$INACTIVE/.env"
+  log "Linked .env from $SHARED_DIR"
+elif [[ -f "${ACTIVE}/.env" ]]; then
+  cp "${ACTIVE}/.env" "$INACTIVE/.env"
+  warn "Copied .env from active slot — consider moving it to $SHARED_DIR"
 else
-  echo "VITE_SENTRY_RELEASE=aurelle@${RELEASE}" >> .env
-  echo "SENTRY_RELEASE=aurelle@${RELEASE}" >> .env
-fi
-info "Release set: aurelle@${RELEASE}"
-
-# ─── Install dependencies ─────────────────────────────────────────────────────
-section "Install"
-log "Installing dependencies..."
-npm ci
-
-# ─── Build ───────────────────────────────────────────────────────────────────
-section "Build"
-if [ "$SKIP_BUILD" = false ]; then
-  log "Building (release: $RELEASE)..."
-
-  # Передаём release в Vite build
-  export VITE_APP_VERSION="$RELEASE"
-  export VITE_SENTRY_RELEASE="aurelle@${RELEASE}"
-  export SENTRY_RELEASE="aurelle@${RELEASE}"
-
-  npm run build
-  BUILD_SIZE=$(du -sh dist/public 2>/dev/null | cut -f1 || echo "?")
-  log "Build complete — $BUILD_SIZE total"
-else
-  warn "Skipping build (--skip-smoke)"
+  warn "No .env found — deployment may fail if env vars are missing"
 fi
 
-# ─── Nginx: проверить и перезагрузить конфиг ────────────────────────────────
-section "Nginx"
-if command -v nginx &>/dev/null; then
+# Stamp release for Sentry tracking
+if [[ -f "$INACTIVE/.env" ]]; then
+  sed -i "s/^VITE_SENTRY_RELEASE=.*/VITE_SENTRY_RELEASE=aurelle@${COMMIT}/" "$INACTIVE/.env" \
+    || echo "VITE_SENTRY_RELEASE=aurelle@${COMMIT}" >> "$INACTIVE/.env"
+  sed -i "s/^SENTRY_RELEASE=.*/SENTRY_RELEASE=aurelle@${COMMIT}/" "$INACTIVE/.env" \
+    || echo "SENTRY_RELEASE=aurelle@${COMMIT}" >> "$INACTIVE/.env"
+fi
+
+# ── 5. Install deps & build ───────────────────────────────────────────────────
+section "Install & Build"
+npm ci --prefer-offline
+VITE_APP_VERSION="$COMMIT" VITE_SENTRY_RELEASE="aurelle@${COMMIT}" npm run build
+BUILD_SIZE=$(du -sh dist 2>/dev/null | cut -f1 || echo "?")
+log "Build OK — dist/ $BUILD_SIZE"
+
+# ── 6. Atomic symlink switch ──────────────────────────────────────────────────
+section "Switch"
+# ln -sfn is atomic on Linux (uses rename(2) internally via util-linux).
+# nginx keeps serving the old slot until its worker processes are recycled.
+ln -sfn "$INACTIVE" "$CURRENT"
+log "Symlink: $CURRENT → $INACTIVE_NAME"
+
+# ── 7. Zero-downtime PM2 reload ───────────────────────────────────────────────
+# startOrReload reads the ecosystem file from $CURRENT (new slot).
+# PM2 derives cwd from the directory of the config file = /var/www/aurelle.
+# New workers start from the new slot's dist/; old workers drain gracefully.
+section "PM2 reload"
+pm2 startOrReload "$CURRENT/$ECOSYSTEM" --env "$DEPLOY_ENV" --update-env
+pm2 save
+log "PM2 reloaded"
+
+# ── 8. nginx reload for new static dist/ ──────────────────────────────────────
+if command -v nginx >/dev/null 2>&1; then
   if nginx -t 2>/dev/null; then
-    systemctl reload nginx 2>/dev/null && log "nginx reloaded" || warn "nginx reload failed (not systemd?)"
+    nginx -s reload && log "nginx reloaded"
   else
-    err "nginx -t failed! NOT reloading nginx."
-    err "Check: /etc/nginx/sites-enabled/aurelle"
+    warn "nginx -t failed — skipping nginx reload (app still served via Node)"
   fi
-else
-  warn "nginx not found — skipping"
 fi
 
-# ─── Restart app ─────────────────────────────────────────────────────────────
-section "Restart"
-log "Restarting app..."
-
-if command -v pm2 &>/dev/null && pm2 list 2>/dev/null | grep -q "$APP_NAME"; then
-  pm2 reload "$APP_NAME"
-  log "Restarted via PM2"
-elif systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
-  systemctl restart "$APP_NAME"
-  log "Restarted via systemd"
-elif docker ps --filter "name=$APP_NAME" --format "{{.Names}}" 2>/dev/null | grep -q "$APP_NAME"; then
-  docker restart "$APP_NAME"
-  log "Restarted via Docker"
-else
-  err "Cannot determine process manager. Restart manually:"
-  err "  PM2:     pm2 restart $APP_NAME"
-  err "  systemd: systemctl restart $APP_NAME"
-  err "  Docker:  docker restart $APP_NAME"
-  exit 1
-fi
-
-# ─── Health check ─────────────────────────────────────────────────────────────
+# ── 9. Health check with auto-rollback ────────────────────────────────────────
 section "Health check"
-log "Waiting for app to be ready... ($HEALTH_URL)"
-sleep 3
-
-for i in $(seq 1 $HEALTH_TIMEOUT); do
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
-  if [ "$HTTP_CODE" = "200" ]; then
-    log "Health check passed (HTTP $HTTP_CODE) in ${i}s"
+log "Checking ${APP_URL}/api/health  (up to ${HEALTH_RETRIES}×${HEALTH_DELAY_S}s)"
+HEALTHY=false
+for i in $(seq 1 "$HEALTH_RETRIES"); do
+  HTTP=$(curl -so /dev/null -w "%{http_code}" "${APP_URL}/api/health" 2>/dev/null || echo "000")
+  if [[ "$HTTP" == "200" ]]; then
+    log "Health check passed (attempt $i, HTTP $HTTP)"
+    HEALTHY=true
     break
   fi
-  if [ "$i" = "$HEALTH_TIMEOUT" ]; then
-    err "Health check FAILED after ${HEALTH_TIMEOUT}s (last HTTP: $HTTP_CODE)"
-    err "Auto-rollback to $PREV_SHORT..."
-    bash "$(dirname "$0")/rollback.sh" "$PREV_COMMIT"
-    exit 1
-  fi
-  printf "."
-  sleep 1
+  log "Attempt $i/$HEALTH_RETRIES — HTTP $HTTP — retry in ${HEALTH_DELAY_S}s…"
+  sleep "$HEALTH_DELAY_S"
 done
 
-# ─── Smoke tests (если Playwright установлен) ────────────────────────────────
-section "Smoke tests"
-if [ "$SKIP_SMOKE" = true ]; then
-  warn "Smoke tests skipped (--skip-smoke)"
-elif ! command -v npx &>/dev/null; then
-  warn "npx not found — skipping smoke tests"
-elif ! ls node_modules/@playwright/test &>/dev/null 2>&1; then
-  warn "Playwright not installed — skipping smoke tests"
-  warn "To enable: npm install -D @playwright/test && npx playwright install chromium"
-else
-  log "Running smoke tests against $SMOKE_URL..."
-  if BASE_URL="$SMOKE_URL" npx playwright test tests/e2e/smoke.spec.ts --reporter=list 2>&1; then
+if [[ "$HEALTHY" != "true" ]]; then
+  warn "Health check failed — auto-rollback to $ACTIVE_NAME"
+  ln -sfn "$ACTIVE" "$CURRENT"
+  pm2 startOrReload "$CURRENT/$ECOSYSTEM" --env "$DEPLOY_ENV" --update-env
+  pm2 save
+  nginx -s reload 2>/dev/null || true
+  fail "Deployment failed; site restored to $ACTIVE_NAME"
+fi
+
+# ── 10. Smoke test (optional) ─────────────────────────────────────────────────
+if [[ "$SKIP_SMOKE" != "true" ]] && [[ -d "$INACTIVE/node_modules/@playwright" ]]; then
+  section "Smoke tests"
+  if BASE_URL="${APP_URL}" npx playwright test tests/e2e/smoke.spec.ts --reporter=list 2>&1; then
     log "Smoke tests passed"
   else
-    err "Smoke tests FAILED!"
-    err "Auto-rollback to $PREV_SHORT..."
-    bash "$(dirname "$0")/rollback.sh" "$PREV_COMMIT"
-    exit 1
+    warn "Smoke tests FAILED — auto-rollback to $ACTIVE_NAME"
+    ln -sfn "$ACTIVE" "$CURRENT"
+    pm2 startOrReload "$CURRENT/$ECOSYSTEM" --env "$DEPLOY_ENV" --update-env
+    pm2 save
+    fail "Smoke tests failed; site restored to $ACTIVE_NAME"
   fi
 fi
 
-# ─── Done ─────────────────────────────────────────────────────────────────────
-section "Done"
-log "Deploy complete!"
-info "Release:  aurelle@${RELEASE}"
-info "Commit:   $(git log -1 --oneline)"
-info "URL:      $SMOKE_URL"
-info "Rollback: ./scripts/rollback.sh $PREV_SHORT"
+# ── Done ──────────────────────────────────────────────────────────────────────
+echo ""
+echo -e "${GREEN}══════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  Deployment complete${NC}"
+echo -e "${GREEN}  Slot   : $INACTIVE_NAME  (prev: $ACTIVE_NAME)${NC}"
+echo -e "${GREEN}  Commit : $COMMIT  $COMMIT_MSG${NC}"
+echo -e "${GREEN}  Rollback: bash scripts/rollback.sh${NC}"
+echo -e "${GREEN}══════════════════════════════════════════════════════${NC}"
+echo ""

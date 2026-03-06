@@ -1,6 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
+import { emitUpgradeRequired } from "@/components/upgrade-modal";
 
 // Base URL for API requests
 // If running on native platform (Android/iOS), use the production server URL
@@ -13,6 +14,26 @@ const FETCH_TIMEOUT_MS = 15_000;
 /** Prevent multiple simultaneous admin 401 redirects firing in parallel queries. */
 let _adminRedirectInProgress = false;
 
+/** Read the CSRF token from the csrf-token cookie (set by the server on every response). */
+function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/** Build request headers, injecting X-CSRF-Token on mutating methods. */
+function buildHeaders(method: string, hasBody: boolean): HeadersInit {
+  const headers: Record<string, string> = {};
+  if (hasBody) headers["Content-Type"] = "application/json";
+  if (!SAFE_METHODS.has(method.toUpperCase())) {
+    const token = getCsrfToken();
+    if (token) headers["X-CSRF-Token"] = token;
+  }
+  return headers;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     // Special handling for not found
@@ -24,6 +45,17 @@ async function throwIfResNotOk(res: Response) {
     }
 
     const text = (await res.text()) || res.statusText;
+
+    // 402 Payment Required — show upgrade modal
+    if (res.status === 402) {
+      try {
+        const body = JSON.parse(text) as { feature?: string };
+        emitUpgradeRequired({ feature: body.feature ?? "" });
+      } catch {
+        emitUpgradeRequired({ feature: "" });
+      }
+    }
+
     const error = new Error(`${res.status}: ${text}`);
     (error as Error & { status: number }).status = res.status;
     throw error;
@@ -41,7 +73,7 @@ export async function apiRequest(
   try {
     const res = await fetch(`${BASE_URL}${url}`, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers: buildHeaders(method, !!data),
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
       signal: controller.signal,

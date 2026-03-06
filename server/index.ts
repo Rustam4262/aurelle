@@ -7,6 +7,9 @@ import { initializeUploadDirectories } from "./initUploads";
 import { initializeEmail } from "./email";
 import { startSanctionExpiryJob } from "./jobs/expire-sanctions";
 import { startBookingRemindersJob } from "./jobs/booking-reminders";
+import { startGmvRefreshJob } from "./lib/gmv-refresh";
+import { startDraftCleanupJob } from "./jobs/cleanup-drafts";
+import { startLifecycleCron } from "./lib/subscriptions";
 import {
   initializeSentry,
   setupSentryMiddleware,
@@ -15,6 +18,7 @@ import {
 } from "./lib/sentry";
 import { trackActivityHeartbeat } from "./middleware/activity";
 import { setupWebSocket } from "./lib/websocket";
+import { setCsrfCookie } from "./middleware/csrf";
 
 // Initialize Sentry as early as possible
 initializeSentry();
@@ -98,33 +102,15 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Set CSRF token cookie on every response (readable by JS, checked on mutations)
+app.use(setCsrfCookie);
+
 import { logger } from "./lib/logger";
+import { requestId, slowRequestLogger } from "./middleware/requestId";
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      logger.info(logLine);
-    }
-  });
-
-  next();
-});
+// Attach x-request-id + timing to every request
+app.use(requestId);
+app.use(slowRequestLogger);
 
 (async () => {
   // Initialize upload directories
@@ -176,8 +162,15 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  // Setup WebSocket server (must be done before listen so upgrade events work)
-  setupWebSocket(httpServer);
+
+  // Setup WebSocket server (must be done before listen so upgrade events work).
+  // Now async: sets up Redis pub/sub subscriber before accepting connections.
+  await setupWebSocket(httpServer);
+
+  // In PM2 cluster mode each worker gets a NODE_APP_INSTANCE env var (0, 1, 2…).
+  // Run cron jobs only on instance 0 to avoid N duplicate executions per interval.
+  const isMainInstance =
+    !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === "0";
 
   httpServer.listen(
     {
@@ -188,9 +181,22 @@ app.use((req, res, next) => {
     () => {
       logger.info(`serving on port ${port}`);
 
-      // Start cron jobs
-      startSanctionExpiryJob();
-      startBookingRemindersJob();
+      // Start cron jobs — only on the primary cluster worker
+      if (isMainInstance) {
+        startSanctionExpiryJob();
+        startBookingRemindersJob();
+        startGmvRefreshJob();
+        startDraftCleanupJob();
+        startLifecycleCron();
+        logger.info("[Cron] Jobs started on instance 0");
+      } else {
+        logger.info(`[Cron] Jobs skipped (instance ${process.env.NODE_APP_INSTANCE})`);
+      }
+
+      // Signal PM2 that the process is ready (required for wait_ready: true)
+      if (process.send) {
+        process.send("ready");
+      }
     },
   );
 })();

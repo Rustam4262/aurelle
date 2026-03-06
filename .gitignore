@@ -28,6 +28,7 @@ server/uploads/*/*
 backups/
 *.sql
 !scripts/*.sql
+!migrations/*.sql
 *.sql.gz
 
 # IDE

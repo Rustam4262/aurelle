@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { verifyCsrf } from "../middleware/csrf";
+import { requireAdminIp } from "../middleware/adminIp";
 import authRoutes from "./auth.routes";
 import usersRoutes from "./users.routes";
 import salonsRoutes from "./salons.routes";
@@ -44,7 +46,7 @@ router.use("/salons", salonsRoutes);
 router.use("/masters", publicMasterRoutes);
 
 // Authenticated user routes
-router.use("/bookings", bookingsRoutes);
+router.use("/bookings", verifyCsrf, bookingsRoutes);
 router.use("/favorites", favoritesRoutes);
 router.use("/reviews", reviewsRoutes);
 router.use("/push", pushRoutes);
@@ -55,12 +57,12 @@ router.use("/portfolio", portfolioRoutes);
 
 // Role-specific dashboards
 router.use("/master", mastersRoutes);
-router.use("/owner", ownerRoutes);
+router.use("/owner", verifyCsrf, ownerRoutes);
 router.use("/client", clientRoutes);
 router.use("/solo-master", soloMasterRoutes);
 
-// Admin panel (requires admin authentication)
-router.use("/admin", adminRoutes);
+// Admin panel — IP whitelist check first, then CSRF, then auth
+router.use("/admin", requireAdminIp, verifyCsrf, adminRoutes);
 
 // Payments
 router.use("/payments", paymentsRoutes);

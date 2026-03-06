@@ -1044,6 +1044,11 @@ export const payments = pgTable(
     salonId: varchar("salon_id"),
     masterId: varchar("master_id"),
     clientId: varchar("client_id"),
+    // Fee snapshot (calculated at payment creation from platformFeeConfig)
+    grossAmountUzs: integer("gross_amount_uzs"),  // = amountUzs (explicit alias for reporting)
+    feePercent: decimal("fee_percent", { precision: 5, scale: 2 }),  // rate applied (snapshot)
+    platformFeeUzs: integer("platform_fee_uzs"),  // platform's cut
+    netAmountUzs: integer("net_amount_uzs"),       // salon receives: gross - fee
     // Error tracking
     errorCode: varchar("error_code", { length: 100 }),
     errorMessage: text("error_message"),
@@ -1094,6 +1099,28 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 
+// ============ EMAIL VERIFICATION TOKENS ============
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    token: varchar("token", { length: 64 }).notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(), // 24 hours
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_email_verification_user").on(table.userId),
+    index("idx_email_verification_token").on(table.token),
+    index("idx_email_verification_expires").on(table.expiresAt),
+  ],
+);
+
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
+
 // ============ SCHEDULED NOTIFICATIONS (booking reminders) ============
 export const scheduledNotifications = pgTable(
   "scheduled_notifications",
@@ -1134,6 +1161,9 @@ export const webhookEvents = pgTable(
     ok: boolean("ok").notNull().default(false),
     httpStatus: integer("http_status"),
     error: text("error"),
+    // Idempotency key: provider's unique event ID (click_trans_id, Payme txId, etc.).
+    // A UNIQUE partial index (migration 0024) prevents double-processing the same event.
+    externalEventId: varchar("external_event_id", { length: 255 }),
     // Sanitized payload — no provider secrets
     raw: jsonb("raw").$type<Record<string, unknown>>(),
   },
@@ -1141,7 +1171,156 @@ export const webhookEvents = pgTable(
     index("idx_we_received").on(table.receivedAt),
     index("idx_we_provider").on(table.provider, table.receivedAt),
     index("idx_we_ok").on(table.ok, table.receivedAt),
+    index("idx_we_ext_id").on(table.externalEventId),
   ],
 );
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
+
+// ============ PRODUCT EVENTS (analytics funnel) ============
+export const productEvents = pgTable(
+  "product_events",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    eventName: varchar("event_name", { length: 100 }).notNull(),
+    // Intentionally no FK — events survive user deletion
+    userId: varchar("user_id"),
+    sessionId: varchar("session_id", { length: 128 }),
+    properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_pe_event_name_created").on(table.eventName, table.createdAt),
+    index("idx_pe_user_created").on(table.userId, table.createdAt),
+    index("idx_pe_created").on(table.createdAt),
+  ],
+);
+
+export type ProductEvent = typeof productEvents.$inferSelect;
+
+// ============ PLATFORM FEE CONFIG ============
+// One row per scope: salon_id IS NULL → global default; salon_id set → per-salon override.
+// Multiple rows for the same scope are allowed (append-only history);
+// calculateFee() always picks ORDER BY created_at DESC LIMIT 1.
+export const platformFeeConfig = pgTable(
+  "platform_fee_config",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    salonId: varchar("salon_id"),    // null = global default rate
+    feePercent: decimal("fee_percent", { precision: 5, scale: 2 }).notNull().default("0"),
+    description: text("description"),
+    createdBy: varchar("created_by").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_pfc_salon_id").on(table.salonId),
+    index("idx_pfc_created").on(table.createdAt),
+  ],
+);
+
+export type PlatformFeeConfig = typeof platformFeeConfig.$inferSelect;
+
+// ============ BOOKING DRAFTS (resume booking) ============
+// Stores in-progress booking form state so users can continue later.
+// Auto-expires after 24 hours. Deleted immediately on successful booking.
+export const bookingDrafts = pgTable(
+  "booking_drafts",
+  {
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull(),
+    salonId: varchar("salon_id"),
+    serviceId: varchar("service_id"),
+    masterId: varchar("master_id"),
+    scheduledDate: varchar("scheduled_date", { length: 10 }),  // YYYY-MM-DD
+    scheduledTime: varchar("scheduled_time", { length: 10 }),  // HH:MM
+    // Arbitrary extra state the client wants to persist (selected extras, notes, etc.)
+    properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    // One draft per user (latest wins via upsert)
+    index("idx_bd_user").on(table.userId),
+    index("idx_bd_expires").on(table.expiresAt),
+  ],
+);
+
+export type BookingDraft = typeof bookingDrafts.$inferSelect;
+
+// ============ SUBSCRIPTIONS ============
+
+/**
+ * Subscription plans catalogue.
+ * Managed by admins — not exposed to end-users for edit.
+ */
+export const subscriptionPlans = pgTable(
+  "subscription_plans",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    slug: varchar("slug", { length: 50 }).notNull().unique(), // e.g. "starter", "pro", "enterprise"
+    name: jsonb("name").notNull().$type<{ en: string; ru: string; uz: string }>(),
+    description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
+    priceMonthlyUzs: integer("price_monthly_uzs").notNull().default(0), // 0 = free
+    priceYearlyUzs: integer("price_yearly_uzs").notNull().default(0),
+    trialDays: integer("trial_days").notNull().default(14),
+    features: jsonb("features").notNull().$type<string[]>().default([]),
+    // feature keys this plan unlocks (used by requireFeature middleware)
+    featureKeys: jsonb("feature_keys").notNull().$type<string[]>().default([]),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_plans_active").on(table.isActive),
+  ],
+);
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+
+/**
+ * A salon's current subscription state.
+ * One row per salon (upsert on plan change).
+ */
+export const salonSubscriptions = pgTable(
+  "salon_subscriptions",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    salonId: varchar("salon_id").notNull().unique(), // FK salons.id (enforced at app layer)
+    planId: varchar("plan_id").notNull(),            // FK subscription_plans.id
+    // "trialing" → auto-expires at trialEndsAt
+    // "active"   → paid, renewsAt set
+    // "past_due" → payment failed, grace period
+    // "cancelled"→ admin/owner cancelled
+    // "expired"  → trial ended, no payment
+    status: varchar("status", { length: 20 }).notNull().default("trialing"),
+    trialStartsAt: timestamp("trial_starts_at"),
+    trialEndsAt: timestamp("trial_ends_at"),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    cancelledAt: timestamp("cancelled_at"),
+    cancellationReason: varchar("cancellation_reason", { length: 500 }),
+    // External payment reference (Payme/Click subscription ID if used)
+    externalSubscriptionId: varchar("external_subscription_id", { length: 255 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_subs_salon").on(table.salonId),
+    index("idx_subs_status").on(table.status),
+    index("idx_subs_trial_ends").on(table.trialEndsAt),
+    index("idx_subs_period_end").on(table.currentPeriodEnd),
+  ],
+);
+
+export type SalonSubscription = typeof salonSubscriptions.$inferSelect;

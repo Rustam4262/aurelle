@@ -9,6 +9,8 @@ import chatRoutes from "./admin/chat.routes";
 import auditRoutes from "./admin/audit.routes";
 import activityRoutes from "./admin/activity.routes";
 import seedRoutes from "./admin/seed.routes";
+import billingRoutes from "./admin/billing.routes";
+import analyticsRoutes from "./admin/analytics.routes";
 
 const router = Router();
 
@@ -41,5 +43,11 @@ router.use("/activity", activityRoutes);
 
 // Seed Test Data (development/testing)
 router.use("/seed", seedRoutes);
+
+// Billing & Fee Management
+router.use("/billing", billingRoutes);
+
+// Analytics (funnel, retention)
+router.use("/analytics", analyticsRoutes);
 
 export default router;

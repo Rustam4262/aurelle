@@ -3234,5 +3234,58 @@
     "copyAddress": "Manzilni nusxalash",
     "openInYandex": "Yandex.Xaritada ochish",
     "coordinates": "Koordinatalar:"
+  },
+  "upgrade": {
+    "premiumBadge": "Premium",
+    "title": "Tarifni yangilash talab etiladi",
+    "description": "«{{feature}}» funksiyasi pullik tariflarda mavjud. Starter yoki Pro tarifiga o'ting.",
+    "benefits": [
+      "Kengaytirilgan tahlil va hisobotlar",
+      "Cheksiz ustalar",
+      "Ustuvor qo'llab-quvvatlash"
+    ],
+    "dismiss": "Keyinroq",
+    "cta": "Tariflarni ko'rish"
+  },
+  "pricing": {
+    "badge": "Tariflar",
+    "title": "Oddiy va shaffof narxlar",
+    "subtitle": "Bepul boshlang, kerak bo'lganda yangilang.",
+    "popular": "Mashhur",
+    "perMonth": "so'm/oy",
+    "free": "Bepul",
+    "trialDays": "{{count}} kunlik bepul sinov",
+    "startFree": "Bepul boshlash",
+    "startTrial": "Sinov davrini boshlash",
+    "getStarted": "Boshlash",
+    "vatNote": "Narxlar QQSsiz ko'rsatilgan. Oylik yoki yillik to'lov (20% chegirma).",
+    "plans": {
+      "free": {
+        "name": "Bepul",
+        "f1": "2 tagacha usta",
+        "f2": "Oyiga 50 tagacha yozuv",
+        "f3": "Asosiy tahlil"
+      },
+      "starter": {
+        "name": "Boshlang'ich",
+        "f1": "5 tagacha usta",
+        "f2": "Cheksiz yozuvlar",
+        "f3": "Kengaytirilgan tahlil",
+        "f4": "Email-bildirishnomalar"
+      },
+      "pro": {
+        "name": "Pro",
+        "f1": "Cheksiz ustalar",
+        "f2": "Cheksiz yozuvlar",
+        "f3": "To'liq tahlil + voronka",
+        "f4": "SMS + Push-bildirishnomalar",
+        "f5": "Ustuvor qo'llab-quvvatlash"
+      }
+    },
+    "enterprise": {
+      "title": "Korporativ",
+      "subtitle": "Salon tarmoqlari va franshizalar uchun individual shartlar",
+      "cta": "Biz bilan bog'laning"
+    }
   }
 }

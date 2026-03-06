@@ -3235,5 +3235,58 @@
     "copyAddress": "Copy address",
     "openInYandex": "Open in Yandex Maps",
     "coordinates": "Coordinates:"
+  },
+  "upgrade": {
+    "premiumBadge": "Premium",
+    "title": "Upgrade required",
+    "description": "The «{{feature}}» feature is available on paid plans. Upgrade to Starter or Pro.",
+    "benefits": [
+      "Advanced analytics and reports",
+      "Unlimited masters",
+      "Priority support"
+    ],
+    "dismiss": "Maybe later",
+    "cta": "View plans"
+  },
+  "pricing": {
+    "badge": "Pricing",
+    "title": "Simple, transparent pricing",
+    "subtitle": "Start free, upgrade when you need to.",
+    "popular": "Popular",
+    "perMonth": "UZS/mo",
+    "free": "Free",
+    "trialDays": "{{count}}-day free trial",
+    "startFree": "Start for free",
+    "startTrial": "Start free trial",
+    "getStarted": "Get started",
+    "vatNote": "Prices exclude VAT. Pay monthly or yearly (20% discount).",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "f1": "Up to 2 masters",
+        "f2": "Up to 50 bookings/month",
+        "f3": "Basic analytics"
+      },
+      "starter": {
+        "name": "Starter",
+        "f1": "Up to 5 masters",
+        "f2": "Unlimited bookings",
+        "f3": "Advanced analytics",
+        "f4": "Email notifications"
+      },
+      "pro": {
+        "name": "Pro",
+        "f1": "Unlimited masters",
+        "f2": "Unlimited bookings",
+        "f3": "Full analytics + funnel",
+        "f4": "SMS + Push notifications",
+        "f5": "Priority support"
+      }
+    },
+    "enterprise": {
+      "title": "Enterprise",
+      "subtitle": "Custom terms for salon chains and franchises",
+      "cta": "Contact us"
+    }
   }
 }

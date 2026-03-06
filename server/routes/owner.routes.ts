@@ -38,16 +38,19 @@ import { isAuthenticated } from "../auth";
 import { createNewBookingNotification } from "../notifications";
 import { cacheMiddleware } from "../cache";
 import { logger } from "../lib/logger";
+import { trackEvent } from "../lib/analytics";
 import { upload, setUploadType, getFileUrl } from "../upload";
+import { requireFeature } from "../middleware/requireFeature";
 
 const router = Router();
 
 // ============ ANALYTICS ENDPOINTS (Phase 2 - P0-1) ============
 
-// Get revenue analytics
+// Get revenue analytics — premium feature
 router.get(
   "/analytics/revenue",
   isAuthenticated,
+  requireFeature("analytics.advanced"),
   cacheMiddleware("analytics:revenue", 300), // Cache for 5 minutes
   async (req: any, res) => {
     try {
@@ -785,8 +788,8 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
   }
 });
 
-// Get advanced bookings with filtering
-router.get("/bookings/advanced", isAuthenticated, async (req: any, res) => {
+// Get advanced bookings with filtering — premium feature
+router.get("/bookings/advanced", isAuthenticated, requireFeature("analytics.advanced"), async (req: any, res) => {
   try {
     const ownerId = req.user.claims.sub;
     const { status, salonId, masterId, dateFrom, dateTo, search } = req.query;
@@ -2204,6 +2207,17 @@ router.post(
         result: "success",
       });
 
+      // Track product analytics events for bookings that reached a terminal success state
+      if (status === "confirmed" || status === "completed") {
+        successfulUpdates.forEach((b) => {
+          trackEvent({
+            eventName: "booking_completed",
+            req,
+            properties: { bookingId: b.id, salonId: b.salonId, clientId: b.clientId, status },
+          });
+        });
+      }
+
       return res.json({ success: true, updated: successfulUpdates });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2638,35 +2652,43 @@ router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
       });
     }
 
-    // Check for salons without services
-    for (const salon of ownerSalons) {
-      const salonServices = await db.select().from(services).where(eq(services.salonId, salon.id));
+    // Check for salons without services / masters — 2 batch queries instead of 2N
+    if (salonIds.length > 0) {
+      const [salonsWithServices, salonsWithMasters] = await Promise.all([
+        db
+          .selectDistinct({ salonId: services.salonId })
+          .from(services)
+          .where(inArray(services.salonId, salonIds)),
+        db
+          .selectDistinct({ salonId: masters.salonId })
+          .from(masters)
+          .where(inArray(masters.salonId, salonIds)),
+      ]);
 
-      if (salonServices.length === 0) {
-        alerts.push({
-          type: "no_services",
-          severity: "error",
-          salonId: salon.id,
-          salonName: salon.name,
-          message: `Salon "${salon.name.ru || salon.name.en}" has no services`,
-          action: "GO_SERVICES",
-        });
-      }
-    }
+      const hasServices = new Set(salonsWithServices.map((r) => r.salonId));
+      const hasMasters  = new Set(salonsWithMasters.map((r) => r.salonId));
 
-    // Check for salons without masters
-    for (const salon of ownerSalons) {
-      const salonMasters = await db.select().from(masters).where(eq(masters.salonId, salon.id));
-
-      if (salonMasters.length === 0) {
-        alerts.push({
-          type: "no_masters",
-          severity: "error",
-          salonId: salon.id,
-          salonName: salon.name,
-          message: `Salon "${salon.name.ru || salon.name.en}" has no masters`,
-          action: "GO_MASTERS",
-        });
+      for (const salon of ownerSalons) {
+        if (!hasServices.has(salon.id)) {
+          alerts.push({
+            type: "no_services",
+            severity: "error",
+            salonId: salon.id,
+            salonName: salon.name,
+            message: `Salon "${salon.name.ru || salon.name.en}" has no services`,
+            action: "GO_SERVICES",
+          });
+        }
+        if (!hasMasters.has(salon.id)) {
+          alerts.push({
+            type: "no_masters",
+            severity: "error",
+            salonId: salon.id,
+            salonName: salon.name,
+            message: `Salon "${salon.name.ru || salon.name.en}" has no masters`,
+            action: "GO_MASTERS",
+          });
+        }
       }
     }
 

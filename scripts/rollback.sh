@@ -1,74 +1,90 @@
-#!/bin/bash
-# rollback.sh — Rollback to previous commit for AURELLE
-# Usage: ./scripts/rollback.sh [COMMIT_HASH]
+#!/usr/bin/env bash
+# =============================================================================
+# scripts/rollback.sh — Instant rollback for AURELLE Blue/Green deployment
+#
+# Switches the active slot symlink back to the previous slot and reloads
+# PM2 + nginx. No rebuild needed — the previous slot's dist/ is already there.
+#
+# Usage:
+#   bash scripts/rollback.sh           # interactive confirm
+#   bash scripts/rollback.sh --yes     # non-interactive (CI/CD)
+# =============================================================================
+
 set -euo pipefail
 
-# ─── Config ──────────────────────────────────────────────────────────────────
-APP_DIR="${APP_DIR:-/var/www/aurelle}"
-APP_NAME="${APP_NAME:-aurelle}"
-HEALTH_URL="${HEALTH_URL:-https://aurelle.uz/api/health}"
+# ── Config ────────────────────────────────────────────────────────────────────
+SLOTS_DIR="${SLOTS_DIR:-/var/www}"
+SLOT_BLUE="${SLOTS_DIR}/aurelle-blue"
+SLOT_GREEN="${SLOTS_DIR}/aurelle-green"
+CURRENT="${SLOTS_DIR}/aurelle"
+ECOSYSTEM="ecosystem.config.cjs"
+DEPLOY_ENV="${DEPLOY_ENV:-production}"
+YES=false
+for arg in "$@"; do [[ "$arg" == "--yes" ]] && YES=true; done
+# ─────────────────────────────────────────────────────────────────────────────
 
-# ─── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-log()  { echo -e "${GREEN}[$(date +%H:%M:%S)] ✅ $*${NC}"; }
-warn() { echo -e "${YELLOW}[$(date +%H:%M:%S)] ⚠️  $*${NC}"; }
-err()  { echo -e "${RED}[$(date +%H:%M:%S)] ❌ $*${NC}" >&2; }
+log()  { echo -e "${GREEN}[$(date +%H:%M:%S)] $*${NC}"; }
+warn() { echo -e "${YELLOW}[$(date +%H:%M:%S)] ⚠  $*${NC}"; }
+fail() { echo -e "${RED}[$(date +%H:%M:%S)] ✗ $*${NC}" >&2; exit 1; }
 
-cd "$APP_DIR"
+# ── Resolve active / previous slots ───────────────────────────────────────────
+[[ -L "$CURRENT" ]] || fail "$CURRENT is not a symlink — cannot rollback"
 
-# ─── Determine target commit ──────────────────────────────────────────────────
-if [ -n "${1:-}" ]; then
-  TARGET_COMMIT="$1"
-  log "Rollback target (explicit): $TARGET_COMMIT"
-elif [ -f /tmp/aurelle_prev_commit ]; then
-  TARGET_COMMIT=$(cat /tmp/aurelle_prev_commit)
-  log "Rollback target (from deploy): $TARGET_COMMIT"
+ACTIVE_REAL=$(readlink -f "$CURRENT")
+if   [[ "$ACTIVE_REAL" == "$SLOT_BLUE" ]];  then
+  ACTIVE_NAME="blue";  PREV="$SLOT_GREEN"; PREV_NAME="green"
+elif [[ "$ACTIVE_REAL" == "$SLOT_GREEN" ]]; then
+  ACTIVE_NAME="green"; PREV="$SLOT_BLUE";  PREV_NAME="blue"
 else
-  # Fallback: previous commit in git
-  TARGET_COMMIT=$(git rev-parse HEAD~1)
-  warn "No saved rollback point. Using HEAD~1: $TARGET_COMMIT"
+  fail "Active slot '$ACTIVE_REAL' is neither blue nor green"
 fi
 
-CURRENT_COMMIT=$(git rev-parse HEAD)
-warn "Rolling back: $CURRENT_COMMIT → $TARGET_COMMIT"
-warn "Press Ctrl+C in 5 seconds to cancel..."
-sleep 5
+[[ -d "$PREV" ]] || fail "Previous slot ($PREV_NAME) not found — nothing to roll back to"
 
-# ─── Checkout previous commit ─────────────────────────────────────────────────
-log "Checking out $TARGET_COMMIT..."
-git checkout "$TARGET_COMMIT"
+PREV_COMMIT=$(git -C "$PREV" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+PREV_MSG=$(git -C "$PREV" log -1 --pretty=format:"%s" 2>/dev/null || echo "")
+CURR_COMMIT=$(git -C "$ACTIVE_REAL" rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-# ─── Install & build ─────────────────────────────────────────────────────────
-log "Installing dependencies..."
-npm ci
+echo ""
+warn "Rolling back:"
+warn "  Active   : $ACTIVE_NAME  ($CURR_COMMIT)"
+warn "  Previous : $PREV_NAME    ($PREV_COMMIT  $PREV_MSG)"
+echo ""
 
-log "Building..."
-npm run build
-
-# ─── Restart ─────────────────────────────────────────────────────────────────
-log "Restarting..."
-
-if command -v pm2 &>/dev/null && pm2 list | grep -q "$APP_NAME"; then
-  pm2 reload "$APP_NAME"
-elif systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
-  systemctl restart "$APP_NAME"
-elif docker ps --filter "name=$APP_NAME" --format "{{.Names}}" | grep -q "$APP_NAME" 2>/dev/null; then
-  docker restart "$APP_NAME"
-else
-  err "Cannot restart — do it manually!"
-  exit 1
+if [[ "$YES" != "true" ]]; then
+  read -r -p "Proceed? (y/N) " confirm
+  [[ "$confirm" =~ ^[Yy]$ ]] || { log "Aborted"; exit 0; }
 fi
 
-# ─── Health check ─────────────────────────────────────────────────────────────
+# ── Switch symlink ─────────────────────────────────────────────────────────────
+ln -sfn "$PREV" "$CURRENT"
+log "Symlink: $CURRENT → $PREV_NAME"
+
+# ── PM2 reload ────────────────────────────────────────────────────────────────
+pm2 startOrReload "$CURRENT/$ECOSYSTEM" --env "$DEPLOY_ENV" --update-env
+pm2 save
+log "PM2 reloaded"
+
+# ── nginx reload ──────────────────────────────────────────────────────────────
+if command -v nginx >/dev/null 2>&1; then
+  nginx -t 2>/dev/null && nginx -s reload && log "nginx reloaded" || warn "nginx reload skipped"
+fi
+
+# ── Quick health check ────────────────────────────────────────────────────────
+APP_PORT="${APP_PORT:-5000}"
+APP_URL="${APP_URL:-http://127.0.0.1:${APP_PORT}}"
 sleep 3
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
-
-if [ "$HTTP_CODE" = "200" ]; then
-  log "Rollback successful! Running on: $(git log -1 --oneline)"
-  rm -f /tmp/aurelle_prev_commit
+HTTP=$(curl -so /dev/null -w "%{http_code}" "${APP_URL}/api/health" 2>/dev/null || echo "000")
+if [[ "$HTTP" == "200" ]]; then
+  log "Health check OK (HTTP $HTTP)"
 else
-  err "Rollback health check failed (HTTP $HTTP_CODE)"
-  err "The app may be broken on the rollback commit too."
-  err "Check logs: pm2 logs $APP_NAME / journalctl -u $APP_NAME -f"
-  exit 1
+  warn "Health check returned HTTP $HTTP — check logs: pm2 logs aurelle-production"
 fi
+
+echo ""
+echo -e "${GREEN}══════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  Rollback complete${NC}"
+echo -e "${GREEN}  Now live: $PREV_NAME  ($PREV_COMMIT)${NC}"
+echo -e "${GREEN}══════════════════════════════════════════════════════${NC}"
+echo ""
