@@ -19,5 +19,6 @@
     ".github/workflows/ci.yml",
     ".github/workflows/deploy-production.yml",
     ".github/workflows/deploy-staging.yml"
-  ]
+  ],
+  "snyk.advanced.autoSelectOrganization": true
 }
