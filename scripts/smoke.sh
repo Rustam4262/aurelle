@@ -104,8 +104,10 @@ echo ""
 # ── 6. DB Verify ─────────────────────────────────────────────────────────────
 
 echo "── 6. DB Schema Verification ────────────────────────"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 if command -v npx &>/dev/null; then
-  if npx tsx scripts/db-verify.ts 2>&1 | tail -1 | grep -q "✅"; then
+  if (cd "$PROJECT_ROOT" && npx tsx scripts/db-verify.ts 2>&1) | tail -1 | grep -q "✅"; then
     pass "DB schema — all required tables present"
   else
     fail "DB schema — missing tables detected (run: npm run db:verify)"
