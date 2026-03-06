@@ -42,7 +42,7 @@ export default function AdminSalons() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/verify`),
+    mutationFn: (salonId: string) => apiRequest("POST", `/api/admin/salons/${salonId}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: t("admin.salons.toasts.verifiedSuccess") });
@@ -57,7 +57,7 @@ export default function AdminSalons() {
   });
 
   const unverifyMutation = useMutation({
-    mutationFn: (salonId: string) => apiRequest("PATCH", `/api/admin/salons/${salonId}/unverify`),
+    mutationFn: (salonId: string) => apiRequest("POST", `/api/admin/salons/${salonId}/unverify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/salons"] });
       toast({ title: t("admin.salons.toasts.unverifiedSuccess") });
