@@ -8,7 +8,7 @@
 //   - /api/*            → stale-while-revalidate (fresh data, fast response)
 //   - push notifications → always handled
 
-const VERSION = "3.0.0";
+const VERSION = "3.1.0";
 const CACHE_STATIC = `aurelle-static-v${VERSION}`;
 const CACHE_DYNAMIC = `aurelle-dynamic-v${VERSION}`;
 
@@ -36,7 +36,15 @@ self.addEventListener("activate", (event) => {
             .map((k) => caches.delete(k)),
         ),
       )
-      .then(() => clients.claim()),
+      .then(() => clients.claim())
+      .then(() =>
+        // Notify all open tabs that a new SW version has activated.
+        // The page listens for this and does window.location.reload() so that
+        // stale JS bundles (referencing old chunk URLs) are replaced immediately.
+        clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) =>
+          Promise.all(clientList.map((c) => c.postMessage({ type: "SW_UPDATED", version: VERSION }))),
+        ),
+      ),
   );
 });
 
