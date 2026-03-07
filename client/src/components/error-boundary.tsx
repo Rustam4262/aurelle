@@ -20,6 +20,25 @@ interface State {
 }
 
 /**
+ * Returns true for errors thrown when React.lazy() fails to load a chunk
+ * (e.g. after a deployment where old chunk URLs no longer exist on the server).
+ * The standard fix is a hard reload so the browser fetches the new index.html
+ * and resolves the new chunk URLs.
+ */
+function isChunkLoadError(error: Error): boolean {
+  const msg = error?.message ?? "";
+  const name = error?.name ?? "";
+  return (
+    name === "ChunkLoadError" ||
+    msg.includes("ChunkLoadError") ||
+    msg.includes("Loading chunk") ||
+    msg.includes("Loading CSS chunk") ||
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Importing a module script failed")
+  );
+}
+
+/**
  * ErrorBoundary Component
  * Catches JavaScript errors anywhere in the child component tree.
  *
@@ -39,6 +58,11 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
+    // Chunk load errors (stale cache after deploy) → trigger hard reload.
+    // Return hasError: false so we don't flash the error UI before reload fires.
+    if (isChunkLoadError(error)) {
+      return { hasError: false, error, errorInfo: null };
+    }
     return {
       hasError: true,
       error,
@@ -47,6 +71,21 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Chunk load errors (stale cache after deploy): hard reload once.
+    // We mark sessionStorage so we don't loop if reload doesn't fix it.
+    if (isChunkLoadError(error)) {
+      if (!sessionStorage.getItem("chunk_reload_attempted")) {
+        sessionStorage.setItem("chunk_reload_attempted", "1");
+        logger.warn("ChunkLoadError — reloading page to fetch new bundles", {
+          source: "error-boundary",
+        });
+        window.location.reload();
+        return;
+      }
+      // Second time: give up silently and fall through to normal error UI
+      sessionStorage.removeItem("chunk_reload_attempted");
+    }
+
     logger.error("ErrorBoundary caught an error", error, {
       source: "error-boundary",
       meta: errorInfo as unknown as Record<string, unknown>,

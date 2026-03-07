@@ -5,20 +5,31 @@ import { logger } from "@/lib/logger";
 import { setUser as setSentryUser } from "@/lib/sentry";
 
 async function fetchUser(): Promise<User | null> {
-  const response = await fetch("/api/auth/user", {
-    credentials: "include",
-  });
+  try {
+    const response = await fetch("/api/auth/user", {
+      credentials: "include",
+    });
 
-  if (response.status === 401) {
-    // User is not authenticated
+    if (response.status === 401) {
+      // User is not authenticated — expected, not an error
+      return null;
+    }
+
+    if (!response.ok) {
+      // Non-401 server error (5xx, network issue): treat as unauthenticated
+      // rather than throwing, so the auth page always renders the login form.
+      logger.warn(`fetchUser: unexpected status ${response.status}`, {
+        source: "use-auth",
+      });
+      return null;
+    }
+
+    return response.json();
+  } catch (err) {
+    // Network failure (DNS, timeout, connection refused): treat as unauthenticated.
+    logger.warn("fetchUser: network error", { source: "use-auth" });
     return null;
   }
-
-  if (!response.ok) {
-    throw new Error(`${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
 async function doLogout(): Promise<void> {
