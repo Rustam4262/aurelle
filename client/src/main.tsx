@@ -4,6 +4,9 @@ import { initializeSentry } from "./lib/sentry";
 import App from "./App";
 import "./index.css";
 
+// Expose build SHA in DevTools: window.__APP_VERSION__
+window.__APP_VERSION__ = __APP_VERSION__;
+
 // Initialize Sentry for error monitoring
 initializeSentry();
 

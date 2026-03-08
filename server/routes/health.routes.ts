@@ -51,6 +51,7 @@ router.get("/health", async (req, res) => {
       },
       system: systemInfo,
       version: process.env.APP_VERSION || "1.0.0",
+      commit: process.env.GIT_COMMIT_SHA || process.env.APP_VERSION || "unknown",
       environment: process.env.NODE_ENV || "development",
     };
 
@@ -143,7 +144,9 @@ router.get("/health/sentry", (_req, res) => {
     enabled: dsnPresent,
     dsnPresent,
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
-    release: process.env.SENTRY_RELEASE || `aurelle-backend@${process.env.APP_VERSION || "1.0.0"}`,
+    release:
+      process.env.SENTRY_RELEASE ||
+      `aurelle-backend@${process.env.GIT_COMMIT_SHA || process.env.APP_VERSION || "1.0.0"}`,
   });
 });
 

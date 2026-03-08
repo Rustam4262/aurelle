@@ -98,6 +98,24 @@ bash scripts/smoke.sh https://aurelle.uz
 
 - [ ] All smoke checks green
 
+### 4a. Verify build SHA alignment
+
+```bash
+# Frontend SHA (DevTools console on any page):
+#   window.__APP_VERSION__   → e.g. "a1b2c3d"
+
+# Backend SHA:
+curl -s https://aurelle.uz/api/health | grep -E '"commit"|"version"'
+#   "version": "a1b2c3d",
+#   "commit": "a1b2c3d"
+
+# Both must match:
+git rev-parse --short HEAD
+```
+
+- [ ] `window.__APP_VERSION__` matches `git rev-parse --short HEAD`
+- [ ] `/api/health` `.commit` matches the same SHA
+
 ### 5. Post-deploy monitoring (first 15 minutes)
 
 - [ ] Check Sentry for new error spikes

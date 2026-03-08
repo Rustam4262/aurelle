@@ -7,7 +7,7 @@ export function HomeFooter() {
 
   return (
     <footer
-      className="bg-card/50 backdrop-blur-sm border-t border-border pt-20 pb-10"
+      className="bg-card/50 backdrop-blur-sm border-t border-border pt-20 pb-safe-footer"
       data-testid="section-footer"
     >
       <div className="max-w-7xl mx-auto px-6">

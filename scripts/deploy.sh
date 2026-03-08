@@ -42,6 +42,16 @@ log()     { echo -e "${GREEN}[$(date +%H:%M:%S)] $*${NC}"; }
 warn()    { echo -e "${YELLOW}[$(date +%H:%M:%S)] ⚠  $*${NC}"; }
 section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}"; }
 fail()    { echo -e "${RED}[$(date +%H:%M:%S)] ✗ FAIL: $*${NC}" >&2; exit 1; }
+# stamp_env KEY VALUE FILE — update the key if it exists, otherwise append it.
+# (plain `sed -i s/…/ || echo >>` doesn't work: sed exits 0 even on no match)
+stamp_env() {
+  local key="$1" value="$2" file="$3"
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$file"
+  else
+    echo "${key}=${value}" >> "$file"
+  fi
+}
 
 # ── 0. Pre-flight ─────────────────────────────────────────────────────────────
 section "Pre-flight"
@@ -95,18 +105,26 @@ else
   warn "No .env found — deployment may fail if env vars are missing"
 fi
 
-# Stamp release for Sentry tracking
+# Stamp build version into .env so frontend build SHA and backend runtime SHA match.
+# GIT_COMMIT_SHA  → read by server at runtime  → exposed in GET /api/health
+# APP_VERSION     → read by server at runtime  → exposed in GET /api/health
+# VITE_SENTRY_RELEASE → overrides vite.config.ts default in next npm run build
+# SENTRY_RELEASE  → read by @sentry/node at runtime
 if [[ -f "$INACTIVE/.env" ]]; then
-  sed -i "s/^VITE_SENTRY_RELEASE=.*/VITE_SENTRY_RELEASE=aurelle@${COMMIT}/" "$INACTIVE/.env" \
-    || echo "VITE_SENTRY_RELEASE=aurelle@${COMMIT}" >> "$INACTIVE/.env"
-  sed -i "s/^SENTRY_RELEASE=.*/SENTRY_RELEASE=aurelle@${COMMIT}/" "$INACTIVE/.env" \
-    || echo "SENTRY_RELEASE=aurelle@${COMMIT}" >> "$INACTIVE/.env"
+  stamp_env "GIT_COMMIT_SHA"      "${COMMIT}"          "$INACTIVE/.env"
+  stamp_env "APP_VERSION"         "${COMMIT}"          "$INACTIVE/.env"
+  stamp_env "VITE_SENTRY_RELEASE" "aurelle@${COMMIT}"  "$INACTIVE/.env"
+  stamp_env "SENTRY_RELEASE"      "aurelle@${COMMIT}"  "$INACTIVE/.env"
+  log "Stamped GIT_COMMIT_SHA=${COMMIT} into .env"
 fi
 
 # ── 5. Install deps & build ───────────────────────────────────────────────────
 section "Install & Build"
 npm ci --prefer-offline
-VITE_APP_VERSION="$COMMIT" VITE_SENTRY_RELEASE="aurelle@${COMMIT}" npm run build
+# __APP_VERSION__ is baked by vite.config.ts via execSync("git rev-parse --short HEAD").
+# VITE_SENTRY_RELEASE overrides the vite.config.ts default to ensure it matches
+# the value stamped into .env (same string used by @sentry/node at runtime).
+VITE_SENTRY_RELEASE="aurelle@${COMMIT}" npm run build
 BUILD_SIZE=$(du -sh dist 2>/dev/null | cut -f1 || echo "?")
 log "Build OK — dist/ $BUILD_SIZE"
 

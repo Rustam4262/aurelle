@@ -43,6 +43,9 @@ module.exports = {
   ],
 
   // Deployment configuration
+  // NOTE: pm2 deploy is not used by this project.
+  // Use scripts/deploy.sh for blue/green zero-downtime deploys.
+  // These entries are kept for reference only.
   deploy: {
     production: {
       user: "deploy",
@@ -50,8 +53,7 @@ module.exports = {
       ref: "origin/main",
       repo: "git@github.com:Rustam4262/aurelle.git",
       path: "/var/www/aurelle",
-      "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env production && pm2 save",
+      "post-deploy": "bash scripts/deploy.sh",
       "pre-setup": "apt-get install git -y",
     },
     staging: {
@@ -60,8 +62,7 @@ module.exports = {
       ref: "origin/main",
       repo: "git@github.com:Rustam4262/aurelle.git",
       path: "/var/www/aurelle-staging",
-      "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.cjs --env staging && pm2 save",
+      "post-deploy": "DEPLOY_ENV=staging bash scripts/deploy.sh",
       "pre-setup": "apt-get install git -y",
     },
   },

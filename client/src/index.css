@@ -254,6 +254,42 @@
   /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
    * buttons/badges can remove the automatic brightness adjustment on interactions
    * and program their own. */
+  /* Hide scrollbars while keeping scroll behaviour (used in horizontal chip rows) */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /*
+   * Safe-area utilities
+   * --safe-top/bottom are set in :root from env(safe-area-inset-*).
+   * Use these classes on fixed/sticky elements and page edges so content
+   * never sits behind the status bar or home indicator on notched devices.
+   */
+
+  /* Nav bar: push its own content below the status bar */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Hero / any section that must clear the fixed nav (h-16 = 4rem) + status bar */
+  .pt-nav {
+    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* Sticky "top" position that accounts for nav + status bar */
+  .top-nav {
+    top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* Footer: ensure content clears the home indicator on iPhone */
+  .pb-safe-footer {
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
+  }
+
   .no-default-hover-elevate {}
 
   .no-default-active-elevate {}

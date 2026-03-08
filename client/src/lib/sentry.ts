@@ -29,9 +29,8 @@ export function initializeSentry() {
     // Release version for tracking.
     // Must match the release name used by sentryVitePlugin in vite.config.ts so that
     // uploaded source maps are found for events from this SDK.
-    release:
-      import.meta.env.VITE_SENTRY_RELEASE ||
-      `aurelle@${import.meta.env.VITE_APP_VERSION || "1.0.0"}`,
+    // Priority: VITE_SENTRY_RELEASE (CI) → aurelle@<git-sha> (baked at build time)
+    release: import.meta.env.VITE_SENTRY_RELEASE || `aurelle@${__APP_VERSION__}`,
 
     // Integrations
     integrations: [
@@ -114,10 +113,10 @@ export function initializeSentry() {
     ],
   });
 
-  // Set initial context
+  // Set initial context — commit SHA baked at build time
   Sentry.setContext("app", {
     name: "AURELLE Beauty Salon Platform",
-    version: import.meta.env.VITE_APP_VERSION || "1.0.0",
+    version: __APP_VERSION__,
     environment: import.meta.env.MODE,
   });
 }

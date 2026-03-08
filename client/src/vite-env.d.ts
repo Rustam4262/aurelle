@@ -18,6 +18,14 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+// Injected by vite.config.ts define — git short SHA baked at build time
+declare const __APP_VERSION__: string;
+
+// Expose on window so it's readable in DevTools console: window.__APP_VERSION__
+interface Window {
+  __APP_VERSION__: string;
+}
+
 // Declare module for image imports
 declare module "*.jpg" {
   const src: string;

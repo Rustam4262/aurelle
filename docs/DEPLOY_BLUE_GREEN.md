@@ -224,6 +224,48 @@ pm2 startOrReload /var/www/aurelle/ecosystem.config.cjs --env production --updat
 
 ---
 
+## Build Versioning (`__APP_VERSION__` / `GIT_COMMIT_SHA`)
+
+Every deploy stamps the git short SHA in four places so the frontend build and
+backend runtime always report the same commit.
+
+### Where the SHA comes from
+
+| Location | How it's set | Used by |
+|----------|-------------|---------|
+| `__APP_VERSION__` (frontend bundle) | `vite.config.ts` → `execSync("git rev-parse --short HEAD")` at build time | `window.__APP_VERSION__`, Sentry `app.version`, error boundary fallback UI |
+| `GIT_COMMIT_SHA` (server env) | `deploy.sh` → `stamp_env GIT_COMMIT_SHA` into `.env` before build | `GET /api/health` response `.commit` field |
+| `APP_VERSION` (server env) | same `stamp_env` call | `GET /api/health` response `.version` field |
+| `VITE_SENTRY_RELEASE` | same `stamp_env` call; also passed to `npm run build` | Sentry release tracking (links source maps to events) |
+
+### Verifying SHA alignment after a deploy
+
+```bash
+# 1. Frontend SHA (DevTools console — any page)
+window.__APP_VERSION__
+# → e.g. "a1b2c3d"
+
+# 2. Backend SHA (from any terminal or browser)
+curl -s https://aurelle.uz/api/health | python3 -m json.tool | grep commit
+# → "commit": "a1b2c3d"
+
+# Both should match the deployed commit:
+git rev-parse --short HEAD
+```
+
+### Error boundary chunk-load behaviour
+
+After a deploy, clients with cached `index.html` may request chunk URLs that no
+longer exist (404). The error boundary handles this without a white screen:
+
+| Occurrence | Behaviour |
+|-----------|-----------|
+| 1st chunk error | Spinner shown; auto-reload fires once (`sessionStorage` guard prevents loop) |
+| 2nd chunk error (reload didn't help) | User-visible card: "App updated — reload page" with a manual Reload button. No further auto-reload. |
+| Runtime error (non-chunk) | Standard error card with Try Again / Go Home buttons |
+
+---
+
 ## DoD Verification (P3.4)
 
 - [x] `scripts/deploy.sh` — build in inactive slot → atomic symlink switch → PM2 reload → health check → auto-rollback on failure
