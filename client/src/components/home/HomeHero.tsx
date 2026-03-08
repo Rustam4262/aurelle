@@ -34,7 +34,28 @@ export function HomeHero() {
       </div>
 
       <div className="relative z-10 text-center max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-0">
-        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-light leading-tight mb-4 md:mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700 bg-gradient-to-r from-white via-white to-pink-200 bg-clip-text text-transparent">
+        <h1
+          data-testid="hero-title"
+          className={[
+            // Sizing
+            "font-serif text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-light",
+            // Line-height — mobile MUST be 1.4+.
+            // Cormorant Garamond has very tall ascenders/descenders (~1.65em visual
+            // line height). leading-tight (1.25) leaves −0.4em of clearance, causing
+            // Cyrillic lines to overlap.  At sm+ the text is larger and fewer lines
+            // stack, so snug (1.375) is safe.
+            "leading-[1.4] sm:leading-snug",
+            // Letter-spacing — tracking-tight (−0.025em) on narrow Cyrillic causes
+            // unpredictable line breaks that expose the leading-tight overlap on
+            // most viewports while hiding it on iPhone XR's wider 414px.
+            "tracking-normal sm:tracking-tight",
+            // Spacing & animation
+            "mb-4 md:mb-6",
+            "animate-in fade-in slide-in-from-bottom-4 duration-700",
+            // Gradient fill
+            "bg-gradient-to-r from-white via-white to-pink-200 bg-clip-text text-transparent",
+          ].join(" ")}
+        >
           {t("marketplace.hero.title")}
         </h1>
         <p className="text-white/90 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-6 md:mb-10 font-light leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
