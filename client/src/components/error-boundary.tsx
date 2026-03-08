@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
+import { AlertTriangle, RefreshCcw, Home, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/lib/logger";
@@ -58,21 +58,30 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // Chunk load errors (stale cache after deploy) → trigger hard reload.
-    // Return hasError: false so we don't flash the error UI before reload fires.
-    if (isChunkLoadError(error)) {
-      return { hasError: false, error, errorInfo: null };
-    }
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
+    // CRITICAL: always return hasError: true — never return hasError: false.
+    //
+    // Returning hasError: false for ChunkLoadError was incorrect and caused
+    // an infinite render loop + React Error #321:
+    //   1. getDerivedStateFromError returns { hasError: false }
+    //   2. ErrorBoundary re-renders children (because hasError is false)
+    //   3. React.lazy is permanently "rejected" → throws ChunkLoadError again
+    //   4. getDerivedStateFromError called again → loop back to step 1
+    //
+    // The infinite loop corrupts React's internal fiber/dispatcher state.
+    // When React attempts to render any component in this broken state,
+    // useContext (inside useTranslation) throws React Error #321 because
+    // there is no active hook dispatcher.
+    //
+    // Fix: always set hasError: true. The chunk error path shows a minimal
+    // "updating" spinner instead of the full error card, and reloads immediately
+    // in componentDidCatch (no render loop possible since children are unmounted).
+    return { hasError: true, error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Chunk load errors (stale cache after deploy): hard reload once.
-    // We mark sessionStorage so we don't loop if reload doesn't fix it.
+    // Chunk load errors (stale cache after deploy): reload once immediately.
+    // hasError is already true (set by getDerivedStateFromError above), so
+    // children are unmounted — no re-throw loop is possible.
     if (isChunkLoadError(error)) {
       if (!sessionStorage.getItem("chunk_reload_attempted")) {
         sessionStorage.setItem("chunk_reload_attempted", "1");
@@ -82,7 +91,7 @@ class ErrorBoundaryComponent extends Component<Props, State> {
         window.location.reload();
         return;
       }
-      // Second time: give up silently and fall through to normal error UI
+      // Second attempt also failed: clear the flag and show the normal error UI.
       sessionStorage.removeItem("chunk_reload_attempted");
     }
 
@@ -93,7 +102,7 @@ class ErrorBoundaryComponent extends Component<Props, State> {
 
     captureException(error, { componentStack: errorInfo.componentStack ?? undefined });
 
-    this.setState({ error, errorInfo });
+    this.setState({ hasError: true, error, errorInfo });
 
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -128,6 +137,17 @@ class ErrorBoundaryComponent extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      // Chunk load errors: show a minimal spinner while the page reloads.
+      // componentDidCatch fires window.location.reload() immediately after
+      // getDerivedStateFromError — this fallback is visible only for ~100ms.
+      if (this.state.error && isChunkLoadError(this.state.error)) {
+        return (
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        );
       }
 
       // Use i18n.t() directly — NOT useTranslation() hook — so we never

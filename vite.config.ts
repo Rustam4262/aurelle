@@ -46,6 +46,11 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
+    // Ensure a single React runtime instance across all CJS/ESM boundaries.
+    // Without this, use-sync-external-store/shim (CJS, used by react-i18next)
+    // can resolve to a separate React module than the one rendering components,
+    // causing hooks (useContext inside useTranslation) to throw React Error #321.
+    dedupe: ["react", "react-dom"],
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
