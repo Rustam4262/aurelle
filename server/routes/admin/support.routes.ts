@@ -12,7 +12,7 @@ function getUserId(req: Request): string {
 }
 
 // GET /api/admin/support/tickets
-router.get("/tickets", requirePermission("chat.read"), async (req, res) => {
+router.get("/tickets", requirePermission("complaints.read"), async (req, res) => {
   try {
     const { status, limit = "50", offset = "0" } = req.query;
 
@@ -43,7 +43,7 @@ router.get("/tickets", requirePermission("chat.read"), async (req, res) => {
 });
 
 // GET /api/admin/support/tickets/:id
-router.get("/tickets/:id", requirePermission("chat.read"), async (req, res) => {
+router.get("/tickets/:id", requirePermission("complaints.read"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -75,7 +75,7 @@ router.get("/tickets/:id", requirePermission("chat.read"), async (req, res) => {
 });
 
 // POST /api/admin/support/tickets/:id/messages — admin replies
-router.post("/tickets/:id/messages", requirePermission("chat.write"), async (req, res) => {
+router.post("/tickets/:id/messages", requirePermission("complaints.write"), async (req, res) => {
   try {
     const { id } = req.params;
     const adminId = getUserId(req);
@@ -119,7 +119,7 @@ router.post("/tickets/:id/messages", requirePermission("chat.write"), async (req
 });
 
 // PATCH /api/admin/support/tickets/:id/status — resolve/close
-router.patch("/tickets/:id/status", requirePermission("chat.write"), async (req, res) => {
+router.patch("/tickets/:id/status", requirePermission("complaints.write"), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
