@@ -13,6 +13,7 @@ import {
   Store,
   Shield,
   MessageSquare,
+  Headphones,
   FileText,
   AlertCircle,
   Activity,
@@ -31,6 +32,7 @@ const AdminSalons     = lazy(() => import("@/pages/admin/salons"));
 const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
 const AdminSanctions  = lazy(() => import("@/pages/admin/sanctions"));
 const AdminChat       = lazy(() => import("@/pages/admin/chat"));
+const AdminSupport    = lazy(() => import("@/pages/admin/support"));
 const AdminAudit      = lazy(() => import("@/pages/admin/audit"));
 const AdminActivity   = lazy(() => import("@/pages/admin/activity"));
 
@@ -43,6 +45,7 @@ const ROUTE_MAP = {
   "/admin/complaints": AdminComplaints,
   "/admin/sanctions":  AdminSanctions,
   "/admin/chat":       AdminChat,
+  "/admin/support":    AdminSupport,
   "/admin/audit":      AdminAudit,
 } as const;
 
@@ -156,6 +159,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
     {
       groupKey: "support",
       items: [
+        { path: "/admin/support", labelKey: "support", icon: Headphones },
         { path: "/admin/chat", labelKey: "chat", icon: MessageSquare },
       ],
     },

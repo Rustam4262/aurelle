@@ -6,6 +6,7 @@ import salonsManagementRoutes from "./admin/salons.routes";
 import sanctionsRoutes from "./admin/sanctions.routes";
 import complaintsRoutes from "./admin/complaints.routes";
 import chatRoutes from "./admin/chat.routes";
+import supportRoutes from "./admin/support.routes";
 import auditRoutes from "./admin/audit.routes";
 import activityRoutes from "./admin/activity.routes";
 import seedRoutes from "./admin/seed.routes";
@@ -32,8 +33,11 @@ router.use("/sanctions", sanctionsRoutes);
 // Complaints & Moderation
 router.use("/complaints", complaintsRoutes);
 
-// Support Chat
+// Support Chat (admin↔admin threads)
 router.use("/chat", chatRoutes);
+
+// Support Tickets (client submissions)
+router.use("/support", supportRoutes);
 
 // Audit Logs
 router.use("/audit", auditRoutes);
