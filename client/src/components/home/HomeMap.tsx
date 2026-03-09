@@ -1,13 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  YMaps,
-  Map,
-  Placemark,
-  Clusterer,
-  ZoomControl,
-  GeolocationControl,
-} from "@pbe/react-yandex-maps";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Maximize2, Minimize2, AlertCircle } from "lucide-react";
@@ -17,33 +9,32 @@ import type { Salon } from "@shared/schema";
 const YANDEX_MAPS_API_KEY =
   import.meta.env.VITE_YANDEX_MAPS_API_KEY || "99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0";
 
-// Map i18next language codes ("ru", "en", "uz") to the locale strings that
-// the Yandex Maps API actually accepts. Passing a bare "ru" instead of "ru_RU"
-// is silently ignored by the API and may result in wrong-language labels.
 const YMAPS_LANG: Record<string, "ru_RU" | "en_US"> = {
   ru: "ru_RU",
-  uz: "ru_RU", // Yandex has no Uzbek locale — Russian is the nearest fallback
+  uz: "ru_RU",
   en: "en_US",
 };
 
+// Extend Window to hold the ymaps global injected by Yandex Maps script.
+declare global {
+  interface Window {
+    ymaps: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+}
+
 export function HomeMap({ salons }: { salons: Salon[] }) {
   const { t, i18n } = useTranslation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null); // ymaps.Map instance
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // If the map hasn't fired onLoad within 10 s, stop showing the loading
-  // spinner and display a graceful error card instead of an infinite dark box.
-  useEffect(() => {
-    if (mapLoaded || mapError) return;
-    const timer = setTimeout(() => setMapError(true), 10_000);
-    return () => clearTimeout(timer);
-  }, [mapLoaded, mapError]);
-
-  const defaultCenter: [number, number] = [41.2995, 69.2401]; // Tashkent
+  const ymapsLang = YMAPS_LANG[i18n.language] ?? "ru_RU";
 
   const salonsWithCoords = salons?.filter((s) => s.latitude && s.longitude) ?? [];
 
+  const defaultCenter: [number, number] = [41.2995, 69.2401]; // Tashkent
   const center: [number, number] =
     salonsWithCoords.length > 0
       ? [
@@ -54,55 +45,197 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
         ]
       : defaultCenter;
 
-  const ymapsLang = YMAPS_LANG[i18n.language] ?? "ru_RU";
+  // ── Load Yandex Maps script once ───────────────────────────────────────────
+  useEffect(() => {
+    const SCRIPT_ID = "yandex-maps-api";
+    const timeout = setTimeout(() => {
+      if (!mapLoaded) setMapError(true);
+    }, 12_000);
 
-  const createBalloonContent = (salon: Salon) => {
-    const name =
-      getLocalizedText(salon.name as { en?: string; ru?: string; uz?: string }, i18n.language) ||
-      "Salon";
-    const city = getLocalizedText(
-      salon.city as { en?: string; ru?: string; uz?: string },
-      i18n.language,
-    );
-    const hasRating = salon.averageRating && Number(salon.averageRating) > 0;
+    const initMap = () => {
+      if (!containerRef.current) return;
+      if (mapRef.current) return; // already initialised
 
-    return {
-      balloonContentHeader: `
-        <div style="font-family: system-ui; padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">
-          <h3 style="font-size: 18px; font-weight: 600; margin: 0; color: #111827;">${name}</h3>
-          ${city ? `<p style="font-size: 13px; color: #6b7280; margin: 4px 0 0 0;">📍 ${city}</p>` : ""}
-        </div>
-      `,
-      balloonContentBody: `
-        <div style="font-family: system-ui; padding: 16px;">
-          ${
-            salon.address
-              ? `<div style="margin-bottom: 12px; font-size: 14px; color: #374151;">
-                   <strong>${t("marketplace.home.map.address")}:</strong> ${salon.address}
-                 </div>`
-              : ""
-          }
-          ${
-            hasRating
-              ? `<div style="margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg,#fef3c7,#fde68a); border-radius: 8px; border-left: 3px solid #f59e0b;">
-                   <div style="display:flex; align-items:center; gap:8px;">
-                     <span style="font-size:24px;">⭐</span>
-                     <div>
-                       <div style="font-size:18px; font-weight:700; color:#92400e;">${Number(salon.averageRating).toFixed(1)}</div>
-                       <div style="font-size:12px; color:#78350f;">${salon.reviewCount || 0} ${t("marketplace.salon.reviews")}</div>
-                     </div>
-                   </div>
-                 </div>`
-              : ""
-          }
-          <a href="/salon/${salon.id}"
-             style="display:block; text-align:center; padding:12px 24px; background:linear-gradient(135deg,#8b5cf6,#a78bfa); color:white; border-radius:12px; text-decoration:none; font-weight:600; font-size:14px;">
-            ${t("marketplace.salon.viewDetails")} →
-          </a>
-        </div>
-      `,
+      try {
+        const ymaps = window.ymaps;
+
+        const mapInstance = new ymaps.Map(
+          containerRef.current,
+          {
+            center,
+            zoom: salonsWithCoords.length > 0 ? 12 : 11,
+            controls: [],
+          },
+          {
+            suppressMapOpenBlock: true,
+            yandexMapDisablePoiInteractivity: true,
+          },
+        );
+
+        mapRef.current = mapInstance;
+
+        // Controls
+        mapInstance.controls.add(
+          new ymaps.control.ZoomControl({ options: { position: { right: 10, top: 10 }, size: "small" } }),
+        );
+        mapInstance.controls.add(new ymaps.control.GeolocationControl({ options: { float: "left" } }));
+
+        // Placemarks / clusterer
+        if (salonsWithCoords.length > 0) {
+          const clusterer = new ymaps.Clusterer({
+            preset: "islands#violetClusterIcons",
+            groupByCoordinates: false,
+            clusterDisableClickZoom: false,
+            clusterHideIconOnBalloonOpen: false,
+            geoObjectHideIconOnBalloonOpen: false,
+            clusterBalloonContentLayout: "cluster#balloonCarousel",
+            clusterBalloonPagerSize: 5,
+            clusterBalloonContentLayoutWidth: 300,
+            clusterBalloonContentLayoutHeight: 200,
+          });
+
+          const placemarks = salonsWithCoords.map((salon) => {
+            const name =
+              getLocalizedText(
+                salon.name as { en?: string; ru?: string; uz?: string },
+                i18n.language,
+              ) || "Salon";
+            const city = getLocalizedText(
+              salon.city as { en?: string; ru?: string; uz?: string },
+              i18n.language,
+            );
+            const hasRating = salon.averageRating && Number(salon.averageRating) > 0;
+
+            return new ymaps.Placemark(
+              [Number(salon.latitude), Number(salon.longitude)],
+              {
+                balloonContentHeader: `
+                  <div style="font-family:system-ui;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
+                    <h3 style="font-size:18px;font-weight:600;margin:0;color:#111827;">${name}</h3>
+                    ${city ? `<p style="font-size:13px;color:#6b7280;margin:4px 0 0 0;">📍 ${city}</p>` : ""}
+                  </div>`,
+                balloonContentBody: `
+                  <div style="font-family:system-ui;padding:16px;">
+                    ${
+                      salon.address
+                        ? `<div style="margin-bottom:12px;font-size:14px;color:#374151;">
+                             <strong>${t("marketplace.home.map.address")}:</strong> ${salon.address}
+                           </div>`
+                        : ""
+                    }
+                    ${
+                      hasRating
+                        ? `<div style="margin-bottom:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;border-left:3px solid #f59e0b;">
+                             <div style="display:flex;align-items:center;gap:8px;">
+                               <span style="font-size:24px;">⭐</span>
+                               <div>
+                                 <div style="font-size:18px;font-weight:700;color:#92400e;">${Number(salon.averageRating).toFixed(1)}</div>
+                                 <div style="font-size:12px;color:#78350f;">${salon.reviewCount || 0} ${t("marketplace.salon.reviews")}</div>
+                               </div>
+                             </div>
+                           </div>`
+                        : ""
+                    }
+                    <a href="/salon/${salon.id}"
+                       style="display:block;text-align:center;padding:12px 24px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;">
+                      ${t("marketplace.salon.viewDetails")} →
+                    </a>
+                  </div>`,
+              },
+              {
+                preset: "islands#violetDotIcon",
+                iconColor: "#8b5cf6",
+                hideIconOnBalloonOpen: false,
+              },
+            );
+          });
+
+          clusterer.add(placemarks);
+          mapInstance.geoObjects.add(clusterer);
+        }
+
+        clearTimeout(timeout);
+        setMapLoaded(true);
+      } catch (err) {
+        clearTimeout(timeout);
+        setMapError(true);
+      }
     };
-  };
+
+    const onScriptLoad = () => {
+      if (window.ymaps) {
+        window.ymaps.ready(initMap);
+      } else {
+        setMapError(true);
+      }
+    };
+
+    // If script already loaded (e.g. hot-reload), initialise immediately.
+    if (window.ymaps) {
+      window.ymaps.ready(initMap);
+      return () => clearTimeout(timeout);
+    }
+
+    // Script already in DOM (e.g. StrictMode double-effect): just wait for ready.
+    if (document.getElementById(SCRIPT_ID)) {
+      // Script is loading — poll until ymaps is available.
+      const poll = setInterval(() => {
+        if (window.ymaps) {
+          clearInterval(poll);
+          window.ymaps.ready(initMap);
+        }
+      }, 100);
+      return () => {
+        clearTimeout(timeout);
+        clearInterval(poll);
+      };
+    }
+
+    const script = document.createElement("script");
+    script.id = SCRIPT_ID;
+    script.src = `https://api-maps.yandex.ru/2.1/?lang=${ymapsLang}&apikey=${YANDEX_MAPS_API_KEY}`;
+    script.async = true;
+    script.onload = onScriptLoad;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      setMapError(true);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  // ── Fit map to new container size when fullscreen toggles ─────────────────
+  useEffect(() => {
+    if (mapRef.current) {
+      // Small delay lets CSS transition finish before container.fitToViewport()
+      const t = setTimeout(() => {
+        try {
+          mapRef.current.container.fitToViewport();
+        } catch {
+          /* ignore */
+        }
+      }, 320);
+      return () => clearTimeout(t);
+    }
+  }, [isFullscreen]);
+
+  // ── Cleanup on unmount ────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        try {
+          mapRef.current.destroy();
+        } catch {
+          /* ignore */
+        }
+        mapRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <section
@@ -130,7 +263,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
             isFullscreen ? "fixed inset-2 sm:inset-4 z-50" : "relative"
           }`}
         >
-          {/* Fullscreen toggle — icon-only on mobile to save space */}
+          {/* Fullscreen toggle */}
           <Button
             variant="secondary"
             size="sm"
@@ -150,16 +283,11 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
             )}
           </Button>
 
-          {/*
-           * Responsive heights prevent the map from being a massive dark block on mobile.
-           * The previous fixed h-[550px] on all sizes was the root cause of the
-           * "large empty black section" on phones (550px loading spinner in dark mode).
-           */}
           <div
             className={`relative overflow-hidden ${isFullscreen ? "h-full" : "h-[260px] sm:h-[380px] md:h-[500px] lg:h-[600px]"}`}
             data-testid="map-container"
           >
-            {/* Loading spinner — hidden once onLoad fires */}
+            {/* Loading spinner */}
             {!mapLoaded && !mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/50 backdrop-blur-sm z-[1000]">
                 <div className="text-center">
@@ -174,7 +302,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
               </div>
             )}
 
-            {/* Error state — shown when map fails to load or 10 s timeout fires */}
+            {/* Error state */}
             {mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/30 z-[1000]">
                 <div className="text-center px-6">
@@ -189,75 +317,23 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
               </div>
             )}
 
-            <YMaps query={{ apikey: YANDEX_MAPS_API_KEY, lang: ymapsLang }}>
-              <Map
-                defaultState={{
-                  center,
-                  zoom: salonsWithCoords.length > 0 ? 12 : 11,
-                  controls: [],
-                }}
-                width="100%"
-                height="100%"
-                // Do NOT add className here — @pbe/react-yandex-maps drops
-                // width/height when className is present (its C() helper
-                // returns only {className} in that branch), leaving the
-                // Yandex Maps container at 0px height → black rectangle.
-                // Rounded corners are already handled by the parent Card's
-                // overflow-hidden + rounded-* classes.
-                onLoad={() => setMapLoaded(true)}
-                onError={() => setMapError(true)}
-                options={{
-                  suppressMapOpenBlock: true,
-                  yandexMapDisablePoiInteractivity: true,
-                }}
-              >
-                <ZoomControl options={{ position: { right: 10, top: 10 }, size: "small" }} />
-                <GeolocationControl options={{ float: "left" }} />
+            {/* No-salons overlay (shown after map loads with empty coords) */}
+            {salonsWithCoords.length === 0 && mapLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <Card className="p-6 text-center max-w-sm bg-background/95 backdrop-blur-sm pointer-events-auto">
+                  <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                  <h3 className="font-semibold text-base mb-1">
+                    {t("marketplace.home.map.noSalonsOnMap")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t("marketplace.home.map.noSalonsDesc")}
+                  </p>
+                </Card>
+              </div>
+            )}
 
-                {salonsWithCoords.length > 0 && (
-                  <Clusterer
-                    options={{
-                      preset: "islands#violetClusterIcons",
-                      groupByCoordinates: false,
-                      clusterDisableClickZoom: false,
-                      clusterHideIconOnBalloonOpen: false,
-                      geoObjectHideIconOnBalloonOpen: false,
-                      clusterBalloonContentLayout: "cluster#balloonCarousel",
-                      clusterBalloonPagerSize: 5,
-                      clusterBalloonContentLayoutWidth: 300,
-                      clusterBalloonContentLayoutHeight: 200,
-                    }}
-                  >
-                    {salonsWithCoords.map((salon) => (
-                      <Placemark
-                        key={salon.id}
-                        geometry={[Number(salon.latitude), Number(salon.longitude)]}
-                        options={{
-                          preset: "islands#violetDotIcon",
-                          iconColor: "#8b5cf6",
-                          hideIconOnBalloonOpen: false,
-                        }}
-                        properties={createBalloonContent(salon)}
-                      />
-                    ))}
-                  </Clusterer>
-                )}
-
-                {salonsWithCoords.length === 0 && mapLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Card className="p-6 text-center max-w-sm bg-background/95 backdrop-blur-sm pointer-events-auto">
-                      <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                      <h3 className="font-semibold text-base mb-1">
-                        {t("marketplace.home.map.noSalonsOnMap")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("marketplace.home.map.noSalonsDesc")}
-                      </p>
-                    </Card>
-                  </div>
-                )}
-              </Map>
-            </YMaps>
+            {/* Yandex Maps container — ref attached here */}
+            <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
           </div>
         </Card>
 
