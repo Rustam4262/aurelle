@@ -109,6 +109,26 @@ export default function AdminSupport() {
       toast({ title: t("common.error"), description: t("adminSupport.statusFailed"), variant: "destructive" }),
   });
 
+  const handleResolve = async () => {
+    if (!replyText.trim()) {
+      toast({
+        title: t("common.error"),
+        description: t("adminSupport.replyRequiredToResolve"),
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await apiRequest("POST", `/api/admin/support/tickets/${selectedTicket!.ticket.id}/messages`, {
+        message: replyText,
+      });
+      setReplyText("");
+      statusMutation.mutate("resolved");
+    } catch {
+      toast({ title: t("common.error"), description: t("adminSupport.replyFailed"), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -289,8 +309,8 @@ export default function AdminSupport() {
             {selectedTicket && !["resolved", "closed"].includes(selectedTicket.ticket.status) && (
               <Button
                 variant="outline"
-                onClick={() => statusMutation.mutate("resolved")}
-                disabled={statusMutation.isPending}
+                onClick={handleResolve}
+                disabled={statusMutation.isPending || replyMutation.isPending}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
                 {t("adminSupport.markResolved")}
