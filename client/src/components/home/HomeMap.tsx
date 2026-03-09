@@ -156,7 +156,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
            * "large empty black section" on phones (550px loading spinner in dark mode).
            */}
           <div
-            className={`relative ${isFullscreen ? "h-full" : "h-[260px] sm:h-[380px] md:h-[500px] lg:h-[600px]"}`}
+            className={`relative overflow-hidden ${isFullscreen ? "h-full" : "h-[260px] sm:h-[380px] md:h-[500px] lg:h-[600px]"}`}
             data-testid="map-container"
           >
             {/* Loading spinner — hidden once onLoad fires */}
@@ -198,7 +198,12 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                 }}
                 width="100%"
                 height="100%"
-                className="rounded-2xl sm:rounded-3xl"
+                // Do NOT add className here — @pbe/react-yandex-maps drops
+                // width/height when className is present (its C() helper
+                // returns only {className} in that branch), leaving the
+                // Yandex Maps container at 0px height → black rectangle.
+                // Rounded corners are already handled by the parent Card's
+                // overflow-hidden + rounded-* classes.
                 onLoad={() => setMapLoaded(true)}
                 onError={() => setMapError(true)}
                 options={{
