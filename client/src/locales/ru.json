@@ -2121,41 +2121,6 @@
         "close": "Закрыть"
       }
     },
-    "adminSupport": {
-      "title": "Обращения клиентов",
-      "subtitle": "Просмотр и ответы на обращения пользователей",
-      "tickets": "Тикеты",
-      "allStatuses": "Все статусы",
-      "noTickets": "Обращений нет",
-      "noMessages": "Сообщений нет",
-      "open": "Открыть",
-      "markResolved": "Закрыть как решённый",
-      "replyPlaceholder": "Ваш ответ... (Ctrl+Enter для отправки)",
-      "replySent": "Ответ отправлен",
-      "replyFailed": "Не удалось отправить ответ",
-      "statusUpdated": "Статус обновлён",
-      "statusFailed": "Не удалось обновить статус",
-      "status": {
-        "open": "Открыто",
-        "in_progress": "В работе",
-        "resolved": "Решено",
-        "closed": "Закрыто"
-      },
-      "category": {
-        "bug": "Ошибка",
-        "payment": "Проблема с оплатой",
-        "question": "Вопрос",
-        "suggestion": "Предложение"
-      },
-      "table": {
-        "subject": "Тема",
-        "user": "Пользователь",
-        "category": "Категория",
-        "status": "Статус",
-        "created": "Дата",
-        "actions": "Действия"
-      }
-    },
     "chat": {
       "title": "Чат поддержки",
       "subtitle": "Ответы на запросы пользователей",
@@ -3347,6 +3312,41 @@
       "fraud": "Мошенничество",
       "spam": "Спам",
       "other": "Другое"
+    }
+  },
+  "adminSupport": {
+    "title": "Обращения клиентов",
+    "subtitle": "Просмотр и ответы на обращения пользователей",
+    "tickets": "Тикеты",
+    "allStatuses": "Все статусы",
+    "noTickets": "Обращений нет",
+    "noMessages": "Сообщений нет",
+    "open": "Открыть",
+    "markResolved": "Закрыть как решённый",
+    "replyPlaceholder": "Ваш ответ... (Ctrl+Enter для отправки)",
+    "replySent": "Ответ отправлен",
+    "replyFailed": "Не удалось отправить ответ",
+    "statusUpdated": "Статус обновлён",
+    "statusFailed": "Не удалось обновить статус",
+    "status": {
+      "open": "Открыто",
+      "in_progress": "В работе",
+      "resolved": "Решено",
+      "closed": "Закрыто"
+    },
+    "category": {
+      "bug": "Ошибка",
+      "payment": "Проблема с оплатой",
+      "question": "Вопрос",
+      "suggestion": "Предложение"
+    },
+    "table": {
+      "subject": "Тема",
+      "user": "Пользователь",
+      "category": "Категория",
+      "status": "Статус",
+      "created": "Дата",
+      "actions": "Действия"
     }
   }
 }
