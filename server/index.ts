@@ -74,6 +74,8 @@ app.use(
           "wss:",
         ],
         "frame-src": ["https://www.googletagmanager.com"],
+        // Yandex Maps v3 loads tile workers as blob: URLs
+        "worker-src": ["blob:"],
       },
     },
     // frame-ancestors 'none' в CSP перекрывает X-Frame-Options, но оставляем для legacy
