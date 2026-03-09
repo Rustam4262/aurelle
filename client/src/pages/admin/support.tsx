@@ -74,18 +74,10 @@ export default function AdminSupport() {
 
   const { data, isLoading } = useQuery<{ tickets: Ticket[] }>({
     queryKey: ["/api/admin/support/tickets", params],
-    queryFn: () =>
-      apiRequest("GET", `/api/admin/support/tickets?${new URLSearchParams(params as any)}`).then(
-        (r) => r.json(),
-      ),
   });
 
   const { data: detail, isLoading: detailLoading } = useQuery<TicketDetail>({
-    queryKey: ["/api/admin/support/tickets", selectedTicket?.ticket.id],
-    queryFn: () =>
-      apiRequest("GET", `/api/admin/support/tickets/${selectedTicket!.ticket.id}`).then((r) =>
-        r.json(),
-      ),
+    queryKey: ["/api/admin/support/tickets/" + selectedTicket?.ticket.id],
     enabled: !!selectedTicket,
   });
 
