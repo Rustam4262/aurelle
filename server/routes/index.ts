@@ -21,6 +21,7 @@ import soloMasterRoutes from "./soloMaster.routes";
 import publicMasterRoutes from "./publicMaster.routes";
 import featureFlagsRoutes from "./featureFlags.routes";
 import invitationsRoutes from "./invitations.routes";
+import complaintsRoutes from "./complaints.routes";
 import paymentsRoutes from "./payments.routes";
 import paymeWebhookRoutes from "./webhooks/payme.routes";
 import clickWebhookRoutes from "./webhooks/click.routes";
@@ -63,6 +64,9 @@ router.use("/solo-master", soloMasterRoutes);
 
 // Admin panel — IP whitelist check first, then CSRF, then auth
 router.use("/admin", requireAdminIp, verifyCsrf, adminRoutes);
+
+// Client complaint submission
+router.use("/complaints", complaintsRoutes);
 
 // Payments
 router.use("/payments", paymentsRoutes);

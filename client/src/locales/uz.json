@@ -3287,5 +3287,24 @@
       "subtitle": "Salon tarmoqlari va franshizalar uchun individual shartlar",
       "cta": "Biz bilan bog'laning"
     }
+  },
+  "complaint": {
+    "report": "Shikoyat qilish",
+    "title": "Shikoyat yuborish",
+    "categoryLabel": "Sababi",
+    "descriptionLabel": "Tavsif",
+    "descriptionPlaceholder": "Muammoni batafsil tasvirlab bering (kamida 10 belgi)...",
+    "submit": "Shikoyat yuborish",
+    "submitted": "Shikoyat yuborildi",
+    "submittedDesc": "Administrator shikoyatingizni tez orada ko'rib chiqadi.",
+    "error": "Yuborishda xatolik",
+    "errorDesc": "Shikoyatni yuborib bo'lmadi. Qayta urinib ko'ring.",
+    "category": {
+      "quality": "Xizmat sifati past",
+      "abuse": "Qo'pollik / hurmatsizlik",
+      "fraud": "Firibgarlik",
+      "spam": "Spam",
+      "other": "Boshqa"
+    }
   }
 }

@@ -3288,5 +3288,24 @@
       "subtitle": "Custom terms for salon chains and franchises",
       "cta": "Contact us"
     }
+  },
+  "complaint": {
+    "report": "Report",
+    "title": "Submit a complaint",
+    "categoryLabel": "Reason",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe the issue in detail (at least 10 characters)...",
+    "submit": "Submit complaint",
+    "submitted": "Complaint submitted",
+    "submittedDesc": "An administrator will review your complaint shortly.",
+    "error": "Submission failed",
+    "errorDesc": "Could not submit the complaint. Please try again.",
+    "category": {
+      "quality": "Poor service quality",
+      "abuse": "Rude / disrespectful behaviour",
+      "fraud": "Fraud",
+      "spam": "Spam",
+      "other": "Other"
+    }
   }
 }

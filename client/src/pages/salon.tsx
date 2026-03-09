@@ -10,6 +10,7 @@ import { getLocalizedText } from "@/lib/i18n";
 import type { Service, Master } from "@shared/schema";
 import { MapPin, Phone, Calendar, Scissors, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ComplaintDialog } from "@/components/ComplaintDialog";
 
 // Sub-components
 import { SalonHeader } from "@/components/salon/SalonHeader";
@@ -211,6 +212,19 @@ export default function SalonPage() {
                 </h4>
                 <WorkingHoursDisplay hours={hoursQuery.data} />
               </Card>
+            )}
+
+            {user && (
+              <div className="flex justify-center">
+                <ComplaintDialog
+                  targetType="salon"
+                  targetId={id}
+                  targetName={getLocalizedText(
+                    salon.name as unknown as { en: string; ru: string; uz: string },
+                    currentLang,
+                  )}
+                />
+              </div>
             )}
           </div>
         </div>
