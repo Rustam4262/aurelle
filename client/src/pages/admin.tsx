@@ -28,6 +28,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 // recharts (~200 KB gz) is pulled in only by dashboard; xlsx+jspdf only by users.
 const AdminDashboard  = lazy(() => import("@/pages/admin/dashboard"));
 const AdminUsers      = lazy(() => import("@/pages/admin/users"));
+const AdminUserDetail = lazy(() => import("@/pages/admin/user-detail"));
 const AdminSalons     = lazy(() => import("@/pages/admin/salons"));
 const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
 const AdminSanctions  = lazy(() => import("@/pages/admin/sanctions"));
@@ -370,7 +371,11 @@ export default function AdminPage() {
     return null;
   }
 
-  const PageComponent = ROUTE_MAP[location as keyof typeof ROUTE_MAP] ?? AdminDashboard;
+  // Dynamic route: /admin/users/:id
+  const isUserDetail = /^\/admin\/users\/.+/.test(location);
+  const PageComponent = isUserDetail
+    ? AdminUserDetail
+    : (ROUTE_MAP[location as keyof typeof ROUTE_MAP] ?? AdminDashboard);
 
   return (
     <AdminLayout>

@@ -1,6 +1,6 @@
 import { Router, Request } from "express";
 import { db } from "../../db";
-import { users, salons, masters } from "@shared/schema";
+import { users, salons, masters, userProfiles, bookings } from "@shared/schema";
 import { adminUsers } from "@shared/admin-schema";
 import { eq, and, or, sql, inArray, ilike, desc, asc, count } from "drizzle-orm";
 import { requirePermission, logAuditAction } from "../../middleware/admin";
@@ -215,13 +215,23 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 // GET /api/admin/users/:id - Get single user
 router.get("/:id", requirePermission("users.read"), async (req, res) => {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, req.params.id)).limit(1);
+    const { id } = req.params;
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ user });
+    // Enrich with profile and recent bookings
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, id)).limit(1);
+    const recentBookings = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.clientId, profile?.id ?? ""))
+      .orderBy(desc(bookings.bookingDate))
+      .limit(10);
+
+    res.json({ user, profile: profile ?? null, recentBookings });
   } catch (error: any) {
     logger.error("Get user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to fetch user" });
