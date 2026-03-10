@@ -65,7 +65,7 @@ export default function AdminUserDetail() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const userId = location.replace("/admin/users/", "");
+  const userId = decodeURIComponent(location.replace("/admin/users/", ""));
 
   const { data, isLoading, error } = useQuery<UserDetail>({
     queryKey: [`/api/admin/users/${userId}`],

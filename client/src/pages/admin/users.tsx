@@ -932,7 +932,7 @@ export default function AdminUsers() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t("admin.users.actions.quickView")}
                               </DropdownMenuItem>
-                              <Link href={`/admin/users/${user.id}`}>
+                              <Link href={`/admin/users/${encodeURIComponent(user.id)}`}>
                                 <DropdownMenuItem>
                                   <Shield className="mr-2 h-4 w-4" />
                                   {t("admin.users.actions.fullDetails")}
@@ -1233,7 +1233,7 @@ export default function AdminUsers() {
               {t("admin.users.viewDialog.close")}
             </Button>
             {quickViewDialog.user && (
-              <Link href={`/admin/users/${quickViewDialog.user.id}`}>
+              <Link href={`/admin/users/${encodeURIComponent(quickViewDialog.user.id)}`}>
                 <Button>
                   <Shield className="h-4 w-4 mr-2" />
                   {t("admin.users.viewDialog.viewFull")}
