@@ -228,6 +228,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         salon: booking.salonId ? salonsMap.get(booking.salonId) || null : null,
         service: booking.serviceId ? servicesMap.get(booking.serviceId) || null : null,
         clientName,
+        clientAvatar: clientProfile?.avatarUrl ?? null,
       };
     });
 

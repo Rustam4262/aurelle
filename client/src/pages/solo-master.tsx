@@ -4,6 +4,7 @@ import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,8 @@ interface Booking {
   priceSnapshot: number | null;
   notes: string | null;
   isMobileBooking: boolean | null;
+  clientName?: string | null;
+  clientAvatar?: string | null;
 }
 
 interface DashboardStats {
@@ -1144,7 +1147,17 @@ export default function SoloMasterPage() {
                           return (
                             <div key={booking.id} className="border rounded-lg p-4 space-y-3">
                               <div className="flex items-start justify-between gap-3 flex-wrap">
+                                <div className="flex items-start gap-3">
+                                  <Avatar className="h-9 w-9 shrink-0 mt-0.5">
+                                    <AvatarImage src={booking.clientAvatar ?? undefined} />
+                                    <AvatarFallback className="text-xs">
+                                      {booking.clientName?.[0] ?? "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
                                 <div>
+                                  {booking.clientName && (
+                                    <p className="text-xs text-muted-foreground mb-0.5">{booking.clientName}</p>
+                                  )}
                                   <p className="font-medium">{svc?.name?.ru || "Услуга"}</p>
                                   <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
                                     <span className="flex items-center gap-1">
@@ -1172,6 +1185,7 @@ export default function SoloMasterPage() {
                                       &ldquo;{booking.notes}&rdquo;
                                     </p>
                                   )}
+                                </div>
                                 </div>
                                 <span
                                   className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${statusColors[booking.status] || ""}`}

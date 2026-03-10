@@ -22,7 +22,7 @@ DATABASE_URL="вставьте_скопированный_connection_string" npx
 
 **Пример:**
 ```bash
-DATABASE_URL="postgresql://neondb_owner:abc123@ep-icy-snow-something.neon.tech/neondb?sslmode=require" npx tsx quick-fix.ts
+DATABASE_URL="postgresql://neondb_owner:<REDACTED>@ep-icy-snow-something.neon.tech/neondb?sslmode=require" npx tsx quick-fix.ts
 ```
 
 ## Шаг 3: Готово! ✅
@@ -54,3 +54,4 @@ npx tsx quick-fix.ts
 
 **Время:** 30 секунд
 **Статус:** Готово к запуску!
+

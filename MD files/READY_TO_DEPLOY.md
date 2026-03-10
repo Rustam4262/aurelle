@@ -19,10 +19,10 @@
 
 **Используемые credentials**:
 
-- Google Client ID: `60089668488-9gvr0ahqda3neh2p3dsdvbofd39piguj.apps.googleusercontent.com`
-- Google Client Secret: `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`
-- Yandex Client ID: `3b79a753092d49bb977ce1ec5b3017ec`
-- Yandex Client Secret: `3086c3c9bf844b5298f801005307e4d4`
+- Google Client ID: `[see .env]`
+- Google Client Secret: `[see .env]`
+- Yandex Client ID: `[see .env]`
+- Yandex Client Secret: `[see .env]`
 
 ### 2. Логотип и брендинг ✅
 
@@ -85,13 +85,13 @@
 **IP адрес**: 89.39.94.194
 **Домены**: aurelle.uz, www.aurelle.uz
 **SSH логин**: root
-**SSH пароль**: w2@nT\*6D
+**SSH пароль**: <REDACTED>
 
 **База данных**:
 
 - Имя БД: aurelle
 - Пользователь: aurelle_user
-- Пароль: w2@nT\*6D
+- Пароль: <REDACTED>
 
 ---
 
@@ -110,7 +110,7 @@ scp aurelle-deploy.tar.gz root@89.39.94.194:/root/
 scp server-setup.sh root@89.39.94.194:/root/
 ```
 
-При запросе пароля: `w2@nT*6D`
+При запросе пароля: `<REDACTED>`
 
 #### 2️⃣ Подключитесь к серверу
 
@@ -118,7 +118,7 @@ scp server-setup.sh root@89.39.94.194:/root/
 ssh root@89.39.94.194
 ```
 
-Пароль: `w2@nT*6D`
+Пароль: `<REDACTED>`
 
 #### 3️⃣ Запустите автоматическую установку
 
@@ -348,3 +348,5 @@ _Если возникнут вопросы или проблемы, обращ�
 **Версия**: 1.0.0
 **Последнее обновление**: 26 декабря 2024
 **Статус**: ✅ READY TO DEPLOY
+
+

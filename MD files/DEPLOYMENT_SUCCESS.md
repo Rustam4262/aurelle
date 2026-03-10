@@ -252,7 +252,7 @@ docker-compose exec -T postgres psql -U aurelle_user aurelle < backup.sql
 ```
 IP:      89.39.94.194
 Логин:   root
-Пароль:  w2@nT*6D
+Пароль:  <REDACTED>
 SSH:     ssh root@89.39.94.194
 ```
 
@@ -263,7 +263,7 @@ Host:     postgres (внутри Docker сети)
 Port:     5432
 Database: aurelle
 User:     aurelle_user
-Password: w2@nT*6D
+Password: <REDACTED>
 ```
 
 ### URL приложения
@@ -293,3 +293,4 @@ Alternative: https://www.aurelle.uz
 **Время деплоя**: ~40 минут
 **Метод**: Docker (Node.js 20 + PostgreSQL 14)
 **Статус**: ✅ SUCCESS
+

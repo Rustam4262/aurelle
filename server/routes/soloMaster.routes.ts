@@ -1,13 +1,14 @@
 import express from "express";
 import { z } from "zod";
 import { db } from "../db";
-import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, inArray } from "drizzle-orm";
 import {
   masters,
   soloMasterSettings,
   soloMasterServices,
   masterWorkingHours,
   bookings,
+  userProfiles,
 } from "@shared/schema";
 import { isAuthenticated } from "../auth";
 import { logger } from "../lib/logger";
@@ -721,7 +722,23 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       filtered = filtered.filter((b) => new Date(b.bookingDate) <= toDate);
     }
 
-    return res.json(filtered);
+    // Enrich with client profiles (avatar + name)
+    const clientIds = [...new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id))];
+    const clientProfilesData = clientIds.length > 0
+      ? await db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+      : [];
+    const clientMap = new Map(clientProfilesData.map((p) => [p.id, p]));
+
+    const enriched = filtered.map((booking) => {
+      const profile = booking.clientId ? clientMap.get(booking.clientId) : undefined;
+      return {
+        ...booking,
+        clientName: profile?.fullName?.split(" ")[0] ?? null,
+        clientAvatar: profile?.avatarUrl ?? null,
+      };
+    });
+
+    return res.json(enriched);
   } catch (error) {
     logger.error("Get bookings error:", error);
     return res.status(500).json({ error: "Failed to get bookings" });

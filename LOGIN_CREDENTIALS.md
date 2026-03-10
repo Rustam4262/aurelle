@@ -1,186 +1,23 @@
-# Учетные данные для входа в систему AURELLE
+# Login Access Notes
 
-## 🔐 Credentials для Owner Dashboard
+This file must not contain real credentials, passwords, or private connection details.
 
-**Email:** `xulkarraziyeva@gmail.com`
-**Password:** `aurelle2026`
+## How to access Owner Dashboard
 
-**Профиль:**
+1. Open `https://aurelle.uz/auth`.
+2. Use credentials from your secure secret manager.
+3. After login, open `https://aurelle.uz/owner`.
 
-- Имя: Roziyeva Khulkar
-- Роль: Owner (Владелец салона)
-- Телефон: +998500151475
-- Город: Tashkent
+## Password reset
 
----
+Use the standard password reset flow from the auth page.
+Do not store static passwords in the repository.
 
-## 📝 Как войти в систему
+## Security rules
 
-### Шаг 1: Откройте страницу входа
+- Never commit real passwords.
+- Never commit SSH or DB secrets.
+- Share access only via approved secret storage.
 
-Перейдите по ссылке: **https://aurelle.uz/auth**
-
-### Шаг 2: Введите учетные данные
-
-- В поле **Email** введите: `xulkarraziyeva@gmail.com`
-- В поле **Password** введите: `aurelle2026`
-- Нажмите кнопку **"Login"** или **"Войти"**
-
-### Шаг 3: Доступ к Owner Dashboard
-
-После успешного входа вы будете перенаправлены на страницу профиля.
-
-Затем откройте: **https://aurelle.uz/owner**
-
-Вы увидите Owner Dashboard с вкладками:
-
-- 📊 **Dashboard** - Обзор и статистика
-- 📅 **Bookings** - Управление бронированиями
-- ✂️ **Services** - Управление услугами
-- 👥 **Masters** - Управление мастерами
-- 🏪 **Salons** - Управление салонами
-- 📆 **Calendar** - Календарь бронирований
-- 📈 **Analytics** - Аналитика
-
----
-
-## ✅ Проверка входа (для тестирования)
-
-Вход протестирован и работает:
-
-```bash
-# Тест через curl (успешно)
-curl -X POST https://aurelle.uz/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"xulkarraziyeva@gmail.com","password":"aurelle2026"}'
-
-# Ответ:
-{
-  "success": true,
-  "user": {
-    "id": "local:1768540768958-vpo3thpug",
-    "email": "xulkarraziyeva@gmail.com"
-  }
-}
-```
-
----
-
-## 🆕 Создание первого салона
-
-После входа в Owner Dashboard:
-
-1. Перейдите на вкладку **"Salons"**
-2. Нажмите кнопку **"+ Add Salon"**
-3. Заполните информацию:
-   - **Salon Name (English):** Например, "Beauty Studio"
-   - **Salon Name (Russian):** Например, "Студия красоты"
-   - **Salon Name (Uzbek):** Например, "Go'zallik studiyasi"
-   - **Description:** Описание салона
-   - **City:** Tashkent (или ваш город)
-   - **Address:** Полный адрес салона
-   - **Phone:** Номер телефона салона
-4. Нажмите **"Create Salon"**
-
-Салон будет создан и сохранен в базе данных **навсегда** (пока вы не удалите его вручную).
-
----
-
-## 🔧 Если забыли пароль
-
-### Способ 1: Сброс через сервер
-
-```bash
-# Подключитесь к серверу
-ssh root@89.39.94.194
-
-# Сгенерируйте новый хеш пароля
-cd /var/www/aurelle/current
-HASH=$(node -p "const bcrypt = require('bcrypt'); bcrypt.hashSync('ваш_новый_пароль', 10);")
-
-# Обновите пароль в базе данных
-docker exec aurelle-postgres psql -U aurelle_user -d aurelle_db -c "UPDATE users SET password_hash = '$HASH' WHERE email = 'xulkarraziyeva@gmail.com';"
-```
-
-### Способ 2: Создать новый аккаунт
-
-1. Откройте https://aurelle.uz/auth
-2. Нажмите "Sign Up"
-3. Зарегистрируйтесь с новым email
-4. Создайте профиль Owner
-
----
-
-## 📱 Другие зарегистрированные пользователи
-
-### Пользователь 2 (Client)
-
-**Email:** `roziyev18r@gmail.com`
-**Роль:** Client (Клиент)
-**Имя:** Rustam Roziyev
-
-Этот аккаунт имеет роль клиента, не владельца салона.
-
----
-
-## 🚨 Важные примечания
-
-### Требования браузера
-
-✅ **Используйте обычный режим браузера** (не инкогнито)
-✅ **Разрешите cookies** для сайта aurelle.uz
-✅ **Отключите блокировщики cookies** (если есть)
-✅ **Используйте современный браузер** (Chrome, Firefox, Safari, Edge)
-
-### Безопасность сессии
-
-- После входа сессия сохраняется в cookies
-- Сессия остается активной до выхода из системы
-- Не передавайте пароль третьим лицам
-- Используйте сложный пароль для production
-
-### Изменение пароля
-
-**Текущий пароль:** `aurelle2026` - это тестовый пароль
-
-**Рекомендация:** После первого входа измените пароль на более надежный!
-
-Для production используйте пароль:
-
-- Минимум 12 символов
-- Содержит буквы, цифры и спецсимволы
-- Не используйте общие слова
-
----
-
-## 🎯 Что делать после входа
-
-1. ✅ **Создайте первый салон** (вкладка Salons)
-2. ✅ **Добавьте услуги** (вкладка Services)
-3. ✅ **Добавьте мастеров** (вкладка Masters)
-4. ✅ **Настройте рабочие часы** салона
-5. ✅ **Загрузите фотографии** салона и услуг
-6. ✅ **Проверьте Dashboard** с статистикой
-
-Все эти данные будут **сохранены в базе данных навсегда** и не потеряются при обновлениях платформы!
-
----
-
-## 📞 Контакты для помощи
-
-Если возникли проблемы со входом:
-
-1. Проверьте что вы правильно ввели email (без пробелов)
-2. Проверьте что пароль введен правильно (регистр имеет значение)
-3. Очистите кэш браузера (Ctrl+Shift+Delete)
-4. Попробуйте другой браузер
-5. Убедитесь что cookies разрешены
-
-Если проблема сохраняется, отправьте скриншот ошибки!
-
----
-
-**Дата обновления:** 16 января 2026
-**Статус:** ✅ Credentials проверены и работают
-**Тип аккаунта:** Owner (Владелец салона)
-**База данных:** Персистентна, данные сохраняются навсегда
+Last updated: 2026-03-09
+Status: sanitized

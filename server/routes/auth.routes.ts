@@ -110,31 +110,10 @@ router.post("/logout", (req: any, res) => {
   }
 });
 
-// Logout endpoint (GET) - for redirect-based logout
-router.get("/logout", (req: any, res) => {
-  if (req.session) {
-    const sessionId = req.sessionID;
 
-    // Track logout before destroying session
-    trackUserLogout(sessionId);
-
-    req.session.destroy((err: any) => {
-      if (err) {
-        logger.error("Logout error", err);
-        return res.redirect("/auth?error=logout_failed");
-      }
-      // Clear cookie with all possible options
-      res.clearCookie("connect.sid", {
-        path: "/",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-      });
-      return res.redirect("/auth");
-    });
-  } else {
-    return res.redirect("/auth");
-  }
+// Logout endpoint (GET) - no state changes to avoid CSRF logout
+router.get("/logout", (_req: any, res) => {
+  return res.redirect("/auth?logout=post_only");
 });
 
 /**

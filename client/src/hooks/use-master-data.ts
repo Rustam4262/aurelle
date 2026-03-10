@@ -16,6 +16,7 @@ export interface EnrichedBooking extends Booking {
   service?: Service;
   master?: Master;
   clientName?: string;
+  clientAvatar?: string | null;
   client?: {
     firstName: string;
     lastName: string;

@@ -24,7 +24,7 @@ scp aurelle-deploy.tar.gz root@89.39.94.194:/root/
 scp server-setup.sh root@89.39.94.194:/root/
 ```
 
-При запросе пароля введите: `w2@nT*6D`
+При запросе пароля введите: `<REDACTED>`
 
 ### Шаг 2: Запустите автоматическую установку
 
@@ -32,7 +32,7 @@ scp server-setup.sh root@89.39.94.194:/root/
 
 ```bash
 ssh root@89.39.94.194
-# Пароль: w2@nT*6D
+# Пароль: <REDACTED>
 ```
 
 На сервере выполните:
@@ -242,14 +242,14 @@ systemctl status postgresql
 
 # Проверьте подключение
 psql -U aurelle_user -d aurelle -h localhost -W
-# Пароль: w2@nT*6D
+# Пароль: <REDACTED>
 
 # Если не работает, пересоздайте пользователя
 sudo -u postgres psql
 DROP DATABASE IF EXISTS aurelle;
 DROP USER IF EXISTS aurelle_user;
 CREATE DATABASE aurelle;
-CREATE USER aurelle_user WITH PASSWORD 'w2@nT*6D';
+CREATE USER aurelle_user WITH PASSWORD '<REDACTED>';
 GRANT ALL PRIVILEGES ON DATABASE aurelle TO aurelle_user;
 ALTER DATABASE aurelle OWNER TO aurelle_user;
 \q
@@ -341,3 +341,4 @@ pm2 logs aurelle --lines 100
 ```
 
 И обращайтесь за помощью, если нужно.
+
