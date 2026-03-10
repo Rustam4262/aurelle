@@ -1196,7 +1196,11 @@
         "favorites": "Избранное"
       },
       "status": {
-        "label": "Статус"
+        "label": "Статус",
+        "pending": "Ожидает",
+        "confirmed": "Подтверждено",
+        "completed": "Завершено",
+        "cancelled": "Отменено"
       },
       "tabs": {
         "dashboard": "Главная",
@@ -1224,6 +1228,9 @@
       },
       "filter": {
         "all": "Все",
+        "upcoming": "Предстоящие",
+        "completed": "Завершённые",
+        "cancelled": "Отменённые",
         "allServices": "Все услуги",
         "search": "Поиск",
         "byDate": "По дате",

@@ -208,14 +208,14 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         ? db.select().from(salons).where(inArray(salons.id, salonIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+        ? db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
         : Promise.resolve([]),
     ]);
 
     // Create lookup maps
     const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
     const salonsMap = new Map(salonsData.map((s) => [s.id, s]));
-    const clientProfilesMap = new Map(clientProfilesData.map((p) => [p.id, p]));
+    const clientProfilesMap = new Map(clientProfilesData.map((p) => [p.userId, p]));
 
     // Enrich bookings with related data
     const enrichedBookings = masterBookings.map((booking) => {

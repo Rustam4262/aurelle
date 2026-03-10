@@ -725,9 +725,9 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     // Enrich with client profiles (avatar + name)
     const clientIds = [...new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id))];
     const clientProfilesData = clientIds.length > 0
-      ? await db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+      ? await db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
       : [];
-    const clientMap = new Map(clientProfilesData.map((p) => [p.id, p]));
+    const clientMap = new Map(clientProfilesData.map((p) => [p.userId, p]));
 
     const enriched = filtered.map((booking) => {
       const profile = booking.clientId ? clientMap.get(booking.clientId) : undefined;

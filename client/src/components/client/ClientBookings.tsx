@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -422,7 +423,12 @@ ID: ${booking.id.slice(0, 8)}
                         <span>{salonName}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
+                        <Avatar className="h-6 w-6 shrink-0">
+                          <AvatarImage src={booking.master?.photo ?? undefined} />
+                          <AvatarFallback className="text-xs">
+                            {booking.master?.name?.[0] ?? "?"}
+                          </AvatarFallback>
+                        </Avatar>
                         <span>{booking.master?.name}</span>
                       </div>
                       <div className="flex items-center gap-2">

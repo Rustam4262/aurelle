@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Calendar, Clock, Scissors, User } from "lucide-react";
+import { Calendar, Clock, Scissors } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Booking, Master } from "@shared/schema";
 
 interface EnrichedOwnerBooking extends Booking {
-  client?: { firstName: string; lastName: string } | null;
+  client?: { fullName?: string | null; avatarUrl?: string | null } | null;
   service?: { name: Record<string, string> | string } | null;
 }
 
@@ -69,10 +70,15 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
               >
                 <div className="flex-1 space-y-2.5">
                   <div className="flex flex-wrap gap-3 items-center">
-                    {booking.client && (
-                      <span className="flex items-center gap-1.5 font-medium text-foreground">
-                        <User className="h-4 w-4" />
-                        {booking.client.firstName} {booking.client.lastName}
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={booking.client?.avatarUrl ?? undefined} />
+                      <AvatarFallback className="text-xs">
+                        {booking.client?.fullName?.[0] ?? "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {booking.client?.fullName && (
+                      <span className="font-medium text-foreground">
+                        {booking.client.fullName}
                       </span>
                     )}
                     {booking.service && (

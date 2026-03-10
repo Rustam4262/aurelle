@@ -768,12 +768,12 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
         ? db.select().from(services).where(inArray(services.id, serviceIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+        ? db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
         : Promise.resolve([]),
     ]);
 
     const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
-    const clientsMap = new Map(clientsData.map((c) => [c.id, c]));
+    const clientsMap = new Map(clientsData.map((c) => [c.userId, c]));
 
     const enrichedBookings = salonBookings.map((booking) => ({
       ...booking,
