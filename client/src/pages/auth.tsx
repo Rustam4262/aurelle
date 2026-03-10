@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "wouter";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import i18n from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { ArrowLeft, User, Store, Check, Mail, Phone, Briefcase } from "lucide-react";
-import { SiGoogle, SiGithub } from "react-icons/si";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  Store,
+  User,
+} from "lucide-react";
+import { SiGithub, SiGoogle } from "react-icons/si";
 
 function Logo({ className }: { className?: string }) {
   return <img src="/images/logo.jpg" alt="AURELLE" className={className} />;
@@ -27,855 +30,226 @@ function YandexIcon({ className }: { className?: string }) {
   );
 }
 
-function loginWithGitHub() {
-  window.location.href = "/api/auth/github";
+async function submitJson(event: React.FormEvent<HTMLFormElement>, url: string) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message =
+      (payload as { errors?: Array<{ message?: string }>; message?: string; error?: string }).errors?.[0]
+        ?.message ||
+      (payload as { message?: string; error?: string }).message ||
+      (payload as { error?: string }).error ||
+      "Request failed";
+    throw new Error(message);
+  }
+
+  return payload;
 }
 
-type AuthProviders = {
-  local: boolean;
-  yandex: boolean;
-  google: boolean;
-  github: boolean;
-  phone: boolean;
-};
-
-type UserProfile = {
-  exists: boolean;
-  userId?: string;
-  username?: string;
-  role?: string;
-  fullName?: string;
-  phone?: string;
-  city?: string;
-  isProfileComplete?: boolean;
-};
+const benefits = [
+  "Бронирования и избранное в одном кабинете",
+  "Управление салоном и командой без лишних шагов",
+  "Безопасный вход через email и соцсети",
+];
 
 export default function AuthPage() {
-  const { t } = useTranslation();
-  const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const soloMasterEnabled = useFeatureFlag("SOLO_MASTER");
+  const t = i18n.t.bind(i18n);
 
-  const [step, setStep] = useState<"role" | "details">("role");
-  const [selectedRole, setSelectedRole] = useState<"client" | "owner" | "solo_master">("client");
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-    city: "",
-  });
-
-  // Role extracted from URL ?role= param — used to pre-select role and pass to OAuth
-  const [urlRole, setUrlRole] = useState<string | null>(null);
-
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [emailAuthData, setEmailAuthData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [phoneAuthData, setPhoneAuthData] = useState({
-    phoneNumber: "",
-    code: "",
-  });
-  const [phoneStep, setPhoneStep] = useState<"phone" | "code">("phone");
-
-  const { data: profile, isLoading: profileLoading } = useQuery<UserProfile>({
-    queryKey: ["/api/profile"],
-    enabled: !!user,
-  });
-
-  const { data: providers } = useQuery<AuthProviders>({
-    queryKey: ["/api/auth/providers"],
-  });
-
-  const saveProfileMutation = useMutation({
-    mutationFn: async (data: { role: string; fullName: string; phone: string; city: string }) => {
-      return apiRequest("POST", "/api/profile", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: t("marketplace.auth.profileSaved"),
-        description: t("marketplace.auth.welcomeMessage"),
-      });
-      if (selectedRole === "owner") {
-        navigate("/owner");
-      } else if (selectedRole === "solo_master") {
-        navigate("/solo-master/onboarding");
-      } else {
-        navigate("/profile");
-      }
-    },
-    onError: () => {
-      toast({
-        title: t("marketplace.auth.error"),
-        description: t("marketplace.auth.saveFailed"),
-        variant: "destructive",
-      });
-    },
-  });
-
-  const loginMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
-      }
-      return response.json();
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: t("marketplace.auth.loginSuccess"),
-        description: t("marketplace.auth.welcomeBack"),
-      });
-      // Force page reload to ensure React Query picks up the new auth state
-      window.location.reload();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t("marketplace.auth.error"),
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        // Extract validation errors if available
-        if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
-          const firstError = error.errors[0];
-          throw new Error(firstError.message || error.message || "Registration failed");
-        }
-        throw new Error(error.message || "Registration failed");
-      }
-      return response.json();
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: t("marketplace.auth.registerSuccess"),
-        description: t("marketplace.auth.accountCreated"),
-      });
-      // Force page reload to ensure React Query picks up the new auth state
-      window.location.reload();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t("marketplace.auth.error"),
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const sendCodeMutation = useMutation({
-    mutationFn: async (phoneNumber: string) => {
-      const response = await fetch("/api/auth/phone/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to send code");
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setPhoneStep("code");
-      toast({
-        title: t("marketplace.auth.codeSent"),
-        description: data.devCode ? `Code: ${data.devCode}` : t("marketplace.auth.checkPhone"),
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t("marketplace.auth.error"),
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const verifyCodeMutation = useMutation({
-    mutationFn: async (data: { phoneNumber: string; code: string }) => {
-      const response = await fetch("/api/auth/phone/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Invalid code");
-      }
-      return response.json();
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({
-        title: t("marketplace.auth.phoneLoginSuccess"),
-        description: t("marketplace.auth.welcomeBack"),
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t("marketplace.auth.error"),
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveProfileMutation.mutate({
-      role: selectedRole,
-      fullName: formData.fullName,
-      phone: formData.phone,
-      city: formData.city,
-    });
+  const loginWithProvider = (provider: string, role?: string) => {
+    const q = role ? `?role=${encodeURIComponent(role)}` : "";
+    window.location.href = `/api/auth/${provider}${q}`;
   };
 
-  const handleEmailAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (authMode === "register") {
-      if (emailAuthData.password !== emailAuthData.confirmPassword) {
-        toast({
-          title: t("marketplace.auth.error"),
-          description: t("marketplace.auth.passwordMismatch"),
-          variant: "destructive",
-        });
-        return;
-      }
-      registerMutation.mutate({
-        email: emailAuthData.email,
-        password: emailAuthData.password,
-      });
-    } else {
-      loginMutation.mutate({
-        email: emailAuthData.email,
-        password: emailAuthData.password,
-      });
+  const handleEmailLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    try {
+      await submitJson(event, "/api/auth/login");
+      window.location.reload();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Login failed");
     }
   };
 
-  const handleSendCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendCodeMutation.mutate(phoneAuthData.phoneNumber);
-  };
+  const handleEmailRegister = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const password = String(data.get("password") || "");
+    const confirmPassword = String(data.get("confirmPassword") || "");
 
-  const handleVerifyCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    verifyCodeMutation.mutate({
-      phoneNumber: phoneAuthData.phoneNumber,
-      code: phoneAuthData.code,
-    });
-  };
-
-  // Read ?role= from URL on mount — pre-selects role in profile form and passes to OAuth
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const roleParam = params.get("role");
-    if (roleParam === "client" || roleParam === "owner" || roleParam === "solo_master") {
-      setUrlRole(roleParam);
-      setSelectedRole(roleParam);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    // Restore intended destination if redirected here from a protected route
-    const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
-    if (savedRedirect) {
-      sessionStorage.removeItem("redirectAfterLogin");
-      navigate(savedRedirect);
+    if (password !== confirmPassword) {
+      window.alert(t("marketplace.auth.passwordMismatch"));
       return;
     }
 
-    // Admin users go directly to admin panel
-    if (user.isAdmin) {
-      navigate("/admin");
-      return;
+    try {
+      await submitJson(event, "/api/auth/register");
+      window.location.reload();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Registration failed");
     }
+  };
 
-    if (profile?.exists && profile?.isProfileComplete) {
-      if (profile.role === "owner") {
-        navigate("/owner");
-      } else if (profile.role === "master") {
-        navigate("/master");
-      } else if (profile.role === "solo_master") {
-        navigate("/solo-master");
-      } else {
-        navigate("/profile");
-      }
-    }
-  }, [user, profile, navigate]);
-
-  if (isLoading || profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t("common.loading")}</div>
-      </div>
-    );
-  }
-
-  if (user && profile?.exists && profile?.isProfileComplete) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t("common.redirecting")}</div>
-      </div>
-    );
-  }
-
-  if (user && (!profile?.exists || !profile?.isProfileComplete)) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="p-6 flex items-center justify-between">
-          <Link href="/">
-            <Button variant="ghost" size="icon" data-testid="button-back-auth">
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(200,29,96,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_22%),linear-gradient(180deg,#07070a_0%,#121216_45%,#09090b_100%)] text-white">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <a href="/">
+            <Button variant="ghost" size="icon" className="border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-          </Link>
+          </a>
           <LanguageSwitcher />
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-6">
-          <Card className="w-full max-w-lg p-8">
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <Logo className="h-16 w-auto object-contain" />
-              </div>
-              <h1 className="font-serif text-2xl text-foreground mb-2">
-                {t("marketplace.auth.completeProfile")}
-              </h1>
-              <p className="text-muted-foreground">
-                {t("marketplace.auth.completeProfileSubtitle")}
-              </p>
-            </div>
-
-            {step === "role" ? (
-              <div className="space-y-6">
-                <p className="text-center text-sm text-muted-foreground mb-4">
-                  {t("marketplace.auth.selectRole")}
-                </p>
-
-                <div
-                  className={`grid grid-cols-1 gap-4 ${soloMasterEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("client")}
-                    className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
-                      selectedRole === "client" ? "border-primary bg-primary/5" : "border-border"
-                    }`}
-                    data-testid="button-role-client"
-                  >
-                    <User
-                      className={`h-8 w-8 ${selectedRole === "client" ? "text-primary" : "text-muted-foreground"}`}
-                    />
-                    <span className="font-medium text-sm">{t("marketplace.auth.roleClient")}</span>
-                    <span className="text-xs text-muted-foreground text-center">
-                      {t("marketplace.auth.roleClientDesc")}
-                    </span>
-                    {selectedRole === "client" && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-
-                  {soloMasterEnabled && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRole("solo_master")}
-                      className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
-                        selectedRole === "solo_master"
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      }`}
-                      data-testid="button-role-solo-master"
-                    >
-                      <Briefcase
-                        className={`h-8 w-8 ${selectedRole === "solo_master" ? "text-primary" : "text-muted-foreground"}`}
-                      />
-                      <span className="font-medium text-sm">
-                        {t("marketplace.auth.roleSoloMaster", "Solo Master")}
-                      </span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        {t(
-                          "marketplace.auth.roleSoloMasterDesc",
-                          "Independent beauty professional",
-                        )}
-                      </span>
-                      {selectedRole === "solo_master" && <Check className="h-4 w-4 text-primary" />}
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("owner")}
-                    className={`p-5 rounded-lg border-2 transition-all flex flex-col items-center gap-2 hover-elevate ${
-                      selectedRole === "owner" ? "border-primary bg-primary/5" : "border-border"
-                    }`}
-                    data-testid="button-role-owner"
-                  >
-                    <Store
-                      className={`h-8 w-8 ${selectedRole === "owner" ? "text-primary" : "text-muted-foreground"}`}
-                    />
-                    <span className="font-medium text-sm">{t("marketplace.auth.roleOwner")}</span>
-                    <span className="text-xs text-muted-foreground text-center">
-                      {t("marketplace.auth.roleOwnerDesc")}
-                    </span>
-                    {selectedRole === "owner" && <Check className="h-4 w-4 text-primary" />}
-                  </button>
+        <div className="flex flex-1 items-center py-8 lg:py-12">
+          <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <Card className="overflow-hidden border-white/10 bg-white/[0.04] text-white shadow-2xl shadow-black/30 backdrop-blur">
+              <div className="h-full p-6 sm:p-8 lg:p-10">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                  <Sparkles className="h-3.5 w-3.5 text-[#ff5c93]" />
+                  Beauty marketplace для клиентов и владельцев
                 </div>
 
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={() => setStep("details")}
-                  data-testid="button-continue-role"
-                >
-                  {t("marketplace.auth.continue")}
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setStep("role")}
-                    data-testid="button-back-step"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {selectedRole === "client"
-                      ? t("marketplace.auth.roleClient")
-                      : selectedRole === "solo_master"
-                        ? t("marketplace.auth.roleSoloMaster", "Solo Master")
-                        : t("marketplace.auth.roleOwner")}
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">{t("marketplace.auth.fullName")}</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder={t("marketplace.auth.fullNamePlaceholder")}
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      required
-                      data-testid="input-fullname"
-                    />
+                <div className="mt-6 flex items-center gap-4">
+                  <div className="rounded-2xl border border-[#ff5c93]/25 bg-gradient-to-br from-[#ff5c93]/30 to-white/5 p-3 shadow-lg shadow-[#ff5c93]/10">
+                    <Logo className="h-16 w-16 rounded-xl object-cover" />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("marketplace.auth.phone")}</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+998 90 123 45 67"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      data-testid="input-phone"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="city">{t("marketplace.auth.city")}</Label>
-                    <Input
-                      id="city"
-                      type="text"
-                      placeholder={t("marketplace.auth.cityPlaceholder")}
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      required
-                      data-testid="input-city"
-                    />
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.28em] text-white/50">Aurelle</p>
+                    <h1 className="mt-2 font-serif text-3xl leading-tight text-white sm:text-4xl">
+                      Добро пожаловать в пространство записи и управления
+                    </h1>
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={saveProfileMutation.isPending}
-                  data-testid="button-complete-registration"
-                >
-                  {saveProfileMutation.isPending
-                    ? t("marketplace.auth.saving")
-                    : t("marketplace.auth.completeRegistration")}
-                </Button>
-              </form>
-            )}
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="p-6 flex items-center justify-between">
-        <Link href="/">
-          <Button variant="ghost" size="icon" data-testid="button-back-auth">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <LanguageSwitcher />
-      </div>
-
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <Logo className="h-16 w-auto object-contain" />
-            </div>
-            <h1 className="font-serif text-2xl text-foreground mb-2">
-              {t("marketplace.auth.title")}
-            </h1>
-            <p className="text-muted-foreground">{t("marketplace.auth.subtitle")}</p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center p-4 rounded-lg bg-muted/50">
-                <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm font-medium">{t("marketplace.auth.forClients")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("marketplace.auth.forClientsDesc")}
+                <p className="mt-6 max-w-2xl text-base leading-7 text-white/70 sm:text-lg">
+                  Войдите, чтобы бронировать услуги, сохранять любимые салоны и управлять рабочими кабинетами без лишних экранов и перегруза.
                 </p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-muted/50">
-                <Store className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm font-medium">{t("marketplace.auth.forOwners")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("marketplace.auth.forOwnersDesc")}
-                </p>
-              </div>
-            </div>
 
-            <Tabs defaultValue="social" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="social" data-testid="tab-social-login">
-                  {t("marketplace.auth.socialLogin")}
-                </TabsTrigger>
-                <TabsTrigger value="email" data-testid="tab-email-login">
-                  {t("marketplace.auth.emailLogin")}
-                </TabsTrigger>
-                {providers?.phone && (
-                  <TabsTrigger value="phone" data-testid="tab-phone-login">
-                    {t("marketplace.auth.phoneLogin")}
-                  </TabsTrigger>
-                )}
-              </TabsList>
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <User className="h-6 w-6 text-white/80" />
+                    <p className="mt-4 text-lg font-medium text-white">Для клиентов</p>
+                    <p className="mt-2 text-sm text-white/60">Записи, отзывы, избранное и история посещений.</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <Store className="h-6 w-6 text-white/80" />
+                    <p className="mt-4 text-lg font-medium text-white">Для владельцев</p>
+                    <p className="mt-2 text-sm text-white/60">Салоны, услуги, команда и календарь бронирований.</p>
+                  </div>
+                </div>
 
-              <TabsContent value="social" className="space-y-3 mt-4">
-                {providers?.google && (
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    variant="outline"
-                    onClick={() => {
-                      const q = urlRole ? `?role=${encodeURIComponent(urlRole)}` : "";
-                      window.location.href = `/api/auth/google${q}`;
-                    }}
-                    data-testid="button-login-google"
-                  >
-                    <SiGoogle className="mr-2 h-5 w-5 text-[#4285F4]" />
+                <div className="mt-8 rounded-3xl border border-white/10 bg-black/20 p-5">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                    Почему этот вход удобнее сейчас
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {benefits.map((benefit) => (
+                      <div key={benefit} className="flex items-start gap-3 text-sm text-white/70">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                        <span>{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-white/10 bg-[#141418]/95 text-white shadow-2xl shadow-black/30 backdrop-blur">
+              <div className="p-6 sm:p-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <Badge variant="secondary" className="border border-white/10 bg-white/5 text-white/75 hover:bg-white/5">
+                      Безопасный вход
+                    </Badge>
+                    <h2 className="mt-4 font-serif text-2xl text-white">Вход и регистрация</h2>
+                    <p className="mt-2 text-sm text-white/60">
+                      Используйте email или соцсети. Телефонный вход временно недоступен, пока мы восстанавливаем SMS-авторизацию.
+                    </p>
+                  </div>
+                </div>
+
+                <Alert className="mt-6 border-[#ff5c93]/20 bg-[#ff5c93]/8 text-white">
+                  <AlertTitle className="text-white">Временно отключено</AlertTitle>
+                  <AlertDescription className="text-white/75">
+                    Вход по телефону временно недоступен. Используйте email, Google, Яндекс или GitHub.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="mt-6 space-y-3">
+                  <Button className="w-full justify-start border-white/10 bg-white/0 text-white hover:bg-white/5" size="lg" variant="outline" onClick={() => loginWithProvider("google")}>
+                    <SiGoogle className="mr-3 h-5 w-5 text-[#4285F4]" />
                     {t("marketplace.auth.signInWithGoogle", "Продолжить с Google")}
                   </Button>
-                )}
-                {providers?.yandex && (
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    variant="outline"
-                    onClick={() => {
-                      const q = urlRole ? `?role=${encodeURIComponent(urlRole)}` : "";
-                      window.location.href = `/api/auth/yandex${q}`;
-                    }}
-                    data-testid="button-login-yandex"
-                  >
-                    <YandexIcon className="mr-2 h-5 w-5 text-[#FF0000]" />
+                  <Button className="w-full justify-start border-white/10 bg-white/0 text-white hover:bg-white/5" size="lg" variant="outline" onClick={() => loginWithProvider("yandex")}>
+                    <YandexIcon className="mr-3 h-5 w-5 text-[#FF0000]" />
                     {t("marketplace.auth.signInWithYandex", "Продолжить с Яндекс")}
                   </Button>
-                )}
-                {providers?.github && (
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    variant="outline"
-                    onClick={loginWithGitHub}
-                    data-testid="button-login-github"
-                  >
-                    <SiGithub className="mr-2 h-5 w-5" />
+                  <Button className="w-full justify-start border-white/10 bg-white/0 text-white hover:bg-white/5" size="lg" variant="outline" onClick={() => loginWithProvider("github")}>
+                    <SiGithub className="mr-3 h-5 w-5" />
                     {t("marketplace.auth.signInWithGitHub")}
                   </Button>
-                )}
-                {!providers?.google && !providers?.yandex && !providers?.github && (
-                  <p className="text-center text-sm text-muted-foreground py-4" data-testid="social-auth-unavailable">
-                    {t(
-                      "marketplace.auth.socialAuthUnavailable",
-                      "Социальная авторизация временно недоступна",
-                    )}
-                  </p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="email" className="mt-4">
-                <div className="space-y-4">
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      type="button"
-                      variant={authMode === "login" ? "default" : "outline"}
-                      className="flex-1"
-                      onClick={() => setAuthMode("login")}
-                      data-testid="button-mode-login"
-                    >
-                      {t("marketplace.auth.login")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={authMode === "register" ? "default" : "outline"}
-                      className="flex-1"
-                      onClick={() => setAuthMode("register")}
-                      data-testid="button-mode-register"
-                    >
-                      {t("marketplace.auth.register")}
-                    </Button>
-                  </div>
-
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">{t("marketplace.auth.email")}</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="email@example.com"
-                        value={emailAuthData.email}
-                        onChange={(e) =>
-                          setEmailAuthData({ ...emailAuthData, email: e.target.value })
-                        }
-                        required
-                        data-testid="input-email"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">{t("marketplace.auth.password")}</Label>
-                        {authMode === "login" && (
-                          <Link href="/auth/forgot-password">
-                            <a className="text-xs text-primary hover:underline">
-                              {t("auth.forgotPassword", "Forgot Password?")}
-                            </a>
-                          </Link>
-                        )}
-                      </div>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="********"
-                        value={emailAuthData.password}
-                        onChange={(e) =>
-                          setEmailAuthData({ ...emailAuthData, password: e.target.value })
-                        }
-                        required
-                        minLength={8}
-                        data-testid="input-password"
-                      />
-                      {authMode === "register" && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("marketplace.auth.passwordMinLength")}
-                        </p>
-                      )}
-                    </div>
-
-                    {authMode === "register" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
-                          {t("marketplace.auth.confirmPassword")}
-                        </Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          placeholder="********"
-                          value={emailAuthData.confirmPassword}
-                          onChange={(e) =>
-                            setEmailAuthData({ ...emailAuthData, confirmPassword: e.target.value })
-                          }
-                          required
-                          minLength={8}
-                          data-testid="input-confirm-password"
-                        />
-                      </div>
-                    )}
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      disabled={loginMutation.isPending || registerMutation.isPending}
-                      data-testid="button-submit-email-auth"
-                    >
-                      <Mail className="mr-2 h-5 w-5" />
-                      {loginMutation.isPending || registerMutation.isPending
-                        ? t("marketplace.auth.processing")
-                        : authMode === "login"
-                          ? t("marketplace.auth.signIn")
-                          : t("marketplace.auth.createAccount")}
-                    </Button>
-
-                    {/* Switch between login and register with clear link */}
-                    <div className="text-center pt-4 border-t border-border mt-4">
-                      {authMode === "register" ? (
-                        <p className="text-sm text-muted-foreground">
-                          {t("marketplace.auth.alreadyHaveAccount", "Already have an account?")}{" "}
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode("login")}
-                            className="text-primary font-medium hover:underline"
-                            data-testid="link-switch-to-login"
-                          >
-                            {t("marketplace.auth.signIn")}
-                          </button>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          {t("marketplace.auth.dontHaveAccount", "Don't have an account?")}{" "}
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode("register")}
-                            className="text-primary font-medium hover:underline"
-                            data-testid="link-switch-to-register"
-                          >
-                            {t("marketplace.auth.register")}
-                          </button>
-                        </p>
-                      )}
-                    </div>
-                  </form>
                 </div>
-              </TabsContent>
 
-              {providers?.phone && (
-                <TabsContent value="phone" className="mt-4">
-                  <div className="space-y-4">
-                    {phoneStep === "phone" ? (
-                      <form onSubmit={handleSendCode} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="phoneNumber">{t("marketplace.auth.phoneNumber")}</Label>
-                          <Input
-                            id="phoneNumber"
-                            type="tel"
-                            placeholder="+998901234567"
-                            value={phoneAuthData.phoneNumber}
-                            onChange={(e) =>
-                              setPhoneAuthData({ ...phoneAuthData, phoneNumber: e.target.value })
-                            }
-                            required
-                            pattern="^\+\d{10,15}$"
-                            data-testid="input-phone-number"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {t("marketplace.auth.phoneFormat")}
-                          </p>
-                        </div>
+                <Tabs defaultValue="login" className="mt-8 w-full">
+                  <TabsList className="grid w-full grid-cols-2 bg-white/5">
+                    <TabsTrigger value="login">{t("marketplace.auth.login")}</TabsTrigger>
+                    <TabsTrigger value="register">{t("marketplace.auth.register")}</TabsTrigger>
+                  </TabsList>
 
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          size="lg"
-                          disabled={sendCodeMutation.isPending}
-                          data-testid="button-send-code"
-                        >
-                          <Phone className="mr-2 h-5 w-5" />
-                          {sendCodeMutation.isPending
-                            ? t("marketplace.auth.sending")
-                            : t("marketplace.auth.sendCode")}
-                        </Button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleVerifyCode} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="code">{t("marketplace.auth.verificationCode")}</Label>
-                          <Input
-                            id="code"
-                            type="text"
-                            placeholder="123456"
-                            value={phoneAuthData.code}
-                            onChange={(e) =>
-                              setPhoneAuthData({ ...phoneAuthData, code: e.target.value })
-                            }
-                            required
-                            pattern="\d{6}"
-                            maxLength={6}
-                            data-testid="input-verification-code"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {t("marketplace.auth.codeHint")}
-                          </p>
-                        </div>
+                  <TabsContent value="login" className="mt-5">
+                    <form onSubmit={handleEmailLogin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email" className="text-white/85">{t("marketplace.auth.email")}</Label>
+                        <Input id="login-email" name="email" type="email" placeholder="email@example.com" required className="border-white/10 bg-white/0 text-white placeholder:text-white/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password" className="text-white/85">{t("marketplace.auth.password")}</Label>
+                        <Input id="login-password" name="password" type="password" placeholder="********" required minLength={8} className="border-white/10 bg-white/0 text-white placeholder:text-white/30" />
+                      </div>
+                      <Button type="submit" className="w-full bg-[#e33674] text-white hover:bg-[#f04a84]" size="lg">
+                        <Mail className="mr-2 h-5 w-5" />
+                        {t("marketplace.auth.signIn")}
+                      </Button>
+                    </form>
+                  </TabsContent>
 
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          size="lg"
-                          disabled={verifyCodeMutation.isPending}
-                          data-testid="button-verify-code"
-                        >
-                          {verifyCodeMutation.isPending
-                            ? t("marketplace.auth.verifying")
-                            : t("marketplace.auth.verifyCode")}
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full"
-                          onClick={() => setPhoneStep("phone")}
-                          data-testid="button-change-number"
-                        >
-                          {t("marketplace.auth.changeNumber")}
-                        </Button>
-                      </form>
-                    )}
-                  </div>
-                </TabsContent>
-              )}
-            </Tabs>
-
-            <p className="text-center text-xs text-muted-foreground">
-              {t("marketplace.auth.termsNotice")}
-            </p>
+                  <TabsContent value="register" className="mt-5">
+                    <form onSubmit={handleEmailRegister} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="register-email" className="text-white/85">{t("marketplace.auth.email")}</Label>
+                        <Input id="register-email" name="email" type="email" placeholder="email@example.com" required className="border-white/10 bg-white/0 text-white placeholder:text-white/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-password" className="text-white/85">{t("marketplace.auth.password")}</Label>
+                        <Input id="register-password" name="password" type="password" placeholder="********" required minLength={8} className="border-white/10 bg-white/0 text-white placeholder:text-white/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-confirm-password" className="text-white/85">{t("marketplace.auth.confirmPassword")}</Label>
+                        <Input id="register-confirm-password" name="confirmPassword" type="password" placeholder="********" required minLength={8} className="border-white/10 bg-white/0 text-white placeholder:text-white/30" />
+                      </div>
+                      <Button type="submit" className="w-full bg-[#e33674] text-white hover:bg-[#f04a84]" size="lg">
+                        <Mail className="mr-2 h-5 w-5" />
+                        {t("marketplace.auth.createAccount")}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
