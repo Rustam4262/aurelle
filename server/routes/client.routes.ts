@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { db } from "../db";
 import { logger } from "../lib/logger";
@@ -288,7 +288,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
     const [newBooking] = await db
       .insert(bookings)
       .values({
-        clientId: result.profile.id,
+        clientId: userId,
         salonId,
         serviceId,
         masterId: masterId || null,
@@ -389,10 +389,11 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       return res.json([]);
     }
 
+    const clientIds = result.profile ? [userId, result.profile.id] : [userId];
     const clientBookings = await db
       .select()
       .from(bookings)
-      .where(eq(bookings.clientId, result.profile.id))
+      .where(inArray(bookings.clientId, clientIds))
       .orderBy(desc(bookings.bookingDate));
 
     if (clientBookings.length === 0) {
@@ -458,7 +459,12 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
     const [booking] = await db
       .select()
       .from(bookings)
-      .where(and(eq(bookings.id, id), eq(bookings.clientId, result.profile.id)));
+      .where(
+        and(
+          eq(bookings.id, id),
+          inArray(bookings.clientId, result.profile ? [userId, result.profile.id] : [userId]),
+        ),
+      );
 
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
@@ -763,7 +769,12 @@ router.post("/reviews", isAuthenticated, async (req: any, res) => {
     const [booking] = await db
       .select()
       .from(bookings)
-      .where(and(eq(bookings.id, bookingId), eq(bookings.clientId, userId)));
+      .where(
+        and(
+          eq(bookings.id, bookingId),
+          inArray(bookings.clientId, result.profile ? [userId, result.profile.id] : [userId]),
+        ),
+      );
 
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
@@ -1114,7 +1125,7 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
   }
 });
 
-// ─── Booking Drafts (Resume Booking) ─────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Booking Drafts (Resume Booking) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 const draftSchema = z.object({
   salonId:       z.string().optional(),
@@ -1151,7 +1162,7 @@ router.get("/bookings/draft", isAuthenticated, async (req: any, res) => {
 /**
  * POST /api/bookings/draft
  * Save or update a booking draft. Expires in 24 hours.
- * One draft per user — overwrites any existing draft.
+ * One draft per user вЂ” overwrites any existing draft.
  */
 router.post("/bookings/draft", isAuthenticated, async (req: any, res) => {
   const userId: string = req.user.claims.sub;
@@ -1204,3 +1215,5 @@ router.delete("/bookings/draft", isAuthenticated, async (req: any, res) => {
 });
 
 export default router;
+
+
