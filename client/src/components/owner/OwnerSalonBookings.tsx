@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Calendar, Clock, Scissors } from "lucide-react";
+import { Calendar, Clock, Scissors, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
