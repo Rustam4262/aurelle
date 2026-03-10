@@ -9,6 +9,7 @@ import {
   masterWorkingHours,
   bookings,
   userProfiles,
+  users,
 } from "@shared/schema";
 import { isAuthenticated } from "../auth";
 import { logger } from "../lib/logger";
@@ -723,17 +724,31 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Enrich with client profiles (avatar + name)
-    const clientIds = [...new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id))];
+    const clientIds = Array.from(new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id)));
     const clientProfilesData = clientIds.length > 0
-      ? await db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
+      ? await db.select({
+          id: userProfiles.id,
+          fullName: userProfiles.fullName,
+          avatarUrl: userProfiles.avatarUrl,
+          firstName: users.firstName,
+          email: users.email,
+        })
+        .from(userProfiles)
+        .leftJoin(users, eq(users.id, userProfiles.userId))
+        .where(inArray(userProfiles.id, clientIds))
       : [];
-    const clientMap = new Map(clientProfilesData.map((p) => [p.userId, p]));
+    const clientMap = new Map(clientProfilesData.map((p) => [p.id, p]));
 
     const enriched = filtered.map((booking) => {
       const profile = booking.clientId ? clientMap.get(booking.clientId) : undefined;
+      const clientName =
+        profile?.fullName?.split(" ")[0] ||
+        profile?.firstName ||
+        profile?.email?.split("@")[0] ||
+        null;
       return {
         ...booking,
-        clientName: profile?.fullName?.split(" ")[0] ?? null,
+        clientName,
         clientAvatar: profile?.avatarUrl ?? null,
       };
     });

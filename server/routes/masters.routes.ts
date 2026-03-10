@@ -10,6 +10,7 @@ import {
   masterWorkingHours,
   masterPortfolio,
   services,
+  users,
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -208,20 +209,33 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         ? db.select().from(salons).where(inArray(salons.id, salonIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
+        ? db.select({
+            id: userProfiles.id,
+            fullName: userProfiles.fullName,
+            avatarUrl: userProfiles.avatarUrl,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          })
+          .from(userProfiles)
+          .leftJoin(users, eq(users.id, userProfiles.userId))
+          .where(inArray(userProfiles.id, clientIds))
         : Promise.resolve([]),
     ]);
 
     // Create lookup maps
     const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
     const salonsMap = new Map(salonsData.map((s) => [s.id, s]));
-    const clientProfilesMap = new Map(clientProfilesData.map((p) => [p.userId, p]));
+    const clientProfilesMap = new Map(clientProfilesData.map((p) => [p.id, p]));
 
     // Enrich bookings with related data
     const enrichedBookings = masterBookings.map((booking) => {
       const clientProfile = clientProfilesMap.get(booking.clientId);
-      // For privacy, use first name or "Client" as fallback
-      const clientName = clientProfile?.fullName ? clientProfile.fullName.split(" ")[0] : "Client";
+      const clientName =
+        clientProfile?.fullName?.split(" ")[0] ||
+        clientProfile?.firstName ||
+        clientProfile?.email?.split("@")[0] ||
+        null;
 
       return {
         ...booking,

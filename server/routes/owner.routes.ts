@@ -768,18 +768,37 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
         ? db.select().from(services).where(inArray(services.id, serviceIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select().from(userProfiles).where(inArray(userProfiles.userId, clientIds))
+        ? db.select({
+            id: userProfiles.id,
+            fullName: userProfiles.fullName,
+            avatarUrl: userProfiles.avatarUrl,
+            firstName: users.firstName,
+            email: users.email,
+          })
+          .from(userProfiles)
+          .leftJoin(users, eq(users.id, userProfiles.userId))
+          .where(inArray(userProfiles.id, clientIds))
         : Promise.resolve([]),
     ]);
 
     const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
-    const clientsMap = new Map(clientsData.map((c) => [c.userId, c]));
+    const clientsMap = new Map(clientsData.map((c) => [c.id, c]));
 
-    const enrichedBookings = salonBookings.map((booking) => ({
-      ...booking,
-      service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
-      client: clientsMap.get(booking.clientId),
-    }));
+    const enrichedBookings = salonBookings.map((booking) => {
+      const profile = clientsMap.get(booking.clientId);
+      const clientDisplayName =
+        profile?.fullName ||
+        profile?.firstName ||
+        profile?.email?.split("@")[0] ||
+        null;
+      return {
+        ...booking,
+        service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
+        client: profile
+          ? { fullName: clientDisplayName, avatarUrl: profile.avatarUrl }
+          : null,
+      };
+    });
 
     return res.json(enrichedBookings);
   } catch (error) {
