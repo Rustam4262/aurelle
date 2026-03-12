@@ -1,5 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { User } from "@shared/models/auth";
 import { logger } from "@/lib/logger";
 import { setUser as setSentryUser } from "@/lib/sentry";
@@ -11,13 +10,10 @@ async function fetchUser(): Promise<User | null> {
     });
 
     if (response.status === 401) {
-      // User is not authenticated — expected, not an error
       return null;
     }
 
     if (!response.ok) {
-      // Non-401 server error (5xx, network issue): treat as unauthenticated
-      // rather than throwing, so the auth page always renders the login form.
       logger.warn(`fetchUser: unexpected status ${response.status}`, {
         source: "use-auth",
       });
@@ -25,8 +21,7 @@ async function fetchUser(): Promise<User | null> {
     }
 
     return response.json();
-  } catch (err) {
-    // Network failure (DNS, timeout, connection refused): treat as unauthenticated.
+  } catch (_err) {
     logger.warn("fetchUser: network error", { source: "use-auth" });
     return null;
   }
@@ -44,65 +39,67 @@ async function doLogout(): Promise<void> {
 }
 
 export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }) {
-  const {
-    data: user,
-    isLoading,
-    error,
-  } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
-    queryFn: fetchUser,
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const logoutMutation = useMutation({
-    mutationFn: doLogout,
-    onSuccess: () => {
-      // Full page reload clears all React Query state automatically.
-      // Do NOT call queryClient.clear() here — it causes client.tsx to
-      // re-render with user=undefined → navigate("/auth") SPA navigation fires
-      // simultaneously with this full reload, aborting lazy-loaded bundles
-      // and triggering the ErrorBoundary before the reload completes.
-      window.location.href = "/auth";
-    },
-    onError: (error) => {
-      logger.error("Logout error", error);
-      // Fallback: GET-based logout (destroys session server-side and redirects)
-      window.location.href = "/api/logout";
-    },
-  });
-
-  // Sync user identity to Sentry for error context
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        setSentryUser({
-          id: user.id,
-          email: user.email ?? undefined,
-          username: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
-          role: user.isAdmin ? "admin" : undefined,
-        });
-      } else {
-        setSentryUser(null);
-      }
+    let cancelled = false;
+
+    void (async () => {
+      const nextUser = await fetchUser();
+      if (cancelled) return;
+      setUser(nextUser);
+      setIsLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (user) {
+      setSentryUser({
+        id: user.id,
+        email: user.email ?? undefined,
+        username: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
+        role: user.isAdmin ? "admin" : undefined,
+      });
+      return;
     }
+
+    setSentryUser(null);
   }, [user, isLoading]);
 
-  // Auto-redirect to auth page if user is not authenticated and requireAuth is true
   useEffect(() => {
-    if (options?.requireAuth && !isLoading && !user && !error) {
-      const redirectPath = options?.redirectTo || "/auth";
-      // Store current path for redirect after login
-      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
-      window.location.href = redirectPath;
+    if (!options?.requireAuth || isLoading || user) return;
+
+    const redirectPath = options.redirectTo || "/auth";
+    sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+    window.location.href = redirectPath;
+  }, [user, isLoading, options?.requireAuth, options?.redirectTo]);
+
+  const logout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      await doLogout();
+      window.location.href = "/auth";
+    } catch (error) {
+      logger.error("Logout error", error);
+      window.location.href = "/api/logout";
     }
-  }, [user, isLoading, error, options?.requireAuth, options?.redirectTo]);
+  };
 
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
-    logout: logoutMutation.mutate,
-    isLoggingOut: logoutMutation.isPending,
+    logout,
+    isLoggingOut,
   };
 }

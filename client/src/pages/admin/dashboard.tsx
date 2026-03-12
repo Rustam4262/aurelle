@@ -36,7 +36,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Types Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
 interface DashboardStats {
   range: string;
@@ -85,7 +85,7 @@ interface FunnelResponse {
 type RangeKey = "24h" | "7d" | "30d" | "90d";
 type SeriesKey = "users" | "salons" | "bookings";
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Sub-components Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
 function KpiSkeleton() {
   return (
@@ -246,7 +246,7 @@ function FunnelBar({ label, value, max, colorClass }: FunnelBarProps) {
   );
 }
 
-// ─── Custom recharts tooltip ───────────────────────────────────────────────────
+// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Custom recharts tooltip Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
 function GrowthTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -260,7 +260,7 @@ function GrowthTooltip({ active, payload, label }: any) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Main component Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
 const QUERY_OPTS = { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false } as const;
 const RANGES: RangeKey[] = ["24h", "7d", "30d", "90d"];
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
   const [range, setRange] = useState<RangeKey>("30d");
   const [growthSeries, setGrowthSeries] = useState<SeriesKey>("users");
 
-  // ── Queries ────────────────────────────────────────────────────────────────
+  // Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Queries Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
   const {
     data: stats,
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
     refetchOnline();
   };
 
-  // ── Derived values ─────────────────────────────────────────────────────────
+  // Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Derived values Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
   const s = stats?.stats;
   const ac = actionCenter;
@@ -336,50 +336,50 @@ export default function AdminDashboard() {
 
   const rangeLabel = t(`admin.dashboard.period.${range}`);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ Render Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ
 
   return (
     <div className="space-y-8 pb-8">
-      {/* ── 1. Sticky header ─────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b -mx-8 px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold text-foreground">
-            {t("admin.dashboard.title") || "Панель управления"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {t("admin.dashboard.subtitle") || "Обзор платформы и ключевые показатели"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Period switcher */}
-          <div className="flex rounded-md border overflow-hidden text-sm">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={`px-3 py-1.5 transition-colors ${
-                  range === r
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                {t(`admin.dashboard.period.${r}`)}
-              </button>
-            ))}
+      <Card className="border-border/70 bg-card/70 shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary" className="rounded-full px-3 py-1">Control room</Badge>
+              <Badge variant="outline" className="rounded-full px-3 py-1">Range: {range}</Badge>
+            </div>
+            <div>
+              <h1 className="text-2xl font-serif font-semibold text-foreground">
+                {t("admin.dashboard.title") || "Admin dashboard"}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("admin.dashboard.subtitle") || "Platform overview and operational signals"}
+              </p>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refetchAll}
-            className="gap-1.5"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            {t("admin.dashboard.refresh")}
-          </Button>
-        </div>
-      </div>
-
-      {/* ── 2. Error state ───────────────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <div className="flex overflow-hidden rounded-xl border text-sm">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={`px-3 py-1.5 transition-colors ${
+                    range === r
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  {t(`admin.dashboard.period.${r}`)}
+                </button>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={refetchAll} className="gap-1.5">
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t("admin.dashboard.refresh")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 2. Error state Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
       {isError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -392,14 +392,57 @@ export default function AdminDashboard() {
         </Alert>
       )}
 
-      {/* ── 3. KPI Cards ─────────────────────────────────────────────────── */}
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 3. KPI Cards Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
+        <Card className="border-border/70 bg-card/70 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Operations snapshot</CardTitle>
+            <CardDescription>Focus the team on the next moderation and trust actions.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-border bg-background px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Attention queue</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{((ac?.unverifiedSalons ?? 0) + (ac?.pendingComplaints ?? 0) + (ac?.paymentErrors24h ?? 0) + (ac?.expiringToday ?? 0)).toLocaleString()}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Open moderation and payment issues across the platform.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-background px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Verification mix</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth ? `${Math.round((platformHealth.health.emailVerificationRate + platformHealth.health.phoneVerificationRate) / 2)}%` : "-"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Average of email and phone verification completion.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-background px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Live sessions</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.activeSessionsLast24h?.toLocaleString() ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Sessions seen in the last 24 hours.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-background px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Complaint load</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.pendingComplaints?.toLocaleString() ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Cases that still need a moderator decision.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card/70 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Quick routes</CardTitle>
+            <CardDescription>Fast transitions to the places admins use most often.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Link href="/admin/complaints"><Button variant="outline" className="w-full justify-between">Complaints <AlertCircle className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/salons"><Button variant="outline" className="w-full justify-between">Salons review <Store className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/users"><Button variant="outline" className="w-full justify-between">Users desk <Users className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/sanctions"><Button variant="outline" className="w-full justify-between">Sanctions <Shield className="h-4 w-4" /></Button></Link>
+          </CardContent>
+        </Card>
+      </div>
       {isLoading ? (
         <KpiSkeleton />
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Users */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.totalUsers") || "Пользователи"}
+            title={t("marketplace.admin.dashboard.totalUsers") || "Р В РЎСџР В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В РЎвЂ"}
             value={s?.users.total ?? 0}
             delta={(s?.users.newInPeriod ?? 0) - (s?.users.prevPeriod ?? 0)}
             deltaLabel={rangeLabel}
@@ -412,7 +455,7 @@ export default function AdminDashboard() {
 
           {/* Salons */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.salons") || "Салоны"}
+            title={t("marketplace.admin.dashboard.salons") || "Р В Р Р‹Р В Р’В°Р В Р’В»Р В РЎвЂўР В Р вЂ¦Р РЋРІР‚в„–"}
             value={s?.salons.total ?? 0}
             delta={s?.salons.newInPeriod ?? 0}
             deltaLabel={rangeLabel}
@@ -426,7 +469,7 @@ export default function AdminDashboard() {
 
           {/* Masters */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.masters") || "Мастера"}
+            title={t("marketplace.admin.dashboard.masters") || "Р В РЎС™Р В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В°"}
             value={s?.masters.total ?? 0}
             delta={s?.masters.newInPeriod ?? 0}
             deltaLabel={rangeLabel}
@@ -438,7 +481,7 @@ export default function AdminDashboard() {
 
           {/* Bookings */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.totalBookings") || "Записи"}
+            title={t("marketplace.admin.dashboard.totalBookings") || "Р В РІР‚вЂќР В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂ"}
             value={s?.bookings.total ?? 0}
             delta={(s?.bookings.newInPeriod ?? 0) - (s?.bookings.prevPeriod ?? 0)}
             deltaLabel={rangeLabel}
@@ -450,7 +493,7 @@ export default function AdminDashboard() {
 
           {/* Open Complaints */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.openComplaints") || "Открытые жалобы"}
+            title={t("marketplace.admin.dashboard.openComplaints") || "Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋРІР‚в„–Р В Р’Вµ Р В Р’В¶Р В Р’В°Р В Р’В»Р В РЎвЂўР В Р’В±Р РЋРІР‚в„–"}
             value={s?.moderation.openComplaints ?? 0}
             icon={AlertCircle}
             color="text-red-600"
@@ -466,7 +509,7 @@ export default function AdminDashboard() {
 
           {/* Active Sanctions */}
           <KpiCard
-            title={t("marketplace.admin.dashboard.activeSanctions") || "Активные санкции"}
+            title={t("marketplace.admin.dashboard.activeSanctions") || "Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р РЋР С“Р В Р’В°Р В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР В РЎвЂ"}
             value={s?.moderation.activeSanctions ?? 0}
             icon={Shield}
             color="text-amber-600"
@@ -480,12 +523,12 @@ export default function AdminDashboard() {
             href="/admin/sanctions"
           />
 
-          {/* Online Now — spans 2 cols */}
+          {/* Online Now Р Р†Р вЂљРІР‚Сњ spans 2 cols */}
           <Card className="col-span-2 border-green-200 dark:border-green-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                {t("admin.dashboard.onlineUsers") || "Онлайн сейчас"}
+                {t("admin.dashboard.onlineUsers") || "Р В РЎвЂєР В Р вЂ¦Р В Р’В»Р В Р’В°Р В РІвЂћвЂ“Р В Р вЂ¦ Р РЋР С“Р В Р’ВµР В РІвЂћвЂ“Р РЋРІР‚РЋР В Р’В°Р РЋР С“"}
               </CardTitle>
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
@@ -506,14 +549,14 @@ export default function AdminDashboard() {
                 <Wifi className="h-5 w-5 text-green-500" />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("admin.dashboard.onlineSubtitle") || "Активны в последние 10 минут"}
+                {t("admin.dashboard.onlineSubtitle") || "Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„– Р В Р вЂ  Р В РЎвЂ”Р В РЎвЂўР РЋР С“Р В Р’В»Р В Р’ВµР В РўвЂР В Р вЂ¦Р В РЎвЂР В Р’Вµ 10 Р В РЎВР В РЎвЂР В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™"}
               </p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* ── 4. Action Center ─────────────────────────────────────────────── */}
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 4. Action Center Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
       {hasActionItems && (
         <Card className="border-l-4 border-l-orange-500 bg-orange-50/40 dark:bg-orange-950/10">
           <CardHeader className="pb-3">
@@ -565,7 +608,7 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* ── 5. Charts row ─────────────────────────────────────────────────── */}
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 5. Charts row Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Growth chart */}
         <Card>
@@ -573,10 +616,10 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <CardTitle className="text-base">
-                  {t("admin.dashboard.userGrowthTitle") || "Рост платформы"}
+                  {t("admin.dashboard.userGrowthTitle") || "Р В Р’В Р В РЎвЂўР РЋР С“Р РЋРІР‚С™ Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР РЋРІР‚в„–"}
                 </CardTitle>
                 <CardDescription className="mt-0.5">
-                  {t("admin.dashboard.userGrowthSubtitle") || "Новые записи за период"}
+                  {t("admin.dashboard.userGrowthSubtitle") || "Р В РЎСљР В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В Р’Вµ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂ Р В Р’В·Р В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ"}
                 </CardDescription>
               </div>
               {/* Series tabs */}
@@ -689,7 +732,7 @@ export default function AdminDashboard() {
                 {/* Conversion rate callout */}
                 {funnelData.signups > 0 && (
                   <div className="mt-6 pt-4 border-t flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Конверсия регистрация → запись</span>
+                    <span className="text-muted-foreground">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р В Р вЂ Р В Р’ВµР РЋР вЂљР РЋР С“Р В РЎвЂР РЋР РЏ Р РЋР вЂљР В Р’ВµР В РЎвЂ“Р В РЎвЂР РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р Р†РІР‚В РІР‚в„ў Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р РЋР Р‰</span>
                     <Badge variant="secondary" className="text-sm font-semibold">
                       {((funnelData.bookingsCreated / funnelData.signups) * 100).toFixed(1)}%
                     </Badge>
@@ -709,7 +752,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* ── 6. Platform Health ────────────────────────────────────────────── */}
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 6. Platform Health Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -796,20 +839,20 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* ── 7. Payment Health ─────────────────────────────────────────────── */}
+      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ 7. Payment Health Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљ */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
-            {t("admin.dashboard.paymentHealth") || "Здоровье платежей"}
+            {t("admin.dashboard.paymentHealth") || "Р В РІР‚вЂќР В РўвЂР В РЎвЂўР РЋР вЂљР В РЎвЂўР В Р вЂ Р РЋР Р‰Р В Р’Вµ Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В¶Р В Р’ВµР В РІвЂћвЂ“"}
           </CardTitle>
           <CardDescription>
-            {t("admin.dashboard.paymentHealthSubtitle") || "Статус транзакций и ошибки"}
+            {t("admin.dashboard.paymentHealthSubtitle") || "Р В Р Р‹Р РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р РЋРЎвЂњР РЋР С“ Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’В·Р В Р’В°Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР В РІвЂћвЂ“ Р В РЎвЂ Р В РЎвЂўР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В РЎвЂ"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ErrorBoundary fallback={
             <p className="py-4 text-sm text-muted-foreground text-center">
-              Данные о платежах временно недоступны
+              Р В РІР‚СњР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РЎвЂў Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В¶Р В Р’В°Р РЋРІР‚В¦ Р В Р вЂ Р РЋР вЂљР В Р’ВµР В РЎВР В Р’ВµР В Р вЂ¦Р В Р вЂ¦Р В РЎвЂў Р В Р вЂ¦Р В Р’ВµР В РўвЂР В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋРЎвЂњР В РЎвЂ”Р В Р вЂ¦Р РЋРІР‚в„–
             </p>
           }>
             <PaymentHealthWidget scope="platform" />

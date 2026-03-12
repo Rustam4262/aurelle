@@ -4,7 +4,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-// xlsx + jspdf are loaded on-demand when the user clicks Export — not part of the initial chunk
+// xlsx + jspdf are loaded on-demand when the user clicks Export РІР‚вЂќ not part of the initial chunk
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -80,7 +80,7 @@ interface User {
   lastName: string | null;
   fullName: string;
   phone: string | null;
-  role: "client" | "owner" | "master" | "admin";
+  role: "client" | "owner" | "salon_owner" | "master" | "admin";
   status: "active" | "blocked";
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
@@ -102,6 +102,7 @@ interface UsersResponse {
 const ROLE_COLORS = {
   client: "bg-blue-100 text-blue-800",
   owner: "bg-purple-100 text-purple-800",
+  salon_owner: "bg-purple-100 text-purple-800",
   master: "bg-green-100 text-green-800",
   admin: "bg-red-100 text-red-800",
 };
@@ -115,7 +116,7 @@ export default function AdminUsers() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Search & Filters — initialized from URL query params
+  // Search & Filters РІР‚вЂќ initialized from URL query params
   const [search, setSearch] = useState<string>(() => {
     const p = new URLSearchParams(window.location.search);
     return p.get("q") || "";
@@ -140,6 +141,7 @@ export default function AdminUsers() {
     return Math.max(1, parseInt(p.get("page") || "1") || 1);
   });
   const pageSize = 20;
+  const queryRoleFilter = roleFilter === "owner" ? "salon_owner" : roleFilter;
 
   // Sync active filters back to URL (uses debouncedSearch so URL only updates after typing stops)
   useEffect(() => {
@@ -172,6 +174,7 @@ export default function AdminUsers() {
   });
   const [blockReason, setBlockReason] = useState("");
   const [showSeedDialog, setShowSeedDialog] = useState(false);
+  const [bulkBlockDialogOpen, setBulkBlockDialogOpen] = useState(false);
 
   // Fetch users
   const { data, isLoading, error, refetch } = useQuery<UsersResponse>({
@@ -179,7 +182,7 @@ export default function AdminUsers() {
       "/api/admin/users",
       {
         search: debouncedSearch,
-        role: roleFilter !== "all" ? roleFilter : undefined,
+        role: queryRoleFilter !== "all" ? queryRoleFilter : undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
         sortBy,
         sortOrder,
@@ -189,20 +192,62 @@ export default function AdminUsers() {
     ],
   });
 
-  // Calculate stats from current data
-  const stats = data?.users
+  const { data: overviewStats } = useQuery<{
+    total: number;
+    active: number;
+    blocked: number;
+    emailVerified: number;
+    phoneVerified: number;
+    newToday: number;
+    activeLastWeek: number;
+  }>({
+    queryKey: ["/api/admin/users/stats/overview"],
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const stats = overviewStats
     ? {
-        total: data.total,
-        active: data.users.filter((u) => u.status === "active").length,
-        blocked: data.users.filter((u) => u.status === "blocked").length,
+        total: overviewStats.total,
+        active: overviewStats.active,
+        blocked: overviewStats.blocked,
+        emailVerified: overviewStats.emailVerified,
+        phoneVerified: overviewStats.phoneVerified,
+        newToday: overviewStats.newToday,
+        activeLastWeek: overviewStats.activeLastWeek,
         byRole: {
-          client: data.users.filter((u) => u.role === "client").length,
-          owner: data.users.filter((u) => u.role === "owner").length,
-          master: data.users.filter((u) => u.role === "master").length,
-          admin: data.users.filter((u) => u.role === "admin").length,
+          client: 0,
+          owner: 0,
+          master: 0,
+          admin: 0,
         },
       }
-    : null;
+    : data?.users
+      ? {
+          total: data.total,
+          active: data.users.filter((u) => u.status === "active").length,
+          blocked: data.users.filter((u) => u.status === "blocked").length,
+          emailVerified: data.users.filter((u) => u.isEmailVerified).length,
+          phoneVerified: data.users.filter((u) => u.isPhoneVerified).length,
+          newToday: data.users.filter((u) => {
+            const createdAt = new Date(u.createdAt);
+            const today = new Date();
+            return createdAt.toDateString() === today.toDateString();
+          }).length,
+          byRole: {
+            client: data.users.filter((u) => u.role === "client").length,
+            owner: data.users.filter((u) => u.role === "owner" || u.role === "salon_owner").length,
+            master: data.users.filter((u) => u.role === "master").length,
+            admin: data.users.filter((u) => u.role === "admin").length,
+          },
+          activeLastWeek: data.users.filter((u) => {
+            if (!u.lastLoginAt) return false;
+            const lastLogin = new Date(u.lastLoginAt).getTime();
+            return Date.now() - lastLogin <= 7 * 24 * 60 * 60 * 1000;
+          }).length,
+
+        }
+      : null;
 
   // Block user mutation
   const blockUserMutation = useMutation({
@@ -231,6 +276,38 @@ export default function AdminUsers() {
     },
     onError: () => {
       toast({ title: t("admin.users.toasts.unblockFailed"), variant: "destructive" });
+    },
+  });
+
+  const bulkBlockMutation = useMutation({
+    mutationFn: async ({ userIds, reason }: { userIds: string[]; reason: string }) => {
+      return apiRequest("POST", "/api/admin/users/bulk/block", { userIds, reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
+      setBulkBlockDialogOpen(false);
+      setBlockReason("");
+      clearSelection();
+      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+    },
+    onError: () => {
+      toast({ title: "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+    },
+  });
+
+  const bulkUnblockMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      return apiRequest("POST", "/api/admin/users/bulk/unblock", { userIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
+      clearSelection();
+      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+    },
+    onError: () => {
+      toast({ title: "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
     },
   });
 
@@ -287,6 +364,27 @@ export default function AdminUsers() {
     deleteUserMutation.mutate(deleteDialog.user.id);
   };
 
+  const handleBulkBlock = () => {
+    if (!blockReason.trim()) {
+      toast({ title: "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘", variant: "destructive" });
+      return;
+    }
+    bulkBlockMutation.mutate({ userIds: Array.from(selectedUsers), reason: blockReason.trim() });
+  };
+
+  const handleBulkUnblock = () => {
+    const blockedIds = filteredUsers
+      .filter((user) => selectedUsers.has(user.id) && user.status === "blocked")
+      .map((user) => user.id);
+
+    if (blockedIds.length === 0) {
+      toast({ title: "Р СњР ВµРЎвЂљ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      return;
+    }
+
+    bulkUnblockMutation.mutate(blockedIds);
+  };
+
   const toggleSort = (field: string) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -324,7 +422,7 @@ export default function AdminUsers() {
     setSelectAll(false);
   };
 
-  // Export to Excel — xlsx is loaded lazily on first click
+  // Export to Excel РІР‚вЂќ xlsx is loaded lazily on first click
   const exportToExcelFile = async () => {
     if (!data?.users || data.users.length === 0) {
       toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
@@ -358,7 +456,7 @@ export default function AdminUsers() {
     });
   };
 
-  // Export to PDF — jspdf is loaded lazily on first click
+  // Export to PDF РІР‚вЂќ jspdf is loaded lazily on first click
   const exportToPDFFile = async () => {
     if (!data?.users || data.users.length === 0) {
       toast({ title: t("admin.users.toasts.noData"), variant: "destructive" });
@@ -407,81 +505,145 @@ export default function AdminUsers() {
     });
   }, [data?.users, verificationFilter]);
 
+  const selectedUsersList = filteredUsers.filter((user) => selectedUsers.has(user.id));
+  const selectedActiveCount = selectedUsersList.filter((user) => user.status === "active").length;
+  const selectedBlockedCount = selectedUsersList.filter((user) => user.status === "blocked").length;
+  const selectedVerifiedCount = selectedUsersList.filter(
+    (user) => user.isEmailVerified && user.isPhoneVerified,
+  ).length;
+
+  const quickSegments = [
+    {
+      id: "all",
+      label: "Р вЂ™РЎРѓР Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘",
+      active: roleFilter === "all" && statusFilter === "all" && verificationFilter === "all",
+      onClick: () => {
+        setRoleFilter("all");
+        setStatusFilter("all");
+        setVerificationFilter("all");
+        setPage(1);
+      },
+    },
+    {
+      id: "active",
+      label: "Р С’Р С”РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ",
+      active: statusFilter === "active" && roleFilter === "all",
+      onClick: () => {
+        setRoleFilter("all");
+        setStatusFilter("active");
+        setVerificationFilter("all");
+        setPage(1);
+      },
+    },
+    {
+      id: "blocked",
+      label: "Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ",
+      active: statusFilter === "blocked" && roleFilter === "all",
+      onClick: () => {
+        setRoleFilter("all");
+        setStatusFilter("blocked");
+        setVerificationFilter("all");
+        setPage(1);
+      },
+    },
+    {
+      id: "verified",
+      label: "Р СџР С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ Р Р†Р ВµРЎР‚Р С‘РЎвЂћР С‘РЎвЂ Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ",
+      active: verificationFilter === "verified",
+      onClick: () => {
+        setRoleFilter("all");
+        setStatusFilter("all");
+        setVerificationFilter("verified");
+        setPage(1);
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b -mx-8 px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold text-foreground">
-            {t("admin.users.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {data?.total != null
-              ? `${data.total} ${t("admin.users.totalCount")}`
-              : t("admin.users.subtitle")}
-            {selectedUsers.size > 0 && ` · ${selectedUsers.size} ${t("admin.users.selectedCount")}`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToExcelFile}
-            disabled={!data?.users || data.users.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {t("admin.users.exportExcel")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToPDFFile}
-            disabled={!data?.users || data.users.length === 0}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            {t("admin.users.exportPdf")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            {t("admin.users.refresh")}
-          </Button>
-        </div>
-      </div>
-
+      <Card className="border-border/70 bg-card/70 shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary" className="rounded-full px-3 py-1">Users desk</Badge>
+              {selectedUsers.size > 0 && (
+                <Badge variant="outline" className="rounded-full px-3 py-1">
+                  {selectedUsers.size} {t("admin.users.selectedCount")}
+                </Badge>
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl font-serif font-semibold text-foreground">
+                {t("admin.users.title")}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {data?.total != null
+                  ? `${data.total} ${t("admin.users.totalCount")}`
+                  : t("admin.users.subtitle")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <Button variant="outline" size="sm" onClick={exportToExcelFile} disabled={!data?.users || data.users.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              {t("admin.users.exportExcel")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportToPDFFile} disabled={!data?.users || data.users.length === 0}>
+              <FileText className="mr-2 h-4 w-4" />
+              {t("admin.users.exportPdf")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              {t("admin.users.refresh")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       {/* Bulk Actions Bar */}
       {selectedUsers.size > 0 && (
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="border-primary/20 bg-primary/5">
           <CardContent className="py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckSquare className="h-5 w-5 text-primary" />
-                <span className="font-medium">
-                  {selectedUsers.size} {t("admin.users.selectedCount")}
-                </span>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-primary" />
+                  <span className="font-medium">
+                    {selectedUsers.size} {t("admin.users.selectedCount")}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <Badge variant="outline">Active: {selectedActiveCount}</Badge>
+                  <Badge variant="outline">Blocked: {selectedBlockedCount}</Badge>
+                  <Badge variant="outline">Verified: {selectedVerifiedCount}</Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={clearSelection}>
                   {t("admin.users.clearSelection")}
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBulkUnblock}
+                  disabled={selectedBlockedCount === 0 || bulkUnblockMutation.isPending}
+                >
+                  <Unlock className="mr-2 h-4 w-4" />
+                  Unblock
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Bulk actions",
-                      description: "Bulk block/delete coming soon!",
-                    });
-                  }}
+                  onClick={() => setBulkBlockDialogOpen(true)}
+                  disabled={selectedActiveCount === 0}
                 >
-                  <Ban className="h-4 w-4 mr-2" />
-                  {t("admin.users.bulkActions")}
+                  <Ban className="mr-2 h-4 w-4" />
+                  Block
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
-
       {/* Stats Cards */}
       {stats && stats.total > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -556,6 +718,21 @@ export default function AdminUsers() {
           </Card>
         </div>
       )}
+
+      <div className="flex flex-wrap gap-2">
+        {quickSegments.map((segment) => (
+          <Button
+            key={segment.id}
+            type="button"
+            variant={segment.active ? "default" : "outline"}
+            size="sm"
+            onClick={segment.onClick}
+            className="rounded-full"
+          >
+            {segment.label}
+          </Button>
+        ))}
+      </div>
 
       {/* Filters Card */}
       <Card>
@@ -709,12 +886,12 @@ export default function AdminUsers() {
               <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">{t("admin.users.noUsersFound")}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {search || roleFilter !== "all" || statusFilter !== "all"
+                {search || roleFilter !== "all" || statusFilter !== "all" || verificationFilter !== "all"
                   ? t("admin.users.noUsersFiltered")
                   : t("admin.users.noUsersEmpty")}
               </p>
               <div className="flex items-center gap-3 justify-center">
-                {(search || roleFilter !== "all" || statusFilter !== "all") && (
+                {(search || roleFilter !== "all" || statusFilter !== "all" || verificationFilter !== "all") && (
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -728,7 +905,7 @@ export default function AdminUsers() {
                     {t("admin.users.clearFilters")}
                   </Button>
                 )}
-                {!search && roleFilter === "all" && statusFilter === "all" && (
+                {!search && roleFilter === "all" && statusFilter === "all" && verificationFilter === "all" && (
                   <Button variant="default" onClick={() => setShowSeedDialog(true)}>
                     <UsersIcon className="h-4 w-4 mr-2" />
                     {t("admin.users.createTestUsers")}
@@ -850,7 +1027,7 @@ export default function AdminUsers() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={ROLE_COLORS[user.role]}>{user.role}</Badge>
+                          <Badge className={ROLE_COLORS[user.role]}>{user.role === "salon_owner" ? t("admin.users.roles.owner") : user.role}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className={STATUS_COLORS[user.status]}>{user.status}</Badge>
@@ -901,7 +1078,7 @@ export default function AdminUsers() {
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs">
                                   {!user.phone
-                                    ? "—"
+                                    ? "РІР‚вЂќ"
                                     : t(
                                         user.isPhoneVerified
                                           ? "admin.users.table.phoneVerified"
@@ -1067,6 +1244,41 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={bulkBlockDialogOpen} onOpenChange={setBulkBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</DialogTitle>
+            <DialogDescription>
+              Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘. Р В­РЎвЂљР С• Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘Р Вµ Р С—РЎР‚Р С‘Р СР ВµР Р…Р С‘РЎвЂљРЎРѓРЎРЏ Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р С Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР С Р С‘ Р С—Р С•Р С—Р В°Р Т‘РЎвЂРЎвЂљ Р Р† Р В°РЎС“Р Т‘Р С‘РЎвЂљ.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="bulkBlockReason">Р СџРЎР‚Р С‘РЎвЂЎР С‘Р Р…Р В° Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘</Label>
+              <Textarea
+                id="bulkBlockReason"
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Р СњР В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚: Р С—Р С•Р Т‘Р С•Р В·РЎР‚Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ Р В°Р С”РЎвЂљР С‘Р Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ, Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р С‘Р Вµ Р С—РЎР‚Р В°Р Р†Р С‘Р В», Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…Р Р…Р В°РЎРЏ Р В¶Р В°Р В»Р С•Р В±Р В°"
+                rows={4}
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkBlockDialogOpen(false)}>
+              Р С›РЎвЂљР СР ВµР Р…Р В°
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkBlock}
+              disabled={!blockReason.trim() || bulkBlockMutation.isPending}
+            >
+              {bulkBlockMutation.isPending ? "Р вЂР В»Р С•Р С”Р С‘РЎР‚РЎС“Р ВµР С..." : "Р СџР С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р Т‘Р С‘РЎвЂљРЎРЉ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”РЎС“"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete User Dialog */}
       <Dialog
@@ -1117,14 +1329,14 @@ export default function AdminUsers() {
                   <Label className="text-sm font-medium text-muted-foreground">
                     {t("admin.users.viewDialog.labels.fullName")}
                   </Label>
-                  <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "—"}</p>
+                  <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "РІР‚вЂќ"}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
                     {t("admin.users.viewDialog.labels.role")}
                   </Label>
                   <Badge className={ROLE_COLORS[quickViewDialog.user.role]} variant="outline">
-                    {quickViewDialog.user.role}
+                    {quickViewDialog.user.role === "salon_owner" ? t("admin.users.roles.owner") : quickViewDialog.user.role}
                   </Badge>
                 </div>
                 <div>
@@ -1142,7 +1354,7 @@ export default function AdminUsers() {
                   </Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Phone className="h-3 w-3 text-muted-foreground" />
-                    <p className="text-sm">{quickViewDialog.user.phone || "—"}</p>
+                    <p className="text-sm">{quickViewDialog.user.phone || "РІР‚вЂќ"}</p>
                   </div>
                 </div>
               </div>
@@ -1255,16 +1467,16 @@ export default function AdminUsers() {
             <div className="space-y-3 text-sm">
               <p className="font-medium">{t("admin.users.testUsersDialog.toBeCreated")}</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>2 Clients (Анна Иванова, Дмитрий Петров)</li>
-                <li>2 Salon Owners (Ольга Смирнова, Сергей Козлов)</li>
-                <li>2 Masters (Елена Волкова, Алексей Морозов)</li>
-                <li>1 Blocked User (для тестирования блокировки)</li>
+                <li>2 Clients (Р С’Р Р…Р Р…Р В° Р ВР Р†Р В°Р Р…Р С•Р Р†Р В°, Р вЂќР СР С‘РЎвЂљРЎР‚Р С‘Р в„– Р СџР ВµРЎвЂљРЎР‚Р С•Р Р†)</li>
+                <li>2 Salon Owners (Р С›Р В»РЎРЉР С–Р В° Р РЋР СР С‘РЎР‚Р Р…Р С•Р Р†Р В°, Р РЋР ВµРЎР‚Р С–Р ВµР в„– Р С™Р С•Р В·Р В»Р С•Р Р†)</li>
+                <li>2 Masters (Р вЂўР В»Р ВµР Р…Р В° Р вЂ™Р С•Р В»Р С”Р С•Р Р†Р В°, Р С’Р В»Р ВµР С”РЎРѓР ВµР в„– Р СљР С•РЎР‚Р С•Р В·Р С•Р Р†)</li>
+                <li>1 Blocked User (Р Т‘Р В»РЎРЏ РЎвЂљР ВµРЎРѓРЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘)</li>
               </ul>
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p className="font-medium mb-1">{t("admin.users.testUsersDialog.credentials")}</p>
                 <p className="text-muted-foreground">
                   {t("admin.users.testUsersDialog.email")}{" "}
-                  <code className="text-xs">client1@test.com</code> (или любой другой)
+                  <code className="text-xs">client1@test.com</code> (Р С‘Р В»Р С‘ Р В»РЎР‹Р В±Р С•Р в„– Р Т‘РЎР‚РЎС“Р С–Р С•Р в„–)
                 </p>
                 <p className="text-muted-foreground">
                   {t("admin.users.testUsersDialog.password")}{" "}
@@ -1291,3 +1503,19 @@ export default function AdminUsers() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
@@ -519,95 +519,171 @@ export default function SoloMasterPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Hidden avatar file input */}
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
-              <button
-                type="button"
-                className="relative h-16 w-16 rounded-full group focus:outline-none"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={avatarUploading}
-                title="Изменить фото профиля"
-              >
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                  {avatarUploading ? (
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  ) : masterData.photo ? (
-                    <img
-                      src={masterData.photo}
-                      alt={masterData.name}
-                      className="h-16 w-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <Briefcase className="h-8 w-8 text-primary" />
-                  )}
+      <div className="border-b border-border/70 bg-gradient-to-b from-background via-background to-muted/20">
+        <div className="container py-6 sm:py-8">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+            <Card className="border-border/70 bg-card/80 shadow-sm">
+              <CardContent className="flex flex-col gap-5 p-5 sm:p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-start gap-4">
+                    <button
+                      type="button"
+                      className="relative h-20 w-20 rounded-full group focus:outline-none"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      title="???????? ???? ???????"
+                    >
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                        {avatarUploading ? (
+                          <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                        ) : masterData.photo ? (
+                          <img
+                            src={masterData.photo}
+                            alt={masterData.name}
+                            className="h-20 w-20 rounded-full object-cover"
+                          />
+                        ) : (
+                          <Briefcase className="h-9 w-9 text-primary" />
+                        )}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Camera className="h-5 w-5 text-white" />
+                      </div>
+                    </button>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={isDraft ? "secondary" : "default"}>
+                          {isDraft ? "????????" : "???????? ???????"}
+                        </Badge>
+                        <Badge variant="outline">??????????: {completionPercent}%</Badge>
+                        {masterData.city && (
+                          <Badge variant="outline" className="gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {masterData.city}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <h1 className="mt-3 text-3xl font-serif font-semibold tracking-tight text-foreground">
+                        {masterData.name}
+                      </h1>
+
+                      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                        ?????????? ??????? ????????, ????????, ???????? ? ????? ????????? ???????? ?? ?????? ????????.
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                        {masterData.averageRating && parseFloat(masterData.averageRating) > 0 && (
+                          <span className="flex items-center gap-1 text-amber-500 font-medium">
+                            <Star className="h-3.5 w-3.5 fill-amber-500" />
+                            {parseFloat(masterData.averageRating).toFixed(1)}
+                            {masterData.reviewCount ? (
+                              <span className="text-muted-foreground font-normal">({masterData.reviewCount})</span>
+                            ) : null}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground">???????? ?????: {activeServicesCount}</span>
+                        <span className="text-muted-foreground">???????? ???????: {upcomingBookingsCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    {publishedProfileUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(publishedProfileUrl, "_blank")}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {t("soloMaster.viewPublicPage", "View Page")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/solo-master/onboarding")}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t("soloMaster.editProfile", "Edit Profile")}
+                    </Button>
+                    <LanguageSwitcher variant="outline" />
+                    <ThemeToggle />
+                    <Button variant="ghost" size="sm" onClick={() => logout()}>
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-5 w-5 text-white" />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">???????</p>
+                    <p className="mt-2 text-2xl font-semibold tabular-nums">{stats?.todayBookings || 0}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">??????? ? ?????????</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">???????</p>
+                    <p className="mt-2 text-2xl font-semibold tabular-nums">{(stats?.monthRevenue || 0).toLocaleString()}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">UZS ?? ??????? ?????</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">??????? ?????</p>
+                    <p className="mt-2 text-2xl font-semibold tabular-nums">{stats?.pendingBookings || 0}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">??????? ???? ?????????????</p>
+                  </div>
                 </div>
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold">{masterData.name}</h1>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <Badge variant={isDraft ? "secondary" : "default"}>
-                    {isDraft ? "Черновик" : "Активный"}
-                  </Badge>
-                  {masterData.city && (
-                    <span className="text-sm text-muted-foreground">{masterData.city}</span>
-                  )}
-                  {masterData.averageRating && parseFloat(masterData.averageRating) > 0 && (
-                    <span className="flex items-center gap-1 text-sm text-amber-500 font-medium">
-                      <Star className="h-3.5 w-3.5 fill-amber-500" />
-                      {parseFloat(masterData.averageRating).toFixed(1)}
-                      {masterData.reviewCount ? (
-                        <span className="text-muted-foreground font-normal">
-                          ({masterData.reviewCount})
-                        </span>
-                      ) : null}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {masterData.slug && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(`/master/${masterData.slug}`, "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  {t("soloMaster.viewPublicPage", "View Page")}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card/80 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">??????? ????????</CardTitle>
+                <CardDescription>????? ?????? ???????? solo master ??? ?????? ?????????.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("bookings")}>
+                  ??????????? ??????
+                  <Clock className="h-4 w-4" />
                 </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/solo-master/onboarding")}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                {t("soloMaster.editProfile", "Edit Profile")}
-              </Button>
-              <LanguageSwitcher variant="outline" />
-              <ThemeToggle />
-              <Button variant="ghost" size="sm" onClick={() => logout()}>
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("services")}>
+                  ????????? ????????
+                  <Briefcase className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("portfolio")}>
+                  ???????? ?????????
+                  <Image className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("schedule")}>
+                  ????????? ??????
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+                {publishedProfileUrl && (
+                  <div className="rounded-2xl border border-dashed border-border px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">????????? ????????</p>
+                    <p className="mt-2 truncate text-sm font-medium text-foreground">aurelle.uz{publishedProfileUrl}</p>
+                    <Button
+                      variant="link"
+                      className="mt-1 h-auto px-0 text-sm"
+                      onClick={() => window.open(publishedProfileUrl, "_blank")}
+                    >
+                      ??????? ????????
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
-
-      {/* Draft Warning */}
+      </div>      {/* Draft Warning */}
       {isDraft && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800">
           <div className="container py-3">
@@ -642,7 +718,7 @@ export default function SoloMasterPage() {
       {/* Dashboard Content */}
       <div className="container py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-2 rounded-2xl border border-border bg-card p-2">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               {t("soloMaster.tabs.overview", "Overview")}
@@ -1065,113 +1141,152 @@ export default function SoloMasterPage() {
           </TabsContent>
 
           <TabsContent value="bookings">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <CardTitle>{t("soloMaster.tabs.bookings", "Bookings")}</CardTitle>
-                    <CardDescription>Управление записями клиентов</CardDescription>
-                  </div>
-                  {/* Filter pills */}
-                  <div className="flex gap-2 flex-wrap">
-                    {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map(
-                      (f) => (
-                        <button
-                          key={f}
-                          onClick={() => setBookingFilter(f)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                            bookingFilter === f
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground hover:bg-muted/80"
-                          }`}
-                        >
-                          {
-                            {
-                              all: "Все",
-                              pending: "Ожидают",
-                              confirmed: "Подтверждены",
-                              completed: "Завершены",
-                              cancelled: "Отменены",
-                            }[f]
-                          }
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {bookingsLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  (() => {
-                    const filtered =
-                      bookingFilter === "all"
-                        ? masterBookings
-                        : masterBookings.filter((b) => b.status === bookingFilter);
-                    if (filtered.length === 0)
-                      return (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                          <p>Записей пока нет</p>
-                        </div>
-                      );
-                    return (
-                      <div className="space-y-3">
-                        {filtered.map((booking) => {
-                          const date = new Date(booking.bookingDate);
-                          const dateStr = date.toLocaleDateString("ru-RU", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          });
-                          const svc = services.find((s) => s.id === booking.soloMasterServiceId);
-                          const statusColors: Record<string, string> = {
-                            pending:
-                              "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-                            confirmed:
-                              "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-                            completed:
-                              "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-                            cancelled:
-                              "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-                          };
-                          const statusLabel: Record<string, string> = {
-                            pending: "Ожидает",
-                            confirmed: "Подтверждена",
-                            completed: "Завершена",
-                            cancelled: "Отменена",
-                          };
-                          return (
-                            <div key={booking.id} className="border rounded-lg p-4 space-y-3">
-                              <div className="flex items-start justify-between gap-3 flex-wrap">
-                                <div className="flex items-start gap-3">
-                                  <Avatar className="h-9 w-9 shrink-0 mt-0.5">
-                                    <AvatarImage src={booking.clientAvatar ?? undefined} />
-                                    <AvatarFallback className="text-xs">
-                                      {booking.clientName?.[0] ?? "?"}
-                                    </AvatarFallback>
-                                  </Avatar>
+            <div className="space-y-4">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+                <Card className="border-border/70 bg-card/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <CardTitle>{t("soloMaster.tabs.bookings", "Bookings")}</CardTitle>
+                        <CardDescription>?????????? ?????? ? ????????? ???????? ????????</CardDescription>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setBookingFilter(f)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                              bookingFilter === f
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {{
+                              all: "???",
+                              pending: "???????",
+                              confirmed: "????????????",
+                              completed: "?????????",
+                              cancelled: "????????",
+                            }[f]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">??? ??????</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.all}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">???? ????? ???????????? ???????.</p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">???? ???????</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.pending}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">????? ??????, ??????? ????? ??????????.</p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">????????????</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.confirmed}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">????????? ??????, ?? ??????? ??? ????? ?????????.</p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">?????????</p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.completed}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">?????? ??? ????????? ??????? ? ???????.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/70 bg-card/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">??????? ????????</CardTitle>
+                    <CardDescription>??????? ????? ?? ???, ??? ??????? ??????? ????? ??????.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-accent/40" onClick={() => setBookingFilter("pending")}>
+                      <div>
+                        <p className="font-medium text-foreground">??????????? ????? ??????</p>
+                        <p className="mt-1 text-xs text-muted-foreground">????? ???????????? ????? ????????? ? ?????? ???????.</p>
+                      </div>
+                      <Badge variant="outline">{bookingStats.pending}</Badge>
+                    </button>
+                    <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-accent/40" onClick={() => setBookingFilter("confirmed")}>
+                      <div>
+                        <p className="font-medium text-foreground">????????? ?????????????? ??????</p>
+                        <p className="mt-1 text-xs text-muted-foreground">???????, ????? ????????? ?????? ???? ??? ?????????.</p>
+                      </div>
+                      <Badge variant="outline">{bookingStats.confirmed}</Badge>
+                    </button>
+                    <div className="rounded-2xl border border-dashed border-border px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">??????? ??????</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">???????? ???????: {filteredBookings.length}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">??????? ?????????? pending, ????? confirmed, ????? ?? ?????? ??????? ?????.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardContent className="pt-6">
+                  {bookingsLoading ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : filteredBookings.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                      <p>??????? ??? ?????????? ??????? ???? ???</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredBookings.map((booking) => {
+                        const date = new Date(booking.bookingDate);
+                        const dateStr = date.toLocaleDateString("ru-RU", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        });
+                        const svc = services.find((s) => s.id === booking.soloMasterServiceId);
+                        const statusColors = {
+                          pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                          confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+                          completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+                          cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+                        } as const;
+                        const statusLabel = {
+                          pending: "???????",
+                          confirmed: "????????????",
+                          completed: "?????????",
+                          cancelled: "????????",
+                        } as const;
+                        return (
+                          <div key={booking.id} className="rounded-2xl border border-border bg-card/60 p-4 shadow-sm">
+                            <div className="flex items-start justify-between gap-3 flex-wrap">
+                              <div className="flex items-start gap-3">
+                                <Avatar className="mt-0.5 h-10 w-10 shrink-0">
+                                  <AvatarImage src={booking.clientAvatar ?? undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {booking.clientName?.[0] ?? "?"}
+                                  </AvatarFallback>
+                                </Avatar>
                                 <div>
                                   {booking.clientName && (
-                                    <p className="text-xs text-muted-foreground mb-0.5">{booking.clientName}</p>
+                                    <p className="mb-0.5 text-xs text-muted-foreground">{booking.clientName}</p>
                                   )}
-                                  <p className="font-medium">{svc?.name?.ru || "Услуга"}</p>
-                                  <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
+                                  <p className="font-medium">{svc?.name?.ru || "??????"}</p>
+                                  <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                                     <span className="flex items-center gap-1">
                                       <Calendar className="h-3.5 w-3.5" />
                                       {dateStr}
                                     </span>
                                     <span className="flex items-center gap-1">
                                       <Clock className="h-3.5 w-3.5" />
-                                      {booking.startTime}–{booking.endTime}
+                                      {booking.startTime}-{booking.endTime}
                                     </span>
                                     {booking.isMobileBooking && (
                                       <span className="flex items-center gap-1">
                                         <MapPin className="h-3.5 w-3.5" />
-                                        Выезд
+                                        ?????
                                       </span>
                                     )}
                                     {booking.priceSnapshot != null && (
@@ -1181,98 +1296,72 @@ export default function SoloMasterPage() {
                                     )}
                                   </div>
                                   {booking.notes && (
-                                    <p className="text-xs text-muted-foreground mt-1 italic">
+                                    <p className="mt-1 text-xs italic text-muted-foreground">
                                       &ldquo;{booking.notes}&rdquo;
                                     </p>
                                   )}
                                 </div>
-                                </div>
-                                <span
-                                  className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${statusColors[booking.status] || ""}`}
-                                >
-                                  {statusLabel[booking.status] || booking.status}
-                                </span>
                               </div>
-                              {/* Action buttons */}
-                              {booking.status === "pending" && (
-                                <div className="flex gap-2 pt-1">
-                                  <Button
-                                    size="sm"
-                                    className="gap-1.5"
-                                    onClick={() =>
-                                      updateBookingStatusMutation.mutate({
-                                        id: booking.id,
-                                        status: "confirmed",
-                                      })
-                                    }
-                                    disabled={updateBookingStatusMutation.isPending}
-                                  >
-                                    <CheckCircle className="h-3.5 w-3.5" />
-                                    Подтвердить
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="gap-1.5 text-destructive hover:text-destructive"
-                                    onClick={() =>
-                                      updateBookingStatusMutation.mutate({
-                                        id: booking.id,
-                                        status: "cancelled",
-                                      })
-                                    }
-                                    disabled={updateBookingStatusMutation.isPending}
-                                  >
-                                    <XCircle className="h-3.5 w-3.5" />
-                                    Отменить
-                                  </Button>
-                                </div>
-                              )}
-                              {booking.status === "confirmed" && (
-                                <div className="flex gap-2 pt-1">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="gap-1.5"
-                                    onClick={() =>
-                                      updateBookingStatusMutation.mutate({
-                                        id: booking.id,
-                                        status: "completed",
-                                      })
-                                    }
-                                    disabled={updateBookingStatusMutation.isPending}
-                                  >
-                                    <CheckCircle className="h-3.5 w-3.5" />
-                                    Завершить
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="gap-1.5 text-destructive hover:text-destructive"
-                                    onClick={() =>
-                                      updateBookingStatusMutation.mutate({
-                                        id: booking.id,
-                                        status: "cancelled",
-                                      })
-                                    }
-                                    disabled={updateBookingStatusMutation.isPending}
-                                  >
-                                    <XCircle className="h-3.5 w-3.5" />
-                                    Отменить
-                                  </Button>
-                                </div>
-                              )}
+                              <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${statusColors[booking.status as keyof typeof statusColors] || ""}`}>
+                                {statusLabel[booking.status as keyof typeof statusLabel] || booking.status}
+                              </span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="services">
+                            {booking.status === "pending" && (
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  size="sm"
+                                  className="gap-1.5"
+                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "confirmed" })}
+                                  disabled={updateBookingStatusMutation.isPending}
+                                >
+                                  <CheckCircle className="h-3.5 w-3.5" />
+                                  ???????????
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1.5 text-destructive hover:text-destructive"
+                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
+                                  disabled={updateBookingStatusMutation.isPending}
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  ????????
+                                </Button>
+                              </div>
+                            )}
+                            {booking.status === "confirmed" && (
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1.5"
+                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "completed" })}
+                                  disabled={updateBookingStatusMutation.isPending}
+                                >
+                                  <CheckCircle className="h-3.5 w-3.5" />
+                                  ?????????
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="gap-1.5 text-destructive hover:text-destructive"
+                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
+                                  disabled={updateBookingStatusMutation.isPending}
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  ????????
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>          <TabsContent value="services">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>

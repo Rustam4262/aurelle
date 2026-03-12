@@ -10,14 +10,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import { Loader2 } from "lucide-react";
 
-// Eager load Home page (first page users see)
-import Home from "@/pages/home";
-
-// Lazy load all other pages for code splitting
+// Lazy load route pages so non-home screens do not pull the full landing page bundle.
+const Home = lazy(() => import("@/pages/home"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const SalonPage = lazy(() => import("@/pages/salon"));
 const SearchPage = lazy(() => import("@/pages/search"));
@@ -95,7 +92,6 @@ function App() {
             <TooltipProvider>
               <SkipToContent />
               <Toaster />
-              <PWAInstallPrompt />
               <UpgradeModal />
               <Router />
             </TooltipProvider>
@@ -107,3 +103,4 @@ function App() {
 }
 
 export default App;
+
