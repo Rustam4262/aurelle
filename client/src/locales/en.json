@@ -19,7 +19,22 @@
       "subtitle": "Discover top-rated salons across Uzbekistan. Book appointments instantly and experience premium beauty services.",
       "searchPlaceholder": "Search by salon name, service, or location...",
       "search": "Search",
-      "popularCities": "Popular cities"
+      "popularCities": "Popular cities",
+      "badge": "Premium beauty marketplace",
+      "imageLabel": "Aurelle selection",
+      "liveNow": "Live now",
+      "cardTitle": "Beauty journeys that feel curated",
+      "cardSubtitle": "Fast discovery, trusted reviews and an experience that feels premium from the first click.",
+      "verifiedSalons": "Verified salons",
+      "topRated": "Top rated",
+      "topRatedDesc": "Clean booking flow and trusted salon pages with real feedback.",
+      "clientComfort": "Client comfort",
+      "clientComfortDesc": "Favorites, bookings and reviews stay in one place across devices.",
+      "ownerTools": "Owner tools",
+      "ownerToolsLabel": "Smart",
+      "ownerToolsDesc": "Salon pages, team workflows and booking visibility without clutter.",
+      "ctaDesc": "Start from search if you are a client, or open the owner workspace if you manage a salon.",
+      "trustedBooking": "Trusted beauty booking"
     },
     "categories": {
       "all": "All Services",
@@ -132,7 +147,13 @@
       "title": "Own a Beauty Salon?",
       "subtitle": "Join AURELLE marketplace and reach thousands of new clients. Register your salon for free and start growing your business.",
       "registerSalon": "Register Your Salon",
-      "joinClient": "Join as Client"
+      "joinClient": "Join as Client",
+      "forClients": "For clients",
+      "clientTitle": "Search, compare and book faster",
+      "clientDescription": "Find salons, keep favorites close and manage your beauty routine in one account.",
+      "forOwners": "For owners",
+      "ownerTitle": "Grow your salon with a sharper workspace",
+      "ownerDescription": "Build your salon page, organize services and keep bookings visible without admin chaos."
     },
     "home": {
       "faq": {

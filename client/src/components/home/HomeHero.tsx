@@ -39,7 +39,7 @@ export function HomeHero() {
           <div className="max-w-3xl">
             <Badge className="rounded-full border border-primary/15 bg-white/85 px-4 py-1.5 text-foreground shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white">
               <Sparkles className="mr-2 h-3.5 w-3.5" />
-              Premium beauty marketplace
+              {t("marketplace.hero.badge")}
             </Badge>
 
             <h1 data-testid="hero-title" className="mt-6 font-serif text-4xl font-light leading-[1.08] tracking-tight text-slate-950 sm:text-5xl lg:text-7xl dark:text-white">
@@ -113,7 +113,7 @@ export function HomeHero() {
               </div>
               <div className="rounded-3xl border border-border bg-white p-5 shadow-lg shadow-primary/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
                 <div className="text-3xl font-semibold text-slate-950 dark:text-white">4.9/5</div>
-                <div className="mt-2 text-slate-600 dark:text-zinc-400">Trusted beauty booking</div>
+                <div className="mt-2 text-slate-600 dark:text-zinc-400">{t("marketplace.hero.trustedBooking")}</div>
               </div>
             </div>
           </div>
@@ -126,18 +126,18 @@ export function HomeHero() {
 
                 <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
                   <div className="rounded-full border border-white/20 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.24em] text-white/75 backdrop-blur">
-                    Aurelle selection
+                    {t("marketplace.hero.imageLabel")}
                   </div>
                   <div className="rounded-full border border-emerald-400/25 bg-emerald-400/12 px-3 py-1 text-xs text-emerald-100 backdrop-blur">
-                    Live now
+                    {t("marketplace.hero.liveNow")}
                   </div>
                 </div>
 
                 <div className="absolute bottom-5 left-5 right-5">
                   <div className="rounded-[1.75rem] border border-white/15 bg-black/40 p-5 text-white backdrop-blur-xl">
-                    <p className="font-serif text-2xl leading-tight sm:text-3xl">Beauty journeys that feel curated</p>
+                    <p className="font-serif text-2xl leading-tight sm:text-3xl">{t("marketplace.hero.cardTitle")}</p>
                     <p className="mt-3 max-w-lg text-sm leading-6 text-white/72">
-                      Fast discovery, trusted reviews and an experience that feels premium from the first click.
+                      {t("marketplace.hero.cardSubtitle")}
                     </p>
                   </div>
                 </div>
@@ -147,29 +147,29 @@ export function HomeHero() {
                 <div className="rounded-3xl border border-border bg-muted/40 p-5 dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-white/60">
                     <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                    Verified salons
+                    {t("marketplace.hero.verifiedSalons")}
                   </div>
-                  <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">Top rated</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">Clean booking flow and trusted salon pages with real feedback.</p>
+                  <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">{t("marketplace.hero.topRated")}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">{t("marketplace.hero.topRatedDesc")}</p>
                 </div>
                 <div className="rounded-3xl border border-border bg-muted/40 p-5 dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-white/60">
                     <Users className="h-4 w-4 text-primary" />
-                    Client comfort
+                    {t("marketplace.hero.clientComfort")}
                   </div>
                   <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">24/7</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">Favorites, bookings and reviews stay in one place across devices.</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">{t("marketplace.hero.clientComfortDesc")}</p>
                 </div>
                 <div className="rounded-3xl border border-border bg-muted/40 p-5 dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-white/60">
                     <Star className="h-4 w-4 text-amber-500" />
-                    Owner tools
+                    {t("marketplace.hero.ownerTools")}
                   </div>
-                  <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">Smart</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">Salon pages, team workflows and booking visibility without clutter.</p>
+                  <p className="mt-3 text-2xl font-semibold text-slate-950 dark:text-white">{t("marketplace.hero.ownerToolsLabel")}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/60">{t("marketplace.hero.ownerToolsDesc")}</p>
                 </div>
                 <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5 dark:border-white/10 dark:bg-white/5">
-                  <p className="text-sm leading-6 text-slate-700 dark:text-white/70">Start from search if you are a client, or open the owner workspace if you manage a salon.</p>
+                  <p className="text-sm leading-6 text-slate-700 dark:text-white/70">{t("marketplace.hero.ctaDesc")}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link href="/auth">
                       <Button size="sm" className="rounded-full px-4">{t("marketplace.nav.login")}</Button>

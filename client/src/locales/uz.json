@@ -19,7 +19,22 @@
       "subtitle": "O'zbekiston bo'ylab eng yaxshi salonlarni kashf eting. Onlayn bron qiling va premium xizmatlardan bahramand bo'ling.",
       "searchPlaceholder": "Nom, xizmat yoki joylashuv bo'yicha qidirish...",
       "search": "Qidirish",
-      "popularCities": "Mashhur shaharlar"
+      "popularCities": "Mashhur shaharlar",
+      "badge": "Premium go'zallik markazi",
+      "imageLabel": "Aurelle tanlovi",
+      "liveNow": "Jonli",
+      "cardTitle": "Siz uchun maxsus tanlangan go'zallik",
+      "cardSubtitle": "Tezkor qidiruv, ishonchli sharhlar va birinchi bosishdan premium tajriba.",
+      "verifiedSalons": "Tasdiqlangan salonlar",
+      "topRated": "Eng yuqori reyting",
+      "topRatedDesc": "Qulay bron qilish va haqiqiy sharhlar bilan ishonchli salon sahifalari.",
+      "clientComfort": "Mijoz qulayligi",
+      "clientComfortDesc": "Sevimlilar, bronlar va sharhlar — barcha qurilmalarda bir joyda.",
+      "ownerTools": "Egalar uchun vositalar",
+      "ownerToolsLabel": "Aqlli",
+      "ownerToolsDesc": "Salon sahifalari, jamoa ishlari va bronlarni tartibli boshqarish.",
+      "ctaDesc": "Mijoz bo'lsangiz qidirishdan boshlang yoki saloningizni boshqarsangiz egalar kabinetini oching.",
+      "trustedBooking": "Ishonchli bron qilish"
     },
     "categories": {
       "all": "Barcha xizmatlar",
@@ -132,7 +147,13 @@
       "title": "Go'zallik saloningiz bormi?",
       "subtitle": "AURELLE ga qo'shiling va minglab yangi mijozlarni jalb qiling. Bepul ro'yxatdan o'tish.",
       "registerSalon": "Salon qo'shish",
-      "joinClient": "Mijoz bo'lish"
+      "joinClient": "Mijoz bo'lish",
+      "forClients": "Mijozlar uchun",
+      "clientTitle": "Tezroq qidiring, solishtiring va bron qiling",
+      "clientDescription": "Salonlarni toping, sevimlilar ro'yxatini saqlang va go'zallik rutiningizni bitta akkauntda boshqaring.",
+      "forOwners": "Egalar uchun",
+      "ownerTitle": "Saloningizni qulay ish maydoni bilan rivojlantiring",
+      "ownerDescription": "Salon sahifasini yarating, xizmatlarni tartibga soling va bronlarni tartibsizliksiz nazorat qiling."
     },
     "home": {
       "faq": {

@@ -1,51 +1,88 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, Store, UserRound } from "lucide-react";
 
 export function HomeCTA() {
   const { t } = useTranslation();
 
   return (
     <section
-      className="py-32 bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden"
+      className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8 lg:py-32"
       data-testid="section-cta"
     >
-      {/* Background decorations */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-      <div className="absolute top-0 left-0 w-64 h-64 bg-pink-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(200,29,96,0.12),transparent_24%),radial-gradient(circle_at_82%_80%,rgba(255,191,219,0.18),transparent_28%),linear-gradient(180deg,hsl(var(--background))_0%,rgba(248,240,244,0.82)_100%)]" />
+      <div className="absolute left-1/2 top-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/8 blur-[120px]" />
 
-      <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-        <div className="inline-block p-1 px-4 bg-primary/5 rounded-full text-primary text-xs font-bold uppercase tracking-widest mb-8 border border-primary/10 animate-in fade-in slide-in-from-bottom duration-700">
-          Присоединяйтесь к нам
-        </div>
-        <h2 className="font-serif text-4xl md:text-5xl lg:text-7xl text-foreground mb-8 font-light leading-tight animate-in fade-in slide-in-from-bottom duration-700 delay-100 tracking-tight">
-          {t("marketplace.cta.title")}
-        </h2>
-        <p className="text-muted-foreground text-lg md:text-xl mb-14 max-w-2xl mx-auto font-light leading-relaxed animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-          {t("marketplace.cta.subtitle")}
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
-          <Link href="/owner">
-            <Button
-              size="lg"
-              className="rounded-full px-12 h-16 text-lg bg-gradient-to-r from-primary via-pink-600 to-purple-600 hover:from-primary/90 hover:via-pink-600/90 hover:to-purple-600/90 shadow-2xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 font-semibold relative group overflow-hidden"
-              data-testid="button-register-salon-cta"
-            >
-              <span className="relative z-10">{t("marketplace.cta.registerSalon")}</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            </Button>
-          </Link>
-          <Link href="/auth">
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full px-12 h-16 text-lg border-2 border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 hover:scale-105 active:scale-95 font-semibold bg-background/80 backdrop-blur-md"
-              data-testid="button-join-client-cta"
-            >
-              {t("marketplace.cta.joinClient")}
-            </Button>
-          </Link>
+      <div className="relative mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 shadow-[0_30px_80px_-40px_rgba(200,29,96,0.45)] backdrop-blur-xl">
+          <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:p-12">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                Aurelle platform
+              </div>
+              <h2 className="mt-6 max-w-2xl font-serif text-4xl font-light leading-tight text-foreground md:text-5xl lg:text-6xl">
+                {t("marketplace.cta.title")}
+              </h2>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+                {t("marketplace.cta.subtitle")}
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link href="/owner">
+                  <Button
+                    size="lg"
+                    className="h-14 rounded-full px-8 text-base shadow-lg shadow-primary/25"
+                    data-testid="button-register-salon-cta"
+                  >
+                    <Store className="mr-2 h-4 w-4" />
+                    {t("marketplace.cta.registerSalon")}
+                  </Button>
+                </Link>
+                <Link href="/auth">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-14 rounded-full px-8 text-base"
+                    data-testid="button-join-client-cta"
+                  >
+                    <UserRound className="mr-2 h-4 w-4" />
+                    {t("marketplace.cta.joinClient")}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4 self-stretch sm:grid-cols-2 lg:grid-cols-1">
+              <div className="rounded-[1.75rem] border border-border/60 bg-background/75 p-5">
+                <p className="text-sm font-medium text-muted-foreground">{t("marketplace.cta.forClients")}</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">{t("marketplace.cta.clientTitle")}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t("marketplace.cta.clientDescription")}
+                </p>
+                <Link href="/search">
+                  <Button variant="ghost" className="mt-4 rounded-full px-0 text-primary hover:bg-transparent">
+                    {t("marketplace.nav.explore")}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="rounded-[1.75rem] border border-primary/15 bg-primary/5 p-5">
+                <p className="text-sm font-medium text-primary">{t("marketplace.cta.forOwners")}</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">{t("marketplace.cta.ownerTitle")}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {t("marketplace.cta.ownerDescription")}
+                </p>
+                <Link href="/owner">
+                  <Button variant="ghost" className="mt-4 rounded-full px-0 text-primary hover:bg-transparent">
+                    {t("marketplace.nav.forOwners")}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
