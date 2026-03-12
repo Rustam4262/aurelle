@@ -7,6 +7,7 @@ import { isAuthenticated } from "../auth";
 import { createWsToken } from "../lib/websocket";
 import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
+import { salons, userProfiles } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { trackUserLogout } from "../middleware/activity";
@@ -68,6 +69,34 @@ router.get("/auth/user", async (req: any, res) => {
       // Silently ignore - admin tables may not exist yet
     }
 
+    // Derive the user's real role from DB (not just userProfiles.role which defaults to "client")
+    let derivedRole = "client";
+    if (adminRole) {
+      derivedRole = "admin";
+    } else {
+      try {
+        const [ownerSalon] = await db
+          .select({ id: salons.id })
+          .from(salons)
+          .where(eq(salons.ownerId, userId))
+          .limit(1);
+        if (ownerSalon) {
+          derivedRole = "owner";
+        } else {
+          const [profile] = await db
+            .select({ role: userProfiles.role })
+            .from(userProfiles)
+            .where(eq(userProfiles.userId, userId))
+            .limit(1);
+          if (profile?.role === "solo_master" || profile?.role === "master") {
+            derivedRole = profile.role;
+          }
+        }
+      } catch {
+        // Silently fall back to "client" if DB check fails
+      }
+    }
+
     return res.json({
       id: userId,
       email: user.claims.email,
@@ -76,6 +105,7 @@ router.get("/auth/user", async (req: any, res) => {
       profileImageUrl: user.claims.profile_image_url,
       isAdmin: !!adminRole,
       adminRole: adminRole,
+      role: derivedRole,
     });
   }
 
