@@ -289,10 +289,10 @@ export default function AdminUsers() {
       setBulkBlockDialogOpen(false);
       setBlockReason("");
       clearSelection();
-      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Рµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
     },
     onError: () => {
-      toast({ title: "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "РќРµ РЎС“Р Т‘Р В°Р В»Р С•СЃСЊ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
     },
   });
 
@@ -304,10 +304,10 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
       clearSelection();
-      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Рµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
     },
     onError: () => {
-      toast({ title: "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "РќРµ РЎС“Р Т‘Р В°Р В»Р С•СЃСЊ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
     },
   });
 
@@ -366,7 +366,7 @@ export default function AdminUsers() {
 
   const handleBulkBlock = () => {
     if (!blockReason.trim()) {
-      toast({ title: "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘", variant: "destructive" });
+      toast({ title: "Р Р€Р С”Р В°Р В¶Р С‘С‚Рµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘", variant: "destructive" });
       return;
     }
     bulkBlockMutation.mutate({ userIds: Array.from(selectedUsers), reason: blockReason.trim() });
@@ -378,7 +378,7 @@ export default function AdminUsers() {
       .map((user) => user.id);
 
     if (blockedIds.length === 0) {
-      toast({ title: "Р СњР ВµРЎвЂљ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "РќРµС‚ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
       return;
     }
 
@@ -515,7 +515,7 @@ export default function AdminUsers() {
   const quickSegments = [
     {
       id: "all",
-      label: "Р вЂ™РЎРѓР Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘",
+      label: "Р вЂ™СЃРµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘",
       active: roleFilter === "all" && statusFilter === "all" && verificationFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -526,7 +526,7 @@ export default function AdminUsers() {
     },
     {
       id: "active",
-      label: "Р С’Р С”РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ",
+      label: "Р С’Р С”РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Рµ",
       active: statusFilter === "active" && roleFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -537,7 +537,7 @@ export default function AdminUsers() {
     },
     {
       id: "blocked",
-      label: "Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ",
+      label: "Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Рµ",
       active: statusFilter === "blocked" && roleFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -548,7 +548,7 @@ export default function AdminUsers() {
     },
     {
       id: "verified",
-      label: "Р СџР С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ Р Р†Р ВµРЎР‚Р С‘РЎвЂћР С‘РЎвЂ Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р Вµ",
+      label: "Р СџР С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ Р Р†Р ВµРЎР‚Р С‘РЎвЂћР С‘РЎвЂ Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Рµ",
       active: verificationFilter === "verified",
       onClick: () => {
         setRoleFilter("all");
@@ -1247,19 +1247,19 @@ export default function AdminUsers() {
       <Dialog open={bulkBlockDialogOpen} onOpenChange={setBulkBlockDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</DialogTitle>
+            <DialogTitle>Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</DialogTitle>
             <DialogDescription>
-              Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘. Р В­РЎвЂљР С• Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘Р Вµ Р С—РЎР‚Р С‘Р СР ВµР Р…Р С‘РЎвЂљРЎРѓРЎРЏ Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р С Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР С Р С‘ Р С—Р С•Р С—Р В°Р Т‘РЎвЂРЎвЂљ Р Р† Р В°РЎС“Р Т‘Р С‘РЎвЂљ.
+              Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘С‚Рµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘. Р В­РЎвЂљР С• Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘Рµ Р С—РЎР‚Р С‘Р СР ВµР Р…Р С‘С‚СЃСЏ Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р С Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР С Р С‘ Р С—Р С•Р С—Р В°Р Т‘РЎвЂС‚ Р Р† Р В°РЎС“Р Т‘Р С‘С‚.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="bulkBlockReason">Р СџРЎР‚Р С‘РЎвЂЎР С‘Р Р…Р В° Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘</Label>
+              <Label htmlFor="bulkBlockReason">Р СџРЎР‚Р С‘РЎвЂЎР С‘Р Р…Р° Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘</Label>
               <Textarea
                 id="bulkBlockReason"
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Р СњР В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚: Р С—Р С•Р Т‘Р С•Р В·РЎР‚Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ Р В°Р С”РЎвЂљР С‘Р Р†Р Р…Р С•РЎРѓРЎвЂљРЎРЉ, Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р С‘Р Вµ Р С—РЎР‚Р В°Р Р†Р С‘Р В», Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…Р Р…Р В°РЎРЏ Р В¶Р В°Р В»Р С•Р В±Р В°"
+                placeholder="Р СњР В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚: Р С—Р С•Р Т‘Р С•Р В·РЎР‚Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р°СЏ Р В°Р С”РЎвЂљР С‘Р Р†Р Р…Р С•СЃС‚СЊ, Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р С‘Рµ Р С—РЎР‚Р В°Р Р†Р С‘Р», Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…Р Р…Р°СЏ Р В¶Р В°Р В»Р С•Р±Р°"
                 rows={4}
                 className="mt-2"
               />
@@ -1267,14 +1267,14 @@ export default function AdminUsers() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkBlockDialogOpen(false)}>
-              Р С›РЎвЂљР СР ВµР Р…Р В°
+              Р С›РЎвЂљР СР ВµР Р…Р°
             </Button>
             <Button
               variant="destructive"
               onClick={handleBulkBlock}
               disabled={!blockReason.trim() || bulkBlockMutation.isPending}
             >
-              {bulkBlockMutation.isPending ? "Р вЂР В»Р С•Р С”Р С‘РЎР‚РЎС“Р ВµР С..." : "Р СџР С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р Т‘Р С‘РЎвЂљРЎРЉ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”РЎС“"}
+              {bulkBlockMutation.isPending ? "Р вЂР В»Р С•Р С”Р С‘РЎР‚РЎС“Р ВµР С..." : "Р СџР С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р Т‘Р С‘С‚СЊ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”РЎС“"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1467,10 +1467,10 @@ export default function AdminUsers() {
             <div className="space-y-3 text-sm">
               <p className="font-medium">{t("admin.users.testUsersDialog.toBeCreated")}</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>2 Clients (Р С’Р Р…Р Р…Р В° Р ВР Р†Р В°Р Р…Р С•Р Р†Р В°, Р вЂќР СР С‘РЎвЂљРЎР‚Р С‘Р в„– Р СџР ВµРЎвЂљРЎР‚Р С•Р Р†)</li>
-                <li>2 Salon Owners (Р С›Р В»РЎРЉР С–Р В° Р РЋР СР С‘РЎР‚Р Р…Р С•Р Р†Р В°, Р РЋР ВµРЎР‚Р С–Р ВµР в„– Р С™Р С•Р В·Р В»Р С•Р Р†)</li>
-                <li>2 Masters (Р вЂўР В»Р ВµР Р…Р В° Р вЂ™Р С•Р В»Р С”Р С•Р Р†Р В°, Р С’Р В»Р ВµР С”РЎРѓР ВµР в„– Р СљР С•РЎР‚Р С•Р В·Р С•Р Р†)</li>
-                <li>1 Blocked User (Р Т‘Р В»РЎРЏ РЎвЂљР ВµРЎРѓРЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘)</li>
+                <li>2 Clients (Р С’Р Р…Р Р…Р° Р ВР Р†Р В°Р Р…Р С•Р Р†Р°, Р вЂќР СР С‘РЎвЂљРЎР‚Р С‘Р в„– Р СџР ВµРЎвЂљРЎР‚Р С•Р Р†)</li>
+                <li>2 Salon Owners (Р С›Р В»РЎРЉР С–Р° Р РЋР СР С‘РЎР‚Р Р…Р С•Р Р†Р°, Р РЋР ВµРЎР‚Р С–Р ВµР в„– Р С™Р С•Р В·Р В»Р С•Р Р†)</li>
+                <li>2 Masters (Р вЂўР В»Р ВµР Р…Р° Р вЂ™Р С•Р В»Р С”Р С•Р Р†Р°, Р С’Р В»Р ВµР С”РЎРѓР ВµР в„– Р СљР С•РЎР‚Р С•Р В·Р С•Р Р†)</li>
+                <li>1 Blocked User (Р Т‘Р»СЏ РЎвЂљР ВµРЎРѓРЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘СЏ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘)</li>
               </ul>
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p className="font-medium mb-1">{t("admin.users.testUsersDialog.credentials")}</p>

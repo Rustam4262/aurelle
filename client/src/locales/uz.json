@@ -1831,7 +1831,9 @@
         "online": "So'nggi 10 daqiqada faol sessiyalar"
       },
       "paymentHealth": "To'lovlar salomatligi",
-      "paymentHealthSubtitle": "Tranzaksiya holati va xatoliklar"
+      "paymentHealthSubtitle": "Tranzaksiya holati va xatoliklar",
+      "title": "Boshqaruv paneli",
+      "subtitle": "Platforma sharhi va asosiy ko'rsatkichlar"
     },
     "navGroup": {
       "users": "Foydalanuvchilar",

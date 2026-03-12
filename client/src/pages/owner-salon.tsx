@@ -47,11 +47,11 @@ function getLocalizedText(
 function statusLabel(status: string) {
   switch (status) {
     case "active":
-      return "Активен";
+      return "РђРєС‚РёРІРµРЅ";
     case "paused":
-      return "На паузе";
+      return "РќР° РїР°СѓР·Рµ";
     default:
-      return "Черновик";
+      return "Р§РµСЂРЅРѕРІРёРє";
   }
 }
 
@@ -119,7 +119,7 @@ export default function OwnerSalonPage() {
         return;
       }
 
-      setLoadError("Не удалось загрузить салон. Попробуйте обновить страницу.");
+      setLoadError("РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СЃР°Р»РѕРЅ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РѕР±РЅРѕРІРёС‚СЊ СЃС‚СЂР°РЅРёС†Сѓ.");
     } finally {
       setSalonLoading(false);
       setRefreshing(false);
@@ -155,9 +155,9 @@ export default function OwnerSalonPage() {
                 </Button>
               </Link>
               <div>
-                <h1 className="font-serif text-xl text-foreground">Салон не найден</h1>
+                <h1 className="font-serif text-xl text-foreground">РЎР°Р»РѕРЅ РЅРµ РЅР°Р№РґРµРЅ</h1>
                 <p className="text-sm text-muted-foreground">
-                  Проверьте доступ или вернитесь к списку салонов
+                  РџСЂРѕРІРµСЂСЊС‚Рµ РґРѕСЃС‚СѓРї РёР»Рё РІРµСЂРЅРёС‚РµСЃСЊ Рє СЃРїРёСЃРєСѓ СЃР°Р»РѕРЅРѕРІ
                 </p>
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function OwnerSalonPage() {
               </Link>
               <Button variant="outline" onClick={() => void loadSalon()} disabled={refreshing}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Попробовать снова
+                РџРѕРїСЂРѕР±РѕРІР°С‚СЊ СЃРЅРѕРІР°
               </Button>
             </div>
           </Card>
@@ -230,7 +230,7 @@ export default function OwnerSalonPage() {
             <LanguageSwitcher />
             <Button variant="outline" size="sm" onClick={() => void loadSalon()} disabled={refreshing}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              {refreshing ? t("common.loading") : "Обновить"}
+              {refreshing ? t("common.loading") : "РћР±РЅРѕРІРёС‚СЊ"}
             </Button>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function OwnerSalonPage() {
                 <div className="min-w-0">
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
                     <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Центр управления салоном
+                    Р¦РµРЅС‚СЂ СѓРїСЂР°РІР»РµРЅРёСЏ СЃР°Р»РѕРЅРѕРј
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <h2 className="font-serif text-3xl text-foreground">{salonName}</h2>
@@ -260,7 +260,7 @@ export default function OwnerSalonPage() {
                   </div>
                   <p className="mt-3 text-muted-foreground max-w-2xl">
                     {description ||
-                      "Здесь собраны основные операции владельца: оформление карточки салона, услуги, команда, график и бронирования."}
+                      "Р—РґРµСЃСЊ СЃРѕР±СЂР°РЅС‹ РѕСЃРЅРѕРІРЅС‹Рµ РѕРїРµСЂР°С†РёРё РІР»Р°РґРµР»СЊС†Р°: РѕС„РѕСЂРјР»РµРЅРёРµ РєР°СЂС‚РѕС‡РєРё СЃР°Р»РѕРЅР°, СѓСЃР»СѓРіРё, РєРѕРјР°РЅРґР°, РіСЂР°С„РёРє Рё Р±СЂРѕРЅРёСЂРѕРІР°РЅРёСЏ."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-2">
@@ -283,17 +283,17 @@ export default function OwnerSalonPage() {
                 <div className="grid grid-cols-2 gap-3 md:min-w-[250px]">
                   <div className="rounded-2xl bg-background/80 px-4 py-3 shadow-sm">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Рейтинг
+                      Р РµР№С‚РёРЅРі
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-foreground">{stats.rating}</p>
-                    <p className="text-xs text-muted-foreground mt-1">средняя оценка салона</p>
+                    <p className="text-xs text-muted-foreground mt-1">СЃСЂРµРґРЅСЏСЏ РѕС†РµРЅРєР° СЃР°Р»РѕРЅР°</p>
                   </div>
                   <div className="rounded-2xl bg-background/80 px-4 py-3 shadow-sm">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Отзывы
+                      РћС‚Р·С‹РІС‹
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-foreground">{stats.reviews}</p>
-                    <p className="text-xs text-muted-foreground mt-1">социальное доверие</p>
+                    <p className="text-xs text-muted-foreground mt-1">СЃРѕС†РёР°Р»СЊРЅРѕРµ РґРѕРІРµСЂРёРµ</p>
                   </div>
                 </div>
               </div>
@@ -303,23 +303,23 @@ export default function OwnerSalonPage() {
           <Card className="p-6 border-border/70 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-foreground">Быстрый обзор</p>
-                <p className="text-xs text-muted-foreground">Ключевое состояние карточки</p>
+                <p className="text-sm font-medium text-foreground">Р‘С‹СЃС‚СЂС‹Р№ РѕР±Р·РѕСЂ</p>
+                <p className="text-xs text-muted-foreground">РљР»СЋС‡РµРІРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РєР°СЂС‚РѕС‡РєРё</p>
               </div>
               <Store className="h-5 w-5 text-primary" />
             </div>
             <Separator className="my-4" />
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Статус публикации</span>
+                <span className="text-muted-foreground">РЎС‚Р°С‚СѓСЃ РїСѓР±Р»РёРєР°С†РёРё</span>
                 <span className="font-medium text-foreground">{statusLabel(status)}</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Фото в карточке</span>
+                <span className="text-muted-foreground">Р¤РѕС‚Рѕ РІ РєР°СЂС‚РѕС‡РєРµ</span>
                 <span className="font-medium text-foreground">{stats.photos}</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Город</span>
+                <span className="text-muted-foreground">Р“РѕСЂРѕРґ</span>
                 <span className="font-medium text-foreground">{salon.city}</span>
               </div>
             </div>
@@ -329,7 +329,7 @@ export default function OwnerSalonPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="p-5 border-border/70 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Статус</p>
+              <p className="text-sm text-muted-foreground">РЎС‚Р°С‚СѓСЃ</p>
               {status === "active" ? (
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               ) : status === "paused" ? (
@@ -339,31 +339,31 @@ export default function OwnerSalonPage() {
               )}
             </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{statusLabel(status)}</p>
-            <p className="mt-2 text-sm text-muted-foreground">состояние видимости на витрине</p>
+            <p className="mt-2 text-sm text-muted-foreground">СЃРѕСЃС‚РѕСЏРЅРёРµ РІРёРґРёРјРѕСЃС‚Рё РЅР° РІРёС‚СЂРёРЅРµ</p>
           </Card>
           <Card className="p-5 border-border/70 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Рейтинг</p>
+              <p className="text-sm text-muted-foreground">Р РµР№С‚РёРЅРі</p>
               <Star className="h-5 w-5 text-amber-500" />
             </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{stats.rating}</p>
-            <p className="mt-2 text-sm text-muted-foreground">по отзывам клиентов</p>
+            <p className="mt-2 text-sm text-muted-foreground">РїРѕ РѕС‚Р·С‹РІР°Рј РєР»РёРµРЅС‚РѕРІ</p>
           </Card>
           <Card className="p-5 border-border/70 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Отзывы</p>
+              <p className="text-sm text-muted-foreground">РћС‚Р·С‹РІС‹</p>
               <Star className="h-5 w-5 text-pink-500" />
             </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{stats.reviews}</p>
-            <p className="mt-2 text-sm text-muted-foreground">накопленный social proof</p>
+            <p className="mt-2 text-sm text-muted-foreground">РЅР°РєРѕРїР»РµРЅРЅС‹Р№ social proof</p>
           </Card>
           <Card className="p-5 border-border/70 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Фотографии</p>
+              <p className="text-sm text-muted-foreground">Р¤РѕС‚РѕРіСЂР°С„РёРё</p>
               <Camera className="h-5 w-5 text-sky-500" />
             </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{stats.photos}</p>
-            <p className="mt-2 text-sm text-muted-foreground">изображений в карточке салона</p>
+            <p className="mt-2 text-sm text-muted-foreground">РёР·РѕР±СЂР°Р¶РµРЅРёР№ РІ РєР°СЂС‚РѕС‡РєРµ СЃР°Р»РѕРЅР°</p>
           </Card>
         </section>
 
@@ -388,12 +388,12 @@ export default function OwnerSalonPage() {
 
           <Card className="p-4 border-border/70 shadow-sm mb-6">
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Сейчас открыт раздел:</span>
+              <span className="font-medium text-foreground">РЎРµР№С‡Р°СЃ РѕС‚РєСЂС‹С‚ СЂР°Р·РґРµР»:</span>
               <Badge variant="secondary">
                 {tabItems.find((tab) => tab.value === activeTab)?.label ||
                   t("marketplace.owner.info")}
               </Badge>
-              <span>Управляйте данными салона без переходов между отдельными страницами.</span>
+              <span>РЈРїСЂР°РІР»СЏР№С‚Рµ РґР°РЅРЅС‹РјРё СЃР°Р»РѕРЅР° Р±РµР· РїРµСЂРµС…РѕРґРѕРІ РјРµР¶РґСѓ РѕС‚РґРµР»СЊРЅС‹РјРё СЃС‚СЂР°РЅРёС†Р°РјРё.</span>
             </div>
           </Card>
 

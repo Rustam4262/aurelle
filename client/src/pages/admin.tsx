@@ -67,40 +67,40 @@ const ROUTE_MAP = {
 
 const ROUTE_META: Record<string, { title: string; description: string }> = {
   "/admin/dashboard": {
-    title: "РџР°РЅРµР»СЊ СѓРїСЂР°РІР»РµРЅРёСЏ",
-    description: "РљР»СЋС‡РµРІС‹Рµ РјРµС‚СЂРёРєРё, СЂРёСЃРєРё Рё СЃРѕСЃС‚РѕСЏРЅРёРµ РїР»Р°С‚С„РѕСЂРјС‹ РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ.",
+    title: "Панель управления",
+    description: "РљР»СЋС‡РµРІС‹Рµ РјРµС‚рики, риски Рё СЃРѕСЃС‚ояние РїР»Р°С‚С„РѕСЂРјС‹ РІ РѕРґном РјРµСЃС‚Рµ.",
   },
   "/admin/users": {
-    title: "РџРѕР»СЊР·РѕРІР°С‚РµР»Рё",
-    description: "РџРѕРёСЃРє, РїСЂРѕРІРµСЂРєР° Рё СѓРїСЂР°РІР»РµРЅРёРµ Р°РєРєР°СѓРЅС‚Р°РјРё РєР»РёРµРЅС‚РѕРІ, РІР»Р°РґРµР»СЊС†РµРІ Рё РјР°СЃС‚РµСЂРѕРІ.",
+    title: "РџРѕР»СЊР·РѕРІР°С‚ели",
+    description: "Поиск, проверка Рё управление Р°РєРєР°СѓРЅС‚ами РєР»РёРµРЅС‚ов, РІР»Р°РґРµР»СЊС†ев Рё РјР°СЃС‚еров.",
   },
   "/admin/salons": {
     title: "РЎР°Р»РѕРЅС‹",
-    description: "РњРѕРґРµСЂР°С†РёСЏ СЃР°Р»РѕРЅРѕРІ, РєРѕРЅС‚СЂРѕР»СЊ РїСѓР±Р»РёРєР°С†РёР№ Рё РєР°С‡РµСЃС‚РІР° РєР°СЂС‚РѕС‡РµРє.",
+    description: "РњРѕРґРµСЂР°С†ия салонов, РєРѕРЅС‚роль РїСѓР±Р»РёРєР°С†РёР№ Рё РєР°С‡РµСЃС‚ва РєР°СЂС‚РѕС‡ек.",
   },
   "/admin/activity": {
     title: "РђРєС‚РёРІРЅРѕСЃС‚СЊ",
-    description: "Р›РµРЅС‚Р° СЃРѕР±С‹С‚РёР№, РґРµР№СЃС‚РІРёР№ Рё СЃРІРµР¶РёС… РёР·РјРµРЅРµРЅРёР№ РїРѕ РїР»Р°С‚С„РѕСЂРјРµ.",
+    description: "Р›РµРЅС‚Р° СЃРѕР±С‹С‚РёР№, РґРµР№СЃС‚РІРёР№ Рё СЃРІРµР¶РёС… РёР·РјРµРЅРµРЅРёР№ по РїР»Р°С‚С„орме.",
   },
   "/admin/complaints": {
     title: "Р–Р°Р»РѕР±С‹",
-    description: "РџСЂРёРѕСЂРёС‚РµС‚РЅС‹Рµ РѕР±СЂР°С‰РµРЅРёСЏ Рё РєРµР№СЃС‹, С‚СЂРµР±СѓСЋС‰РёРµ РІРјРµС€Р°С‚РµР»СЊСЃС‚РІР° Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°.",
+    description: "РџСЂРёРѕСЂРёС‚РµС‚РЅС‹Рµ РѕР±СЂР°С‰ения Рё РєРµР№СЃС‹, С‚СЂРµР±СѓСЋС‰ие РІРјРµС€Р°С‚РµР»СЊСЃС‚ва Р°РґРјРёРЅРёСЃС‚СЂР°С‚ора.",
   },
   "/admin/sanctions": {
-    title: "РЎР°РЅРєС†РёРё",
-    description: "РђРєС‚РёРІРЅС‹Рµ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, СЃСЂРѕРєРё Рё РєРѕРЅС‚СЂРѕР»СЊ СЂРёСЃРєРѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.",
+    title: "РЎР°РЅРєС†ии",
+    description: "РђРєС‚РёРІРЅС‹Рµ РѕРіСЂР°РЅРёС‡ения, сроки Рё РєРѕРЅС‚роль СЂРёСЃРєРѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.",
   },
   "/admin/support": {
-    title: "РџРѕРґРґРµСЂР¶РєР°",
-    description: "Р—Р°РїСЂРѕСЃС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕРјРјСѓРЅРёРєР°С†РёСЏ Рё СЃС‚Р°С‚СѓСЃ РѕР±СЂР°Р±РѕС‚РєРё РѕР±СЂР°С‰РµРЅРёР№.",
+    title: "РџРѕРґРґержка",
+    description: "Р—Р°РїСЂРѕСЃС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕРјРјСѓРЅРёРєР°С†ия Рё СЃС‚Р°С‚ус РѕР±СЂР°Р±РѕС‚ки РѕР±СЂР°С‰РµРЅРёР№.",
   },
   "/admin/chat": {
     title: "Р§Р°С‚",
-    description: "Р Р°Р±РѕС‡Р°СЏ РєРѕРјРјСѓРЅРёРєР°С†РёСЏ Рё РѕРїРµСЂР°С‚РёРІРЅС‹Рµ РѕС‚РІРµС‚С‹ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.",
+    description: "Р Р°Р±РѕС‡ая РєРѕРјРјСѓРЅРёРєР°С†ия Рё РѕРїРµСЂР°С‚РёРІРЅС‹Рµ РѕС‚РІРµС‚С‹ РІРЅСѓС‚ри РїР»Р°С‚С„РѕСЂРјС‹.",
   },
   "/admin/audit": {
     title: "РђСѓРґРёС‚",
-    description: "РЎРёСЃС‚РµРјРЅС‹Рµ РёР·РјРµРЅРµРЅРёСЏ, Р¶СѓСЂРЅР°Р» РґРµР№СЃС‚РІРёР№ Рё РєРѕРЅС‚СЂРѕР»СЊ РєСЂРёС‚РёС‡РЅС‹С… РѕРїРµСЂР°С†РёР№.",
+    description: "РЎРёСЃС‚РµРјРЅС‹Рµ изменения, журнал РґРµР№СЃС‚РІРёР№ Рё РєРѕРЅС‚роль РєСЂРёС‚РёС‡РЅС‹С… РѕРїРµСЂР°С†РёР№.",
   },
 };
 
@@ -255,7 +255,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const flatNavItems = navGroups.flatMap((group) => group.items);
   const routeMeta = isUserRoute(location)
-    ? { title: "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ", description: "РљР°СЂС‚РѕС‡РєР° Р°РєРєР°СѓРЅС‚Р°, РёСЃС‚РѕСЂРёСЏ Рё РґРµР№СЃС‚РІРёСЏ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°." }
+    ? { title: "РџРѕР»СЊР·РѕРІР°С‚ель", description: "РљР°СЂС‚РѕС‡ка Р°РєРєР°СѓРЅС‚Р°, РёСЃС‚ория Рё РґРµР№СЃС‚вия Р°РґРјРёРЅРёСЃС‚СЂР°С‚ора." }
     : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
 
   const quickActions: QuickActionItem[] = useMemo(() => {
@@ -263,7 +263,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       {
         id: "complaints",
         label: "Р Р°Р·РѕР±СЂР°С‚СЊ Р¶Р°Р»РѕР±С‹",
-        description: "РџРµСЂРµР№С‚Рё Рє СЃРІРµР¶РёРј РѕР±СЂР°С‰РµРЅРёСЏРј, РєРѕС‚РѕСЂС‹Рµ Р¶РґСѓС‚ СЂРµС€РµРЅРёСЏ.",
+        description: "РџРµСЂРµР№С‚Рё Рє свежим РѕР±СЂР°С‰ениям, РєРѕС‚РѕСЂС‹Рµ Р¶РґСѓС‚ СЂРµС€ения.",
         href: "/admin/complaints",
         tone: "text-red-600 bg-red-500/10 border-red-500/20",
         count: actionCenter?.pendingComplaints,
@@ -271,23 +271,23 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       {
         id: "salons",
         label: "РџСЂРѕРІРµСЂРёС‚СЊ СЃР°Р»РѕРЅС‹",
-        description: "РћС‚РєСЂС‹С‚СЊ РјРѕРґРµСЂР°С†РёСЋ РЅРµРїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹С… СЃР°Р»РѕРЅРѕРІ.",
+        description: "РћС‚РєСЂС‹С‚СЊ РјРѕРґРµСЂР°С†ию РЅРµРїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹С… салонов.",
         href: "/admin/salons",
         tone: "text-orange-600 bg-orange-500/10 border-orange-500/20",
         count: actionCenter?.unverifiedSalons,
       },
       {
         id: "sanctions",
-        label: "РЎР°РЅРєС†РёРё РЅР° СЃРµРіРѕРґРЅСЏ",
-        description: "РџРѕСЃРјРѕС‚СЂРµС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ СЃРєРѕСЂРѕ РёСЃС‚РµРєР°СЋС‚.",
+        label: "РЎР°РЅРєС†ии на СЃРµРіРѕРґня",
+        description: "РџРѕСЃРјРѕС‚СЂРµС‚СЊ РѕРіСЂР°РЅРёС‡ения, РєРѕС‚РѕСЂС‹Рµ скоро РёСЃС‚РµРєР°СЋС‚.",
         href: "/admin/sanctions",
         tone: "text-amber-600 bg-amber-500/10 border-amber-500/20",
         count: actionCenter?.expiringToday,
       },
       {
         id: "payments",
-        label: "РљРѕРЅС‚СЂРѕР»СЊ РїР»Р°С‚РµР¶РµР№",
-        description: "Р’РµСЂРЅСѓС‚СЊСЃСЏ РЅР° РґР°С€Р±РѕСЂРґ Рё РїСЂРѕРІРµСЂРёС‚СЊ РїР»Р°С‚С‘Р¶РЅРѕРµ Р·РґРѕСЂРѕРІСЊРµ РїР»Р°С‚С„РѕСЂРјС‹.",
+        label: "РљРѕРЅС‚роль РїР»Р°С‚РµР¶РµР№",
+        description: "Р’РµСЂРЅСѓС‚ься на РґР°С€Р±РѕСЂРґ Рё РїСЂРѕРІРµСЂРёС‚СЊ РїР»Р°С‚С‘жное Р·Рґоровье РїР»Р°С‚С„РѕСЂРјС‹.",
         href: "/admin/dashboard",
         tone: "text-rose-600 bg-rose-500/10 border-rose-500/20",
         count: actionCenter?.paymentErrors24h,
@@ -482,7 +482,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                     {totalAttentionCount > 0 && (
                       <Badge variant="destructive" className="gap-1 text-xs">
                         <Bell className="h-3 w-3" />
-                        {totalAttentionCount} С‚СЂРµР±СѓСЋС‚ РІРЅРёРјР°РЅРёСЏ
+                        {totalAttentionCount} С‚СЂРµР±СѓСЋС‚ внимания
                       </Badge>
                     )}
                   </div>
@@ -515,7 +515,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   onChange={(event) => setCommandQuery(event.target.value)}
                   onFocus={() => setCommandOpen(true)}
                   className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                  placeholder="Р‘С‹СЃС‚СЂС‹Р№ РїРѕРёСЃРє РїРѕ СЂР°Р·РґРµР»Р°Рј РёР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РїРѕ email/С‚РµР»РµС„РѕРЅСѓ"
+                  placeholder="Р‘С‹СЃС‚СЂС‹Р№ поиск по СЂР°Р·Рґелам или РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ по email/С‚РµР»РµС„ону"
                 />
                 <Badge variant="outline" className="hidden gap-1 sm:flex">
                   <Command className="h-3 w-3" />
@@ -543,11 +543,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
                 <Clock3 className="h-3.5 w-3.5" />
-                Р РµР°РіРёСЂСѓР№С‚Рµ РЅР° Р¶Р°Р»РѕР±С‹ Рё СЃР°РЅРєС†РёРё РІ РїРµСЂРІСѓСЋ РѕС‡РµСЂРµРґСЊ
+                Р РµР°РіРёСЂСѓР№С‚Рµ на Р¶Р°Р»РѕР±С‹ Рё СЃР°РЅРєС†ии РІ первую РѕС‡РµСЂРµРґСЊ
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
                 <ArrowRight className="h-3.5 w-3.5" />
-                Р‘С‹СЃС‚СЂС‹Р№ РїРѕРёСЃРє РІРµРґС‘С‚ РІ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ РїСЂРµРґР·Р°РїРѕР»РЅРµРЅРЅС‹Рј С„РёР»СЊС‚СЂРѕРј
+                Р‘С‹СЃС‚СЂС‹Р№ поиск РІРµРґС‘С‚ РІ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ РїСЂРµРґР·Р°РїРѕР»РЅРµРЅРЅС‹Рј С„РёР»СЊС‚ром
               </span>
             </div>
           </div>
@@ -559,9 +559,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚РІРёСЏ</DialogTitle>
+            <DialogTitle>Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚вия</DialogTitle>
             <DialogDescription>
-              РџРµСЂРµС…РѕРґРёС‚Рµ РјРµР¶РґСѓ СЂР°Р·РґРµР»Р°РјРё Рё РёС‰РёС‚Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РїРѕ email, С‚РµР»РµС„РѕРЅСѓ РёР»Рё РёРјРµРЅРё.
+              РџРµСЂРµС…РѕРґРёС‚Рµ РјРµР¶РґСѓ СЂР°Р·Рґелами Рё РёС‰РёС‚Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ по email, С‚РµР»РµС„ону или имени.
             </DialogDescription>
           </DialogHeader>
 
@@ -573,7 +573,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                 value={commandQuery}
                 onChange={(event) => setCommandQuery(event.target.value)}
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                placeholder="РќР°РїСЂРёРјРµСЂ: РїРѕР»СЊР·РѕРІР°С‚РµР»Рё, Р¶Р°Р»РѕР±С‹, salon, +998..."
+                placeholder="Например: РїРѕР»СЊР·РѕРІР°С‚ели, Р¶Р°Р»РѕР±С‹, salon, +998..."
               />
             </div>
 
@@ -608,19 +608,19 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                       );
                     })}
                     {filteredCommandItems.length === 0 && (
-                      <div className="px-3 py-6 text-sm text-muted-foreground">РџРѕ СЂР°Р·РґРµР»Р°Рј СЃРѕРІРїР°РґРµРЅРёР№ РЅРµС‚. РњРѕР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РїРѕРёСЃРє РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃРїСЂР°РІР°.</div>
+                      <div className="px-3 py-6 text-sm text-muted-foreground">По СЂР°Р·Рґелам СЃРѕРІРїР°РґРµРЅРёР№ РЅРµС‚. Можно РІС‹РїРѕР»РЅРёС‚СЊ поиск РїРѕР»СЊР·РѕРІР°С‚еля справа.</div>
                     )}
                   </div>
                 </ScrollArea>
               </div>
 
               <div className="rounded-2xl border border-border bg-muted/20 p-4">
-                <h3 className="text-sm font-semibold">РџРѕРёСЃРє РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</h3>
+                <h3 className="text-sm font-semibold">Поиск РїРѕР»СЊР·РѕРІР°С‚еля</h3>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Р’РІРµРґРёС‚Рµ email, С‚РµР»РµС„РѕРЅ РёР»Рё РёРјСЏ, Рё РјС‹ СЃСЂР°Р·Сѓ РѕС‚РєСЂРѕРµРј С‚Р°Р±Р»РёС†Сѓ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ СЌС‚РёРј С„РёР»СЊС‚СЂРѕРј.
+                  Р’РІРµРґРёС‚Рµ email, С‚РµР»РµС„он или имя, Рё РјС‹ сразу РѕС‚кроем С‚Р°Р±Р»РёС†Сѓ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ СЌС‚им С„РёР»СЊС‚ром.
                 </p>
                 <Button className="mt-4 w-full" onClick={handleOpenUsersSearch}>
-                  РћС‚РєСЂС‹С‚СЊ РїРѕРёСЃРє РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+                  РћС‚РєСЂС‹С‚СЊ поиск РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
                 </Button>
 
                 <div className="mt-6 space-y-2">

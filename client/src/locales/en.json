@@ -1832,7 +1832,9 @@
         "online": "Sessions active in last 10 minutes"
       },
       "paymentHealth": "Payment Health",
-      "paymentHealthSubtitle": "Transaction status and errors"
+      "paymentHealthSubtitle": "Transaction status and errors",
+      "title": "Admin Dashboard",
+      "subtitle": "Platform overview and operational signals"
     },
     "navGroup": {
       "users": "Users",
