@@ -289,10 +289,10 @@ export default function AdminUsers() {
       setBulkBlockDialogOpen(false);
       setBlockReason("");
       clearSelection();
-      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Рµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+      toast({ title: "Выбранные пользователи заблокированы" });
     },
     onError: () => {
-      toast({ title: "РќРµ РЎС“Р Т‘Р В°Р В»Р С•СЃСЊ Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "Не удалось заблокировать выбранных пользователей", variant: "destructive" });
     },
   });
 
@@ -304,10 +304,10 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
       clearSelection();
-      toast({ title: "Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Рµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…РЎвЂ№" });
+      toast({ title: "Выбранные пользователи разблокированы" });
     },
     onError: () => {
-      toast({ title: "РќРµ РЎС“Р Т‘Р В°Р В»Р С•СЃСЊ РЎР‚Р В°Р В·Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "Не удалось разблокировать выбранных пользователей", variant: "destructive" });
     },
   });
 
@@ -366,7 +366,7 @@ export default function AdminUsers() {
 
   const handleBulkBlock = () => {
     if (!blockReason.trim()) {
-      toast({ title: "Р Р€Р С”Р В°Р В¶Р С‘С‚Рµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘", variant: "destructive" });
+      toast({ title: "Укажите причину блокировки", variant: "destructive" });
       return;
     }
     bulkBlockMutation.mutate({ userIds: Array.from(selectedUsers), reason: blockReason.trim() });
@@ -378,7 +378,7 @@ export default function AdminUsers() {
       .map((user) => user.id);
 
     if (blockedIds.length === 0) {
-      toast({ title: "РќРµС‚ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р В·Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–", variant: "destructive" });
+      toast({ title: "Нет выбранных заблокированных пользователей", variant: "destructive" });
       return;
     }
 
@@ -515,7 +515,7 @@ export default function AdminUsers() {
   const quickSegments = [
     {
       id: "all",
-      label: "Р вЂ™СЃРµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘",
+      label: "Все пользователи",
       active: roleFilter === "all" && statusFilter === "all" && verificationFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -526,7 +526,7 @@ export default function AdminUsers() {
     },
     {
       id: "active",
-      label: "Р С’Р С”РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Рµ",
+      label: "Активные",
       active: statusFilter === "active" && roleFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -537,7 +537,7 @@ export default function AdminUsers() {
     },
     {
       id: "blocked",
-      label: "Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Рµ",
+      label: "Заблокированные",
       active: statusFilter === "blocked" && roleFilter === "all",
       onClick: () => {
         setRoleFilter("all");
@@ -548,7 +548,7 @@ export default function AdminUsers() {
     },
     {
       id: "verified",
-      label: "Р СџР С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ Р Р†Р ВµРЎР‚Р С‘РЎвЂћР С‘РЎвЂ Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Рµ",
+      label: "Полностью верифицированные",
       active: verificationFilter === "verified",
       onClick: () => {
         setRoleFilter("all");
@@ -1078,7 +1078,7 @@ export default function AdminUsers() {
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs">
                                   {!user.phone
-                                    ? "РІР‚вЂќ"
+                                    ? "—"
                                     : t(
                                         user.isPhoneVerified
                                           ? "admin.users.table.phoneVerified"
@@ -1247,19 +1247,19 @@ export default function AdminUsers() {
       <Dialog open={bulkBlockDialogOpen} onOpenChange={setBulkBlockDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Р вЂ”Р В°Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р°С‚СЊ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№С… Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</DialogTitle>
+            <DialogTitle>Заблокировать выбранных пользователей</DialogTitle>
             <DialogDescription>
-              Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘С‚Рµ Р С—РЎР‚Р С‘РЎвЂЎР С‘Р Р…РЎС“ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘. Р В­РЎвЂљР С• Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘Рµ Р С—РЎР‚Р С‘Р СР ВµР Р…Р С‘С‚СЃСЏ Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р С Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР С Р С‘ Р С—Р С•Р С—Р В°Р Т‘РЎвЂС‚ Р Р† Р В°РЎС“Р Т‘Р С‘С‚.
+              Выберите причину блокировки. Это действие применится к выбранным пользователям и попадёт в аудит.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="bulkBlockReason">Р СџРЎР‚Р С‘РЎвЂЎР С‘Р Р…Р° Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘</Label>
+              <Label htmlFor="bulkBlockReason">Причина блокировки</Label>
               <Textarea
                 id="bulkBlockReason"
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Р СњР В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚: Р С—Р С•Р Т‘Р С•Р В·РЎР‚Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р°СЏ Р В°Р С”РЎвЂљР С‘Р Р†Р Р…Р С•СЃС‚СЊ, Р Р…Р В°РЎР‚РЎС“РЎв‚¬Р ВµР Р…Р С‘Рµ Р С—РЎР‚Р В°Р Р†Р С‘Р», Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…Р Р…Р°СЏ Р В¶Р В°Р В»Р С•Р±Р°"
+                placeholder="Например: подозрительная активность, нарушение правил, подтверждённая жалоба"
                 rows={4}
                 className="mt-2"
               />
@@ -1267,14 +1267,14 @@ export default function AdminUsers() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkBlockDialogOpen(false)}>
-              Р С›РЎвЂљР СР ВµР Р…Р°
+              Отмена
             </Button>
             <Button
               variant="destructive"
               onClick={handleBulkBlock}
               disabled={!blockReason.trim() || bulkBlockMutation.isPending}
             >
-              {bulkBlockMutation.isPending ? "Р вЂР В»Р С•Р С”Р С‘РЎР‚РЎС“Р ВµР С..." : "Р СџР С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р Т‘Р С‘С‚СЊ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”РЎС“"}
+              {bulkBlockMutation.isPending ? "Блокирую..." : "Подтвердить блокировку"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1329,7 +1329,7 @@ export default function AdminUsers() {
                   <Label className="text-sm font-medium text-muted-foreground">
                     {t("admin.users.viewDialog.labels.fullName")}
                   </Label>
-                  <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "РІР‚вЂќ"}</p>
+                  <p className="mt-1 text-sm">{quickViewDialog.user.fullName || "—"}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
@@ -1354,7 +1354,7 @@ export default function AdminUsers() {
                   </Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Phone className="h-3 w-3 text-muted-foreground" />
-                    <p className="text-sm">{quickViewDialog.user.phone || "РІР‚вЂќ"}</p>
+                    <p className="text-sm">{quickViewDialog.user.phone || "—"}</p>
                   </div>
                 </div>
               </div>
@@ -1467,16 +1467,16 @@ export default function AdminUsers() {
             <div className="space-y-3 text-sm">
               <p className="font-medium">{t("admin.users.testUsersDialog.toBeCreated")}</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>2 Clients (Р С’Р Р…Р Р…Р° Р ВР Р†Р В°Р Р…Р С•Р Р†Р°, Р вЂќР СР С‘РЎвЂљРЎР‚Р С‘Р в„– Р СџР ВµРЎвЂљРЎР‚Р С•Р Р†)</li>
-                <li>2 Salon Owners (Р С›Р В»РЎРЉР С–Р° Р РЋР СР С‘РЎР‚Р Р…Р С•Р Р†Р°, Р РЋР ВµРЎР‚Р С–Р ВµР в„– Р С™Р С•Р В·Р В»Р С•Р Р†)</li>
-                <li>2 Masters (Р вЂўР В»Р ВµР Р…Р° Р вЂ™Р С•Р В»Р С”Р С•Р Р†Р°, Р С’Р В»Р ВµР С”РЎРѓР ВµР в„– Р СљР С•РЎР‚Р С•Р В·Р С•Р Р†)</li>
-                <li>1 Blocked User (Р Т‘Р»СЏ РЎвЂљР ВµРЎРѓРЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘СЏ Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘)</li>
+                <li>2 Clients (Инна Иванова, Дмитрий Петров)</li>
+                <li>2 Salon Owners (Ольга Смирнова, Сергей Козлов)</li>
+                <li>2 Masters (Елена Волкова, Алексей Морозов)</li>
+                <li>1 Blocked User (для тестирования блокировки)</li>
               </ul>
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p className="font-medium mb-1">{t("admin.users.testUsersDialog.credentials")}</p>
                 <p className="text-muted-foreground">
                   {t("admin.users.testUsersDialog.email")}{" "}
-                  <code className="text-xs">client1@test.com</code> (Р С‘Р В»Р С‘ Р В»РЎР‹Р В±Р С•Р в„– Р Т‘РЎР‚РЎС“Р С–Р С•Р в„–)
+                  <code className="text-xs">client1@test.com</code> (или любой другой)
                 </p>
                 <p className="text-muted-foreground">
                   {t("admin.users.testUsersDialog.password")}{" "}
