@@ -71,6 +71,20 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     sourcemap: true, // Enable source maps for Sentry
+    // Production currently serves the entry asset with a cache-busting `?v=...`
+    // suffix in HTML. ES module URLs are query-sensitive, so sibling chunks that
+    // import `./index-*.js` without that suffix instantiate a second copy of the
+    // entry module and React runtime, which triggers `Minified React error #321`.
+    //
+    // A single bundled entry avoids cross-chunk imports back into the entry
+    // module, so the app keeps exactly one React instance even if HTML asset URLs
+    // are rewritten upstream.
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
   },
   server: {
     fs: {
