@@ -516,6 +516,42 @@ export default function SoloMasterPage() {
 
   const isDraft = masterData.status === "draft";
 
+  // ── Derived values ────────────────────────────────────────────────────────
+  const completionPercent = (() => {
+    const fields = [
+      masterData.name,
+      masterData.city,
+      masterData.phone,
+      masterData.bio?.ru || masterData.bio?.en,
+      masterData.photo,
+      services.length > 0,
+      portfolio.length > 0,
+    ];
+    return Math.round((fields.filter(Boolean).length / fields.length) * 100);
+  })();
+
+  const activeServicesCount = services.filter((s) => s.isActive).length;
+
+  const upcomingBookingsCount = masterBookings.filter(
+    (b) =>
+      (b.status === "pending" || b.status === "confirmed") &&
+      new Date(b.bookingDate) >= new Date(new Date().setHours(0, 0, 0, 0)),
+  ).length;
+
+  const publishedProfileUrl = !isDraft && masterData.slug ? `/master/${masterData.slug}` : null;
+
+  const bookingStats = {
+    all: masterBookings.length,
+    pending: masterBookings.filter((b) => b.status === "pending").length,
+    confirmed: masterBookings.filter((b) => b.status === "confirmed").length,
+    completed: masterBookings.filter((b) => b.status === "completed").length,
+  };
+
+  const filteredBookings =
+    bookingFilter === "all"
+      ? masterBookings
+      : masterBookings.filter((b) => b.status === bookingFilter);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -671,9 +707,9 @@ export default function SoloMasterPage() {
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">????????? ????????</p>
                     <p className="mt-2 truncate text-sm font-medium text-foreground">aurelle.uz{publishedProfileUrl}</p>
                     <Button
-                      variant="link"
+                      variant="ghost"
                       className="mt-1 h-auto px-0 text-sm"
-                      onClick={() => window.open(publishedProfileUrl, "_blank")}
+                      onClick={() => window.open(publishedProfileUrl!, "_blank")}
                     >
                       ??????? ????????
                     </Button>
