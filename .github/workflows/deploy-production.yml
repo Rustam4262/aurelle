@@ -70,8 +70,9 @@ jobs:
             git rev-parse HEAD > /tmp/aurelle_prev_commit
             echo "Previous: $(cat /tmp/aurelle_prev_commit)"
 
-            echo "==> git pull"
-            git pull origin main
+            echo "==> git fetch/reset"
+            git fetch origin main
+            git reset --hard origin/main
 
             echo "==> npm ci"
             npm ci
@@ -107,8 +108,13 @@ jobs:
             DELAY=5
 
             echo "==> PM2 status"
-            PM2_STATUS=$(pm2 jlist | jq -r \
-              '.[] | select(.name=="${{ env.PM2_APP_NAME }}") | .pm2_env.status')
+            PM2_STATUS=$(pm2 jlist | node -e '
+              const fs = require("fs");
+              const name = process.argv[1];
+              const apps = JSON.parse(fs.readFileSync(0, "utf8"));
+              const app = apps.find((item) => item.name === name);
+              process.stdout.write(app?.pm2_env?.status || "missing");
+            ' "${{ env.PM2_APP_NAME }}")
             if [ "$PM2_STATUS" != "online" ]; then
               echo "ERROR: PM2 is '$PM2_STATUS'"
               pm2 logs ${{ env.PM2_APP_NAME }} --lines 80 --nostream --err
@@ -229,5 +235,5 @@ jobs:
 
       - name: API health DB check
         run: |
-          STATUS=$(curl -sf https://aurelle.uz/api/health | jq -r '.status' 2>/dev/null || echo "error")
+          STATUS=$(curl -sf https://aurelle.uz/api/health | node -e "let raw='';process.stdin.on('data',d=>raw+=d);process.stdin.on('end',()=>{try{process.stdout.write(JSON.parse(raw).status||'error')}catch{process.stdout.write('error')}})")
           [ "$STATUS" = "healthy" ] && echo "DB OK" || (echo "DB health: $STATUS"; exit 1)
