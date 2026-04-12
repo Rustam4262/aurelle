@@ -15,7 +15,7 @@ on:
 
 env:
   PM2_APP_NAME: aurelle-production
-  DEPLOY_DIR: /var/www/aurelle/current
+  DEPLOY_DIR: /var/www/aurelle
   HEALTH_URL: http://localhost:5000/api/health/ping
 
 jobs:
