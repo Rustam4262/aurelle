@@ -68,39 +68,39 @@ const ROUTE_MAP = {
 const ROUTE_META: Record<string, { title: string; description: string }> = {
   "/admin/dashboard": {
     title: "Панель управления",
-    description: "РљР»СЋС‡РµРІС‹Рµ РјРµС‚рики, риски Рё СЃРѕСЃС‚ояние РїР»Р°С‚С„РѕСЂРјС‹ РІ РѕРґном РјРµСЃС‚Рµ.",
+    description: "Ключевые метрики, риски и состояние платформы в одном месте.",
   },
   "/admin/users": {
-    title: "РџРѕР»СЊР·РѕРІР°С‚ели",
-    description: "Поиск, проверка Рё управление Р°РєРєР°СѓРЅС‚ами РєР»РёРµРЅС‚ов, РІР»Р°РґРµР»СЊС†ев Рё РјР°СЃС‚еров.",
+    title: "Пользователи",
+    description: "Поиск, проверка и управление аккаунтами клиентов, владельцев и мастеров.",
   },
   "/admin/salons": {
-    title: "РЎР°Р»РѕРЅС‹",
-    description: "РњРѕРґРµСЂР°С†ия салонов, РєРѕРЅС‚роль РїСѓР±Р»РёРєР°С†РёР№ Рё РєР°С‡РµСЃС‚ва РєР°СЂС‚РѕС‡ек.",
+    title: "Салоны и мастера",
+    description: "Модерация салонов, контроль публикаций и качества карточек.",
   },
   "/admin/activity": {
-    title: "РђРєС‚РёРІРЅРѕСЃС‚СЊ",
-    description: "Р›РµРЅС‚Р° СЃРѕР±С‹С‚РёР№, РґРµР№СЃС‚РІРёР№ Рё СЃРІРµР¶РёС… РёР·РјРµРЅРµРЅРёР№ по РїР»Р°С‚С„орме.",
+    title: "Активность",
+    description: "Лента событий, действий и свежих изменений по платформе.",
   },
   "/admin/complaints": {
-    title: "Р–Р°Р»РѕР±С‹",
-    description: "РџСЂРёРѕСЂРёС‚РµС‚РЅС‹Рµ РѕР±СЂР°С‰ения Рё РєРµР№СЃС‹, С‚СЂРµР±СѓСЋС‰ие РІРјРµС€Р°С‚РµР»СЊСЃС‚ва Р°РґРјРёРЅРёСЃС‚СЂР°С‚ора.",
+    title: "Жалобы",
+    description: "Приоритетные обращения и кейсы, требующие решения администратора.",
   },
   "/admin/sanctions": {
-    title: "РЎР°РЅРєС†ии",
-    description: "РђРєС‚РёРІРЅС‹Рµ РѕРіСЂР°РЅРёС‡ения, сроки Рё РєРѕРЅС‚роль СЂРёСЃРєРѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.",
+    title: "Санкции",
+    description: "Активные ограничения, сроки и контроль рисковых пользователей.",
   },
   "/admin/support": {
-    title: "РџРѕРґРґержка",
-    description: "Р—Р°РїСЂРѕСЃС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕРјРјСѓРЅРёРєР°С†ия Рё СЃС‚Р°С‚ус РѕР±СЂР°Р±РѕС‚ки РѕР±СЂР°С‰РµРЅРёР№.",
+    title: "Обращения",
+    description: "Запросы пользователей, коммуникация и статус обработки обращений.",
   },
   "/admin/chat": {
-    title: "Р§Р°С‚",
-    description: "Р Р°Р±РѕС‡ая РєРѕРјРјСѓРЅРёРєР°С†ия Рё РѕРїРµСЂР°С‚РёРІРЅС‹Рµ РѕС‚РІРµС‚С‹ РІРЅСѓС‚ри РїР»Р°С‚С„РѕСЂРјС‹.",
+    title: "Чат поддержки",
+    description: "Рабочая коммуникация и оперативные ответы внутри платформы.",
   },
   "/admin/audit": {
-    title: "РђСѓРґРёС‚",
-    description: "РЎРёСЃС‚РµРјРЅС‹Рµ изменения, журнал РґРµР№СЃС‚РІРёР№ Рё РєРѕРЅС‚роль РєСЂРёС‚РёС‡РЅС‹С… РѕРїРµСЂР°С†РёР№.",
+    title: "Журнал аудита",
+    description: "Системные изменения, журнал действий и контроль критичных операций.",
   },
 };
 
@@ -255,39 +255,42 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const flatNavItems = navGroups.flatMap((group) => group.items);
   const routeMeta = isUserRoute(location)
-    ? { title: "РџРѕР»СЊР·РѕРІР°С‚ель", description: "РљР°СЂС‚РѕС‡ка Р°РєРєР°СѓРЅС‚Р°, РёСЃС‚ория Рё РґРµР№СЃС‚вия Р°РґРјРёРЅРёСЃС‚СЂР°С‚ора." }
+    ? {
+        title: "Пользователь",
+        description: "Карточка аккаунта, история и действия администратора.",
+      }
     : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
 
   const quickActions: QuickActionItem[] = useMemo(() => {
     const items: QuickActionItem[] = [
       {
         id: "complaints",
-        label: "Р Р°Р·РѕР±СЂР°С‚СЊ Р¶Р°Р»РѕР±С‹",
-        description: "РџРµСЂРµР№С‚Рё Рє свежим РѕР±СЂР°С‰ениям, РєРѕС‚РѕСЂС‹Рµ Р¶РґСѓС‚ СЂРµС€ения.",
+        label: "Разобрать жалобы",
+        description: "Перейти к свежим обращениям, которые ждут решения.",
         href: "/admin/complaints",
         tone: "text-red-600 bg-red-500/10 border-red-500/20",
         count: actionCenter?.pendingComplaints,
       },
       {
         id: "salons",
-        label: "РџСЂРѕРІРµСЂРёС‚СЊ СЃР°Р»РѕРЅС‹",
-        description: "РћС‚РєСЂС‹С‚СЊ РјРѕРґРµСЂР°С†ию РЅРµРїРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹С… салонов.",
+        label: "Проверить салоны",
+        description: "Открыть модерацию неподтверждённых салонов.",
         href: "/admin/salons",
         tone: "text-orange-600 bg-orange-500/10 border-orange-500/20",
         count: actionCenter?.unverifiedSalons,
       },
       {
         id: "sanctions",
-        label: "РЎР°РЅРєС†ии на СЃРµРіРѕРґня",
-        description: "РџРѕСЃРјРѕС‚СЂРµС‚СЊ РѕРіСЂР°РЅРёС‡ения, РєРѕС‚РѕСЂС‹Рµ скоро РёСЃС‚РµРєР°СЋС‚.",
+        label: "Санкции на сегодня",
+        description: "Посмотреть ограничения, которые скоро истекают.",
         href: "/admin/sanctions",
         tone: "text-amber-600 bg-amber-500/10 border-amber-500/20",
         count: actionCenter?.expiringToday,
       },
       {
         id: "payments",
-        label: "РљРѕРЅС‚роль РїР»Р°С‚РµР¶РµР№",
-        description: "Р’РµСЂРЅСѓС‚ься на РґР°С€Р±РѕСЂРґ Рё РїСЂРѕРІРµСЂРёС‚СЊ РїР»Р°С‚С‘жное Р·Рґоровье РїР»Р°С‚С„РѕСЂРјС‹.",
+        label: "Контроль платежей",
+        description: "Вернуться на дашборд и проверить платёжное здоровье платформы.",
         href: "/admin/dashboard",
         tone: "text-rose-600 bg-rose-500/10 border-rose-500/20",
         count: actionCenter?.paymentErrors24h,
@@ -332,7 +335,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         ) : (
           <div>
             <h1 className="text-xl font-serif font-semibold text-foreground leading-none">AURELLE</h1>
-            <p className="mt-1 text-xs text-muted-foreground">{t("admin.title") || "Admin Console"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("admin.title") || "Панель администратора"}</p>
           </div>
         )}
       </div>
@@ -391,14 +394,14 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <button
         onClick={toggleCollapse}
         className="hidden items-center justify-center border-t border-border/60 py-2 text-muted-foreground transition-colors hover:text-foreground md:flex"
-        title={collapsed ? "Р Р°Р·РІРµСЂРЅСѓС‚СЊ" : "РЎРІРµСЂРЅСѓС‚СЊ"}
+        title={collapsed ? "Развернуть" : "Свернуть"}
       >
         {collapsed ? (
           <ChevronRight className="h-4 w-4" />
         ) : (
           <div className="flex items-center gap-2 px-4 py-0.5 text-xs">
             <ChevronLeft className="h-4 w-4" />
-            <span>РЎРІРµСЂРЅСѓС‚СЊ</span>
+            <span>Свернуть</span>
           </div>
         )}
       </button>
@@ -454,7 +457,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <div>
                 <h2 className="font-serif text-lg font-semibold">AURELLE</h2>
-                <p className="text-xs text-muted-foreground">Admin Console</p>
+                <p className="text-xs text-muted-foreground">Панель администратора</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)}>
                 <X className="h-5 w-5" />
@@ -477,12 +480,12 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="gap-1 border border-primary/10 bg-primary/5 text-xs text-primary">
                       <Sparkles className="h-3 w-3" />
-                      Admin workspace
+                      Рабочее место администратора
                     </Badge>
                     {totalAttentionCount > 0 && (
                       <Badge variant="destructive" className="gap-1 text-xs">
                         <Bell className="h-3 w-3" />
-                        {totalAttentionCount} С‚СЂРµР±СѓСЋС‚ внимания
+                        {totalAttentionCount} требуют внимания
                       </Badge>
                     )}
                   </div>
@@ -496,7 +499,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                 <ThemeToggle />
                 <Button variant="outline" className="gap-2" onClick={() => refetchActionCenter()} disabled={isFetching}>
                   <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-                  РћР±РЅРѕРІРёС‚СЊ
+                  Обновить
                 </Button>
               </div>
             </div>
@@ -515,7 +518,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   onChange={(event) => setCommandQuery(event.target.value)}
                   onFocus={() => setCommandOpen(true)}
                   className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                  placeholder="Р‘С‹СЃС‚СЂС‹Р№ поиск по СЂР°Р·Рґелам или РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ по email/С‚РµР»РµС„ону"
+                  placeholder="Быстрый поиск по разделам или пользователям по email/телефону"
                 />
                 <Badge variant="outline" className="hidden gap-1 sm:flex">
                   <Command className="h-3 w-3" />
@@ -543,11 +546,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
                 <Clock3 className="h-3.5 w-3.5" />
-                Р РµР°РіРёСЂСѓР№С‚Рµ на Р¶Р°Р»РѕР±С‹ Рё СЃР°РЅРєС†ии РІ первую РѕС‡РµСЂРµРґСЊ
+                Реагируйте на жалобы и санкции в первую очередь
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
                 <ArrowRight className="h-3.5 w-3.5" />
-                Р‘С‹СЃС‚СЂС‹Р№ поиск РІРµРґС‘С‚ РІ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ РїСЂРµРґР·Р°РїРѕР»РЅРµРЅРЅС‹Рј С„РёР»СЊС‚ром
+                Быстрый поиск ведёт в пользователей с предзаполненным фильтром
               </span>
             </div>
           </div>
@@ -559,10 +562,8 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚вия</DialogTitle>
-            <DialogDescription>
-              РџРµСЂРµС…РѕРґРёС‚Рµ РјРµР¶РґСѓ СЂР°Р·Рґелами Рё РёС‰РёС‚Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ по email, С‚РµР»РµС„ону или имени.
-            </DialogDescription>
+            <DialogTitle>Быстрые действия</DialogTitle>
+            <DialogDescription>Переходите между разделами и ищите пользователей по email, телефону или имени.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

@@ -344,15 +344,15 @@ export default function AdminDashboard() {
         <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary" className="rounded-full px-3 py-1">Control room</Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1">Range: {range}</Badge>
+              <Badge variant="secondary" className="rounded-full px-3 py-1">Панель контроля</Badge>
+              <Badge variant="outline" className="rounded-full px-3 py-1">Период: {range}</Badge>
             </div>
             <div>
               <h1 className="text-2xl font-serif font-semibold text-foreground">
-                {t("admin.dashboard.title") || "Admin dashboard"}
+                {t("admin.dashboard.title") || "Панель управления"}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {t("admin.dashboard.subtitle") || "Platform overview and operational signals"}
+                {t("admin.dashboard.subtitle") || "Обзор платформы и ключевые показатели"}
               </p>
             </div>
           </div>
@@ -396,43 +396,43 @@ export default function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
         <Card className="border-border/70 bg-card/70 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Operations snapshot</CardTitle>
-            <CardDescription>Focus the team on the next moderation and trust actions.</CardDescription>
+            <CardTitle className="text-base">Операционная сводка</CardTitle>
+            <CardDescription>Сфокусируйте команду на следующих шагах модерации и доверия.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Attention queue</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Требует внимания</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{((ac?.unverifiedSalons ?? 0) + (ac?.pendingComplaints ?? 0) + (ac?.paymentErrors24h ?? 0) + (ac?.expiringToday ?? 0)).toLocaleString()}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Open moderation and payment issues across the platform.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Открытые задачи модерации и платежей по всей платформе.</p>
             </div>
             <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Verification mix</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Верификация</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth ? `${Math.round((platformHealth.health.emailVerificationRate + platformHealth.health.phoneVerificationRate) / 2)}%` : "-"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Average of email and phone verification completion.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Средний уровень завершения email и телефонной верификации.</p>
             </div>
             <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Live sessions</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Живые сессии</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.activeSessionsLast24h?.toLocaleString() ?? 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Sessions seen in the last 24 hours.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Сессии, замеченные за последние 24 часа.</p>
             </div>
             <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Complaint load</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Нагрузка по жалобам</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.pendingComplaints?.toLocaleString() ?? 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Cases that still need a moderator decision.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Кейсы, которые всё ещё ждут решения модератора.</p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border/70 bg-card/70 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Quick routes</CardTitle>
-            <CardDescription>Fast transitions to the places admins use most often.</CardDescription>
+            <CardTitle className="text-base">Быстрые переходы</CardTitle>
+            <CardDescription>Быстрые переходы в разделы, которыми администраторы пользуются чаще всего.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Link href="/admin/complaints"><Button variant="outline" className="w-full justify-between">Complaints <AlertCircle className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/salons"><Button variant="outline" className="w-full justify-between">Salons review <Store className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/users"><Button variant="outline" className="w-full justify-between">Users desk <Users className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/sanctions"><Button variant="outline" className="w-full justify-between">Sanctions <Shield className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/complaints"><Button variant="outline" className="w-full justify-between">Жалобы <AlertCircle className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/salons"><Button variant="outline" className="w-full justify-between">Проверка салонов <Store className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/users"><Button variant="outline" className="w-full justify-between">Пользователи <Users className="h-4 w-4" /></Button></Link>
+            <Link href="/admin/sanctions"><Button variant="outline" className="w-full justify-between">Санкции <Shield className="h-4 w-4" /></Button></Link>
           </CardContent>
         </Card>
       </div>

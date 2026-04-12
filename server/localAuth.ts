@@ -3,6 +3,7 @@ import crypto from "crypto";
 import type { Express, Request, Response } from "express";
 import { db } from "./db";
 import { users, passwordResetTokens, emailVerificationTokens } from "@shared/schema";
+import { userProfiles } from "@shared/schema";
 import { eq, and, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLimiter";
@@ -16,6 +17,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  role: z.enum(["client", "owner", "solo_master"]).default("client"),
 });
 
 const loginSchema = z.object({
@@ -43,7 +45,7 @@ export function setupLocalAuth(app: Express) {
         return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
       }
 
-      const { email, password, firstName, lastName } = parsed.data;
+      const { email, password, firstName, lastName, role } = parsed.data;
       logger.info(`Registration attempt for email: ${email}`, { source: "localAuth" });
 
       const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -66,6 +68,12 @@ export function setupLocalAuth(app: Express) {
         })
         .returning();
 
+      await db.insert(userProfiles).values({
+        userId: newUser.id,
+        role,
+        fullName: [firstName, lastName].filter(Boolean).join(" ") || null,
+      });
+
       logger.info(`User created with ID: ${newUser.id}`, { source: "localAuth" });
 
       (req.session as any).passport = {
@@ -76,6 +84,7 @@ export function setupLocalAuth(app: Express) {
             first_name: newUser.firstName,
             last_name: newUser.lastName,
             profile_image_url: newUser.profileImageUrl,
+            role,
           },
           expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
         },
@@ -105,6 +114,7 @@ export function setupLocalAuth(app: Express) {
             email: newUser.email,
             firstName: newUser.firstName,
             lastName: newUser.lastName,
+            role,
           },
         });
       });

@@ -95,10 +95,29 @@ const benefits = [
   "Безопасный вход через email и социальные сети",
 ];
 
+const registrationRoles = [
+  {
+    value: "client",
+    title: "Клиент",
+    description: "Записи, отзывы, избранное и история посещений.",
+  },
+  {
+    value: "solo_master",
+    title: "Фриланс-мастер",
+    description: "Личный кабинет мастера, расписание и услуги без салона.",
+  },
+  {
+    value: "owner",
+    title: "Владелец салона",
+    description: "Салоны, услуги, команда и календарь бронирований.",
+  },
+] as const;
+
 export default function AuthPage() {
   const t = i18n.t.bind(i18n);
   const [isResolvingSession, setIsResolvingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationRole, setRegistrationRole] = useState<"client" | "owner" | "solo_master">("client");
 
   const loginWithProvider = (provider: string, role?: string) => {
     const q = role ? `?role=${encodeURIComponent(role)}` : "";
@@ -305,6 +324,32 @@ export default function AuthPage() {
 
                   <TabsContent value="register" className="mt-5">
                     <form onSubmit={handleEmailRegister} className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <Label className="text-foreground/85 dark:text-white/85">Кто вы?</Label>
+                          <span className="text-xs text-muted-foreground dark:text-white/50">
+                            Выбор влияет на кабинет после регистрации
+                          </span>
+                        </div>
+                        <input type="hidden" name="role" value={registrationRole} />
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          {registrationRoles.map((role) => (
+                            <button
+                              key={role.value}
+                              type="button"
+                              onClick={() => setRegistrationRole(role.value)}
+                              className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                                registrationRole === role.value
+                                  ? "border-primary bg-primary/10 text-foreground dark:border-primary dark:bg-primary/15 dark:text-white"
+                                  : "border-border bg-background text-muted-foreground hover:bg-accent dark:border-white/10 dark:bg-white/0 dark:text-white/70 dark:hover:bg-white/5"
+                              }`}
+                            >
+                              <div className="text-sm font-semibold">{role.title}</div>
+                              <div className="mt-1 text-xs leading-5">{role.description}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="register-email" className="text-foreground/85 dark:text-white/85">{t("marketplace.auth.email")}</Label>
                         <Input id="register-email" name="email" type="email" placeholder="email@example.com" required className="border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/0 dark:text-white dark:placeholder:text-white/30" />
