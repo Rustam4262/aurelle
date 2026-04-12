@@ -17,4 +17,4 @@ function gtag() {
   window.dataLayer.push(arguments);
 }
 gtag("js", new Date());
-gtag("config", "G-2NNQ2EXYV3");
+gtag("config", "G-MFMB4BM30N");
