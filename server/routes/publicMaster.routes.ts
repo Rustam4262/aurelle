@@ -10,6 +10,7 @@ import {
   masterPortfolio,
   bookings,
   soloMasterSettings,
+  users,
 } from "@shared/schema";
 import { logger } from "../lib/logger";
 
@@ -22,7 +23,17 @@ router.get("/", async (req, res) => {
     const limitNum = Math.min(parseInt(String(limit), 10) || 20, 100);
     const offsetNum = parseInt(String(offset), 10) || 0;
 
-    const conditions = [eq(masters.isSoloMaster, true), eq(masters.status, "active")];
+    const conditions = [
+      eq(masters.isSoloMaster, true),
+      eq(masters.isActive, true),
+      eq(masters.status, "active"),
+      sql`NOT EXISTS (
+        SELECT 1
+        FROM users u
+        WHERE u.id = ${masters.userId}
+          AND u.is_blocked = true
+      )`,
+    ];
 
     if (city && typeof city === "string" && city.trim()) {
       conditions.push(ilike(masters.city, `%${city.trim()}%`));
@@ -69,7 +80,19 @@ router.get("/:slug", async (req, res) => {
     const [master] = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.slug, slug), eq(masters.isSoloMaster, true)));
+      .where(
+        and(
+          eq(masters.slug, slug),
+          eq(masters.isSoloMaster, true),
+          eq(masters.isActive, true),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
+      );
 
     if (!master) {
       return res.status(404).json({ error: "Master not found" });
@@ -140,7 +163,18 @@ router.get("/:slug/services", async (req, res) => {
       .select()
       .from(masters)
       .where(
-        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+        and(
+          eq(masters.slug, slug),
+          eq(masters.isSoloMaster, true),
+          eq(masters.isActive, true),
+          eq(masters.status, "active"),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
       );
 
     if (!master) {
@@ -169,7 +203,18 @@ router.get("/:slug/reviews", async (req, res) => {
       .select()
       .from(masters)
       .where(
-        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+        and(
+          eq(masters.slug, slug),
+          eq(masters.isSoloMaster, true),
+          eq(masters.isActive, true),
+          eq(masters.status, "active"),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
       );
 
     if (!master) {
@@ -230,7 +275,18 @@ router.get("/:slug/availability", async (req, res) => {
       .select()
       .from(masters)
       .where(
-        and(eq(masters.slug, slug), eq(masters.isSoloMaster, true), eq(masters.status, "active")),
+        and(
+          eq(masters.slug, slug),
+          eq(masters.isSoloMaster, true),
+          eq(masters.isActive, true),
+          eq(masters.status, "active"),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
       );
 
     if (!master) {

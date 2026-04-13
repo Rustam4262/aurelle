@@ -290,16 +290,38 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Actually update database
-    const [updated] = await db
-      .update(users)
-      .set({
-        isBlocked: true,
-        blockReason: reason,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, id))
-      .returning();
+    const [updated, hiddenSalons, hiddenMasters] = await db.transaction(async (tx) => {
+      const [blockedUser] = await tx
+        .update(users)
+        .set({
+          isBlocked: true,
+          blockReason: reason,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+
+      const salonsHidden = await tx
+        .update(salons)
+        .set({
+          isActive: false,
+          status: "paused",
+          updatedAt: new Date(),
+        })
+        .where(eq(salons.ownerId, id))
+        .returning({ id: salons.id });
+
+      const mastersHidden = await tx
+        .update(masters)
+        .set({
+          isActive: false,
+          status: "paused",
+        })
+        .where(eq(masters.userId, id))
+        .returning({ id: masters.id });
+
+      return [blockedUser, salonsHidden, mastersHidden] as const;
+    });
 
     // Log action
     await logAuditAction({
@@ -309,7 +331,12 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       entityType: "user",
       entityId: id,
       oldData: { isBlocked: oldUser.isBlocked, blockReason: oldUser.blockReason },
-      newData: { isBlocked: true, blockReason: reason },
+      newData: {
+        isBlocked: true,
+        blockReason: reason,
+        hiddenSalons: hiddenSalons.length,
+        hiddenMasters: hiddenMasters.length,
+      },
       req,
     });
 
@@ -322,7 +349,12 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
       });
     }
 
-    res.json({ user: updated, message: "User blocked successfully" });
+    res.json({
+      user: updated,
+      message: "User blocked successfully",
+      hiddenSalons: hiddenSalons.length,
+      hiddenMasters: hiddenMasters.length,
+    });
   } catch (error: any) {
     logger.error("Block user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to block user" });
@@ -386,14 +418,49 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
     const { id } = req.params;
     const userId = getUserId(req);
 
+    if (id === userId) {
+      return res.status(400).json({ error: "You cannot delete your own admin account" });
+    }
+
     const [oldUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
     if (!oldUser) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Soft delete by marking as deleted (if you have such field)
-    // For now, just log the action
+    const [ownedSalons, ownedMasters] = await Promise.all([
+      db.select({ id: salons.id }).from(salons).where(eq(salons.ownerId, id)),
+      db.select({ id: masters.id }).from(masters).where(eq(masters.userId, id)),
+    ]);
+
+    await db.transaction(async (tx) => {
+      if (ownedSalons.length > 0) {
+        await tx
+          .update(salons)
+          .set({
+            isActive: false,
+            status: "paused",
+            updatedAt: new Date(),
+          })
+          .where(eq(salons.ownerId, id));
+      }
+
+      if (ownedMasters.length > 0) {
+        await tx
+          .update(masters)
+          .set({
+            isActive: false,
+            status: "paused",
+            userId: null,
+          })
+          .where(eq(masters.userId, id));
+      }
+
+      await tx.delete(adminUsers).where(eq(adminUsers.userId, id));
+      await tx.delete(userProfiles).where(eq(userProfiles.userId, id));
+      await tx.delete(users).where(eq(users.id, id));
+    });
+
     await logAuditAction({
       actorUserId: userId,
       actorRole: req.admin!.roleName,
@@ -401,10 +468,19 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
       entityType: "user",
       entityId: id,
       oldData: oldUser,
+      newData: {
+        deleted: true,
+        hiddenSalons: ownedSalons.length,
+        hiddenMasters: ownedMasters.length,
+      },
       req,
     });
 
-    res.json({ message: "User deleted" });
+    res.json({
+      message: "User deleted",
+      hiddenSalons: ownedSalons.length,
+      hiddenMasters: ownedMasters.length,
+    });
   } catch (error: any) {
     logger.error("Delete user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to delete user" });

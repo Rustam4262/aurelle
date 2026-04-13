@@ -18,7 +18,7 @@ import {
   Store,
   User,
 } from "lucide-react";
-import { SiGithub, SiGoogle } from "react-icons/si";
+import { SiGoogle } from "react-icons/si";
 
 type AuthUser = {
   id: string;
@@ -274,13 +274,13 @@ export default function AuthPage() {
 
                 <h2 className="mt-4 font-serif text-2xl text-foreground dark:text-white">Вход и регистрация</h2>
                 <p className="mt-2 text-sm text-muted-foreground dark:text-white/60">
-                  Используйте email или социальные сети. Вход по телефону временно недоступен, пока мы восстанавливаем SMS-авторизацию.
+                  Используйте email, Google или Яндекс. Вход по телефону временно недоступен, пока мы восстанавливаем SMS-авторизацию.
                 </p>
 
                 <Alert className="mt-6 border-[#ff5c93]/15 bg-[#ff5c93]/6 text-foreground dark:text-white">
                   <AlertTitle className="text-foreground dark:text-white">Временно отключено</AlertTitle>
                   <AlertDescription className="text-muted-foreground dark:text-white/75">
-                    Вход по телефону временно недоступен. Используйте email, Google, Яндекс или GitHub.
+                    Вход по телефону временно недоступен. Используйте email, Google или Яндекс.
                   </AlertDescription>
                 </Alert>
 
@@ -292,10 +292,6 @@ export default function AuthPage() {
                   <Button className="w-full justify-start border-border bg-background text-foreground hover:bg-accent dark:border-white/10 dark:bg-white/0 dark:text-white dark:hover:bg-white/5" size="lg" variant="outline" onClick={() => loginWithProvider("yandex")}>
                     <YandexIcon className="mr-3 h-5 w-5 text-[#FF0000]" />
                     {t("marketplace.auth.signInWithYandex", "Продолжить с Яндекс")}
-                  </Button>
-                  <Button className="w-full justify-start border-border bg-background text-foreground hover:bg-accent dark:border-white/10 dark:bg-white/0 dark:text-white dark:hover:bg-white/5" size="lg" variant="outline" onClick={() => loginWithProvider("github")}>
-                    <SiGithub className="mr-3 h-5 w-5" />
-                    {t("marketplace.auth.signInWithGitHub")}
                   </Button>
                 </div>
 
@@ -325,14 +321,14 @@ export default function AuthPage() {
                   <TabsContent value="register" className="mt-5">
                     <form onSubmit={handleEmailRegister} className="space-y-4">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-1">
                           <Label className="text-foreground/85 dark:text-white/85">Кто вы?</Label>
-                          <span className="text-xs text-muted-foreground dark:text-white/50">
-                            Выбор влияет на кабинет после регистрации
-                          </span>
+                          <p className="text-xs text-muted-foreground dark:text-white/50">
+                            Выберите формат кабинета, который нужен после регистрации
+                          </p>
                         </div>
                         <input type="hidden" name="role" value={registrationRole} />
-                        <div className="grid gap-2 sm:grid-cols-3">
+                        <div className="grid gap-2 md:grid-cols-3">
                           {registrationRoles.map((role) => (
                             <button
                               key={role.value}

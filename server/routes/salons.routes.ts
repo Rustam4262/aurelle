@@ -11,8 +11,9 @@ import {
   salonSettings,
   salonBreaks,
   salonExceptions,
+  users,
 } from "@shared/schema";
-import { eq, and, desc, ne } from "drizzle-orm";
+import { eq, and, desc, ne, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { trackEvent } from "../lib/analytics";
 
@@ -23,7 +24,17 @@ router.get("/", async (req, res) => {
   try {
     const { city, minLat, maxLat, minLng, maxLng } = req.query;
 
-    const query = db.select().from(salons).where(eq(salons.isActive, true));
+    const query = db.select().from(salons).where(
+      and(
+        eq(salons.isActive, true),
+        sql`NOT EXISTS (
+          SELECT 1
+          FROM users u
+          WHERE u.id = ${salons.ownerId}
+            AND u.is_blocked = true
+        )`,
+      ),
+    );
 
     const result = await query.orderBy(desc(salons.averageRating));
 
@@ -46,7 +57,21 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [salon] = await db.select().from(salons).where(eq(salons.id, id));
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(
+        and(
+          eq(salons.id, id),
+          eq(salons.isActive, true),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${salons.ownerId}
+              AND u.is_blocked = true
+          )`,
+        ),
+      );
     if (!salon) {
       return res.status(404).json({ error: "Salon not found" });
     }
@@ -54,7 +79,18 @@ router.get("/:id", async (req, res) => {
     const salonMasters = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.salonId, id), eq(masters.isActive, true)));
+      .where(
+        and(
+          eq(masters.salonId, id),
+          eq(masters.isActive, true),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
+      );
 
     const salonServices = await db
       .select()
@@ -108,7 +144,18 @@ router.get("/:id/masters", async (req, res) => {
     const result = await db
       .select()
       .from(masters)
-      .where(and(eq(masters.salonId, id), eq(masters.isActive, true)));
+      .where(
+        and(
+          eq(masters.salonId, id),
+          eq(masters.isActive, true),
+          sql`NOT EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ${masters.userId}
+              AND u.is_blocked = true
+          )`,
+        ),
+      );
     return res.json(result);
   } catch (error) {
     logger.error("Get masters error:", error);
