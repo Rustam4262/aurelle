@@ -113,11 +113,13 @@ const registrationRoles = [
   },
 ] as const;
 
+type RegistrationRole = (typeof registrationRoles)[number]["value"];
+
 export default function AuthPage() {
   const t = i18n.t.bind(i18n);
   const [isResolvingSession, setIsResolvingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [registrationRole, setRegistrationRole] = useState<"client" | "owner" | "solo_master">("client");
+  const [registrationRole, setRegistrationRole] = useState<RegistrationRole | "">("");
 
   const loginWithProvider = (provider: string, role?: string) => {
     const q = role ? `?role=${encodeURIComponent(role)}` : "";
@@ -167,6 +169,11 @@ export default function AuthPage() {
     const data = new FormData(form);
     const password = String(data.get("password") || "");
     const confirmPassword = String(data.get("confirmPassword") || "");
+
+    if (!registrationRole) {
+      window.alert("Пожалуйста, выберите кто вы: клиент, фриланс-мастер или владелец салона.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       window.alert(t("marketplace.auth.passwordMismatch"));
@@ -328,23 +335,29 @@ export default function AuthPage() {
                           </p>
                         </div>
                         <input type="hidden" name="role" value={registrationRole} />
-                        <div className="grid gap-2 md:grid-cols-3">
-                          {registrationRoles.map((role) => (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {registrationRoles.map((role, index) => (
                             <button
                               key={role.value}
                               type="button"
                               onClick={() => setRegistrationRole(role.value)}
                               className={`rounded-xl border px-3 py-3 text-left transition-colors ${
                                 registrationRole === role.value
-                                  ? "border-primary bg-primary/10 text-foreground dark:border-primary dark:bg-primary/15 dark:text-white"
+                                  ? "border-primary bg-primary/10 text-foreground shadow-[0_0_0_1px_rgba(227,54,116,0.35)] dark:border-primary dark:bg-primary/15 dark:text-white"
                                   : "border-border bg-background text-muted-foreground hover:bg-accent dark:border-white/10 dark:bg-white/0 dark:text-white/70 dark:hover:bg-white/5"
-                              }`}
+                              } ${index === 1 ? "sm:translate-y-4" : ""} ${index === 2 ? "sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.25rem)]" : ""}`}
+                              aria-pressed={registrationRole === role.value}
                             >
                               <div className="text-sm font-semibold">{role.title}</div>
                               <div className="mt-1 text-xs leading-5">{role.description}</div>
                             </button>
                           ))}
                         </div>
+                        {!registrationRole && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            Выберите один вариант, чтобы продолжить регистрацию
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="register-email" className="text-foreground/85 dark:text-white/85">{t("marketplace.auth.email")}</Label>

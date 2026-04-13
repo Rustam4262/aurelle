@@ -17,7 +17,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  role: z.enum(["client", "owner", "solo_master"]).default("client"),
+  role: z.enum(["client", "owner", "solo_master"]),
 });
 
 const loginSchema = z.object({
