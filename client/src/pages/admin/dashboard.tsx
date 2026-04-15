@@ -732,7 +732,7 @@ export default function AdminDashboard() {
                 {/* Conversion rate callout */}
                 {funnelData.signups > 0 && (
                   <div className="mt-6 pt-4 border-t flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Р В РЎв„ўР В РЎвЂўР В Р вЂ¦Р В Р вЂ Р В Р’ВµР РЋР вЂљР РЋР С“Р В РЎвЂРЎРЏ Р РЋР вЂљР В Р’ВµР В РЎвЂ“Р В РЎвЂР РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р РЋРІР‚В Р В РЎвЂРЎРЏ Р Р†РІР‚В РІР‚в„ў Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р РЋР Р‰</span>
+                    <span className="text-muted-foreground">Конверсия регистрации в запись</span>
                     <Badge variant="secondary" className="text-sm font-semibold">
                       {((funnelData.bookingsCreated / funnelData.signups) * 100).toFixed(1)}%
                     </Badge>
