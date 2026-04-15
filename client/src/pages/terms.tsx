@@ -148,7 +148,7 @@ export default function TermsPage() {
               <div className="space-y-2 text-muted-foreground leading-relaxed">
                 <p>For questions about these Terms, please contact us:</p>
                 <p>• Email: legal@aurelle.uz</p>
-                <p>• Phone: +998 (12) 345-67-89</p>
+                <p>• Phone: +998 (93) 261-18-04</p>
                 <p>• Address: Tashkent, Uzbekistan</p>
               </div>
             </section>

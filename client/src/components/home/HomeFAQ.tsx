@@ -179,10 +179,10 @@ export function HomeFAQ() {
               📧 support@aurelle.uz
             </a>
             <a
-              href="tel:+998123456789"
+              href="tel:+998932611804"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-background border-2 border-primary/30 text-foreground font-semibold hover:bg-primary/5 transition-all hover:scale-105"
             >
-              📞 +998 (12) 345-67-89
+              📞 +998 (93) 261-18-04
             </a>
           </div>
         </Card>

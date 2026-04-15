@@ -216,7 +216,7 @@ export default function PrivacyPage() {
               <div className="space-y-2 text-muted-foreground leading-relaxed">
                 <p>For privacy-related questions or to exercise your rights, contact us:</p>
                 <p>• Email: privacy@aurelle.uz</p>
-                <p>• Phone: +998 (12) 345-67-89</p>
+                <p>• Phone: +998 (93) 261-18-04</p>
                 <p>• Address: Tashkent, Uzbekistan</p>
               </div>
             </section>
