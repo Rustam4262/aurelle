@@ -6,6 +6,7 @@ import { eq, sql, gte, and, isNull, not, lt, lte } from "drizzle-orm";
 import { requirePermission } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { withCache } from "../../lib/cache";
+import { notSoftDeleted } from "../../lib/user-deletion";
 
 const router = Router();
 
@@ -39,19 +40,22 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
         curSalonsRow,
         curMastersRow,
       ] = await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(users),
+        db.select({ count: sql<number>`count(*)` }).from(users).where(notSoftDeleted(users.blockReason)),
         db.select({ count: sql<number>`count(*)` }).from(salons),
         db.select({ count: sql<number>`count(*)` }).from(masters),
         db.select({ count: sql<number>`count(*)` }).from(bookings),
         db.select({ count: sql<number>`count(*)` }).from(complaints).where(eq(complaints.status, "open")),
         db.select({ count: sql<number>`count(*)` }).from(sanctions).where(eq(sanctions.status, "active")),
         db.select({ count: sql<number>`count(*)` }).from(users).where(
-          gte(users.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+          and(
+            gte(users.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+            notSoftDeleted(users.blockReason),
+          )
         ),
         db.select({ count: sql<number>`count(*)` }).from(salons).where(eq(salons.isVerified, true)),
-        db.select({ count: sql<number>`count(*)` }).from(users).where(gte(users.createdAt, periodStart)),
+        db.select({ count: sql<number>`count(*)` }).from(users).where(and(gte(users.createdAt, periodStart), notSoftDeleted(users.blockReason))),
         db.select({ count: sql<number>`count(*)` }).from(users).where(
-          and(gte(users.createdAt, prevStart), lt(users.createdAt, periodStart))
+          and(gte(users.createdAt, prevStart), lt(users.createdAt, periodStart), notSoftDeleted(users.blockReason))
         ),
         db.select({ count: sql<number>`count(*)` }).from(bookings).where(gte(bookings.createdAt, periodStart)),
         db.select({ count: sql<number>`count(*)` }).from(bookings).where(
@@ -252,7 +256,7 @@ router.get("/user-growth", requirePermission("analytics.read"), async (req, res)
             count: sql<number>`count(*)`,
           })
           .from(users)
-          .where(gte(users.createdAt, sql`${sql.raw(interval)}`))
+          .where(and(gte(users.createdAt, sql`${sql.raw(interval)}`), notSoftDeleted(users.blockReason)))
           .groupBy(sql`DATE(${users.createdAt})`)
           .orderBy(sql`DATE(${users.createdAt}) ASC`);
       }

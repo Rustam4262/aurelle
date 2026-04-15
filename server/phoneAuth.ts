@@ -6,6 +6,7 @@ import { users, userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
+import { isSoftDeletedUser } from "./lib/user-deletion";
 
 // Store verification codes temporarily (in production, use Redis)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -125,6 +126,10 @@ export function setupPhoneAuth(app: Express) {
       // Find or create user
       const userId = `phone:${phoneNumber.replace(/\+/g, "")}`;
       let [user] = await db.select().from(users).where(eq(users.id, userId));
+
+      if (user && isSoftDeletedUser(user)) {
+        return res.status(403).json({ error: "Account removed by administrator" });
+      }
 
       if (!user) {
         // Create new user

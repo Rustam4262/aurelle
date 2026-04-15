@@ -1,6 +1,7 @@
 import { db } from "../db";
 import { users, userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { isSoftDeletedUser } from "../lib/user-deletion";
 
 export const authStorage = {
   async upsertUser(userData: {
@@ -14,6 +15,9 @@ export const authStorage = {
     const existingUser = await db.select().from(users).where(eq(users.id, userData.id)).limit(1);
 
     if (existingUser.length > 0) {
+      if (isSoftDeletedUser(existingUser[0])) {
+        throw new Error("ACCOUNT_DELETED");
+      }
       await db
         .update(users)
         .set({
@@ -35,6 +39,9 @@ export const authStorage = {
         .limit(1);
 
       if (emailMatch.length > 0) {
+        if (isSoftDeletedUser(emailMatch[0])) {
+          throw new Error("ACCOUNT_DELETED");
+        }
         // Update profile image on the existing account and reuse their ID
         await db
           .update(users)

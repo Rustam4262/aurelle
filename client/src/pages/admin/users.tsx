@@ -81,12 +81,14 @@ interface User {
   fullName: string;
   phone: string | null;
   role: "client" | "owner" | "salon_owner" | "master" | "admin";
-  status: "active" | "blocked";
+  status: "active" | "blocked" | "deleted";
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   createdAt: string;
   blockedAt?: string | null;
   blockReason?: string | null;
+  deletedAt?: string | null;
+  isDeleted?: boolean;
   lastLoginAt?: string | null;
   loginCount?: number;
 }
@@ -110,6 +112,7 @@ const ROLE_COLORS = {
 const STATUS_COLORS = {
   active: "bg-green-100 text-green-800",
   blocked: "bg-red-100 text-red-800",
+  deleted: "bg-slate-200 text-slate-800",
 };
 
 export default function AdminUsers() {
@@ -196,6 +199,7 @@ export default function AdminUsers() {
     total: number;
     active: number;
     blocked: number;
+    deleted: number;
     emailVerified: number;
     phoneVerified: number;
     newToday: number;
@@ -211,6 +215,7 @@ export default function AdminUsers() {
         total: overviewStats.total,
         active: overviewStats.active,
         blocked: overviewStats.blocked,
+        deleted: overviewStats.deleted,
         emailVerified: overviewStats.emailVerified,
         phoneVerified: overviewStats.phoneVerified,
         newToday: overviewStats.newToday,
@@ -227,6 +232,7 @@ export default function AdminUsers() {
           total: data.total,
           active: data.users.filter((u) => u.status === "active").length,
           blocked: data.users.filter((u) => u.status === "blocked").length,
+          deleted: data.users.filter((u) => u.status === "deleted").length,
           emailVerified: data.users.filter((u) => u.isEmailVerified).length,
           phoneVerified: data.users.filter((u) => u.isPhoneVerified).length,
           newToday: data.users.filter((u) => {
@@ -311,6 +317,20 @@ export default function AdminUsers() {
     },
   });
 
+  const restoreUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest("POST", `/api/admin/users/${userId}/restore`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
+      toast({ title: "Пользователь восстановлен" });
+    },
+    onError: () => {
+      toast({ title: "Не удалось восстановить пользователя", variant: "destructive" });
+    },
+  });
+
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -318,11 +338,12 @@ export default function AdminUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/stats/overview"] });
       setDeleteDialog({ open: false, user: null });
-      toast({ title: t("admin.users.toasts.deletedSuccess") });
+      toast({ title: "Пользователь удалён с платформы" });
     },
     onError: () => {
-      toast({ title: t("admin.users.toasts.deleteFailed"), variant: "destructive" });
+      toast({ title: "Не удалось удалить пользователя", variant: "destructive" });
     },
   });
 
@@ -508,6 +529,7 @@ export default function AdminUsers() {
   const selectedUsersList = filteredUsers.filter((user) => selectedUsers.has(user.id));
   const selectedActiveCount = selectedUsersList.filter((user) => user.status === "active").length;
   const selectedBlockedCount = selectedUsersList.filter((user) => user.status === "blocked").length;
+  const selectedDeletedCount = selectedUsersList.filter((user) => user.status === "deleted").length;
   const selectedVerifiedCount = selectedUsersList.filter(
     (user) => user.isEmailVerified && user.isPhoneVerified,
   ).length;
@@ -542,6 +564,17 @@ export default function AdminUsers() {
       onClick: () => {
         setRoleFilter("all");
         setStatusFilter("blocked");
+        setVerificationFilter("all");
+        setPage(1);
+      },
+    },
+    {
+      id: "deleted",
+      label: "Удалённые",
+      active: statusFilter === "deleted" && roleFilter === "all",
+      onClick: () => {
+        setRoleFilter("all");
+        setStatusFilter("deleted");
         setVerificationFilter("all");
         setPage(1);
       },
@@ -614,6 +647,7 @@ export default function AdminUsers() {
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <Badge variant="outline">Active: {selectedActiveCount}</Badge>
                   <Badge variant="outline">Blocked: {selectedBlockedCount}</Badge>
+                  <Badge variant="outline">Deleted: {selectedDeletedCount}</Badge>
                   <Badge variant="outline">Verified: {selectedVerifiedCount}</Badge>
                 </div>
               </div>
@@ -629,6 +663,20 @@ export default function AdminUsers() {
                 >
                   <Unlock className="mr-2 h-4 w-4" />
                   Unblock
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const deletedIds = filteredUsers
+                      .filter((user) => selectedUsers.has(user.id) && user.status === "deleted")
+                      .map((user) => user.id);
+                    deletedIds.forEach((id) => restoreUserMutation.mutate(id));
+                  }}
+                  disabled={selectedDeletedCount === 0 || restoreUserMutation.isPending}
+                >
+                  <Unlock className="mr-2 h-4 w-4" />
+                  Restore
                 </Button>
                 <Button
                   variant="destructive"
@@ -783,6 +831,7 @@ export default function AdminUsers() {
                 <SelectItem value="all">{t("admin.users.statuses.allStatuses")}</SelectItem>
                 <SelectItem value="active">{t("admin.users.statuses.active")}</SelectItem>
                 <SelectItem value="blocked">{t("admin.users.statuses.blocked")}</SelectItem>
+                <SelectItem value="deleted">Удалённые</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1031,7 +1080,7 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell>
                           <Badge className={STATUS_COLORS[user.status]}>{user.status}</Badge>
-                          {user.status === "blocked" && user.blockReason && (
+                          {(user.status === "blocked" || user.status === "deleted") && user.blockReason && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                               {user.blockReason}
                             </p>
@@ -1116,7 +1165,15 @@ export default function AdminUsers() {
                                 </DropdownMenuItem>
                               </Link>
                               <DropdownMenuSeparator />
-                              {user.status === "active" ? (
+                              {user.status === "deleted" ? (
+                                <DropdownMenuItem
+                                  onClick={() => restoreUserMutation.mutate(user.id)}
+                                  className="text-green-600"
+                                >
+                                  <Unlock className="mr-2 h-4 w-4" />
+                                  Восстановить
+                                </DropdownMenuItem>
+                              ) : user.status === "active" ? (
                                 <DropdownMenuItem
                                   onClick={() => setBlockDialog({ open: true, user })}
                                   className="text-orange-600"
@@ -1133,13 +1190,15 @@ export default function AdminUsers() {
                                   {t("admin.users.actions.unblockUser")}
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem
-                                onClick={() => setDeleteDialog({ open: true, user })}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {t("admin.users.actions.deleteUser")}
-                              </DropdownMenuItem>
+                              {user.status !== "deleted" && (
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteDialog({ open: true, user })}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Удалить с платформы
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1287,25 +1346,23 @@ export default function AdminUsers() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("admin.users.deleteDialog.title")}</DialogTitle>
+            <DialogTitle>Удалить пользователя с платформы</DialogTitle>
             <DialogDescription>
-              {t("admin.users.deleteDialog.descPrefix")}
-              {deleteDialog.user?.fullName || deleteDialog.user?.email}
-              {t("admin.users.deleteDialog.descSuffix")}
+              Пользователь {deleteDialog.user?.fullName || deleteDialog.user?.email} исчезнет из платформы,
+              не сможет войти и не будет показываться в списках клиентов, мастеров и салонов.
+              Администратор сможет восстановить его позже.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog({ open: false, user: null })}>
-              {t("admin.users.deleteDialog.cancel")}
+              Отмена
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending
-                ? t("admin.users.deleteDialog.deleting")
-                : t("admin.users.deleteDialog.deleteButton")}
+              {deleteUserMutation.isPending ? "Удаляем..." : "Удалить с платформы"}
             </Button>
           </DialogFooter>
         </DialogContent>

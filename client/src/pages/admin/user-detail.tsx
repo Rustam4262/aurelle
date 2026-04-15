@@ -49,6 +49,7 @@ interface UserDetail {
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   blocked: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  deleted: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300",
   inactive: "bg-gray-100 text-gray-800",
 };
 
@@ -90,6 +91,16 @@ export default function AdminUserDetail() {
       toast({ title: t("common.success") });
     },
     onError: () => toast({ title: t("common.error"), variant: "destructive" }),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("POST", `/api/admin/users/${userId}/restore`).then((r) => r.json()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [`/api/admin/users/${userId}`] });
+      toast({ title: "Пользователь восстановлен" });
+    },
+    onError: () => toast({ title: "Не удалось восстановить пользователя", variant: "destructive" }),
   });
 
   if (isLoading) {
@@ -172,7 +183,18 @@ export default function AdminUserDetail() {
             <Separator />
 
             <div className="w-full space-y-2">
-              {user.status === "active" ? (
+              {user.status === "deleted" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => restoreMutation.mutate()}
+                  disabled={restoreMutation.isPending}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Восстановить
+                </Button>
+              ) : user.status === "active" ? (
                 <Button
                   variant="destructive"
                   size="sm"

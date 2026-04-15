@@ -3,9 +3,13 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { RedisStore } from "connect-redis";
 import { pool } from "../db";
+import { db } from "../db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { initializeRedis, getRedisClient } from "../lib/redis";
 import { getRedisConfigStatus } from "../config/redis";
+import { isSoftDeletedUser } from "../lib/user-deletion";
 
 const PgSession = connectPgSimple(session);
 
@@ -75,6 +79,24 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Check if user is authenticated via session
   if (req.session && req.session.passport?.user) {
     const user = req.session.passport.user;
+    const userId = user?.claims?.sub as string | undefined;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!dbUser || isSoftDeletedUser(dbUser)) {
+      req.session.destroy(() => {});
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+      return res.status(401).json({ message: "Account is not available" });
+    }
 
     // Attach user to request
     (req as any).user = user;

@@ -11,6 +11,7 @@ import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
 import { trackEvent } from "./lib/analytics";
 import { sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
+import { isSoftDeletedUser } from "./lib/user-deletion";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -142,6 +143,10 @@ export function setupLocalAuth(app: Express) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
+      if (isSoftDeletedUser(user)) {
+        return res.status(403).json({ message: "Account removed by administrator" });
+      }
+
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid email or password" });
@@ -198,7 +203,7 @@ export function setupLocalAuth(app: Express) {
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       // Always return success to prevent email enumeration
-      if (!user) {
+      if (!user || isSoftDeletedUser(user)) {
         return res.json({
           success: true,
           message: "If this email exists, you will receive password reset instructions",
@@ -264,6 +269,11 @@ export function setupLocalAuth(app: Express) {
         return res.status(400).json({
           message: "Invalid or expired reset token",
         });
+      }
+
+      const [resetUser] = await db.select().from(users).where(eq(users.id, resetToken.userId)).limit(1);
+      if (!resetUser || isSoftDeletedUser(resetUser)) {
+        return res.status(403).json({ message: "Account removed by administrator" });
       }
 
       // Hash new password

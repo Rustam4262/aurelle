@@ -6,6 +6,12 @@ import { eq, and, or, sql, inArray, ilike, desc, asc, count } from "drizzle-orm"
 import { requirePermission, logAuditAction } from "../../middleware/admin";
 import { logger } from "../../lib/logger";
 import { sendUserBlockedEmail, sendUserUnblockedEmail } from "../../lib/email";
+import {
+  buildSoftDeleteReason,
+  isSoftDeletedUser,
+  notSoftDeleted,
+  parseSoftDeleteReason,
+} from "../../lib/user-deletion";
 
 const router = Router();
 
@@ -108,8 +114,16 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     }
 
     // Status (blocked / active)
-    if (status === "blocked") conditions.push(eq(users.isBlocked, true));
-    else if (status === "active") conditions.push(eq(users.isBlocked, false));
+    if (status === "blocked") {
+      conditions.push(eq(users.isBlocked, true));
+      conditions.push(notSoftDeleted(users.blockReason));
+    } else if (status === "active") {
+      conditions.push(eq(users.isBlocked, false));
+      conditions.push(notSoftDeleted(users.blockReason));
+    } else if (status === "deleted") {
+      conditions.push(eq(users.isBlocked, true));
+      conditions.push(sql`${users.blockReason} LIKE ${"__SOFT_DELETED__:%"}`);
+    }
 
     // Verification
     if (verified === "email") {
@@ -174,6 +188,8 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
 
     const transformedUsers = pageUsers.map((user) => {
       const userRoles = pageRolesMap.get(user.id) ?? ["client"];
+      const softDeleteMeta = parseSoftDeleteReason(user.blockReason);
+      const isDeleted = !!softDeleteMeta;
       return {
         id:              user.id,
         email:           user.email,
@@ -183,9 +199,11 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
         phone:           user.phoneNumber,
         role:            userRoles[0] || "client",
         roles:           userRoles,
-        status:          user.isBlocked ? "blocked" : "active",
+        status:          isDeleted ? "deleted" : user.isBlocked ? "blocked" : "active",
         isBlocked:       user.isBlocked || false,
-        blockReason:     user.blockReason,
+        isDeleted,
+        blockReason:     isDeleted ? (softDeleteMeta?.reason || "Удалён администратором") : user.blockReason,
+        deletedAt:       softDeleteMeta?.deletedAt ?? null,
         lastLoginAt:     user.lastLoginAt,
         lastActivityAt:  user.lastActivityAt,
         loginCount:      user.loginCount || 0,
@@ -231,7 +249,19 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
       .orderBy(desc(bookings.bookingDate))
       .limit(10);
 
-    res.json({ user, profile: profile ?? null, recentBookings });
+    const softDeleteMeta = parseSoftDeleteReason(user.blockReason);
+
+    res.json({
+      user: {
+        ...user,
+        status: softDeleteMeta ? "deleted" : user.isBlocked ? "blocked" : "active",
+        isDeleted: !!softDeleteMeta,
+        deletedAt: softDeleteMeta?.deletedAt ?? null,
+        blockReason: softDeleteMeta ? (softDeleteMeta.reason || "Удалён администратором") : user.blockReason,
+      },
+      profile: profile ?? null,
+      recentBookings,
+    });
   } catch (error: any) {
     logger.error("Get user error", error as Error, { source: "users-routes" });
     res.status(500).json({ error: "Failed to fetch user" });
@@ -249,6 +279,10 @@ router.patch("/:id", requirePermission("users.write"), async (req, res) => {
 
     if (!oldUser) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    if (isSoftDeletedUser(oldUser)) {
+      return res.status(400).json({ error: "Deleted users cannot be blocked again" });
     }
 
     const updateData: any = {};
@@ -288,6 +322,10 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
 
     if (!oldUser) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    if (isSoftDeletedUser(oldUser)) {
+      return res.status(400).json({ error: "Use restore for deleted users" });
     }
 
     const [updated, hiddenSalons, hiddenMasters] = await db.transaction(async (tx) => {
@@ -412,6 +450,86 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
   }
 });
 
+// POST /api/admin/users/:id/restore - Restore soft deleted user
+router.post("/:id/restore", requirePermission("users.write"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = getUserId(req);
+
+    const [existingUser] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const metadata = parseSoftDeleteReason(existingUser.blockReason);
+    if (!metadata) {
+      return res.status(400).json({ error: "User is not deleted" });
+    }
+
+    const [restoredUser] = await db.transaction(async (tx) => {
+      const [user] = await tx
+        .update(users)
+        .set({
+          isBlocked: metadata.previousIsBlocked,
+          blockReason: metadata.previousBlockReason,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+
+      for (const salon of metadata.salons) {
+        await tx
+          .update(salons)
+          .set({
+            isActive: salon.isActive ?? true,
+            status: salon.status ?? "active",
+            updatedAt: new Date(),
+          })
+          .where(eq(salons.id, salon.id));
+      }
+
+      for (const master of metadata.masters) {
+        await tx
+          .update(masters)
+          .set({
+            isActive: master.isActive ?? true,
+            status: master.status ?? "active",
+          })
+          .where(eq(masters.id, master.id));
+      }
+
+      return [user] as const;
+    });
+
+    await logAuditAction({
+      actorUserId: userId,
+      actorRole: req.admin!.roleName,
+      action: "user.restore",
+      entityType: "user",
+      entityId: id,
+      oldData: { isBlocked: existingUser.isBlocked, blockReason: existingUser.blockReason },
+      newData: {
+        isBlocked: restoredUser.isBlocked,
+        blockReason: restoredUser.blockReason,
+        restoredSalons: metadata.salons.length,
+        restoredMasters: metadata.masters.length,
+      },
+      req,
+    });
+
+    res.json({
+      user: restoredUser,
+      message: "User restored successfully",
+      restoredSalons: metadata.salons.length,
+      restoredMasters: metadata.masters.length,
+    });
+  } catch (error: any) {
+    logger.error("Restore user error", error as Error, { source: "users-routes" });
+    res.status(500).json({ error: "Failed to restore user" });
+  }
+});
+
 // DELETE /api/admin/users/:id - Soft delete user
 router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
   try {
@@ -428,12 +546,16 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    if (isSoftDeletedUser(oldUser)) {
+      return res.status(400).json({ error: "User is already deleted" });
+    }
+
     const [ownedSalons, ownedMasters] = await Promise.all([
-      db.select({ id: salons.id }).from(salons).where(eq(salons.ownerId, id)),
-      db.select({ id: masters.id }).from(masters).where(eq(masters.userId, id)),
+      db.select({ id: salons.id, status: salons.status, isActive: salons.isActive }).from(salons).where(eq(salons.ownerId, id)),
+      db.select({ id: masters.id, status: masters.status, isActive: masters.isActive }).from(masters).where(eq(masters.userId, id)),
     ]);
 
-    await db.transaction(async (tx) => {
+    const [deletedUser] = await db.transaction(async (tx) => {
       if (ownedSalons.length > 0) {
         await tx
           .update(salons)
@@ -451,20 +573,35 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
           .set({
             isActive: false,
             status: "paused",
-            userId: null,
           })
           .where(eq(masters.userId, id));
       }
 
-      await tx.delete(adminUsers).where(eq(adminUsers.userId, id));
-      await tx.delete(userProfiles).where(eq(userProfiles.userId, id));
-      await tx.delete(users).where(eq(users.id, id));
+      const [user] = await tx
+        .update(users)
+        .set({
+          isBlocked: true,
+          blockReason: buildSoftDeleteReason({
+            deletedAt: new Date().toISOString(),
+            deletedBy: userId,
+            reason: "Удалён администратором",
+            previousIsBlocked: !!oldUser.isBlocked,
+            previousBlockReason: oldUser.blockReason ?? null,
+            salons: ownedSalons,
+            masters: ownedMasters,
+          }),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+
+      return [user] as const;
     });
 
     await logAuditAction({
       actorUserId: userId,
       actorRole: req.admin!.roleName,
-      action: "user.delete",
+      action: "user.soft_delete",
       entityType: "user",
       entityId: id,
       oldData: oldUser,
@@ -477,7 +614,8 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
     });
 
     res.json({
-      message: "User deleted",
+      user: deletedUser,
+      message: "User removed from platform",
       hiddenSalons: ownedSalons.length,
       hiddenMasters: ownedMasters.length,
     });
@@ -509,7 +647,7 @@ router.post("/bulk/block", requirePermission("users.write"), async (req, res) =>
         blockReason: reason || "Bulk blocked by admin",
         updatedAt: new Date(),
       })
-      .where(inArray(users.id, userIds))
+      .where(and(inArray(users.id, userIds), notSoftDeleted(users.blockReason)))
       .returning();
 
     // Log bulk action
@@ -552,7 +690,12 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
       return res.status(400).json({ error: "Maximum 100 users can be unblocked at once" });
     }
 
-    // Update all users
+    const deletedUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(inArray(users.id, userIds), sql`${users.blockReason} LIKE ${"__SOFT_DELETED__:%"}`));
+
+    // Update all non-deleted users
     const updated = await db
       .update(users)
       .set({
@@ -560,7 +703,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
         blockReason: sql`NULL`,
         updatedAt: new Date(),
       })
-      .where(inArray(users.id, userIds))
+      .where(and(inArray(users.id, userIds), notSoftDeleted(users.blockReason)))
       .returning();
 
     // Log bulk action
@@ -573,6 +716,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
       meta: {
         userIds,
         count: updated.length,
+        skippedDeleted: deletedUsers.length,
       },
       req,
     });
@@ -580,6 +724,7 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
     res.json({
       message: `Successfully unblocked ${updated.length} users`,
       count: updated.length,
+      skippedDeleted: deletedUsers.length,
       users: updated,
     });
   } catch (error: any) {
@@ -594,31 +739,37 @@ router.get("/stats/overview", requirePermission("users.read"), async (_req, res)
     // Total users
     const [totalResult] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(users);
+      .from(users)
+      .where(notSoftDeleted(users.blockReason));
 
     // Active users (not blocked)
     const [activeResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(eq(users.isBlocked, false));
+      .where(and(eq(users.isBlocked, false), notSoftDeleted(users.blockReason)));
 
     // Blocked users
     const [blockedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(eq(users.isBlocked, true));
+      .where(and(eq(users.isBlocked, true), notSoftDeleted(users.blockReason)));
+
+    const [deletedResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(sql`${users.blockReason} LIKE ${"__SOFT_DELETED__:%"}`);
 
     // Users by email verification
     const [emailVerifiedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(eq(users.emailVerified, true));
+      .where(and(eq(users.emailVerified, true), notSoftDeleted(users.blockReason)));
 
     // Users by phone verification
     const [phoneVerifiedResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(eq(users.phoneVerified, true));
+      .where(and(eq(users.phoneVerified, true), notSoftDeleted(users.blockReason)));
 
     // New users today
     const today = new Date();
@@ -626,19 +777,20 @@ router.get("/stats/overview", requirePermission("users.read"), async (_req, res)
     const [newTodayResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(sql`${users.createdAt} >= ${today}`);
+      .where(and(sql`${users.createdAt} >= ${today}`, notSoftDeleted(users.blockReason)));
 
     // Active users (logged in last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [activeWeekResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(sql`${users.lastActivityAt} >= ${sevenDaysAgo}`);
+      .where(and(sql`${users.lastActivityAt} >= ${sevenDaysAgo}`, notSoftDeleted(users.blockReason)));
 
     res.json({
       total: Number(totalResult.count),
       active: Number(activeResult.count),
       blocked: Number(blockedResult.count),
+      deleted: Number(deletedResult.count),
       emailVerified: Number(emailVerifiedResult.count),
       phoneVerified: Number(phoneVerifiedResult.count),
       newToday: Number(newTodayResult.count),

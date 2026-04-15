@@ -7,10 +7,11 @@ import { isAuthenticated } from "../auth";
 import { createWsToken } from "../lib/websocket";
 import { db } from "../db";
 import { adminUsers, adminRoles } from "@shared/admin-schema";
-import { salons, userProfiles } from "@shared/schema";
+import { salons, userProfiles, users } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { trackUserLogout } from "../middleware/activity";
+import { isSoftDeletedUser } from "../lib/user-deletion";
 
 const router = Router();
 
@@ -40,6 +41,18 @@ router.get("/auth/user", async (req: any, res) => {
   if (req.session && req.session.passport?.user) {
     const user = req.session.passport.user;
     const userId = user.claims.sub;
+
+    const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!dbUser || isSoftDeletedUser(dbUser)) {
+      req.session.destroy(() => undefined);
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+      return res.status(401).json({ message: "Account is not available" });
+    }
 
     // Check if user is admin (only if admin tables exist)
     let adminRole = null;
@@ -100,9 +113,9 @@ router.get("/auth/user", async (req: any, res) => {
     return res.json({
       id: userId,
       email: user.claims.email,
-      firstName: user.claims.first_name,
-      lastName: user.claims.last_name,
-      profileImageUrl: user.claims.profile_image_url,
+      firstName: dbUser.firstName ?? user.claims.first_name,
+      lastName: dbUser.lastName ?? user.claims.last_name,
+      profileImageUrl: dbUser.profileImageUrl ?? user.claims.profile_image_url,
       isAdmin: !!adminRole,
       adminRole: adminRole,
       role: derivedRole,
