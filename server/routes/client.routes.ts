@@ -162,6 +162,13 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
       phone: z.string().max(20).optional(),
       avatarUrl: z.string().max(500).optional().nullable(),
       city: z.string().max(100).optional(),
+      gender: z.string().max(20).optional(),
+      birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+      notifyEmail: z.boolean().optional(),
+      notifyReminder24h: z.boolean().optional(),
+      notifyReminder2h: z.boolean().optional(),
+      notifyBookingUpdates: z.boolean().optional(),
+      notifyPromotions: z.boolean().optional(),
     });
 
     const parsed = profileSchema.safeParse(req.body);
@@ -169,11 +176,30 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ error: "Invalid profile data", details: parsed.error.errors });
     }
 
-    const [updated] = await db
-      .update(userProfiles)
-      .set({ ...parsed.data, updatedAt: new Date() })
-      .where(eq(userProfiles.userId, userId))
-      .returning();
+    const normalizedData = {
+      ...parsed.data,
+      birthday: parsed.data.birthday || null,
+      updatedAt: new Date(),
+    };
+
+    let updated: typeof userProfiles.$inferSelect | undefined;
+
+    if (result.profile) {
+      [updated] = await db
+        .update(userProfiles)
+        .set(normalizedData)
+        .where(eq(userProfiles.userId, userId))
+        .returning();
+    } else {
+      [updated] = await db
+        .insert(userProfiles)
+        .values({
+          userId,
+          role: "client",
+          ...normalizedData,
+        })
+        .returning();
+    }
 
     return res.json(updated);
   } catch (error) {
