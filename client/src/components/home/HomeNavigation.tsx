@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Globe, ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/components/theme-provider";
 import { changeLanguage } from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -18,7 +19,13 @@ export const languages = [
   { code: "uz", name: "UZ" },
 ];
 
-export function LanguageSwitcher({ scrolled }: { scrolled: boolean }) {
+export function LanguageSwitcher({
+  scrolled,
+  textClass,
+}: {
+  scrolled: boolean;
+  textClass?: string;
+}) {
   const { i18n } = useTranslation();
   const currentLang = languages.find((l) => l.code === i18n.language) || languages[0];
 
@@ -28,7 +35,7 @@ export function LanguageSwitcher({ scrolled }: { scrolled: boolean }) {
         <Button
           variant="ghost"
           size="sm"
-          className={`gap-1 px-2 ${scrolled ? "text-foreground" : "text-white hover:bg-white/20"}`}
+          className={`gap-1 px-2 ${scrolled ? "text-foreground" : textClass || "text-white hover:bg-white/20"}`}
           data-testid="button-language-switcher"
         >
           <Globe className="h-4 w-4" />
@@ -54,7 +61,36 @@ export function LanguageSwitcher({ scrolled }: { scrolled: boolean }) {
 
 export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDarkTheme =
+    !mounted
+      ? true
+      : theme === "dark" ||
+        (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  const navTextClass = scrolled ? "text-foreground" : isDarkTheme ? "text-white" : "text-slate-950";
+  const navMutedTextClass = scrolled
+    ? "text-foreground"
+    : isDarkTheme
+      ? "text-white/90"
+      : "text-slate-900";
+  const navGhostButtonClass = scrolled
+    ? ""
+    : isDarkTheme
+      ? "text-white hover:bg-white/20"
+      : "text-slate-950 hover:bg-primary/10";
+  const navPrimaryButtonClass = scrolled
+    ? "shadow-sm"
+    : isDarkTheme
+      ? "bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30"
+      : "border border-primary/20 bg-primary/10 text-slate-950 hover:bg-primary/15";
 
   return (
     <nav
@@ -65,49 +101,29 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2" data-testid="link-logo">
-            <span
-              className={`font-serif text-2xl font-semibold tracking-tight ${
-                scrolled ? "text-foreground" : "text-white"
-              }`}
-            >
+            <span className={`font-serif text-2xl font-semibold tracking-tight ${navTextClass}`}>
               AURELLE
             </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
             <Link href="/">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
-                  scrolled ? "text-foreground" : "text-white/90"
-                }`}
-              >
+              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
                 {t("marketplace.nav.explore")}
               </span>
             </Link>
             <Link href="/search?tab=masters">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
-                  scrolled ? "text-foreground" : "text-white/90"
-                }`}
-              >
+              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
                 {t("home.masters.navLink") || "Мастера"}
               </span>
             </Link>
             <Link href="/about">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
-                  scrolled ? "text-foreground" : "text-white/90"
-                }`}
-              >
+              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
                 {t("about.title")}
               </span>
             </Link>
             <Link href="/owner">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${
-                  scrolled ? "text-foreground" : "text-white/90"
-                }`}
-              >
+              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
                 {t("marketplace.nav.forOwners")}
               </span>
             </Link>
@@ -115,11 +131,11 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
 
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
-            <LanguageSwitcher scrolled={scrolled} />
+            <LanguageSwitcher scrolled={scrolled} textClass={navGhostButtonClass} />
             <Link href="/auth">
               <Button
                 variant="ghost"
-                className={`${scrolled ? "" : "text-white hover:bg-white/20"}`}
+                className={navGhostButtonClass}
                 data-testid="button-login"
               >
                 {t("marketplace.nav.login")}
@@ -127,11 +143,7 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
             </Link>
             <Link href="/owner">
               <Button
-                className={`rounded-full px-6 transition-all hover:scale-105 active:scale-95 ${
-                  scrolled
-                    ? "shadow-sm"
-                    : "bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30"
-                }`}
+                className={`rounded-full px-6 transition-all hover:scale-105 active:scale-95 ${navPrimaryButtonClass}`}
                 data-testid="button-register-salon"
               >
                 {t("marketplace.nav.registerSalon")}
@@ -141,7 +153,7 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
 
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
-            <LanguageSwitcher scrolled={scrolled} />
+            <LanguageSwitcher scrolled={scrolled} textClass={navGhostButtonClass} />
             <button
               className="p-2 transition-transform active:scale-90"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -150,11 +162,7 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
             >
-              {mobileMenuOpen ? (
-                <X className={scrolled ? "text-foreground" : "text-white"} />
-              ) : (
-                <Menu className={scrolled ? "text-foreground" : "text-white"} />
-              )}
+              {mobileMenuOpen ? <X className={navTextClass} /> : <Menu className={navTextClass} />}
             </button>
           </div>
         </div>
