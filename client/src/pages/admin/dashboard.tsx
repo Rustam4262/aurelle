@@ -1,42 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { PaymentHealthWidget } from "@/components/payment-health-widget";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import {
-  Users,
-  Store,
-  Calendar,
-  AlertCircle,
-  Shield,
-  TrendingUp,
-  TrendingDown,
   Activity,
-  UserCheck,
-  Clock,
-  RefreshCw,
-  Info,
+  AlertCircle,
+  ArrowRight,
+  CalendarCheck2,
+  Clock3,
+  CreditCard,
   Flame,
+  RefreshCw,
+  Shield,
+  ShieldAlert,
+  Sparkles,
+  Store,
+  TrendingUp,
+  UserCheck,
+  UserX,
+  Users,
   Wifi,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from "recharts";
-
-// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Types Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
 
 interface DashboardStats {
   range: string;
@@ -85,780 +76,567 @@ interface FunnelResponse {
 type RangeKey = "24h" | "7d" | "30d" | "90d";
 type SeriesKey = "users" | "salons" | "bookings";
 
-// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Sub-components Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
+const QUERY_OPTS = { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false } as const;
+const RANGES: RangeKey[] = ["24h", "7d", "30d", "90d"];
+const RANGE_LABELS: Record<RangeKey, string> = { "24h": "24ч", "7d": "7д", "30d": "30д", "90d": "90д" };
+const SERIES: SeriesKey[] = ["users", "salons", "bookings"];
+const SERIES_LABELS: Record<SeriesKey, string> = { users: "Пользователи", salons: "Салоны", bookings: "Записи" };
+const SERIES_COLORS: Record<SeriesKey, string> = { users: "#3b82f6", salons: "#8b5cf6", bookings: "#10b981" };
 
-function KpiSkeleton() {
+const num = (value: number) => value.toLocaleString("ru-RU");
+
+function HeroMetric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone?: string }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {[...Array(7)].map((_, i) => (
-        <Card key={i}>
-          <CardHeader className="pb-2">
-            <Skeleton className="h-4 w-24" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-32 mt-2" />
-          </CardContent>
-        </Card>
-      ))}
+    <div className="rounded-lg border border-border/70 bg-background/80 px-4 py-4 backdrop-blur">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className={`mt-3 text-3xl font-semibold tracking-tight ${tone ?? "text-foreground"}`}>{value}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
     </div>
   );
 }
 
-interface KpiCardProps {
-  title: string;
-  value: number;
-  delta?: number;
-  deltaLabel?: string;
-  subtitle?: string;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  tooltipText: string;
-  accentClass?: string;
-  isOnline?: boolean;
-  href?: string;
-}
-
-function KpiCard({
-  title,
+function MiniStat({
+  label,
   value,
-  delta,
-  deltaLabel,
-  subtitle,
+  meta,
   icon: Icon,
-  color,
-  bgColor,
-  tooltipText,
-  accentClass,
-  isOnline,
-  href,
-}: KpiCardProps) {
-  const isPositive = delta !== undefined && delta >= 0;
-
-  const cardContent = (
-    <Card className={`${accentClass ?? ""} ${href ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className="flex items-center gap-1.5">
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[200px] text-xs">
-                {tooltipText}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <div className={`p-1.5 rounded-md ${bgColor}`}>
-            <Icon className={`h-4 w-4 ${color}`} />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-4">
-        <div className="flex items-baseline gap-2">
-          <div className="text-3xl font-bold text-foreground">{value.toLocaleString()}</div>
-          {isOnline && (
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            </span>
-          )}
-        </div>
-        {delta !== undefined && (
-          <p
-            className={`text-xs mt-1 flex items-center gap-1 ${isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-          >
-            {isPositive ? (
-              <TrendingUp className="h-3 w-3" />
-            ) : (
-              <TrendingDown className="h-3 w-3" />
-            )}
-            {isPositive ? "+" : ""}
-            {delta} {deltaLabel}
-          </p>
-        )}
-        {subtitle && delta === undefined && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        )}
-        {subtitle && delta !== undefined && (
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  if (href) {
-    return <Link href={href}>{cardContent}</Link>;
-  }
-  return cardContent;
-}
-
-interface ActionItemProps {
-  count: number;
+  iconTone,
+}: {
   label: string;
-  href: string;
-  color: string;
-  goToLabel: string;
+  value: string;
+  meta: string;
+  icon: React.ElementType;
+  iconTone: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-card px-5 py-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{meta}</p>
+        </div>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconTone}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function ActionItem({ count, label, href, color, goToLabel }: ActionItemProps) {
+function ListItem({
+  title,
+  description,
+  count,
+  href,
+  cta,
+  badgeClass,
+}: {
+  title: string;
+  description: string;
+  count: number;
+  href: string;
+  cta: string;
+  badgeClass: string;
+}) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-background border">
-      <div>
-        <div className={`text-2xl font-bold ${color}`}>{count}</div>
-        <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+    <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-background px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold">{title}</p>
+          <Badge className={badgeClass}>{count}</Badge>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
       <Link href={href}>
-        <Button variant="outline" size="sm" className="text-xs h-7">
-          {goToLabel}
+        <Button variant="outline" className="gap-2">
+          {cta}
+          <ArrowRight className="h-4 w-4" />
         </Button>
       </Link>
     </div>
   );
 }
 
-interface FunnelBarProps {
-  label: string;
-  value: number;
-  max: number;
-  colorClass: string;
-}
-
-function FunnelBar({ label, value, max, colorClass }: FunnelBarProps) {
-  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+function FeedRow({
+  icon: Icon,
+  tone,
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  tone: string;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-muted-foreground w-36 shrink-0">{label}</span>
-      <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
-        <div
-          className={`h-full ${colorClass} transition-all duration-500`}
-          style={{ width: `${pct}%` }}
-        />
+    <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-background px-4 py-4">
+      <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+        <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-semibold w-14 text-right tabular-nums">
-        {value.toLocaleString()}
-      </span>
-      <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
-        {pct.toFixed(0)}%
-      </span>
+      <div>
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
     </div>
   );
 }
 
-// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Custom recharts tooltip Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
+function FunnelRow({ label, value, max, barColor }: { label: string; value: number; max: number; barColor: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-[170px_minmax(0,1fr)_60px_48px] sm:items-center">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="h-3 overflow-hidden rounded-full bg-muted">
+        <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-right text-sm font-semibold tabular-nums">{num(value)}</span>
+      <span className="text-right text-xs text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
+    </div>
+  );
+}
 
 function GrowthTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border rounded-lg shadow-lg px-3 py-2 text-sm">
-      <p className="text-muted-foreground text-xs mb-1">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
+      <p className="text-xs text-muted-foreground">
         {new Date(label).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
       </p>
-      <p className="font-semibold text-foreground">{payload[0].value}</p>
+      <p className="mt-1 text-sm font-semibold">{payload[0].value}</p>
     </div>
   );
 }
 
-// Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Main component Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
-
-const QUERY_OPTS = { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false } as const;
-const RANGES: RangeKey[] = ["24h", "7d", "30d", "90d"];
-const SERIES: SeriesKey[] = ["users", "salons", "bookings"];
-const SERIES_COLORS: Record<SeriesKey, string> = {
-  users: "#3b82f6",
-  salons: "#8b5cf6",
-  bookings: "#10b981",
-};
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-72 rounded-lg" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[...Array(4)].map((_, index) => (
+          <Skeleton key={index} className="h-32 rounded-lg" />
+        ))}
+      </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Skeleton className="h-96 rounded-lg" />
+        <Skeleton className="h-96 rounded-lg" />
+      </div>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
-  const { t } = useTranslation();
   const [range, setRange] = useState<RangeKey>("30d");
-  const [growthSeries, setGrowthSeries] = useState<SeriesKey>("users");
+  const [series, setSeries] = useState<SeriesKey>("users");
 
-  // Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Queries Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
-
-  const {
-    data: stats,
-    isLoading,
-    isError,
-    refetch: refetchStats,
-  } = useQuery<DashboardStats>({
+  const { data: stats, isLoading, isError, refetch: refetchStats, isFetching } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/dashboard", { range }],
     ...QUERY_OPTS,
   });
-
+  const { data: todayStats } = useQuery<DashboardStats>({
+    queryKey: ["/api/admin/dashboard", { range: "24h" }],
+    ...QUERY_OPTS,
+  });
   const { data: actionCenter } = useQuery<ActionCenterData>({
     queryKey: ["/api/admin/dashboard/action-center"],
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-
   const { data: onlineData, refetch: refetchOnline } = useQuery<OnlineUsersResponse>({
     queryKey: ["/api/admin/dashboard/online"],
     refetchInterval: 60_000,
     ...QUERY_OPTS,
   });
-
   const { data: growthData } = useQuery<UserGrowthResponse>({
-    queryKey: ["/api/admin/dashboard/user-growth", { range, series: growthSeries }],
+    queryKey: ["/api/admin/dashboard/user-growth", { range, series }],
     ...QUERY_OPTS,
   });
-
   const { data: funnelData } = useQuery<FunnelResponse>({
     queryKey: ["/api/admin/dashboard/funnel", { range }],
     ...QUERY_OPTS,
   });
-
   const { data: platformHealth } = useQuery<PlatformHealthResponse>({
     queryKey: ["/api/admin/dashboard/platform-health"],
     refetchInterval: 120_000,
     ...QUERY_OPTS,
   });
 
-  const refetchAll = () => {
-    refetchStats();
-    refetchOnline();
+  if (isLoading) return <DashboardSkeleton />;
+  if (isError || !stats) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Не удалось загрузить dashboard</AlertTitle>
+        <AlertDescription>Попробуй обновить страницу. Если проблема повторится, уже копаем запросы.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  const refreshAll = () => {
+    void refetchStats();
+    void refetchOnline();
   };
 
-  // Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Derived values Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
-
-  const s = stats?.stats;
+  const s = stats.stats;
+  const today = todayStats?.stats;
   const ac = actionCenter;
-  const hasActionItems =
-    (ac?.unverifiedSalons ?? 0) +
-      (ac?.pendingComplaints ?? 0) +
-      (ac?.paymentErrors24h ?? 0) +
-      (ac?.expiringToday ?? 0) >
-    0;
+  const health = platformHealth?.health;
+  const online = onlineData?.onlineUsers ?? 0;
+  const seriesColor = SERIES_COLORS[series];
+  const conversion = funnelData && funnelData.signups > 0 ? ((funnelData.bookingsCreated / funnelData.signups) * 100).toFixed(1) : "0.0";
 
-  const seriesColor = SERIES_COLORS[growthSeries];
+  const queue = [
+    {
+      title: "Жалобы ждут решения",
+      description: "Сначала разгрузи модерацию, чтобы негатив не копился в тени.",
+      count: ac?.pendingComplaints ?? 0,
+      href: "/admin/complaints",
+      cta: "Открыть жалобы",
+      badgeClass: "bg-red-500/10 text-red-600 border border-red-500/20",
+    },
+    {
+      title: "Салоны ждут проверки",
+      description: "Непроверенные карточки тормозят качество каталога и доверие пользователей.",
+      count: ac?.unverifiedSalons ?? 0,
+      href: "/admin/salons",
+      cta: "Проверить салоны",
+      badgeClass: "bg-orange-500/10 text-orange-600 border border-orange-500/20",
+    },
+    {
+      title: "Санкции истекают сегодня",
+      description: "Ограничения не должны заканчиваться незаметно. Здесь всё, что пора пересмотреть.",
+      count: ac?.expiringToday ?? 0,
+      href: "/admin/sanctions",
+      cta: "Открыть санкции",
+      badgeClass: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+    },
+    {
+      title: "Ошибки платежей за 24ч",
+      description: "Финансовые сбои должны быть рядом с операционной очередью, а не глубоко внизу страницы.",
+      count: ac?.paymentErrors24h ?? 0,
+      href: "/admin/dashboard",
+      cta: "Смотреть платежи",
+      badgeClass: "bg-rose-500/10 text-rose-600 border border-rose-500/20",
+    },
+  ];
 
-  const rangeLabel = t(`admin.dashboard.period.${range}`);
-
-  // Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ Render Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚
+  const feed = [
+    {
+      icon: Users,
+      tone: "bg-blue-500/10 text-blue-600",
+      title: `${num(today?.users.newInPeriod ?? 0)} новых пользователей за 24 часа`,
+      description: "Первый сигнал того, как движется верхняя часть воронки прямо сейчас.",
+    },
+    {
+      icon: CalendarCheck2,
+      tone: "bg-emerald-500/10 text-emerald-600",
+      title: `${num(today?.bookings.newInPeriod ?? 0)} записей создано за 24 часа`,
+      description: "Не просто посещения, а действие, которое двигает бизнес.",
+    },
+    {
+      icon: Wifi,
+      tone: "bg-teal-500/10 text-teal-600",
+      title: `${num(online)} пользователей онлайн`,
+      description: "Живая метрика, которая даёт ощущение системы, а не мёртвой панели.",
+    },
+    {
+      icon: UserCheck,
+      tone: "bg-violet-500/10 text-violet-600",
+      title: `${Math.round(health?.emailVerificationRate ?? 0)}% email-верификации`,
+      description: "Если верификация проседает, качество базы начинает деградировать раньше остального.",
+    },
+  ];
 
   return (
     <div className="space-y-8 pb-8">
-      <Card className="border-border/70 bg-card/70 shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary" className="rounded-full px-3 py-1">Панель контроля</Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1">Период: {range}</Badge>
+      <section className="relative overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_28%)]" />
+        <div className="relative grid gap-6 px-6 py-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1 border border-primary/10 bg-primary/5 text-primary">
+                <Sparkles className="h-3 w-3" />
+                Control center
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                <Clock3 className="h-3 w-3" />
+                Фокус на действиях
+              </Badge>
             </div>
-            <div>
-              <h1 className="text-2xl font-serif font-semibold text-foreground">
-                {t("admin.dashboard.title") || "Панель управления"}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("admin.dashboard.subtitle") || "Обзор платформы и ключевые показатели"}
-              </p>
+            <h2 className="mt-4 text-3xl font-serif font-semibold tracking-tight sm:text-4xl">Вот твой бизнес сегодня</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+              Главный экран теперь не спорит сам с собой. Здесь только сигналы, риски, деньги и следующие шаги команды.
+            </p>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <HeroMetric
+                label="Сегодня"
+                value={`+${num(today?.users.newInPeriod ?? 0)}`}
+                detail={`${num(today?.bookings.newInPeriod ?? 0)} записей и ${num(online)} пользователей онлайн`}
+              />
+              <HeroMetric
+                label="Риски"
+                value={num((ac?.pendingComplaints ?? 0) + (ac?.unverifiedSalons ?? 0))}
+                detail={`${num(ac?.pendingComplaints ?? 0)} жалоб и ${num(ac?.unverifiedSalons ?? 0)} салонов без проверки`}
+                tone="text-orange-600"
+              />
+              <HeroMetric
+                label="Платежи"
+                value={num(ac?.paymentErrors24h ?? 0)}
+                detail="Ошибки оплат за 24 часа. Денежный блок больше не спрятан."
+                tone="text-rose-600"
+              />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/admin/complaints">
+                <Button className="gap-2">
+                  Разобрать жалобы
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/admin/salons">
+                <Button variant="outline" className="gap-2">
+                  Проверить салоны
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="outline" className="gap-2" onClick={refreshAll} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                Обновить
+              </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <div className="flex overflow-hidden rounded-xl border text-sm">
-              {RANGES.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    range === r
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
-                >
-                  {t(`admin.dashboard.period.${r}`)}
-                </button>
+
+          <div className="rounded-lg border border-border/70 bg-background/80 p-5 backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Решить сейчас</p>
+                <h3 className="mt-2 text-xl font-semibold">Очередь оператора</h3>
+              </div>
+              <Badge variant="outline">
+                {(ac?.pendingComplaints ?? 0) + (ac?.unverifiedSalons ?? 0) + (ac?.paymentErrors24h ?? 0) + (ac?.expiringToday ?? 0)} задач
+              </Badge>
+            </div>
+            <div className="mt-5 space-y-3">
+              {queue.map((item) => (
+                <div key={item.title} className="rounded-lg border border-border/70 bg-card px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{item.title}</p>
+                    <Badge className={item.badgeClass}>{item.count}</Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                </div>
               ))}
             </div>
-            <Button variant="outline" size="sm" onClick={refetchAll} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" />
-              {t("admin.dashboard.refresh")}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 2. Error state Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      {isError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t("admin.dashboard.errorLoading")}</AlertTitle>
-          <AlertDescription className="mt-2">
-            <Button size="sm" variant="outline" onClick={() => refetchStats()}>
-              {t("admin.dashboard.retry")}
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 3. KPI Cards Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
-        <Card className="border-border/70 bg-card/70 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Операционная сводка</CardTitle>
-            <CardDescription>Сфокусируйте команду на следующих шагах модерации и доверия.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Требует внимания</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{((ac?.unverifiedSalons ?? 0) + (ac?.pendingComplaints ?? 0) + (ac?.paymentErrors24h ?? 0) + (ac?.expiringToday ?? 0)).toLocaleString()}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Открытые задачи модерации и платежей по всей платформе.</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Верификация</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth ? `${Math.round((platformHealth.health.emailVerificationRate + platformHealth.health.phoneVerificationRate) / 2)}%` : "-"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Средний уровень завершения email и телефонной верификации.</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Живые сессии</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.activeSessionsLast24h?.toLocaleString() ?? 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Сессии, замеченные за последние 24 часа.</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-background px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Нагрузка по жалобам</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">{platformHealth?.health.pendingComplaints?.toLocaleString() ?? 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Кейсы, которые всё ещё ждут решения модератора.</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/70 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Быстрые переходы</CardTitle>
-            <CardDescription>Быстрые переходы в разделы, которыми администраторы пользуются чаще всего.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Link href="/admin/complaints"><Button variant="outline" className="w-full justify-between">Жалобы <AlertCircle className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/salons"><Button variant="outline" className="w-full justify-between">Проверка салонов <Store className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/users"><Button variant="outline" className="w-full justify-between">Пользователи <Users className="h-4 w-4" /></Button></Link>
-            <Link href="/admin/sanctions"><Button variant="outline" className="w-full justify-between">Санкции <Shield className="h-4 w-4" /></Button></Link>
-          </CardContent>
-        </Card>
-      </div>
-      {isLoading ? (
-        <KpiSkeleton />
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Users */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.totalUsers") || "Р В РЎСџР В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В РЎвЂ"}
-            value={s?.users.total ?? 0}
-            delta={(s?.users.newInPeriod ?? 0) - (s?.users.prevPeriod ?? 0)}
-            deltaLabel={rangeLabel}
-            icon={Users}
-            color="text-blue-600"
-            bgColor="bg-blue-100 dark:bg-blue-900/30"
-            tooltipText={t("admin.dashboard.tooltip.users")}
-            href="/admin/users"
-          />
-
-          {/* Salons */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.salons") || "Р В Р Р‹Р В Р’В°Р В Р’В»Р В РЎвЂўР В Р вЂ¦Р РЋРІР‚в„–"}
-            value={s?.salons.total ?? 0}
-            delta={s?.salons.newInPeriod ?? 0}
-            deltaLabel={rangeLabel}
-            subtitle={t("marketplace.admin.dashboard.verified", { count: s?.salons.verified ?? 0 })}
-            icon={Store}
-            color="text-purple-600"
-            bgColor="bg-purple-100 dark:bg-purple-900/30"
-            tooltipText={t("admin.dashboard.tooltip.salons")}
-            href="/admin/salons"
-          />
-
-          {/* Masters */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.masters") || "Р В РЎС™Р В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В°"}
-            value={s?.masters.total ?? 0}
-            delta={s?.masters.newInPeriod ?? 0}
-            deltaLabel={rangeLabel}
-            icon={UserCheck}
-            color="text-green-600"
-            bgColor="bg-green-100 dark:bg-green-900/30"
-            tooltipText={t("admin.dashboard.tooltip.masters")}
-          />
-
-          {/* Bookings */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.totalBookings") || "Р В РІР‚вЂќР В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂ"}
-            value={s?.bookings.total ?? 0}
-            delta={(s?.bookings.newInPeriod ?? 0) - (s?.bookings.prevPeriod ?? 0)}
-            deltaLabel={rangeLabel}
-            icon={Calendar}
-            color="text-orange-600"
-            bgColor="bg-orange-100 dark:bg-orange-900/30"
-            tooltipText={t("admin.dashboard.tooltip.bookings")}
-          />
-
-          {/* Open Complaints */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.openComplaints") || "Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋРІР‚в„–Р В Р’Вµ Р В Р’В¶Р В Р’В°Р В Р’В»Р В РЎвЂўР В Р’В±Р РЋРІР‚в„–"}
-            value={s?.moderation.openComplaints ?? 0}
-            icon={AlertCircle}
-            color="text-red-600"
-            bgColor="bg-red-100 dark:bg-red-900/30"
-            tooltipText={t("admin.dashboard.tooltip.complaints")}
-            accentClass={
-              (s?.moderation.openComplaints ?? 0) > 0
-                ? "border-l-4 border-l-red-500"
-                : undefined
-            }
-            href="/admin/complaints"
-          />
-
-          {/* Active Sanctions */}
-          <KpiCard
-            title={t("marketplace.admin.dashboard.activeSanctions") || "Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р РЋР С“Р В Р’В°Р В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР В РЎвЂ"}
-            value={s?.moderation.activeSanctions ?? 0}
-            icon={Shield}
-            color="text-amber-600"
-            bgColor="bg-amber-100 dark:bg-amber-900/30"
-            tooltipText={t("admin.dashboard.tooltip.sanctions")}
-            accentClass={
-              (s?.moderation.activeSanctions ?? 0) > 0
-                ? "border-l-4 border-l-amber-500"
-                : undefined
-            }
-            href="/admin/sanctions"
-          />
-
-          {/* Online Now Р Р†Р вЂљРІР‚Сњ spans 2 cols */}
-          <Card className="col-span-2 border-green-200 dark:border-green-900/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                {t("admin.dashboard.onlineUsers") || "Р В РЎвЂєР В Р вЂ¦Р В Р’В»Р В Р’В°Р В РІвЂћвЂ“Р Р… Р РЋР С“Р В Р’ВµР В РІвЂћвЂ“Р РЋРІР‚РЋР В Р’В°Р РЋР С“"}
-              </CardTitle>
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs max-w-[200px]">
-                    {t("admin.dashboard.tooltip.online")}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <div className="flex items-baseline gap-3">
-                <div className="text-4xl font-bold text-green-600 dark:text-green-400">
-                  {onlineData?.onlineUsers?.toLocaleString() ?? 0}
-                </div>
-                <Wifi className="h-5 w-5 text-green-500" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("admin.dashboard.onlineSubtitle") || "Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„– Р Р† Р В РЎвЂ”Р В РЎвЂўР РЋР С“Р В Р’В»Р В Р’ВµР В РўвЂР В Р вЂ¦Р В РЎвЂР В Р’Вµ 10 Р В РЎВР В РЎвЂР В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™"}
-              </p>
-            </CardContent>
-          </Card>
         </div>
-      )}
+      </section>
 
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 4. Action Center Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      {hasActionItems && (
-        <Card className="border-l-4 border-l-orange-500 bg-orange-50/40 dark:bg-orange-950/10">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Flame className="h-5 w-5 text-orange-500" />
-              {t("admin.dashboard.actionCenter.title")}
-            </CardTitle>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MiniStat label="Всего пользователей" value={num(s.users.total)} meta={`+${num(s.users.newInPeriod)} за ${RANGE_LABELS[range]}`} icon={Users} iconTone="bg-blue-500/10 text-blue-600" />
+        <MiniStat label="Салоны" value={num(s.salons.total)} meta={`${num(s.salons.verified)} проверено`} icon={Store} iconTone="bg-fuchsia-500/10 text-fuchsia-600" />
+        <MiniStat label="Мастера" value={num(s.masters.total)} meta={`+${num(s.masters.newInPeriod)} за ${RANGE_LABELS[range]}`} icon={Shield} iconTone="bg-amber-500/10 text-amber-600" />
+        <MiniStat label="Записи" value={num(s.bookings.total)} meta={`+${num(s.bookings.newInPeriod)} за ${RANGE_LABELS[range]}`} icon={CalendarCheck2} iconTone="bg-emerald-500/10 text-emerald-600" />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Очередь действий</CardTitle>
+            <CardDescription>Админ должен действовать быстро. Здесь только задачи, а не декоративная статистика.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {(ac?.unverifiedSalons ?? 0) > 0 && (
-                <ActionItem
-                  count={ac!.unverifiedSalons}
-                  label={t("admin.dashboard.actionCenter.unverifiedSalons")}
-                  href="/admin/salons"
-                  color="text-orange-600"
-                  goToLabel={t("admin.dashboard.actionCenter.goTo")}
-                />
-              )}
-              {(ac?.pendingComplaints ?? 0) > 0 && (
-                <ActionItem
-                  count={ac!.pendingComplaints}
-                  label={t("admin.dashboard.actionCenter.pendingComplaints")}
-                  href="/admin/complaints"
-                  color="text-red-600"
-                  goToLabel={t("admin.dashboard.actionCenter.goTo")}
-                />
-              )}
-              {(ac?.paymentErrors24h ?? 0) > 0 && (
-                <ActionItem
-                  count={ac!.paymentErrors24h}
-                  label={t("admin.dashboard.actionCenter.paymentErrors")}
-                  href="/admin/dashboard"
-                  color="text-rose-600"
-                  goToLabel={t("admin.dashboard.actionCenter.goTo")}
-                />
-              )}
-              {(ac?.expiringToday ?? 0) > 0 && (
-                <ActionItem
-                  count={ac!.expiringToday}
-                  label={t("admin.dashboard.actionCenter.expiringToday")}
-                  href="/admin/sanctions"
-                  color="text-amber-600"
-                  goToLabel={t("admin.dashboard.actionCenter.goTo")}
-                />
-              )}
-            </div>
+          <CardContent className="space-y-3">
+            {queue.map((item) => (
+              <ListItem key={item.title} {...item} />
+            ))}
           </CardContent>
         </Card>
-      )}
 
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 5. Charts row Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Growth chart */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-base">
-                  {t("admin.dashboard.userGrowthTitle") || "Р В Р’В Р В РЎвЂўР РЋР С“Р РЋРІР‚С™ Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР РЋРІР‚в„–"}
-                </CardTitle>
-                <CardDescription className="mt-0.5">
-                  {t("admin.dashboard.userGrowthSubtitle") || "Р В РЎСљР В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В Р’Вµ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂ Р В Р’В·Р В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ"}
-                </CardDescription>
+                <CardTitle className="text-xl">Живая лента</CardTitle>
+                <CardDescription>Небольшой поток сигналов, который даёт ощущение системы и реального движения.</CardDescription>
               </div>
-              {/* Series tabs */}
-              <div className="flex rounded-md border overflow-hidden text-xs">
-                {SERIES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setGrowthSeries(s)}
-                    className={`px-2.5 py-1 transition-colors ${
-                      growthSeries === s
-                        ? "bg-primary text-primary-foreground font-medium"
-                        : "bg-card text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {t(`admin.dashboard.growthSeries.${s}`)}
-                  </button>
-                ))}
+              <Badge variant="secondary" className="gap-1">
+                <Wifi className="h-3 w-3" />
+                real-time
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {feed.map((item) => (
+              <FeedRow key={item.title} {...item} />
+            ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl">Рост и динамика</CardTitle>
+                <CardDescription>Смотри на один поток за выбранный период, а не на всё сразу.</CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex overflow-hidden rounded-lg border border-border">
+                  {RANGES.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => setRange(item)}
+                      className={`px-3 py-1.5 text-sm ${range === item ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-accent"}`}
+                    >
+                      {RANGE_LABELS[item]}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex overflow-hidden rounded-lg border border-border">
+                  {SERIES.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => setSeries(item)}
+                      className={`px-3 py-1.5 text-sm ${series === item ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-accent"}`}
+                    >
+                      {SERIES_LABELS[item]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {!growthData ? (
-              /* Skeleton bars while data loads */
-              <div className="h-[240px] flex flex-col gap-3 pt-2">
-                <div className="flex items-end gap-1.5 flex-1 px-2">
-                  {[35, 55, 40, 70, 50, 80, 60, 90, 65, 75, 45, 85].map((h, i) => (
-                    <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
-                  ))}
-                </div>
-                <div className="flex justify-between px-2 pb-1">
-                  {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-3 w-10" />
-                  ))}
-                </div>
-              </div>
-            ) : growthData.growth.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={growthData.growth} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            {growthData?.growth?.length ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={growthData.growth} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="gradSeries" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={seriesColor} stopOpacity={0.25} />
+                    <linearGradient id="adminGrowthGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={seriesColor} stopOpacity={0.24} />
                       <stop offset="95%" stopColor={seriesColor} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(v) =>
-                      new Date(v).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
-                    }
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.45} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(value) => new Date(value).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
                   <RechartsTooltip content={<GrowthTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke={seriesColor}
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#gradSeries)"
-                    dot={false}
-                    activeDot={{ r: 4, strokeWidth: 0 }}
-                  />
+                  <Area type="monotone" dataKey="count" stroke={seriesColor} strokeWidth={2} fill="url(#adminGrowthGradient)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[240px] flex items-center justify-center text-sm text-muted-foreground">
-                {t("admin.dashboard.funnel.noData")}
-              </div>
+              <div className="flex h-[280px] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">Данных по этой серии пока нет.</div>
             )}
           </CardContent>
         </Card>
 
-        {/* Conversion funnel */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t("admin.dashboard.funnel.title")}</CardTitle>
-            <CardDescription>{t("admin.dashboard.funnel.subtitle")}</CardDescription>
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Воронка конверсии</CardTitle>
+            <CardDescription>Рост полезен только тогда, когда пользователи доходят до действия.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {funnelData ? (
+              <>
+                <FunnelRow label="Регистрации" value={funnelData.signups} max={funnelData.signups} barColor="bg-blue-500" />
+                <FunnelRow label="Записи созданы" value={funnelData.bookingsCreated} max={funnelData.signups} barColor="bg-violet-500" />
+                <FunnelRow label="Записи подтверждены" value={funnelData.bookingsCompleted} max={funnelData.signups} barColor="bg-emerald-500" />
+                <div className="rounded-lg border border-border/70 bg-muted/30 px-4 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold">Конверсия регистрации в запись</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Сколько пользователей доходит до реального действия.</p>
+                    </div>
+                    <Badge variant="secondary" className="text-base font-semibold">{conversion}%</Badge>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-3">{[...Array(4)].map((_, index) => <Skeleton key={index} className="h-12 rounded-lg" />)}</div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Здоровье платформы</CardTitle>
+            <CardDescription>Ключевые показатели доверия и качества без стены однотипных блоков.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <FeedRow icon={Activity} tone="bg-blue-500/10 text-blue-600" title={`${num(health?.activeSessionsLast24h ?? 0)} активных сессий за 24ч`} description={`Средняя длительность: ${num(Math.round(health?.avgSessionDurationMinutes ?? 0))} минут.`} />
+            <FeedRow icon={UserCheck} tone="bg-emerald-500/10 text-emerald-600" title={`${Math.round(health?.emailVerificationRate ?? 0)}% email-верификации`} description={`Телефон подтверждён у ${Math.round(health?.phoneVerificationRate ?? 0)}% пользователей.`} />
+            <FeedRow icon={ShieldAlert} tone="bg-orange-500/10 text-orange-600" title={`${num(health?.pendingComplaints ?? 0)} жалоб ожидают решения`} description="Если эта цифра растёт, команда не успевает за качеством сервиса." />
+            <FeedRow icon={UserX} tone="bg-rose-500/10 text-rose-600" title={`${(health?.blockedUserPercentage ?? 0).toFixed(1)}% пользователей заблокированы`} description="Это сигнал про качество потока, правила и верификацию." />
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <CardTitle className="text-xl">Деньги и платежи</CardTitle>
+                <CardDescription>Финансовый блок должен жить рядом с рисками, а не прятаться внизу.</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            {funnelData ? (
-              <div className="space-y-4 py-4">
-                <FunnelBar
-                  label={t("admin.dashboard.funnel.signups")}
-                  value={funnelData.signups}
-                  max={funnelData.signups}
-                  colorClass="bg-blue-500"
-                />
-                <FunnelBar
-                  label={t("admin.dashboard.funnel.bookingsCreated")}
-                  value={funnelData.bookingsCreated}
-                  max={funnelData.signups}
-                  colorClass="bg-purple-500"
-                />
-                <FunnelBar
-                  label={t("admin.dashboard.funnel.bookingsCompleted")}
-                  value={funnelData.bookingsCompleted}
-                  max={funnelData.signups}
-                  colorClass="bg-green-500"
-                />
-
-                {/* Conversion rate callout */}
-                {funnelData.signups > 0 && (
-                  <div className="mt-6 pt-4 border-t flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Конверсия регистрации в запись</span>
-                    <Badge variant="secondary" className="text-sm font-semibold">
-                      {((funnelData.bookingsCreated / funnelData.signups) * 100).toFixed(1)}%
-                    </Badge>
-                  </div>
-                )}
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border/70 bg-background px-4 py-4">
+                <p className="text-sm font-medium text-muted-foreground">Ошибки оплаты за 24ч</p>
+                <p className="mt-3 text-3xl font-semibold text-rose-600">{num(ac?.paymentErrors24h ?? 0)}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Даже редкие ошибки должны быть видны с первого экрана.</p>
               </div>
-            ) : (
-              <div className="h-[240px] flex items-center justify-center">
-                <div className="space-y-3 w-full px-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-6 w-full" />
-                  ))}
-                </div>
+              <div className="rounded-lg border border-border/70 bg-background px-4 py-4">
+                <p className="text-sm font-medium text-muted-foreground">Подтверждённые записи</p>
+                <p className="mt-3 text-3xl font-semibold">{num(funnelData?.bookingsCompleted ?? 0)}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Ближайший доступный сигнал, что спрос дошёл до завершённого действия.</p>
               </div>
-            )}
+            </div>
+            <ErrorBoundary fallback={<p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">Виджет платёжного здоровья сейчас не загрузился, но dashboard остаётся рабочим.</p>}>
+              <PaymentHealthWidget scope="platform" />
+            </ErrorBoundary>
           </CardContent>
         </Card>
-      </div>
+      </section>
 
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 6. Platform Health Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            {t("admin.dashboard.platformHealth")}
-          </CardTitle>
-          <CardDescription>{t("admin.dashboard.platformHealthSubtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {platformHealth ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                {
-                  icon: Activity,
-                  color: "text-blue-600",
-                  label: t("admin.dashboard.metrics.activeSessions"),
-                  desc: t("admin.dashboard.metrics.activeSessDesc"),
-                  value: platformHealth.health.activeSessionsLast24h,
-                  fmt: (v: number) => v.toString(),
-                },
-                {
-                  icon: Clock,
-                  color: "text-purple-600",
-                  label: t("admin.dashboard.metrics.avgSession"),
-                  desc: t("admin.dashboard.metrics.avgSessDesc"),
-                  value: platformHealth.health.avgSessionDurationMinutes,
-                  fmt: (v: number) => `${v}m`,
-                },
-                {
-                  icon: UserCheck,
-                  color: "text-green-600",
-                  label: t("admin.dashboard.metrics.emailVerified"),
-                  desc: t("admin.dashboard.metrics.emailVerifDesc"),
-                  value: platformHealth.health.emailVerificationRate,
-                  fmt: (v: number) => `${Math.round(v)}%`,
-                },
-                {
-                  icon: UserCheck,
-                  color: "text-teal-600",
-                  label: t("admin.dashboard.metrics.phoneVerified"),
-                  desc: t("admin.dashboard.metrics.phoneVerifDesc"),
-                  value: platformHealth.health.phoneVerificationRate,
-                  fmt: (v: number) => `${Math.round(v)}%`,
-                },
-                {
-                  icon: AlertCircle,
-                  color: "text-orange-600",
-                  label: t("admin.dashboard.metrics.pendingComplaints"),
-                  desc: t("admin.dashboard.metrics.pendingComplDesc"),
-                  value: platformHealth.health.pendingComplaints,
-                  fmt: (v: number) => v.toString(),
-                },
-                {
-                  icon: Shield,
-                  color: "text-red-600",
-                  label: t("admin.dashboard.metrics.blockedUsers"),
-                  desc: t("admin.dashboard.metrics.blockedUsersDesc"),
-                  value: platformHealth.health.blockedUserPercentage,
-                  fmt: (v: number) => `${v.toFixed(1)}%`,
-                },
-              ].map(({ icon: Ic, color, label, desc, value, fmt }) => (
-                <div
-                  key={label}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/40"
-                >
-                  <div className={`mt-0.5 ${color}`}>
-                    <Ic className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">{desc}</p>
-                  </div>
-                  <div className={`text-lg font-bold ${color} shrink-0`}>{fmt(value)}</div>
-                </div>
-              ))}
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-border/70 bg-card px-5 py-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Flame className="h-5 w-5" />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
-              ))}
+            <div>
+              <p className="text-sm font-semibold">Фокус команды</p>
+              <p className="text-sm text-muted-foreground">Сначала модерация и жалобы, потом деньги и каталог.</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Р Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ 7. Payment Health Р Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚СњР вЂљР Р†РІР‚ќР‚ */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            {t("admin.dashboard.paymentHealth") || "Р В РІР‚вЂќР В РўвЂР В РЎвЂўР РЋР вЂљР В РЎвЂўР В Р вЂ Р РЋР Р‰Р В Р’Вµ Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В¶Р В Р’ВµР В РІвЂћвЂ“"}
-          </CardTitle>
-          <CardDescription>
-            {t("admin.dashboard.paymentHealthSubtitle") || "Р В Р Р‹Р РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р РЋРЎвЂњР РЋР С“ Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’В·Р В Р’В°Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР В РІвЂћвЂ“ Р В РЎвЂ Р В РЎвЂўР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В РЎвЂ"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ErrorBoundary fallback={
-            <p className="py-4 text-sm text-muted-foreground text-center">
-              Р В РІР‚СњР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р С• Р В РЎвЂ”Р В Р’В»Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В¶Р В Р’В°Р РЋРІР‚В¦ Р В Р вЂ Р РЋР вЂљР В Р’ВµР В РЎВР В Р’µР Р…Р Р…Р С• Р В Р вЂ¦Р В Р’ВµР В РўвЂР В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋРЎвЂњР В РЎвЂ”Р В Р вЂ¦Р РЋРІР‚в„–
-            </p>
-          }>
-            <PaymentHealthWidget scope="platform" />
-          </ErrorBoundary>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border/70 bg-card px-5 py-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Нормальная иерархия</p>
+              <p className="text-sm text-muted-foreground">Важное ведёт интерфейс, а второстепенное не шумит.</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border/70 bg-card px-5 py-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Ощущение системы</p>
+              <p className="text-sm text-muted-foreground">Админка стала ближе к control center, а не к набору страниц.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

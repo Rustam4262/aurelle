@@ -2,13 +2,12 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -17,27 +16,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  LayoutDashboard,
-  Users,
-  Store,
-  Shield,
-  MessageSquare,
-  Headphones,
-  FileText,
-  AlertCircle,
   Activity,
-  LogOut,
+  AlertCircle,
+  Bell,
   ChevronLeft,
   ChevronRight,
-  Search,
   Command,
+  FileText,
+  Headphones,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
   PanelLeft,
-  X,
-  Bell,
-  ArrowRight,
-  Sparkles,
   RefreshCw,
-  Clock3,
+  Search,
+  Shield,
+  Sparkles,
+  Store,
+  Users,
+  X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -68,58 +66,41 @@ const ROUTE_MAP = {
 const ROUTE_META: Record<string, { title: string; description: string }> = {
   "/admin/dashboard": {
     title: "Панель управления",
-    description: "Ключевые метрики, риски и состояние платформы в одном месте.",
+    description: "Главные сигналы бизнеса, риски и очередь действий в одном месте.",
   },
   "/admin/users": {
     title: "Пользователи",
-    description: "Поиск, проверка и управление аккаунтами клиентов, владельцев и мастеров.",
+    description: "Клиенты, мастера и владельцы с быстрыми действиями и поиском по аккаунтам.",
   },
   "/admin/salons": {
-    title: "Салоны и мастера",
-    description: "Модерация салонов, контроль публикаций и качества карточек.",
+    title: "Бизнес",
+    description: "Салоны, публикации и статусы верификации, которые влияют на доверие к платформе.",
   },
   "/admin/activity": {
     title: "Активность",
-    description: "Лента событий, действий и свежих изменений по платформе.",
+    description: "Живая лента изменений по платформе: события, действия и свежие сигналы команды.",
   },
   "/admin/complaints": {
-    title: "Жалобы",
-    description: "Приоритетные обращения и кейсы, требующие решения администратора.",
+    title: "Модерация жалоб",
+    description: "Очередь кейсов, по которым администратору нужно принять решение без лишнего шума.",
   },
   "/admin/sanctions": {
     title: "Санкции",
-    description: "Активные ограничения, сроки и контроль рисковых пользователей.",
+    description: "Ограничения, сроки действия и риск-профиль пользователей, требующих контроля.",
   },
   "/admin/support": {
     title: "Обращения",
-    description: "Запросы пользователей, коммуникация и статус обработки обращений.",
+    description: "Поддержка пользователей и системные запросы, которые важно не терять из фокуса.",
   },
   "/admin/chat": {
-    title: "Чат поддержки",
-    description: "Рабочая коммуникация и оперативные ответы внутри платформы.",
+    title: "Коммуникации",
+    description: "Рабочие переписки и быстрый контакт с пользователями внутри платформы.",
   },
   "/admin/audit": {
-    title: "Журнал аудита",
-    description: "Системные изменения, журнал действий и контроль критичных операций.",
+    title: "Система",
+    description: "Журнал аудита и история критичных изменений, важных для контроля и безопасности.",
   },
 };
-
-function AdminPageSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-9 w-28" />
-      </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-lg" />
-        ))}
-      </div>
-      <Skeleton className="h-72 rounded-lg" />
-    </div>
-  );
-}
 
 interface ActionCenterData {
   unverifiedSalons: number;
@@ -130,31 +111,42 @@ interface ActionCenterData {
 
 interface NavItem {
   path: string;
-  labelKey: string;
+  label: string;
+  description: string;
   icon: React.ElementType;
   badge?: number;
   searchTags?: string[];
 }
 
 interface NavGroup {
-  groupKey: string | null;
+  heading?: string;
   items: NavItem[];
 }
 
-interface QuickActionItem {
-  id: string;
-  label: string;
-  description: string;
-  href: string;
-  tone: string;
-  count?: number;
+function AdminPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-56" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[...Array(4)].map((_, index) => (
+          <Skeleton key={index} className="h-32 rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="h-80 rounded-lg" />
+    </div>
+  );
+}
+
+function isUserRoute(path: string) {
+  return /^\/admin\/users\/.+/.test(path);
 }
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
-  const { t } = useTranslation();
-
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem("admin-sidebar-collapsed") === "true";
@@ -165,18 +157,6 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
-
-  const toggleCollapse = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("admin-sidebar-collapsed", String(next));
-      } catch {
-        // ignore localStorage errors
-      }
-      return next;
-    });
-  };
 
   const { data: actionCenter, refetch: refetchActionCenter, isFetching } = useQuery<ActionCenterData>({
     queryKey: ["/api/admin/dashboard/action-center"],
@@ -190,10 +170,6 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         event.preventDefault();
         setCommandOpen((prev) => !prev);
       }
-      if (event.key === "/" && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) {
-        event.preventDefault();
-        setCommandOpen(true);
-      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -206,113 +182,114 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const navGroups: NavGroup[] = [
     {
-      groupKey: null,
       items: [
-        { path: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard, searchTags: ["overview", "kpi", "metrics"] },
+        {
+          path: "/admin/dashboard",
+          label: "Dashboard",
+          description: "Главный экран бизнеса и рисков",
+          icon: LayoutDashboard,
+          searchTags: ["главная", "control center", "kpi", "риски"],
+        },
       ],
     },
     {
-      groupKey: "users",
+      heading: "Пользователи",
       items: [
-        { path: "/admin/users", labelKey: "users", icon: Users, searchTags: ["accounts", "clients", "owners", "masters"] },
-        { path: "/admin/salons", labelKey: "salons", icon: Store, searchTags: ["business", "moderation", "catalog"] },
-        { path: "/admin/activity", labelKey: "activity", icon: Activity, searchTags: ["events", "feed", "logs"] },
+        {
+          path: "/admin/users",
+          label: "Все аккаунты",
+          description: "Клиенты, мастера и владельцы",
+          icon: Users,
+          searchTags: ["клиенты", "мастера", "владельцы", "users"],
+        },
       ],
     },
     {
-      groupKey: "moderation",
+      heading: "Бизнес",
+      items: [
+        {
+          path: "/admin/salons",
+          label: "Салоны и услуги",
+          description: "Каталог, верификация и публикации",
+          icon: Store,
+          badge: actionCenter?.unverifiedSalons,
+          searchTags: ["salons", "catalog", "верификация"],
+        },
+      ],
+    },
+    {
+      heading: "Модерация",
       items: [
         {
           path: "/admin/complaints",
-          labelKey: "complaints",
+          label: "Жалобы",
+          description: "Кейсы, требующие решения",
           icon: AlertCircle,
           badge: actionCenter?.pendingComplaints,
-          searchTags: ["reports", "issues", "abuse"],
+          searchTags: ["жалобы", "abuse", "reports"],
         },
         {
           path: "/admin/sanctions",
-          labelKey: "sanctions",
+          label: "Санкции",
+          description: "Блокировки, ограничения и сроки",
           icon: Shield,
           badge: actionCenter?.expiringToday,
-          searchTags: ["blocks", "restrictions", "risk"],
+          searchTags: ["санкции", "blocks", "risk"],
         },
       ],
     },
     {
-      groupKey: "support",
+      heading: "Коммуникации",
       items: [
-        { path: "/admin/support", labelKey: "support", icon: Headphones, searchTags: ["tickets", "help"] },
-        { path: "/admin/chat", labelKey: "chat", icon: MessageSquare, searchTags: ["messages", "conversation"] },
+        {
+          path: "/admin/support",
+          label: "Обращения",
+          description: "Запросы пользователей и поддержка",
+          icon: Headphones,
+          searchTags: ["support", "tickets", "обращения"],
+        },
+        {
+          path: "/admin/chat",
+          label: "Чат",
+          description: "Оперативная коммуникация",
+          icon: MessageSquare,
+          searchTags: ["chat", "messages", "коммуникации"],
+        },
       ],
     },
     {
-      groupKey: "system",
+      heading: "Система",
       items: [
-        { path: "/admin/audit", labelKey: "audit", icon: FileText, searchTags: ["history", "security", "journal"] },
+        {
+          path: "/admin/activity",
+          label: "Активность",
+          description: "Лента последних событий",
+          icon: Activity,
+          searchTags: ["activity", "feed", "events"],
+        },
+        {
+          path: "/admin/audit",
+          label: "Аудит",
+          description: "Журнал критичных действий",
+          icon: FileText,
+          searchTags: ["audit", "logs", "security"],
+        },
       ],
     },
   ];
 
   const flatNavItems = navGroups.flatMap((group) => group.items);
-  const routeMeta = isUserRoute(location)
-    ? {
-        title: "Пользователь",
-        description: "Карточка аккаунта, история и действия администратора.",
-      }
-    : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
-
-  const quickActions: QuickActionItem[] = useMemo(() => {
-    const items: QuickActionItem[] = [
-      {
-        id: "complaints",
-        label: "Разобрать жалобы",
-        description: "Перейти к свежим обращениям, которые ждут решения.",
-        href: "/admin/complaints",
-        tone: "text-red-600 bg-red-500/10 border-red-500/20",
-        count: actionCenter?.pendingComplaints,
-      },
-      {
-        id: "salons",
-        label: "Проверить салоны",
-        description: "Открыть модерацию неподтверждённых салонов.",
-        href: "/admin/salons",
-        tone: "text-orange-600 bg-orange-500/10 border-orange-500/20",
-        count: actionCenter?.unverifiedSalons,
-      },
-      {
-        id: "sanctions",
-        label: "Санкции на сегодня",
-        description: "Посмотреть ограничения, которые скоро истекают.",
-        href: "/admin/sanctions",
-        tone: "text-amber-600 bg-amber-500/10 border-amber-500/20",
-        count: actionCenter?.expiringToday,
-      },
-      {
-        id: "payments",
-        label: "Контроль платежей",
-        description: "Вернуться на дашборд и проверить платёжное здоровье платформы.",
-        href: "/admin/dashboard",
-        tone: "text-rose-600 bg-rose-500/10 border-rose-500/20",
-        count: actionCenter?.paymentErrors24h,
-      },
-    ];
-
-    return items;
-  }, [actionCenter]);
-
   const filteredCommandItems = useMemo(() => {
     const query = commandQuery.trim().toLowerCase();
     if (!query) return flatNavItems;
 
     return flatNavItems.filter((item) => {
-      const label = t(`admin.nav.${item.labelKey}`).toLowerCase();
-      return (
-        label.includes(query) ||
-        item.path.toLowerCase().includes(query) ||
-        item.searchTags?.some((tag) => tag.includes(query))
-      );
+      const haystack = [item.label, item.description, item.path, ...(item.searchTags ?? [])]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
     });
-  }, [commandQuery, flatNavItems, t]);
+  }, [commandQuery, flatNavItems]);
 
   const totalAttentionCount =
     (actionCenter?.unverifiedSalons ?? 0) +
@@ -327,55 +304,77 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
     setLocation(query ? `/admin/users?q=${encodeURIComponent(query)}` : "/admin/users");
   };
 
+  const routeMeta = isUserRoute(location)
+    ? {
+        title: "Карточка пользователя",
+        description: "История аккаунта, статусы и точечные действия администратора.",
+      }
+    : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
+
   const SidebarContent = (
     <>
-      <div className={`border-b border-border flex items-center ${collapsed ? "justify-center p-4 h-[76px]" : "p-5 h-[76px]"}`}>
-        {collapsed ? (
-          <span className="text-xl font-serif font-semibold text-foreground">A</span>
-        ) : (
-          <div>
-            <h1 className="text-xl font-serif font-semibold text-foreground leading-none">AURELLE</h1>
-            <p className="mt-1 text-xs text-muted-foreground">{t("admin.title") || "Панель администратора"}</p>
+      <div className={`border-b border-border/70 ${collapsed ? "px-3 py-5" : "px-5 py-5"}`}>
+        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+            <Sparkles className="h-4 w-4" />
           </div>
-        )}
+          {!collapsed && (
+            <div>
+              <p className="font-serif text-xl font-semibold leading-none text-foreground">AURELLE</p>
+              <p className="mt-1 text-xs text-muted-foreground">Admin control center</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="py-3">
-          {navGroups.map((group, gi) => (
-            <div key={gi} className={gi > 0 ? "mt-1" : ""}>
-              {group.groupKey && !collapsed && (
-                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                  {t(`admin.navGroup.${group.groupKey}`)}
+        <div className="px-3 py-4">
+          {navGroups.map((group) => (
+            <div key={group.heading ?? "dashboard"} className="mb-4 last:mb-0">
+              {group.heading && !collapsed && (
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">
+                  {group.heading}
                 </p>
               )}
-              {group.groupKey && collapsed && gi > 0 && <div className="mx-3 my-2 border-t border-border/60" />}
-
-              <div className="px-2 space-y-0.5">
+              <div className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = location === item.path;
-                  const showBadge = (item.badge ?? 0) > 0;
+                  const hasBadge = (item.badge ?? 0) > 0;
 
                   return (
                     <Link key={item.path} href={item.path}>
                       <div
-                        className={`relative flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm select-none transition-colors ${
+                        className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${
                           isActive
                             ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         } ${collapsed ? "justify-center px-2" : ""}`}
                       >
                         <div className="relative shrink-0">
                           <Icon className="h-4 w-4" />
-                          {collapsed && showBadge && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />}
+                          {collapsed && hasBadge && (
+                            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500" />
+                          )}
                         </div>
 
                         {!collapsed && (
                           <>
-                            <span className="flex-1 truncate">{t(`admin.nav.${item.labelKey}`)}</span>
-                            {showBadge && (
-                              <Badge variant={isActive ? "secondary" : "destructive"} className="ml-auto flex h-5 min-w-[20px] items-center justify-center px-1.5 text-xs">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{item.label}</p>
+                              <p
+                                className={`truncate text-xs ${
+                                  isActive ? "text-primary-foreground/75" : "text-muted-foreground/75"
+                                }`}
+                              >
+                                {item.description}
+                              </p>
+                            </div>
+                            {hasBadge && (
+                              <Badge
+                                variant={isActive ? "secondary" : "destructive"}
+                                className="min-w-[22px] justify-center px-1.5 text-[11px]"
+                              >
                                 {item.badge}
                               </Badge>
                             )}
@@ -392,30 +391,40 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       </ScrollArea>
 
       <button
-        onClick={toggleCollapse}
-        className="hidden items-center justify-center border-t border-border/60 py-2 text-muted-foreground transition-colors hover:text-foreground md:flex"
-        title={collapsed ? "Развернуть" : "Свернуть"}
+        onClick={() => {
+          setCollapsed((prev) => {
+            const next = !prev;
+            try {
+              localStorage.setItem("admin-sidebar-collapsed", String(next));
+            } catch {
+              // ignore localStorage errors
+            }
+            return next;
+          });
+        }}
+        className="hidden items-center justify-center border-t border-border/70 py-2 text-muted-foreground transition-colors hover:text-foreground md:flex"
+        title={collapsed ? "Развернуть меню" : "Свернуть меню"}
       >
         {collapsed ? (
           <ChevronRight className="h-4 w-4" />
         ) : (
-          <div className="flex items-center gap-2 px-4 py-0.5 text-xs">
+          <div className="flex items-center gap-2 text-xs">
             <ChevronLeft className="h-4 w-4" />
             <span>Свернуть</span>
           </div>
         )}
       </button>
 
-      <div className={`border-t border-border ${collapsed ? "p-2" : "p-4"}`}>
+      <div className={`border-t border-border/70 ${collapsed ? "p-2" : "p-4"}`}>
         {!collapsed ? (
           <>
             <div className="mb-3 flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <span className="text-sm font-medium text-primary">{user?.firstName?.charAt(0) || user?.email?.charAt(0) || "A"}</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "A"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Admin"}
+                <p className="truncate text-sm font-medium">
+                  {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Администратор"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
               </div>
@@ -426,16 +435,20 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
             <Button variant="outline" size="sm" className="h-8 w-full gap-2 text-xs" onClick={() => logout()}>
               <LogOut className="h-3.5 w-3.5" />
-              {t("admin.logout")}
+              Выйти
             </Button>
           </>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <span className="text-xs font-medium text-primary">{user?.firstName?.charAt(0) || user?.email?.charAt(0) || "A"}</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "A"}
             </div>
             <ThemeToggle />
-            <button onClick={() => logout()} className="text-muted-foreground transition-colors hover:text-foreground" title={t("admin.logout")}>
+            <button
+              onClick={() => logout()}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              title="Выйти"
+            >
               <LogOut className="h-4 w-4" />
             </button>
           </div>
@@ -446,18 +459,27 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground md:flex">
-      <aside className={`${collapsed ? "md:w-16" : "md:w-72"} hidden border-r border-border bg-card md:flex md:shrink-0 md:flex-col md:transition-all md:duration-200`}>
+      <aside
+        className={`hidden shrink-0 border-r border-border/70 bg-card/95 backdrop-blur md:flex md:flex-col ${
+          collapsed ? "md:w-20" : "md:w-80"
+        } md:transition-all md:duration-200`}
+      >
         {SidebarContent}
       </aside>
 
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-[88%] max-w-[320px] flex-col border-r border-border bg-card shadow-2xl">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 flex w-[90%] max-w-[340px] flex-col border-r border-border bg-card shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
-              <div>
-                <h2 className="font-serif text-lg font-semibold">AURELLE</h2>
-                <p className="text-xs text-muted-foreground">Панель администратора</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-serif text-lg font-semibold leading-none">AURELLE</p>
+                  <p className="text-xs text-muted-foreground">Admin control center</p>
+                </div>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)}>
                 <X className="h-5 w-5" />
@@ -469,48 +491,48 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <main className="min-w-0 flex-1">
-        <div className="border-b border-border/70 bg-background/92">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex min-w-0 items-start gap-3">
-                <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileSidebarOpen(true)}>
-                  <PanelLeft className="h-4 w-4" />
-                </Button>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="gap-1 border border-primary/10 bg-primary/5 text-xs text-primary">
-                      <Sparkles className="h-3 w-3" />
-                      Рабочее место администратора
-                    </Badge>
-                    {totalAttentionCount > 0 && (
-                      <Badge variant="destructive" className="gap-1 text-xs">
-                        <Bell className="h-3 w-3" />
-                        {totalAttentionCount} требуют внимания
+        <div className="border-b border-border/70 bg-background/90 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileSidebarOpen(true)}>
+                    <PanelLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" className="gap-1 border border-primary/10 bg-primary/5 text-primary">
+                        <Sparkles className="h-3 w-3" />
+                        Рабочее место администратора
                       </Badge>
-                    )}
+                      {totalAttentionCount > 0 && (
+                        <Badge variant="destructive" className="gap-1">
+                          <Bell className="h-3 w-3" />
+                          {totalAttentionCount} требуют внимания
+                        </Badge>
+                      )}
+                    </div>
+                    <h1 className="mt-3 text-[1.9rem] font-serif font-semibold tracking-tight">{routeMeta.title}</h1>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{routeMeta.description}</p>
                   </div>
-                  <h1 className="mt-2 text-[1.75rem] font-serif font-semibold tracking-tight">{routeMeta.title}</h1>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{routeMeta.description}</p>
+                </div>
+
+                <div className="hidden items-center gap-2 lg:flex">
+                  <LanguageSwitcher variant="outline" className="h-10" />
+                  <ThemeToggle />
+                  <Button variant="outline" className="gap-2" onClick={() => refetchActionCenter()} disabled={isFetching}>
+                    <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                    Обновить
+                  </Button>
                 </div>
               </div>
 
-              <div className="hidden items-center gap-2 lg:flex">
-                <LanguageSwitcher variant="outline" className="h-10" />
-                <ThemeToggle />
-                <Button variant="outline" className="gap-2" onClick={() => refetchActionCenter()} disabled={isFetching}>
-                  <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-                  Обновить
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
                   setCommandOpen(true);
                 }}
-                className="flex items-center gap-2 rounded-2xl border border-border bg-card/80 px-3 py-2 shadow-sm"
+                className="flex items-center gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 shadow-sm"
               >
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -518,40 +540,16 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   onChange={(event) => setCommandQuery(event.target.value)}
                   onFocus={() => setCommandOpen(true)}
                   className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                  placeholder="Быстрый поиск по разделам или пользователям по email/телефону"
+                  placeholder="Быстрый поиск по разделам или пользователям по email и телефону"
                 />
                 <Badge variant="outline" className="hidden gap-1 sm:flex">
                   <Command className="h-3 w-3" />
                   Ctrl K
                 </Badge>
+                <Button type="button" variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileSidebarOpen(true)}>
+                  <Menu className="h-4 w-4" />
+                </Button>
               </form>
-
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {quickActions.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setLocation(item.href)}
-                    className={`rounded-2xl border px-4 py-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${item.tone}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{item.label}</span>
-                      <span className="text-lg font-bold tabular-nums">{item.count ?? 0}</span>
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-foreground/70 dark:text-white/70">{item.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
-                <Clock3 className="h-3.5 w-3.5" />
-                Реагируйте на жалобы и санкции в первую очередь
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">
-                <ArrowRight className="h-3.5 w-3.5" />
-                Быстрый поиск ведёт в пользователей с предзаполненным фильтром
-              </span>
             </div>
           </div>
         </div>
@@ -562,30 +560,33 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Быстрые действия</DialogTitle>
-            <DialogDescription>Переходите между разделами и ищите пользователей по email, телефону или имени.</DialogDescription>
+            <DialogTitle>Быстрые переходы</DialogTitle>
+            <DialogDescription>
+              Открой нужный раздел или сразу перейди в пользователей с подготовленным поисковым запросом.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
                 autoFocus
                 value={commandQuery}
                 onChange={(event) => setCommandQuery(event.target.value)}
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                placeholder="Например: РїРѕР»СЊР·РѕРІР°С‚ели, Р¶Р°Р»РѕР±С‹, salon, +998..."
+                placeholder="Например: жалобы, salons, malika@gmail.com, +998..."
               />
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="rounded-2xl border border-border">
-                <div className="border-b border-border px-4 py-3 text-sm font-medium">Р Р°Р·РґРµР»С‹</div>
+              <div className="rounded-lg border border-border">
+                <div className="border-b border-border px-4 py-3 text-sm font-medium">Разделы</div>
                 <ScrollArea className="h-[320px]">
                   <div className="space-y-1 p-2">
                     {filteredCommandItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = location === item.path;
+                      const hasBadge = (item.badge ?? 0) > 0;
 
                       return (
                         <button
@@ -595,51 +596,63 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                             setCommandOpen(false);
                             setCommandQuery("");
                           }}
-                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors ${
                             isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                           }`}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{t(`admin.nav.${item.labelKey}`)}</p>
-                            <p className={`truncate text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{item.path}</p>
+                            <p className="truncate text-sm font-medium">{item.label}</p>
+                            <p className={`truncate text-xs ${isActive ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
+                              {item.description}
+                            </p>
                           </div>
-                          {(item.badge ?? 0) > 0 && <Badge variant={isActive ? "secondary" : "destructive"}>{item.badge}</Badge>}
+                          {hasBadge && <Badge variant={isActive ? "secondary" : "destructive"}>{item.badge}</Badge>}
                         </button>
                       );
                     })}
                     {filteredCommandItems.length === 0 && (
-                      <div className="px-3 py-6 text-sm text-muted-foreground">По СЂР°Р·Рґелам СЃРѕРІРїР°РґРµРЅРёР№ РЅРµС‚. Можно РІС‹РїРѕР»РЅРёС‚СЊ поиск РїРѕР»СЊР·РѕРІР°С‚еля справа.</div>
+                      <div className="px-3 py-6 text-sm text-muted-foreground">
+                        Ничего не найдено по разделам. Можно сразу открыть поиск по пользователям справа.
+                      </div>
                     )}
                   </div>
                 </ScrollArea>
               </div>
 
-              <div className="rounded-2xl border border-border bg-muted/20 p-4">
-                <h3 className="text-sm font-semibold">Поиск РїРѕР»СЊР·РѕРІР°С‚еля</h3>
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <h3 className="text-sm font-semibold">Поиск пользователя</h3>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Р’РІРµРґРёС‚Рµ email, С‚РµР»РµС„он или имя, Рё РјС‹ сразу РѕС‚кроем С‚Р°Р±Р»РёС†Сѓ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ СЌС‚им С„РёР»СЊС‚ром.
+                  Введи email, телефон или имя, и мы откроем раздел пользователей с готовым фильтром.
                 </p>
                 <Button className="mt-4 w-full" onClick={handleOpenUsersSearch}>
-                  РћС‚РєСЂС‹С‚СЊ поиск РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+                  Открыть поиск пользователей
                 </Button>
 
                 <div className="mt-6 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Р‘С‹СЃС‚СЂС‹Рµ РїСЂРёРѕСЂРёС‚РµС‚С‹</p>
-                  {quickActions.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setLocation(item.href);
-                        setCommandOpen(false);
-                        setCommandQuery("");
-                      }}
-                      className="flex w-full items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
-                    >
-                      <span>{item.label}</span>
-                      <Badge variant="secondary">{item.count ?? 0}</Badge>
-                    </button>
-                  ))}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Приоритет сейчас</p>
+                  {flatNavItems
+                    .filter((item) => (item.badge ?? 0) > 0)
+                    .slice(0, 4)
+                    .map((item) => (
+                      <button
+                        key={item.path}
+                        onClick={() => {
+                          setLocation(item.path);
+                          setCommandOpen(false);
+                          setCommandQuery("");
+                        }}
+                        className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                      >
+                        <span>{item.label}</span>
+                        <Badge variant="destructive">{item.badge}</Badge>
+                      </button>
+                    ))}
+                  {!flatNavItems.some((item) => (item.badge ?? 0) > 0) && (
+                    <div className="rounded-lg border border-dashed border-border px-3 py-4 text-xs text-muted-foreground">
+                      Срочных разделов сейчас нет. Можно идти через обычную навигацию.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -648,10 +661,6 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       </Dialog>
     </div>
   );
-}
-
-function isUserRoute(path: string) {
-  return /^\/admin\/users\/.+/.test(path);
 }
 
 export default function AdminPage() {
