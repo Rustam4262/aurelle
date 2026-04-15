@@ -558,10 +558,10 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.11),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.08),transparent_20%),linear-gradient(180deg,#fff9fc_0%,#fff5f8_48%,#ffffff_100%)] text-foreground dark:bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_18%),linear-gradient(180deg,#08080b_0%,#111117_46%,#09090b_100%)] dark:text-white">
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.11),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.08),transparent_20%),linear-gradient(180deg,#fff9fc_0%,#fff5f8_48%,#ffffff_100%)] text-foreground dark:bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_18%),linear-gradient(180deg,#08080b_0%,#111117_46%,#09090b_100%)] dark:text-white">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-3 py-2">
-          <div className="flex items-center gap-2">
+        <header className="flex items-start justify-between gap-3 py-2 sm:items-center">
+          <div className="flex min-w-0 items-center gap-2">
             <Link href="/">
               <Button variant="ghost" size="icon" className="border border-border bg-white/85 text-foreground shadow-sm hover:bg-accent hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10" aria-label="Back to home">
                 <ArrowLeft className="h-5 w-5" />
@@ -577,7 +577,7 @@ export default function AuthPage() {
               </div>
             </Link>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
             <LanguageSwitcher variant="outline" className="border-border bg-white/85 text-foreground hover:bg-accent dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10" />
           </div>
@@ -585,16 +585,16 @@ export default function AuthPage() {
 
         <main className="flex flex-1 items-center py-6 lg:py-10">
           <div className="grid w-full items-stretch gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8">
-            <section className="order-2 flex flex-col justify-between rounded-[32px] border border-white/50 bg-white/72 p-5 shadow-[0_32px_90px_rgba(227,54,116,0.10)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.045] dark:shadow-black/30 sm:p-7 lg:order-1 lg:p-8">
+            <section className="order-2 flex min-w-0 flex-col justify-between rounded-[28px] border border-white/50 bg-white/72 p-4 shadow-[0_32px_90px_rgba(227,54,116,0.10)] backdrop-blur-xl [overflow-wrap:anywhere] dark:border-white/10 dark:bg-white/[0.045] dark:shadow-black/30 sm:rounded-[32px] sm:p-7 lg:order-1 lg:p-8">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-medium text-foreground/80 dark:border-white/10 dark:bg-white/5 dark:text-white/75">
+                <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-[11px] font-medium text-foreground/80 dark:border-white/10 dark:bg-white/5 dark:text-white/75 sm:text-xs">
                   <Sparkles className="h-3.5 w-3.5 text-[#e33674]" />
-                  {copy.heroBadge}
+                  <span className="min-w-0 truncate sm:whitespace-normal">{copy.heroBadge}</span>
                 </div>
 
                 <div className="mt-6 max-w-2xl">
-                  <h1 className="font-serif text-4xl font-light leading-[1.04] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl dark:text-white">{copy.headline}</h1>
-                  <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg dark:text-white/70">{copy.subtitle}</p>
+                  <h1 className="font-serif text-[2.1rem] font-light leading-[1.04] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl dark:text-white">{copy.headline}</h1>
+                  <p className="mt-5 max-w-xl text-[15px] leading-7 text-slate-600 sm:text-lg sm:leading-8 dark:text-white/70">{copy.subtitle}</p>
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -610,54 +610,54 @@ export default function AuthPage() {
                   {copy.experienceCards.map((item, index) => {
                     const Icon = index === 0 ? UserRound : index === 1 ? WandSparkles : BriefcaseBusiness;
                     return (
-                      <div key={item.title} className={`rounded-3xl border border-border/70 p-5 transition-transform hover:-translate-y-0.5 dark:border-white/10 ${index === 2 ? "sm:col-span-2 bg-gradient-to-br from-primary/8 via-white/80 to-primary/5 dark:from-primary/12 dark:via-white/[0.03] dark:to-white/[0.02]" : "bg-white/82 dark:bg-white/[0.04]"}`}>
+                      <div key={item.title} className={`min-w-0 rounded-3xl border border-border/70 p-5 transition-transform hover:-translate-y-0.5 dark:border-white/10 ${index === 2 ? "sm:col-span-2 bg-gradient-to-br from-primary/8 via-white/80 to-primary/5 dark:from-primary/12 dark:via-white/[0.03] dark:to-white/[0.02]" : "bg-white/82 dark:bg-white/[0.04]"}`}>
                         <div className="flex items-center gap-3">
                           <div className="rounded-2xl bg-primary/10 p-2 text-primary dark:bg-white/10 dark:text-white">
                             <Icon className="h-4 w-4" />
                           </div>
                           <div className="text-base font-medium text-slate-950 dark:text-white">{item.title}</div>
                         </div>
-                        <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-white/62">{item.description}</p>
+                        <p className="mt-3 break-words text-sm leading-6 text-muted-foreground dark:text-white/62">{item.description}</p>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="mt-8 rounded-[28px] border border-border/70 bg-white/82 p-5 dark:border-white/10 dark:bg-black/20">
+                <div className="mt-8 rounded-[28px] border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-black/20 sm:p-5">
                   <div className="flex items-center gap-2 text-sm font-medium text-slate-950 dark:text-white">
                     <ShieldCheck className="h-4 w-4 text-emerald-500" />
                     {copy.trustTitle}
                   </div>
-                  <p className="mt-2 text-sm leading-7 text-muted-foreground dark:text-white/65">{copy.trustDescription}</p>
+                  <p className="mt-2 break-words text-sm leading-7 text-muted-foreground dark:text-white/65">{copy.trustDescription}</p>
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {copy.benefits.map((benefit) => (
                       <div key={benefit} className="flex items-start gap-3 rounded-2xl bg-muted/35 p-4 dark:bg-white/[0.03]">
                         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                        <span className="text-sm leading-6 text-slate-700 dark:text-white/70">{benefit}</span>
+                        <span className="break-words text-sm leading-6 text-slate-700 dark:text-white/70">{benefit}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 overflow-hidden rounded-[32px] border border-border/70 bg-white/90 shadow-2xl shadow-primary/10 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="mt-8 overflow-hidden rounded-[28px] border border-border/70 bg-white/90 shadow-2xl shadow-primary/10 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[32px]">
                 <div className="relative h-[240px] sm:h-[280px]">
                   <img src={heroImage} alt="AURELLE beauty experience" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/75 backdrop-blur">digital luxury access</div>
-                  <div className="absolute bottom-5 left-5 right-5 rounded-[28px] border border-white/15 bg-black/38 p-5 text-white backdrop-blur-xl">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-white/60">
+                  <div className="absolute left-4 top-4 max-w-[calc(100%-2rem)] rounded-full border border-white/20 bg-black/25 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-white/75 backdrop-blur sm:left-5 sm:top-5 sm:px-4 sm:text-xs sm:tracking-[0.22em]">digital luxury access</div>
+                  <div className="absolute bottom-4 left-4 right-4 rounded-[24px] border border-white/15 bg-black/38 p-4 text-white backdrop-blur-xl sm:bottom-5 sm:left-5 sm:right-5 sm:rounded-[28px] sm:p-5">
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-white/60 sm:text-xs sm:tracking-[0.22em]">
                       <BadgeCheck className="h-3.5 w-3.5 text-[#ff7aa7]" />
                       {copy.loginFastTrack}
                     </div>
-                    <p className="mt-3 font-serif text-2xl leading-tight sm:text-3xl">{copy.formTitle}</p>
-                    <p className="mt-3 max-w-lg text-sm leading-6 text-white/72">{copy.formSubtitle}</p>
+                    <p className="mt-3 break-words font-serif text-[1.9rem] leading-tight sm:text-3xl">{copy.formTitle}</p>
+                    <p className="mt-3 max-w-lg break-words text-sm leading-6 text-white/72">{copy.formSubtitle}</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="order-1 rounded-[32px] border border-white/55 bg-white/88 p-5 shadow-[0_32px_90px_rgba(227,54,116,0.12)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#141418]/96 dark:shadow-black/35 sm:p-7 lg:order-2 lg:p-8">
+            <section className="order-1 min-w-0 rounded-[28px] border border-white/55 bg-white/88 p-4 shadow-[0_32px_90px_rgba(227,54,116,0.12)] backdrop-blur-2xl [overflow-wrap:anywhere] dark:border-white/10 dark:bg-[#141418]/96 dark:shadow-black/35 sm:rounded-[32px] sm:p-7 lg:order-2 lg:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Badge className="rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-foreground/80 dark:border-white/10 dark:bg-white/5 dark:text-white/75">
                   <LockKeyhole className="mr-2 h-3.5 w-3.5" />
@@ -668,19 +668,19 @@ export default function AuthPage() {
 
               <div className="mt-5">
                 <h2 className="font-serif text-3xl text-slate-950 dark:text-white">{copy.formTitle}</h2>
-                <p className="mt-2 max-w-xl text-sm leading-7 text-muted-foreground dark:text-white/62">{copy.formSubtitle}</p>
+                <p className="mt-2 max-w-xl break-words text-sm leading-7 text-muted-foreground dark:text-white/62">{copy.formSubtitle}</p>
               </div>
 
               <Alert className="mt-5 border-primary/15 bg-primary/[0.045] text-foreground dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
                 <AlertTitle className="text-foreground dark:text-white">{copy.temporaryTitle}</AlertTitle>
-                <AlertDescription className="text-muted-foreground dark:text-white/65">{copy.temporaryDescription}</AlertDescription>
+                <AlertDescription className="break-words text-muted-foreground dark:text-white/65">{copy.temporaryDescription}</AlertDescription>
               </Alert>
 
               <div className="mt-6 rounded-[26px] border border-border/70 bg-muted/25 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
+                <div className="flex items-start justify-between gap-3 sm:items-center">
+                  <div className="min-w-0">
                     <div className="text-sm font-medium text-slate-950 dark:text-white">{copy.socialTitle}</div>
-                    {activeTab === "register" && <div className="mt-1 text-xs leading-5 text-muted-foreground dark:text-white/55">{copy.socialRegisterHint}</div>}
+                    {activeTab === "register" && <div className="mt-1 break-words text-xs leading-5 text-muted-foreground dark:text-white/55">{copy.socialRegisterHint}</div>}
                   </div>
                   <div className="hidden h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:flex dark:bg-white/10 dark:text-white">
                     <Star className="h-4 w-4" />
@@ -688,23 +688,27 @@ export default function AuthPage() {
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <Button className="h-12 justify-start rounded-2xl border-border bg-white text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06]" type="button" size="lg" variant="outline" onClick={() => loginWithProvider("google")} disabled={isSubmitting || !providers.google || (activeTab === "register" && !registrationRole)}>
-                    <SiGoogle className="mr-3 h-5 w-5 text-[#4285F4]" />
-                    <span className="flex-1 text-left">{copy.googleButton}</span>
-                    {!providers.google && <span className="text-[11px] text-muted-foreground dark:text-white/45">{copy.providerUnavailable}</span>}
+                  <Button className="h-auto min-h-12 items-start justify-start rounded-2xl border-border bg-white px-4 py-3 text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06] sm:items-center" type="button" size="lg" variant="outline" onClick={() => loginWithProvider("google")} disabled={isSubmitting || !providers.google || (activeTab === "register" && !registrationRole)}>
+                    <SiGoogle className="mr-3 mt-0.5 h-5 w-5 shrink-0 text-[#4285F4] sm:mt-0" />
+                    <span className="min-w-0 flex-1 text-left">
+                      <span className="block break-words text-sm leading-5">{copy.googleButton}</span>
+                      {!providers.google && <span className="mt-1 block text-[11px] text-muted-foreground dark:text-white/45">{copy.providerUnavailable}</span>}
+                    </span>
                   </Button>
-                  <Button className="h-12 justify-start rounded-2xl border-border bg-white text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06]" type="button" size="lg" variant="outline" onClick={() => loginWithProvider("yandex")} disabled={isSubmitting || !providers.yandex || (activeTab === "register" && !registrationRole)}>
-                    <YandexIcon className="mr-3 h-5 w-5 text-[#FF0000]" />
-                    <span className="flex-1 text-left">{copy.yandexButton}</span>
-                    {!providers.yandex && <span className="text-[11px] text-muted-foreground dark:text-white/45">{copy.providerUnavailable}</span>}
+                  <Button className="h-auto min-h-12 items-start justify-start rounded-2xl border-border bg-white px-4 py-3 text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06] sm:items-center" type="button" size="lg" variant="outline" onClick={() => loginWithProvider("yandex")} disabled={isSubmitting || !providers.yandex || (activeTab === "register" && !registrationRole)}>
+                    <YandexIcon className="mr-3 mt-0.5 h-5 w-5 shrink-0 text-[#FF0000] sm:mt-0" />
+                    <span className="min-w-0 flex-1 text-left">
+                      <span className="block break-words text-sm leading-5">{copy.yandexButton}</span>
+                      {!providers.yandex && <span className="mt-1 block text-[11px] text-muted-foreground dark:text-white/45">{copy.providerUnavailable}</span>}
+                    </span>
                   </Button>
                 </div>
               </div>
 
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")} className="mt-7 w-full">
                 <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl bg-muted p-1 dark:bg-white/[0.05]">
-                  <TabsTrigger value="login" className="rounded-xl text-sm">{copy.loginTab}</TabsTrigger>
-                  <TabsTrigger value="register" className="rounded-xl text-sm">{copy.registerTab}</TabsTrigger>
+                  <TabsTrigger value="login" className="min-w-0 rounded-xl px-2 text-sm">{copy.loginTab}</TabsTrigger>
+                  <TabsTrigger value="register" className="min-w-0 rounded-xl px-2 text-sm">{copy.registerTab}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login" className="mt-6">
@@ -724,8 +728,8 @@ export default function AuthPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <label className="flex items-center gap-2 text-muted-foreground dark:text-white/65">
+                    <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                      <label className="flex min-w-0 items-center gap-2 text-muted-foreground dark:text-white/65">
                         <Checkbox checked={rememberMe} onCheckedChange={(checked) => setRememberMe(Boolean(checked))} name="rememberMe" />
                         <span>{copy.rememberMe}</span>
                       </label>
@@ -753,17 +757,17 @@ export default function AuthPage() {
                         {roles.map((role) => {
                           const selected = registrationRole === role.value;
                           return (
-                            <button key={role.value} type="button" onClick={() => { setRegistrationRole(role.value); setRegisterError(""); }} className={`rounded-[24px] border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${selected ? "border-primary bg-primary/[0.08] shadow-[0_0_0_1px_rgba(227,54,116,0.28),0_18px_32px_rgba(227,54,116,0.10)] dark:border-primary dark:bg-primary/[0.12]" : "border-border bg-white hover:border-primary/25 hover:bg-primary/[0.03] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"}`} aria-pressed={selected}>
+                            <button key={role.value} type="button" onClick={() => { setRegistrationRole(role.value); setRegisterError(""); }} className={`min-w-0 rounded-[24px] border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${selected ? "border-primary bg-primary/[0.08] shadow-[0_0_0_1px_rgba(227,54,116,0.28),0_18px_32px_rgba(227,54,116,0.10)] dark:border-primary dark:bg-primary/[0.12]" : "border-border bg-white hover:border-primary/25 hover:bg-primary/[0.03] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"}`} aria-pressed={selected}>
                               <div className="flex items-start gap-3">
                                 <div className={`rounded-2xl p-2 ${selected ? "bg-primary text-white" : "bg-muted text-foreground dark:bg-white/10 dark:text-white"}`}>
                                   <role.Icon className="h-4 w-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center justify-between gap-2">
-                                    <div className="text-sm font-semibold text-slate-950 dark:text-white">{role.title}</div>
-                                    {selected && <BadgeCheck className="h-4 w-4 text-primary dark:text-[#ff7aa7]" />}
+                                    <div className="min-w-0 break-words text-sm font-semibold text-slate-950 dark:text-white">{role.title}</div>
+                                    {selected && <BadgeCheck className="h-4 w-4 shrink-0 text-primary dark:text-[#ff7aa7]" />}
                                   </div>
-                                  <p className="mt-1 text-sm leading-6 text-muted-foreground dark:text-white/62">{role.description}</p>
+                                  <p className="mt-1 break-words text-sm leading-6 text-muted-foreground dark:text-white/62">{role.description}</p>
                                 </div>
                               </div>
                             </button>
@@ -773,10 +777,12 @@ export default function AuthPage() {
                       {registrationRole ? (
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
                           <div className="font-medium">{copy.selectedRoleLabel}</div>
-                          <div className="mt-1">{roles.find((role) => role.value === registrationRole)?.note}</div>
+                          <div className="mt-1 break-words">{roles.find((role) => role.value === registrationRole)?.note}</div>
                         </div>
                       ) : (
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">{copy.roleRequired}</div>
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                          <span className="break-words">{copy.roleRequired}</span>
+                        </div>
                       )}
                     </div>
 
@@ -807,7 +813,7 @@ export default function AuthPage() {
 
                     <label className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/25 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/[0.03]">
                       <Checkbox checked={agreeToTerms} onCheckedChange={(checked) => setAgreeToTerms(Boolean(checked))} />
-                      <span className="leading-6 text-muted-foreground dark:text-white/65">
+                      <span className="min-w-0 break-words leading-6 text-muted-foreground dark:text-white/65">
                         {copy.termsLabel} <Link href="/terms" className="text-primary hover:opacity-80">{copy.termsLink}</Link> {currentLocale === "en" ? "and" : currentLocale === "uz" ? "va" : "и"} <Link href="/privacy" className="text-primary hover:opacity-80">{copy.privacyLink}</Link>
                       </span>
                     </label>
@@ -822,16 +828,16 @@ export default function AuthPage() {
                 </TabsContent>
               </Tabs>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="mt-6 grid gap-3 [overflow-wrap:anywhere] sm:grid-cols-3">
+                <div className="min-w-0 rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <CalendarDays className="h-4 w-4 text-primary" />
                   <div className="mt-3 text-sm font-medium text-slate-950 dark:text-white">{currentLocale === "en" ? "Smart booking" : currentLocale === "uz" ? "Aqlli bron" : "Умная запись"}</div>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="min-w-0 rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
                   <div className="mt-3 text-sm font-medium text-slate-950 dark:text-white">{currentLocale === "en" ? "Protected access" : currentLocale === "uz" ? "Himoyalangan kirish" : "Защищённый доступ"}</div>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="min-w-0 rounded-2xl border border-border/70 bg-white/82 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <BriefcaseBusiness className="h-4 w-4 text-primary" />
                   <div className="mt-3 text-sm font-medium text-slate-950 dark:text-white">{currentLocale === "en" ? "Role-based workspace" : currentLocale === "uz" ? "Rolga mos kabinet" : "Кабинет под роль"}</div>
                 </div>
