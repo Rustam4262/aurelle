@@ -1,99 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { PaymentHealthWidget } from "@/components/payment-health-widget";
-import { PushNotificationSettings } from "@/components/push-notification-settings";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { useRef } from "react";
-import {
-  Calendar,
-  Clock,
-  Settings,
-  Briefcase,
-  Image,
-  BarChart3,
-  Loader2,
-  Plus,
-  ExternalLink,
   AlertCircle,
+  ArrowLeft,
+  Bell,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  ImagePlus,
+  LifeBuoy,
+  Loader2,
   LogOut,
+  MessageSquare,
+  PencilLine,
+  PieChart,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Star,
   Trash2,
   Upload,
-  Camera,
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
-  Phone,
-  MessageCircle,
-  MapPin,
-  User,
-  Star,
-  Zap,
-  Power,
-  CalendarDays,
+  Users,
+  Wallet,
 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { PaymentHealthWidget } from "@/components/payment-health-widget";
+import { PushNotificationSettings } from "@/components/push-notification-settings";
+import { CalendarWeekView } from "@/components/calendar-week-view";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { goBackOrNavigate } from "@/lib/safe-back";
 
-const SERVICE_CATEGORIES = [
-  "Маникюр",
-  "Педикюр",
-  "Ресницы",
-  "Брови",
-  "Волосы",
-  "Макияж",
-  "Массаж",
-  "Спа",
-  "Эпиляция",
-  "Косметология",
-  "Другое",
-];
-
-interface SoloService {
-  id: string;
-  name: { en: string; ru: string; uz: string };
-  category: string;
-  priceMin: number;
-  priceMax: number | null;
-  duration: number;
-  serviceMode: string | null;
-  isActive: boolean;
-}
-
-interface PortfolioItem {
-  id: string;
-  masterId: string;
-  imageUrl: string;
-  title: { en: string; ru: string; uz: string } | null;
-  createdAt: string;
-}
+type LocalizedText = { en?: string; ru?: string; uz?: string } | null | undefined;
 
 interface MasterData {
   id: string;
@@ -102,29 +61,14 @@ interface MasterData {
   status: string | null;
   photo: string | null;
   city: string | null;
-  serviceMode: string | null;
-  averageRating: string | null;
-  reviewCount: number | null;
+  address: string | null;
   phone: string | null;
   telegram: string | null;
   instagram: string | null;
-  bio: { ru?: string; en?: string; uz?: string } | null;
-}
-
-interface Booking {
-  id: string;
-  masterId: string;
-  clientId: string | null;
-  soloMasterServiceId: string | null;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  priceSnapshot: number | null;
-  notes: string | null;
-  isMobileBooking: boolean | null;
-  clientName?: string | null;
-  clientAvatar?: string | null;
+  serviceMode: string | null;
+  averageRating: string | null;
+  reviewCount: number | null;
+  bio: LocalizedText;
 }
 
 interface DashboardStats {
@@ -134,1766 +78,797 @@ interface DashboardStats {
   pendingBookings: number;
 }
 
+interface SoloService {
+  id: string;
+  name: { en: string; ru: string; uz: string };
+  description?: LocalizedText;
+  category: string;
+  priceMin: number;
+  priceMax: number | null;
+  duration: number;
+  serviceMode: string | null;
+  isActive: boolean | null;
+}
+
+interface BookingItem {
+  id: string;
+  clientId: string | null;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  priceSnapshot: number | null;
+  notes: string | null;
+  clientName?: string | null;
+  clientAvatar?: string | null;
+  clientEmail?: string | null;
+  service?: SoloService | null;
+}
+
+interface PortfolioItem {
+  id: string;
+  imageUrl: string;
+  description?: LocalizedText;
+}
+
+interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  ownerResponse: string | null;
+  createdAt: string | null;
+  clientName: string | null;
+}
+
+interface ClientDeskItem {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  totalSpent: number;
+  lastVisit: string | null;
+  favoriteService: string | null;
+  latestStatus: string | null;
+}
+
+interface SupportTicket {
+  id: string;
+  subject: string;
+  category: string;
+  status: string;
+  priority: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+interface SupportMessage {
+  id: string;
+  senderType: string;
+  message: string;
+  createdAt: string | null;
+}
+
+interface SupportTicketDetail {
+  ticket: SupportTicket;
+  messages: SupportMessage[];
+}
+
+interface NotificationItem {
+  id: string;
+  message: string | null;
+  type: string;
+  isRead: boolean | null;
+  createdAt: string | null;
+}
+
+interface MasterSettings {
+  bufferMinutes?: number | null;
+  travelBufferMinutes?: number | null;
+  autoConfirmBookings?: boolean | null;
+  maxAdvanceBookingDays?: number | null;
+  minAdvanceBookingHours?: number | null;
+}
+
+interface ScheduleDay {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
+}
+
+const SERVICE_CATEGORIES = ["Маникюр", "Педикюр", "Волосы", "Макияж", "Брови", "Ресницы", "Косметология", "Массаж", "SPA", "Другое"];
+
+function localize(value: LocalizedText, lang: string) {
+  if (!value) return "";
+  return value[lang as "en" | "ru" | "uz"] || value.ru || value.en || value.uz || "";
+}
+
+function money(value: number | null | undefined) {
+  return `${Number(value || 0).toLocaleString("ru-RU")} UZS`;
+}
+
+function date(value: string | null | undefined, locale = "ru-RU") {
+  if (!value) return "—";
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return "—";
+  return target.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function dateTime(value: string | null | undefined, locale = "ru-RU") {
+  if (!value) return "—";
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return "—";
+  return target.toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function statusTone(status: string) {
+  if (["confirmed", "completed", "active"].includes(status)) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-500";
+  if (["pending", "open", "in_progress", "draft"].includes(status)) return "border-amber-500/30 bg-amber-500/10 text-amber-500";
+  if (["cancelled", "closed", "resolved"].includes(status)) return "border-rose-500/30 bg-rose-500/10 text-rose-500";
+  return "border-border bg-muted text-muted-foreground";
+}
+
+function dayName(day: number, lang: string) {
+  const sets = {
+    ru: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+    en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    uz: ["Yak", "Dush", "Sesh", "Chor", "Pay", "Juma", "Shan"],
+  };
+  return sets[lang as "ru" | "en" | "uz"]?.[day] || sets.ru[day];
+}
+
+function StatCard({ icon: Icon, label, value, hint }: { icon: typeof Sparkles; label: string; value: string | number; hint: string }) {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardContent className="flex items-start justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="mt-3 break-words text-3xl font-semibold leading-none text-foreground">{value}</p>
+          <p className="mt-2 break-words text-sm text-muted-foreground">{hint}</p>
+        </div>
+        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SoloMasterPage() {
-  const { t } = useTranslation();
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { i18n } = useTranslation();
+  const lang = i18n.language || "ru";
+  const tr = (ru: string, en?: string, uz?: string) => (lang === "en" ? en || ru : lang === "uz" ? uz || ru : ru);
+  const locale = lang === "en" ? "en-US" : lang === "uz" ? "uz-UZ" : "ru-RU";
+  const { user, isLoading: authLoading, logout } = useAuth({ requireAuth: true });
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("overview");
-
-  // Avatar upload ref
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-
-  // Portfolio upload ref
   const portfolioInputRef = useRef<HTMLInputElement>(null);
-  const [portfolioUploading, setPortfolioUploading] = useState(false);
 
-  // Bookings filter
-  const [bookingFilter, setBookingFilter] = useState<
-    "all" | "pending" | "confirmed" | "completed" | "cancelled"
-  >("all");
-  // Calendar week offset
-  const [calWeekOffset, setCalWeekOffset] = useState(0);
-
-  // Profile edit state
-  const [editName, setEditName] = useState("");
-  const [editCity, setEditCity] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editTelegram, setEditTelegram] = useState("");
-  const [editServiceMode, setEditServiceMode] = useState("both");
-  const [editBio, setEditBio] = useState("");
-
-  // Schedule state
-  const [scheduleHours, setScheduleHours] = useState<
-    { dayOfWeek: number; isOpen: boolean; openTime: string; closeTime: string }[]
-  >([]);
-  const [scheduleSynced, setScheduleSynced] = useState(false);
-
-  // Service dialog state
+  const [activeTab, setActiveTab] = useState("overview");
+  const [bookingFilter, setBookingFilter] = useState("all");
+  const [bookingSearch, setBookingSearch] = useState("");
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
-  const [serviceName, setServiceName] = useState("");
-  const [serviceCategory, setServiceCategory] = useState("");
-  const [servicePrice, setServicePrice] = useState("");
-  const [serviceDuration, setServiceDuration] = useState("60");
-  const [serviceMode, setServiceMode] = useState("both");
+  const [supportDialogOpen, setSupportDialogOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [supportReply, setSupportReply] = useState("");
+  const [reviewReplyDrafts, setReviewReplyDrafts] = useState<Record<string, string>>({});
 
-  // Fetch master data
-  const { data: masterData, isLoading: masterLoading } = useQuery<MasterData>({
-    queryKey: ["/api/solo-master/me"],
+  const masterQuery = useQuery<MasterData>({ queryKey: ["/api/solo-master/me"], enabled: !!user, staleTime: 60_000 });
+  const statsQuery = useQuery<DashboardStats>({ queryKey: ["/api/solo-master/stats"], enabled: !!user, staleTime: 30_000, refetchInterval: 30_000 });
+  const servicesQuery = useQuery<SoloService[]>({ queryKey: ["/api/solo-master/services"], enabled: !!user, staleTime: 60_000 });
+  const bookingsQuery = useQuery<BookingItem[]>({ queryKey: ["/api/solo-master/bookings"], enabled: !!user, staleTime: 20_000, refetchInterval: 30_000 });
+  const scheduleQuery = useQuery<any[]>({ queryKey: ["/api/solo-master/schedule"], enabled: !!user, staleTime: 60_000 });
+  const settingsQuery = useQuery<MasterSettings>({ queryKey: ["/api/solo-master/settings"], enabled: !!user, staleTime: 60_000 });
+  const reviewsQuery = useQuery<ReviewItem[]>({ queryKey: ["/api/solo-master/reviews"], enabled: !!user, staleTime: 30_000 });
+  const clientsQuery = useQuery<ClientDeskItem[]>({ queryKey: ["/api/solo-master/clients"], enabled: !!user, staleTime: 30_000 });
+  const notificationsQuery = useQuery<NotificationItem[]>({ queryKey: ["/api/notifications"], enabled: !!user, staleTime: 15_000, refetchInterval: 30_000 });
+  const supportTicketsQuery = useQuery<SupportTicket[]>({ queryKey: ["/api/solo-master/support/tickets"], enabled: !!user, staleTime: 15_000, refetchInterval: 30_000 });
+  const ticketDetailQuery = useQuery<SupportTicketDetail>({
+    queryKey: ["/api/solo-master/support/tickets", selectedTicketId],
+    enabled: !!user && !!selectedTicketId,
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/solo-master/me");
-      if (!res.ok) throw new Error("Failed to fetch master data");
+      const res = await apiRequest("GET", `/api/solo-master/support/tickets/${selectedTicketId}`);
       return res.json();
     },
-    enabled: !!user,
-    retry: false,
+    staleTime: 5_000,
+    refetchInterval: selectedTicketId ? 20_000 : false,
+  });
+  const portfolioQuery = useQuery<PortfolioItem[]>({
+    queryKey: ["/api/portfolio/master", masterQuery.data?.id],
+    enabled: !!masterQuery.data?.id,
+    queryFn: async () => {
+      const res = await fetch(`/api/portfolio/master/${masterQuery.data!.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load portfolio");
+      return res.json();
+    },
+    staleTime: 60_000,
   });
 
-  // Sync profile edit fields when masterData loads
-  const [profileSynced, setProfileSynced] = useState(false);
-  if (masterData && !profileSynced) {
-    setEditName(masterData.name || "");
-    setEditCity(masterData.city || "");
-    setEditPhone(masterData.phone || "");
-    setEditTelegram(masterData.telegram || "");
-    setEditServiceMode(masterData.serviceMode || "both");
-    setEditBio(masterData.bio?.ru || "");
-    setProfileSynced(true);
-  }
-
-  // Fetch dashboard stats
-  const { data: stats } = useQuery<DashboardStats>({
-    queryKey: ["/api/solo-master/stats"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/solo-master/stats");
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      return res.json();
-    },
-    enabled: !!user && !!masterData,
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    city: "",
+    address: "",
+    phone: "",
+    telegram: "",
+    instagram: "",
+    slug: "",
+    bio: "",
+    serviceMode: "both",
+  });
+  const [settingsForm, setSettingsForm] = useState({
+    bufferMinutes: 15,
+    travelBufferMinutes: 30,
+    autoConfirmBookings: false,
+    maxAdvanceBookingDays: 30,
+    minAdvanceBookingHours: 2,
+  });
+  const [scheduleForm, setScheduleForm] = useState<ScheduleDay[]>([]);
+  const [newService, setNewService] = useState({
+    name: "",
+    category: SERVICE_CATEGORIES[0],
+    price: "150000",
+    duration: "60",
+    serviceMode: "both",
+    description: "",
+  });
+  const [newTicket, setNewTicket] = useState({
+    subject: "",
+    category: "question",
+    priority: "normal",
+    message: "",
   });
 
-  // Fetch services
-  const { data: services = [], isLoading: servicesLoading } = useQuery<SoloService[]>({
-    queryKey: ["/api/solo-master/services"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/solo-master/services");
-      if (!res.ok) throw new Error("Failed to fetch services");
+  useEffect(() => {
+    if (!masterQuery.data) return;
+    setProfileForm({
+      name: masterQuery.data.name || "",
+      city: masterQuery.data.city || "",
+      address: masterQuery.data.address || "",
+      phone: masterQuery.data.phone || "",
+      telegram: masterQuery.data.telegram || "",
+      instagram: masterQuery.data.instagram || "",
+      slug: masterQuery.data.slug || "",
+      bio: localize(masterQuery.data.bio, lang),
+      serviceMode: masterQuery.data.serviceMode || "both",
+    });
+  }, [masterQuery.data, lang]);
+
+  useEffect(() => {
+    if (!settingsQuery.data) return;
+    setSettingsForm({
+      bufferMinutes: settingsQuery.data.bufferMinutes ?? 15,
+      travelBufferMinutes: settingsQuery.data.travelBufferMinutes ?? 30,
+      autoConfirmBookings: settingsQuery.data.autoConfirmBookings ?? false,
+      maxAdvanceBookingDays: settingsQuery.data.maxAdvanceBookingDays ?? 30,
+      minAdvanceBookingHours: settingsQuery.data.minAdvanceBookingHours ?? 2,
+    });
+  }, [settingsQuery.data]);
+
+  useEffect(() => {
+    const fallback = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+      dayOfWeek,
+      isOpen: dayOfWeek !== 0,
+      openTime: "10:00",
+      closeTime: "20:00",
+    }));
+    const rows = scheduleQuery.data || [];
+    if (!rows.length) {
+      setScheduleForm(fallback);
+      return;
+    }
+    setScheduleForm(
+      fallback.map((day) => {
+        const row = rows.find((item) => item.dayOfWeek === day.dayOfWeek);
+        return row
+          ? { dayOfWeek: day.dayOfWeek, isOpen: !row.isClosed, openTime: row.openTime || day.openTime, closeTime: row.closeTime || day.closeTime }
+          : day;
+      }),
+    );
+  }, [scheduleQuery.data]);
+
+  const services = servicesQuery.data || [];
+  const bookings = bookingsQuery.data || [];
+  const reviews = reviewsQuery.data || [];
+  const clients = clientsQuery.data || [];
+  const notifications = notificationsQuery.data || [];
+  const supportTickets = supportTicketsQuery.data || [];
+  const portfolio = portfolioQuery.data || [];
+
+  const unreadNotifications = notifications.filter((item) => !item.isRead).length;
+  const openTickets = supportTickets.filter((item) => !["closed", "resolved"].includes(item.status)).length;
+  const upcomingBookings = bookings
+    .filter((item) => ["pending", "confirmed"].includes(item.status))
+    .sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime() || a.startTime.localeCompare(b.startTime));
+  const completedBookings = bookings.filter((item) => item.status === "completed");
+  const cancelledBookings = bookings.filter((item) => item.status === "cancelled");
+  const revenueToday = bookings
+    .filter((item) => item.status === "completed" && item.bookingDate?.slice(0, 10) === new Date().toISOString().slice(0, 10))
+    .reduce((sum, item) => sum + Number(item.priceSnapshot || 0), 0);
+  const revenueWeek = bookings
+    .filter((item) => item.status === "completed" && Date.now() - new Date(item.bookingDate).getTime() <= 7 * 24 * 60 * 60 * 1000)
+    .reduce((sum, item) => sum + Number(item.priceSnapshot || 0), 0);
+
+  const profileChecklist = useMemo(
+    () => [
+      { label: tr("Фото профиля", "Avatar"), done: Boolean(masterQuery.data?.photo), tab: "profile" },
+      { label: tr("Описание", "Bio"), done: Boolean(localize(masterQuery.data?.bio, lang)), tab: "profile" },
+      { label: tr("Город", "City"), done: Boolean(masterQuery.data?.city), tab: "profile" },
+      { label: tr("Услуги", "Services"), done: services.length > 0, tab: "services" },
+      { label: tr("Портфолио", "Portfolio"), done: portfolio.length >= 3, tab: "portfolio" },
+      { label: tr("Расписание", "Schedule"), done: scheduleForm.some((item) => item.isOpen), tab: "schedule" },
+      { label: tr("Публичная страница", "Public page"), done: Boolean(masterQuery.data?.slug), tab: "publicPage" },
+    ],
+    [lang, masterQuery.data, portfolio.length, scheduleForm, services.length],
+  );
+  const profileCompletion = Math.round((profileChecklist.filter((item) => item.done).length / profileChecklist.length) * 100);
+
+  const actionItems = useMemo(() => {
+    const result: { title: string; description: string; tab: string }[] = [];
+    if (statsQuery.data?.pendingBookings) result.push({ title: tr("Подтвердите новые записи", "Confirm bookings"), description: `${statsQuery.data.pendingBookings} ${tr("записей ждут решения", "bookings need action")}`, tab: "bookings" });
+    if (portfolio.length < 3) result.push({ title: tr("Добавьте сильные работы", "Add portfolio"), description: tr("Три-пять работ заметно усиливают конверсию страницы.", "Three to five works improve conversion."), tab: "portfolio" });
+    if (unreadNotifications > 0) result.push({ title: tr("Разберите уведомления", "Review notifications"), description: `${unreadNotifications} ${tr("обновлений ждут внимания", "updates need attention")}`, tab: "messages" });
+    if (profileCompletion < 100) result.push({ title: tr("Дозаполните профиль", "Finish profile"), description: `${tr("Заполненность сейчас", "Current completion")} ${profileCompletion}%`, tab: "profile" });
+    return result;
+  }, [portfolio.length, profileCompletion, statsQuery.data?.pendingBookings, unreadNotifications]);
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((item) => {
+      if (bookingFilter !== "all" && item.status !== bookingFilter) return false;
+      if (!bookingSearch.trim()) return true;
+      const query = bookingSearch.toLowerCase();
+      return (item.clientName || "").toLowerCase().includes(query) || localize(item.service?.name, lang).toLowerCase().includes(query) || (item.notes || "").toLowerCase().includes(query);
+    });
+  }, [bookingFilter, bookingSearch, bookings, lang]);
+
+  const chartData = useMemo(() => {
+    const map = new Map<string, { label: string; bookings: number; revenue: number }>();
+    for (const booking of bookings) {
+      const key = booking.bookingDate?.slice(0, 10) || "unknown";
+      const row = map.get(key) || { label: date(booking.bookingDate, locale), bookings: 0, revenue: 0 };
+      row.bookings += 1;
+      row.revenue += Number(booking.priceSnapshot || 0);
+      map.set(key, row);
+    }
+    return Array.from(map.values()).slice(-7);
+  }, [bookings, locale]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/solo-master/profile", {
+        name: profileForm.name.trim(),
+        city: profileForm.city.trim() || undefined,
+        address: profileForm.address.trim() || undefined,
+        phone: profileForm.phone.trim() || undefined,
+        telegram: profileForm.telegram.trim() || undefined,
+        instagram: profileForm.instagram.trim() || undefined,
+        slug: profileForm.slug.trim() || undefined,
+        bio: profileForm.bio.trim() || undefined,
+        serviceMode: profileForm.serviceMode,
+      });
       return res.json();
     },
-    enabled: !!user && !!masterData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/me"] });
+      toast({ title: tr("Профиль сохранён", "Profile saved") });
+    },
+  });
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/solo-master/settings", settingsForm);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/settings"] });
+      toast({ title: tr("Настройки сохранены", "Settings saved") });
+    },
+  });
+
+  const saveScheduleMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PUT", "/api/solo-master/schedule", { hours: scheduleForm });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/schedule"] });
+      toast({ title: tr("Расписание обновлено", "Schedule updated") });
+    },
   });
 
   const createServiceMutation = useMutation({
     mutationFn: async () => {
-      const price = parseInt(servicePrice, 10);
-      if (!serviceName.trim() || !serviceCategory || isNaN(price) || price < 0) {
-        throw new Error("Заполните обязательные поля");
-      }
       const res = await apiRequest("POST", "/api/solo-master/services", {
-        name: { ru: serviceName.trim(), en: serviceName.trim(), uz: serviceName.trim() },
-        category: serviceCategory,
-        priceMin: price,
-        duration: parseInt(serviceDuration, 10) || 60,
-        serviceMode,
+        name: { ru: newService.name.trim(), en: newService.name.trim(), uz: newService.name.trim() },
+        description: { ru: newService.description.trim(), en: newService.description.trim(), uz: newService.description.trim() },
+        category: newService.category,
+        priceMin: Number(newService.price) || 0,
+        duration: Number(newService.duration) || 60,
+        serviceMode: newService.serviceMode,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Ошибка создания услуги");
-      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] });
       setServiceDialogOpen(false);
-      setServiceName("");
-      setServiceCategory("");
-      setServicePrice("");
-      setServiceDuration("60");
-      setServiceMode("both");
-      toast({ title: "Услуга добавлена" });
+      setNewService({ name: "", category: SERVICE_CATEGORIES[0], price: "150000", duration: "60", serviceMode: "both", description: "" });
+      toast({ title: tr("Услуга добавлена", "Service added") });
     },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const toggleServiceMutation = useMutation({
+    mutationFn: async (service: SoloService) => {
+      const res = await apiRequest("PUT", `/api/solo-master/services/${service.id}`, { isActive: !service.isActive });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] }),
   });
 
   const deleteServiceMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiRequest("DELETE", `/api/solo-master/services/${id}`);
-      if (!res.ok) throw new Error("Ошибка удаления");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] });
-      toast({ title: "Услуга удалена" });
-    },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
-  });
-
-  // Portfolio queries — only when masterData loaded (need masterId)
-  const { data: portfolio = [], isLoading: portfolioLoading } = useQuery<PortfolioItem[]>({
-    queryKey: ["/api/portfolio/master", masterData?.id],
-    queryFn: async () => {
-      const res = await fetch(`/api/portfolio/master/${masterData!.id}`);
-      if (!res.ok) throw new Error("Failed to fetch portfolio");
-      return res.json();
-    },
-    enabled: !!masterData?.id,
-  });
-
-  const deletePortfolioMutation = useMutation({
-    mutationFn: async (itemId: string) => {
-      const res = await apiRequest("DELETE", `/api/portfolio/${itemId}`);
-      if (!res.ok) throw new Error("Ошибка удаления фото");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterData?.id] });
-      toast({ title: "Фото удалено" });
-    },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
-  });
-
-  // Bookings query
-  const { data: masterBookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
-    queryKey: ["/api/solo-master/bookings"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/solo-master/bookings");
-      if (!res.ok) throw new Error("Failed to fetch bookings");
-      return res.json();
-    },
-    enabled: !!masterData,
-    refetchInterval: 30000, // poll every 30s
+    mutationFn: async (serviceId: string) => apiRequest("DELETE", `/api/solo-master/services/${serviceId}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] }),
   });
 
   const updateBookingStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await apiRequest("PATCH", `/api/solo-master/bookings/${id}/status`, { status });
-      if (!res.ok) throw new Error("Ошибка обновления статуса");
+    mutationFn: async ({ bookingId, status }: { bookingId: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/solo-master/bookings/${bookingId}/status`, { status });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/solo-master/bookings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/solo-master/stats"] });
-      toast({ title: "Статус записи обновлён" });
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/clients"] });
     },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
 
-  // Profile update mutation
-  const updateProfileMutation = useMutation({
+  const createSupportTicketMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("PUT", "/api/solo-master/profile", {
-        name: editName.trim() || masterData?.name,
-        city: editCity.trim() || undefined,
-        phone: editPhone.trim() || undefined,
-        telegram: editTelegram.trim() || undefined,
-        serviceMode: editServiceMode,
-        bio: editBio.trim() || undefined,
-        lang: "ru",
+      const res = await apiRequest("POST", "/api/solo-master/support/tickets", {
+        subject: newTicket.subject.trim(),
+        category: newTicket.category,
+        priority: newTicket.priority,
+        message: newTicket.message.trim(),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Ошибка сохранения");
-      }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/me"] });
-      toast({ title: "Профиль обновлён" });
+    onSuccess: (ticket: SupportTicket) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/support/tickets"] });
+      setSelectedTicketId(ticket.id);
+      setSupportDialogOpen(false);
+      setNewTicket({ subject: "", category: "question", priority: "normal", message: "" });
     },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
 
-  const activateMutation = useMutation({
+  const replySupportMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/solo-master/complete-onboarding", {});
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Ошибка активации");
-      }
+      const res = await apiRequest("POST", `/api/solo-master/support/tickets/${selectedTicketId}/messages`, { message: supportReply.trim() });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/me"] });
-      toast({ title: "Профиль активирован! Клиенты теперь могут вас найти." });
+      setSupportReply("");
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/support/tickets", selectedTicketId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/support/tickets"] });
     },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
 
-  const toggleServiceMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const res = await apiRequest("PUT", `/api/solo-master/services/${id}`, { isActive });
-      if (!res.ok) throw new Error("Ошибка обновления услуги");
+  const closeTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const res = await apiRequest("PATCH", `/api/solo-master/support/tickets/${ticketId}/close`, {});
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/services"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/support/tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/support/tickets", selectedTicketId] });
     },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
   });
 
-  // Schedule query
-  const { data: scheduleData } = useQuery<
-    { dayOfWeek: number; isClosed: boolean; openTime: string; closeTime: string }[]
-  >({
-    queryKey: ["/api/solo-master/schedule"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/solo-master/schedule");
-      if (!res.ok) throw new Error("Failed to fetch schedule");
+  const respondReviewMutation = useMutation({
+    mutationFn: async ({ reviewId, ownerResponse }: { reviewId: string; ownerResponse: string }) => {
+      const res = await apiRequest("PATCH", `/api/solo-master/reviews/${reviewId}/respond`, { ownerResponse });
       return res.json();
     },
-    enabled: !!masterData,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/solo-master/reviews"] }),
   });
 
-  // Sync schedule state from server data (one-time, mirrors profileSynced pattern)
-  if (scheduleData && !scheduleSynced) {
-    const days = [0, 1, 2, 3, 4, 5, 6].map((d) => {
-      const found = scheduleData.find((h) => h.dayOfWeek === d);
-      return {
-        dayOfWeek: d,
-        isOpen: found ? !found.isClosed : d !== 0 && d !== 6,
-        openTime: found?.openTime ?? "09:00",
-        closeTime: found?.closeTime ?? "18:00",
-      };
-    });
-    setScheduleHours(days);
-    setScheduleSynced(true);
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      await apiRequest("DELETE", `/api/portfolio/${itemId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterQuery.data?.id] });
+      toast({ title: tr("Портфолио обновлено", "Portfolio updated") });
+    },
+    onError: (error) => {
+      toast({
+        title: tr("Не удалось обновить портфолио", "Could not update portfolio"),
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const markNotificationReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const res = await apiRequest("PATCH", `/api/notifications/${notificationId}/read`, {});
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+  });
+
+  const markAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", "/api/notifications/read-all", {});
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+  });
+
+  async function uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await fetch("/api/upload/master-photo", { method: "POST", credentials: "include", body: formData });
+    if (!response.ok) throw new Error("Upload failed");
+    const data = await response.json();
+    await apiRequest("PUT", "/api/solo-master/profile", { photo: data.url });
+    queryClient.invalidateQueries({ queryKey: ["/api/solo-master/me"] });
   }
 
-  const updateScheduleMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("PUT", "/api/solo-master/schedule", {
-        hours: scheduleHours,
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Ошибка сохранения расписания");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/schedule"] });
-      toast({ title: "Расписание сохранено" });
-    },
-    onError: (e: Error) => toast({ title: e.message, variant: "destructive" }),
-  });
-
-  const handlePortfolioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !masterData) return;
-    setPortfolioUploading(true);
-    let successCount = 0;
+  async function uploadPortfolio(files: FileList | null) {
+    if (!files || !masterQuery.data?.id) return;
     for (const file of Array.from(files)) {
-      try {
-        // Step 1: upload file
-        const formData = new FormData();
-        formData.append("image", file);
-        const uploadRes = await fetch("/api/upload/portfolio", {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        });
-        if (!uploadRes.ok) throw new Error("Ошибка загрузки файла");
-        const { url } = await uploadRes.json();
-
-        // Step 2: create portfolio item
-        const itemRes = await apiRequest("POST", "/api/portfolio", {
-          masterId: masterData.id,
-          imageUrl: url,
-        });
-        if (!itemRes.ok) throw new Error("Ошибка сохранения фото");
-        successCount++;
-      } catch (err) {
-        toast({ title: (err as Error).message, variant: "destructive" });
-      }
-    }
-    if (successCount > 0) {
-      queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterData.id] });
-      toast({ title: `Добавлено фото: ${successCount}` });
-    }
-    setPortfolioUploading(false);
-    // reset input so same files can be re-selected
-    if (portfolioInputRef.current) portfolioInputRef.current.value = "";
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    try {
       const formData = new FormData();
       formData.append("image", file);
-      const uploadRes = await fetch("/api/upload/master-photo", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      if (!uploadRes.ok) throw new Error("Ошибка загрузки фото");
-      const { url } = await uploadRes.json();
-
-      const updateRes = await apiRequest("PUT", "/api/solo-master/profile", { photo: url });
-      if (!updateRes.ok) throw new Error("Ошибка сохранения фото");
-
-      queryClient.invalidateQueries({ queryKey: ["/api/solo-master/me"] });
-      toast({ title: "Фото профиля обновлено" });
-    } catch (err) {
-      toast({ title: (err as Error).message, variant: "destructive" });
-    } finally {
-      setAvatarUploading(false);
-      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      const uploadResponse = await fetch("/api/upload/portfolio", { method: "POST", credentials: "include", body: formData });
+      if (!uploadResponse.ok) throw new Error("Portfolio upload failed");
+      const upload = await uploadResponse.json();
+      await apiRequest("POST", "/api/portfolio", { masterId: masterQuery.data.id, imageUrl: upload.url });
     }
-  };
+    queryClient.invalidateQueries({ queryKey: ["/api/portfolio/master", masterQuery.data.id] });
+  }
 
-  if (authLoading || masterLoading) {
+  const isLoading = authLoading || masterQuery.isLoading || statsQuery.isLoading || servicesQuery.isLoading || bookingsQuery.isLoading;
+  if (isLoading) {
+    return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
+  }
+
+  if (!user || !masterQuery.data) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="container mx-auto px-4 py-16">
+        <EmptyState
+          icon={AlertCircle}
+          title={tr("Профиль мастера не найден", "Master profile not found")}
+          description={tr("Завершите онбординг или напишите в поддержку.", "Complete onboarding or contact support.")}
+          action={{ label: tr("Открыть вход", "Open auth"), onClick: () => navigate("/auth") }}
+        />
       </div>
     );
   }
 
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
-
-  if (!masterData) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>{t("soloMaster.notFound", "Profile Not Found")}</CardTitle>
-            <CardDescription>
-              {t("soloMaster.notFoundDesc", "You need to complete your solo master setup first.")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate("/solo-master/onboarding")} className="w-full">
-              {t("soloMaster.startSetup", "Start Setup")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isDraft = masterData.status === "draft";
-
-  // ── Derived values ────────────────────────────────────────────────────────
-  const completionPercent = (() => {
-    const fields = [
-      masterData.name,
-      masterData.city,
-      masterData.phone,
-      masterData.bio?.ru || masterData.bio?.en,
-      masterData.photo,
-      services.length > 0,
-      portfolio.length > 0,
-    ];
-    return Math.round((fields.filter(Boolean).length / fields.length) * 100);
-  })();
-
-  const activeServicesCount = services.filter((s) => s.isActive).length;
-
-  const upcomingBookingsCount = masterBookings.filter(
-    (b) =>
-      (b.status === "pending" || b.status === "confirmed") &&
-      new Date(b.bookingDate) >= new Date(new Date().setHours(0, 0, 0, 0)),
-  ).length;
-
-  const publishedProfileUrl = !isDraft && masterData.slug ? `/master/${masterData.slug}` : null;
-
-  const bookingStats = {
-    all: masterBookings.length,
-    pending: masterBookings.filter((b) => b.status === "pending").length,
-    confirmed: masterBookings.filter((b) => b.status === "confirmed").length,
-    completed: masterBookings.filter((b) => b.status === "completed").length,
-  };
-
-  const filteredBookings =
-    bookingFilter === "all"
-      ? masterBookings
-      : masterBookings.filter((b) => b.status === bookingFilter);
+  const master = masterQuery.data;
+  const nextBookings = upcomingBookings.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border/70 bg-gradient-to-b from-background via-background to-muted/20">
-        <div className="container py-6 sm:py-8">
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarUpload}
-          />
+      <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-card/90 p-4 shadow-sm">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="outline" size="icon" onClick={() => goBackOrNavigate(navigate, "/")} aria-label={tr("Назад", "Back")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{tr("Кабинет фриланс-мастера", "Solo master workspace")}</p>
+              <h1 className="break-words text-2xl font-semibold text-foreground">{tr("Управляйте услугами, расписанием и клиентами в одном кабинете", "Run services, schedule and clients from one place")}</h1>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <LanguageSwitcher />
+            <Button variant="outline" onClick={() => setActiveTab("messages")} className="gap-2">
+              <Bell className="h-4 w-4" />
+              {unreadNotifications > 0 && <Badge className="border-primary/30 bg-primary/10 text-primary">{unreadNotifications}</Badge>}
+            </Button>
+            <Button variant="outline" onClick={() => logout()} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">{tr("Выйти", "Log out")}</span>
+            </Button>
+          </div>
+        </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-            <Card className="border-border/70 bg-card/80 shadow-sm">
-              <CardContent className="flex flex-col gap-5 p-5 sm:p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex items-start gap-4">
-                    <button
-                      type="button"
-                      className="relative h-20 w-20 rounded-full group focus:outline-none"
-                      onClick={() => avatarInputRef.current?.click()}
-                      disabled={avatarUploading}
-                      title="???????? ???? ???????"
-                    >
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10">
-                        {avatarUploading ? (
-                          <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                        ) : masterData.photo ? (
-                          <img
-                            src={masterData.photo}
-                            alt={masterData.name}
-                            className="h-20 w-20 rounded-full object-cover"
-                          />
-                        ) : (
-                          <Briefcase className="h-9 w-9 text-primary" />
-                        )}
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Camera className="h-5 w-5 text-white" />
-                      </div>
-                    </button>
+        <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
+          <Card className="border-border/70 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex min-w-0 gap-4">
+                  <Avatar className="h-20 w-20 shrink-0 rounded-[22px] border border-border/70">
+                    <AvatarImage src={master.photo || undefined} />
+                    <AvatarFallback className="rounded-[22px] text-lg">{master.name?.slice(0, 1)?.toUpperCase() || "M"}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="border-primary/20 bg-primary/10 text-primary">{tr("Solo master", "Solo master")}</Badge>
+                      <Badge variant="outline" className={statusTone(master.status || "draft")}>{master.status || "draft"}</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="break-words text-3xl font-semibold text-foreground">{master.name}</h2>
+                      <p className="break-words text-sm text-muted-foreground">{[master.city, profileForm.address].filter(Boolean).join(" • ") || tr("Добавьте город и зону работы", "Add city and service area")}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-2"><Star className="h-4 w-4 text-amber-500" />{master.averageRating || "0.0"} ({master.reviewCount || 0})</span>
+                      <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-primary" />{clients.length} {tr("клиентов", "clients")}</span>
+                      <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{services.length} {tr("услуг", "services")}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button onClick={() => setActiveTab("profile")} className="gap-2"><PencilLine className="h-4 w-4" />{tr("Редактировать профиль", "Edit profile")}</Button>
+                  <Button variant="outline" onClick={() => master.slug && window.open(`/master/${master.slug}`, "_blank")} className="gap-2"><ExternalLink className="h-4 w-4" />{tr("Публичная страница", "Public page")}</Button>
+                  <Button variant="outline" onClick={async () => { const url = `${window.location.origin}/master/${master.slug || ""}`; await navigator.clipboard.writeText(url); toast({ title: tr("Ссылка скопирована", "Link copied") }); }} className="gap-2"><Copy className="h-4 w-4" />{tr("Поделиться", "Share")}</Button>
+                  <Button variant="outline" onClick={() => setActiveTab("support")} className="gap-2"><LifeBuoy className="h-4 w-4" />{tr("Поддержка", "Support")}</Button>
+                </div>
+              </div>
+              <Separator className="my-6" />
+              <div className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{tr("Заполненность профиля", "Profile completeness")}</p>
+                      <p className="text-sm text-muted-foreground">{tr("Чем полнее страница, тем легче клиенту довериться и записаться.", "The more complete the page is, the easier it is for clients to trust and book.")}</p>
+                    </div>
+                    <span className="text-lg font-semibold text-foreground">{profileCompletion}%</span>
+                  </div>
+                  <Progress value={profileCompletion} className="h-3" />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {profileChecklist.map((item) => (
+                      <button key={item.label} type="button" onClick={() => setActiveTab(item.tab)} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3 text-left transition hover:border-primary/40">
+                        <span className="min-w-0 break-words text-sm text-foreground">{item.label}</span>
+                        <Badge variant="outline" className={item.done ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500" : "border-amber-500/30 bg-amber-500/10 text-amber-500"}>{item.done ? tr("Готово", "Done") : tr("Нужно", "Need")}</Badge>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Alert className="border-primary/20 bg-primary/5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <AlertTitle>{tr("Что сделать сейчас", "What to do now")}</AlertTitle>
+                  <AlertDescription className="mt-3 space-y-3">
+                    {actionItems.length > 0 ? actionItems.map((item) => (
+                      <button key={item.title} type="button" onClick={() => setActiveTab(item.tab)} className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border/60 bg-background/85 px-4 py-3 text-left transition hover:border-primary/40">
+                        <div className="min-w-0">
+                          <p className="break-words font-medium text-foreground">{item.title}</p>
+                          <p className="mt-1 break-words text-sm text-muted-foreground">{item.description}</p>
+                        </div>
+                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    )) : <p className="text-sm text-muted-foreground">{tr("База выглядит уверенно. Можно сосредоточиться на расписании, качестве и росте выручки.", "The base looks solid. You can focus on schedule, quality and revenue growth.")}</p>}
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </CardContent>
+          </Card>
 
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>{tr("Ближайшие записи", "Nearest bookings")}</CardTitle>
+              <CardDescription>{tr("Следующие 3–5 записей, которые формируют ваш день.", "The next 3–5 appointments that define your day.")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {nextBookings.length > 0 ? nextBookings.map((booking) => (
+                <div key={booking.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={isDraft ? "secondary" : "default"}>
-                          {isDraft ? "????????" : "???????? ???????"}
-                        </Badge>
-                        <Badge variant="outline">??????????: {completionPercent}%</Badge>
-                        {masterData.city && (
-                          <Badge variant="outline" className="gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {masterData.city}
-                          </Badge>
-                        )}
+                        <p className="break-words font-medium text-foreground">{booking.clientName || tr("Клиент", "Client")}</p>
+                        <Badge variant="outline" className={statusTone(booking.status)}>{booking.status}</Badge>
                       </div>
-
-                      <h1 className="mt-3 text-3xl font-serif font-semibold tracking-tight text-foreground">
-                        {masterData.name}
-                      </h1>
-
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                        ?????????? ??????? ????????, ????????, ???????? ? ????? ????????? ???????? ?? ?????? ????????.
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                        {masterData.averageRating && parseFloat(masterData.averageRating) > 0 && (
-                          <span className="flex items-center gap-1 text-amber-500 font-medium">
-                            <Star className="h-3.5 w-3.5 fill-amber-500" />
-                            {parseFloat(masterData.averageRating).toFixed(1)}
-                            {masterData.reviewCount ? (
-                              <span className="text-muted-foreground font-normal">({masterData.reviewCount})</span>
-                            ) : null}
-                          </span>
-                        )}
-                        <span className="text-muted-foreground">???????? ?????: {activeServicesCount}</span>
-                        <span className="text-muted-foreground">???????? ???????: {upcomingBookingsCount}</span>
-                      </div>
+                      <p className="mt-1 break-words text-sm text-muted-foreground">{localize(booking.service?.name, lang) || tr("Услуга не указана", "Service is not specified")}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{date(booking.bookingDate, locale)} • {booking.startTime}–{booking.endTime}</p>
                     </div>
+                    <p className="text-sm font-semibold text-foreground">{money(booking.priceSnapshot)}</p>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                    {publishedProfileUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(publishedProfileUrl, "_blank")}
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        {t("soloMaster.viewPublicPage", "View Page")}
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate("/solo-master/onboarding")}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t("soloMaster.editProfile", "Edit Profile")}
-                    </Button>
-                    <LanguageSwitcher variant="outline" />
-                    <ThemeToggle />
-                    <Button variant="ghost" size="sm" onClick={() => logout()}>
-                      <LogOut className="h-4 w-4" />
-                    </Button>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {booking.status === "pending" && <Button size="sm" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "confirmed" })}>{tr("Подтвердить", "Confirm")}</Button>}
+                    {booking.status === "confirmed" && <Button size="sm" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "completed" })}>{tr("Завершить", "Complete")}</Button>}
+                    {["pending", "confirmed"].includes(booking.status) && <Button size="sm" variant="outline" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "cancelled" })}>{tr("Отменить", "Cancel")}</Button>}
                   </div>
                 </div>
+              )) : <EmptyState icon={CalendarDays} title={tr("Пока нет ближайших записей", "No upcoming bookings")} description={tr("Откройте больше слотов, обновите услуги и поделитесь публичной страницей.", "Open more availability, update services and share the public page.")} action={{ label: tr("Открыть страницу", "Open page"), onClick: () => setActiveTab("publicPage") }} />}
+            </CardContent>
+          </Card>
+        </section>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">???????</p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">{stats?.todayBookings || 0}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">??????? ? ?????????</p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">???????</p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">{(stats?.monthRevenue || 0).toLocaleString()}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">UZS ?? ??????? ?????</p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">??????? ?????</p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">{stats?.pendingBookings || 0}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">??????? ???? ?????????????</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard icon={CalendarDays} label={tr("Сегодня", "Today")} value={statsQuery.data?.todayBookings || 0} hint={tr("Записи на текущий день", "Appointments in the current day")} />
+          <StatCard icon={AlertCircle} label={tr("Ожидают решения", "Pending")} value={statsQuery.data?.pendingBookings || 0} hint={tr("Нужны подтверждение и реакция", "Need confirmation or action")} />
+          <StatCard icon={Wallet} label={tr("Выручка за день", "Revenue today")} value={money(revenueToday)} hint={tr("Только завершённые услуги", "Completed bookings only")} />
+          <StatCard icon={PieChart} label={tr("Выручка за неделю", "Revenue week")} value={money(revenueWeek)} hint={tr("Текущее рабочее окно", "Current rolling window")} />
+          <StatCard icon={MessageSquare} label={tr("Непрочитано", "Unread")} value={unreadNotifications} hint={tr("Уведомления и обновления", "Notifications and updates")} />
+        </section>
 
-            <Card className="border-border/70 bg-card/80 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">??????? ????????</CardTitle>
-                <CardDescription>????? ?????? ???????? solo master ??? ?????? ?????????.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("bookings")}>
-                  ??????????? ??????
-                  <Clock className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("services")}>
-                  ????????? ????????
-                  <Briefcase className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("portfolio")}>
-                  ???????? ?????????
-                  <Image className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="w-full justify-between" onClick={() => setActiveTab("schedule")}>
-                  ????????? ??????
-                  <CalendarDays className="h-4 w-4" />
-                </Button>
-                {publishedProfileUrl && (
-                  <div className="rounded-2xl border border-dashed border-border px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">????????? ????????</p>
-                    <p className="mt-2 truncate text-sm font-medium text-foreground">aurelle.uz{publishedProfileUrl}</p>
-                    <Button
-                      variant="ghost"
-                      className="mt-1 h-auto px-0 text-sm"
-                      onClick={() => window.open(publishedProfileUrl!, "_blank")}
-                    >
-                      ??????? ????????
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>      {/* Draft Warning */}
-      {isDraft && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800">
-          <div className="container py-3">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <AlertCircle className="h-5 w-5 shrink-0" />
-                <span className="text-sm">
-                  Профиль в черновике — клиенты не могут вас найти.
-                  {services.length === 0 && " Сначала добавьте хотя бы одну услугу."}
-                </span>
-              </div>
-              {services.length > 0 && (
-                <Button
-                  size="sm"
-                  className="gap-2 shrink-0"
-                  onClick={() => activateMutation.mutate()}
-                  disabled={activateMutation.isPending}
-                >
-                  {activateMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Zap className="h-3.5 w-3.5" />
-                  )}
-                  Активировать профиль
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dashboard Content */}
-      <div className="container py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-2 rounded-2xl border border-border bg-card p-2">
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              {t("soloMaster.tabs.overview", "Overview")}
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              {t("soloMaster.tabs.calendar", "Calendar")}
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2">
-              <CalendarDays className="h-4 w-4" />
-              {t("soloMaster.tabs.schedule", "Schedule")}
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="gap-2">
-              <Clock className="h-4 w-4" />
-              {t("soloMaster.tabs.bookings", "Bookings")}
-              {(stats?.pendingBookings ?? 0) > 0 && (
-                <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                  {stats!.pendingBookings}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="services" className="gap-2">
-              <Briefcase className="h-4 w-4" />
-              {t("soloMaster.tabs.services", "Services")}
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="gap-2">
-              <Image className="h-4 w-4" />
-              {t("soloMaster.tabs.portfolio", "Portfolio")}
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
-              {t("soloMaster.tabs.settings", "Settings")}
-            </TabsTrigger>
+          <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto rounded-[22px] border border-border/70 bg-card/90 p-2">
+            {[
+              ["overview", tr("Обзор", "Overview")],
+              ["profile", tr("Профиль", "Profile")],
+              ["publicPage", tr("Публичная страница", "Public page")],
+              ["calendar", tr("Календарь", "Calendar")],
+              ["schedule", tr("Расписание", "Schedule")],
+              ["bookings", tr("Записи", "Bookings")],
+              ["clients", tr("Клиенты", "Clients")],
+              ["services", tr("Услуги", "Services")],
+              ["portfolio", tr("Портфолио", "Portfolio")],
+              ["messages", tr("Коммуникации", "Comms")],
+              ["support", tr("Поддержка", "Support")],
+              ["reviews", tr("Отзывы", "Reviews")],
+              ["analytics", tr("Аналитика", "Analytics")],
+              ["finance", tr("Финансы", "Finance")],
+              ["settings", tr("Настройки", "Settings")],
+              ["security", tr("Безопасность", "Security")],
+            ].map(([key, label]) => <TabsTrigger key={key} value={key} className="shrink-0 rounded-2xl px-4 py-2.5">{label}</TabsTrigger>)}
           </TabsList>
 
-          <TabsContent value="overview">
-            <div className="space-y-6">
-              {/* Draft warning */}
-              {isDraft && (
-                <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
-                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-medium text-amber-800 dark:text-amber-300">
-                      Профиль не опубликован
-                    </p>
-                    <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-                      Клиенты не могут найти вас в поиске. Заполните профиль и активируйте его.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Pending bookings alert */}
-              {(stats?.pendingBookings ?? 0) > 0 && (
-                <div
-                  className="flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
-                  onClick={() => setActiveTab("bookings")}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center shrink-0">
-                      <Clock className="h-4 w-4 text-amber-700 dark:text-amber-300" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-amber-800 dark:text-amber-300">
-                        {stats!.pendingBookings}{" "}
-                        {stats!.pendingBookings === 1 ? "новая запись" : "новых записи"} ожидают
-                        подтверждения
-                      </p>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
-                        Нажмите чтобы перейти к записям
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                </div>
-              )}
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Сегодня
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats?.todayBookings || 0}</div>
-                    <p className="text-xs text-muted-foreground">записей</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Неделя
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats?.weekBookings || 0}</div>
-                    <p className="text-xs text-muted-foreground">записей</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Выручка / месяц
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {(stats?.monthRevenue || 0).toLocaleString()}
-                    </div>
-                    <p className="text-xs text-muted-foreground">UZS</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Ожидают
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div
-                      className={`text-2xl font-bold ${(stats?.pendingBookings || 0) > 0 ? "text-amber-600" : ""}`}
-                    >
-                      {stats?.pendingBookings || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">записей</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Profile completeness */}
-                {(() => {
-                  const checks = [
-                    { label: "Фото профиля", done: !!masterData.photo, tab: "settings" },
-                    { label: "Услуги добавлены", done: services.length > 0, tab: "services" },
-                    {
-                      label: "О себе заполнено",
-                      done: !!(masterData.bio?.ru || editBio),
-                      tab: "settings",
-                    },
-                    { label: "Город указан", done: !!masterData.city, tab: "settings" },
-                    {
-                      label: "Телефон или Telegram",
-                      done: !!(masterData.phone || masterData.telegram),
-                      tab: "settings",
-                    },
-                    { label: "Портфолио добавлено", done: portfolio.length > 0, tab: "portfolio" },
-                  ];
-                  const done = checks.filter((c) => c.done).length;
-                  const pct = Math.round((done / checks.length) * 100);
-                  return (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">Заполненность профиля</CardTitle>
-                          <span
-                            className={`text-sm font-semibold ${pct === 100 ? "text-green-600" : pct >= 60 ? "text-amber-600" : "text-red-500"}`}
-                          >
-                            {pct}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${pct === 100 ? "bg-green-500" : pct >= 60 ? "bg-amber-500" : "bg-red-500"}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {checks.map((c) => (
-                          <button
-                            key={c.label}
-                            className="flex items-center gap-2.5 w-full text-left hover:opacity-80 transition-opacity"
-                            onClick={() => !c.done && setActiveTab(c.tab as typeof activeTab)}
-                          >
-                            {c.done ? (
-                              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                            )}
-                            <span
-                              className={`text-sm ${c.done ? "text-foreground" : "text-muted-foreground"}`}
-                            >
-                              {c.label}
-                            </span>
-                            {!c.done && (
-                              <span className="text-xs text-primary ml-auto">Добавить →</span>
-                            )}
-                          </button>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
-
-                {/* Recent bookings */}
-                <Card>
-                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base">Ближайшие записи</CardTitle>
-                    <button
-                      className="text-xs text-primary hover:underline"
-                      onClick={() => setActiveTab("bookings")}
-                    >
-                      Все записи →
-                    </button>
-                  </CardHeader>
-                  <CardContent>
-                    {bookingsLoading ? (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : (
-                      (() => {
-                        const upcoming = masterBookings
-                          .filter((b) => b.status !== "cancelled" && b.status !== "completed")
-                          .sort(
-                            (a, b) =>
-                              new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime(),
-                          )
-                          .slice(0, 4);
-                        if (upcoming.length === 0)
-                          return (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                              Нет предстоящих записей
-                            </p>
-                          );
-                        return (
-                          <div className="space-y-2.5">
-                            {upcoming.map((b) => {
-                              const svc = services.find((s) => s.id === b.soloMasterServiceId);
-                              const date = new Date(b.bookingDate);
-                              const isToday = date.toDateString() === new Date().toDateString();
-                              const dateStr = isToday
-                                ? "Сегодня"
-                                : date.toLocaleDateString("ru-RU", {
-                                    day: "numeric",
-                                    month: "short",
-                                  });
-                              return (
-                                <div key={b.id} className="flex items-center gap-3 text-sm">
-                                  <div
-                                    className={`shrink-0 text-center w-10 rounded-md py-0.5 ${isToday ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-                                  >
-                                    <div className="text-xs font-semibold leading-none">
-                                      {dateStr}
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="truncate font-medium">
-                                      {svc?.name?.ru || "Услуга"}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {b.startTime}–{b.endTime}
-                                    </p>
-                                  </div>
-                                  <span
-                                    className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${b.status === "pending" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"}`}
-                                  >
-                                    {b.status === "pending" ? "Ожидает" : "Подтверждена"}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
-                    {t("soloMaster.quickActions", "Quick Actions")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-3">
-                  <Button onClick={() => setActiveTab("services")}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Добавить услугу
-                  </Button>
-                  <Button variant="outline" onClick={() => setActiveTab("calendar")}>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Календарь
-                  </Button>
-                  <Button variant="outline" onClick={() => setActiveTab("portfolio")}>
-                    <Image className="h-4 w-4 mr-2" />
-                    Добавить фото
-                  </Button>
-                  {masterData.slug && (
-                    <Button variant="outline" asChild>
-                      <a href={`/master/${masterData.slug}`} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Моя страница
-                      </a>
-                    </Button>
-                  )}
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader><CardTitle>{tr("Операционная сводка", "Operational snapshot")}</CardTitle><CardDescription>{tr("Главный экран для загрузки, денег и приоритетных действий.", "Main screen for load, money and priorities.")}</CardDescription></CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">{tr("Записи за неделю", "Bookings this week")}</p><p className="mt-3 text-4xl font-semibold text-foreground">{statsQuery.data?.weekBookings || 0}</p></div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">{tr("Выручка за месяц", "Monthly revenue")}</p><p className="mt-3 break-words text-4xl font-semibold text-foreground">{money(statsQuery.data?.monthRevenue)}</p></div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">{tr("Отзывы", "Reviews")}</p><p className="mt-3 text-4xl font-semibold text-foreground">{reviews.length}</p></div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">{tr("Открытые обращения", "Open support")}</p><p className="mt-3 text-4xl font-semibold text-foreground">{openTickets}</p></div>
                 </CardContent>
               </Card>
-
-              <PaymentHealthWidget scope="master" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Календарь</CardTitle>
-                    <CardDescription>Записи по дням недели</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCalWeekOffset((o) => o - 1)}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setCalWeekOffset(0)}>
-                      Сегодня
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCalWeekOffset((o) => o + 1)}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  const today = new Date();
-                  const startOfWeek = new Date(today);
-                  // Monday as start
-                  const dow = today.getDay() === 0 ? 6 : today.getDay() - 1;
-                  startOfWeek.setDate(today.getDate() - dow + calWeekOffset * 7);
-                  startOfWeek.setHours(0, 0, 0, 0);
-
-                  const days = Array.from({ length: 7 }, (_, i) => {
-                    const d = new Date(startOfWeek);
-                    d.setDate(startOfWeek.getDate() + i);
-                    return d;
-                  });
-
-                  const weekStart = days[0];
-                  const weekEnd = days[6];
-                  const weekLabel = `${weekStart.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })} — ${weekEnd.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}`;
-
-                  const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
-                  return (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground text-center">{weekLabel}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
-                        {days.map((day, idx) => {
-                          const isToday = day.toDateString() === today.toDateString();
-                          const dayBookings = masterBookings.filter((b) => {
-                            const bd = new Date(b.bookingDate);
-                            return (
-                              bd.toDateString() === day.toDateString() && b.status !== "cancelled"
-                            );
-                          });
-                          return (
-                            <div
-                              key={idx}
-                              className={`rounded-lg border p-2 min-h-[80px] ${isToday ? "border-primary bg-primary/5" : "border-border"}`}
-                            >
-                              <div
-                                className={`text-xs font-semibold mb-1 ${isToday ? "text-primary" : "text-muted-foreground"}`}
-                              >
-                                {DAY_NAMES[idx]} {day.getDate()}
-                              </div>
-                              {dayBookings.length === 0 ? (
-                                <div className="text-xs text-muted-foreground/50 text-center py-2">
-                                  —
-                                </div>
-                              ) : (
-                                <div className="space-y-1">
-                                  {dayBookings.map((b) => {
-                                    const svc = services.find(
-                                      (s) => s.id === b.soloMasterServiceId,
-                                    );
-                                    const colors: Record<string, string> = {
-                                      pending:
-                                        "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-                                      confirmed:
-                                        "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-                                      completed:
-                                        "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-                                    };
-                                    return (
-                                      <div
-                                        key={b.id}
-                                        className={`text-xs rounded px-1 py-0.5 truncate ${colors[b.status] || "bg-muted"}`}
-                                        title={`${b.startTime} ${svc?.name?.ru || "Услуга"}`}
-                                      >
-                                        {b.startTime} {svc?.name?.ru || "Услуга"}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="bookings">
-            <div className="space-y-4">
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-                <Card className="border-border/70 bg-card/70 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div>
-                        <CardTitle>{t("soloMaster.tabs.bookings", "Bookings")}</CardTitle>
-                        <CardDescription>?????????? ?????? ? ????????? ???????? ????????</CardDescription>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => setBookingFilter(f)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                              bookingFilter === f
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            }`}
-                          >
-                            {{
-                              all: "???",
-                              pending: "???????",
-                              confirmed: "????????????",
-                              completed: "?????????",
-                              cancelled: "????????",
-                            }[f]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">??? ??????</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.all}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">???? ????? ???????????? ???????.</p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">???? ???????</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.pending}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">????? ??????, ??????? ????? ??????????.</p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">????????????</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.confirmed}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">????????? ??????, ?? ??????? ??? ????? ?????????.</p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">?????????</p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums">{bookingStats.completed}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">?????? ??? ????????? ??????? ? ???????.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border/70 bg-card/70 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">??????? ????????</CardTitle>
-                    <CardDescription>??????? ????? ?? ???, ??? ??????? ??????? ????? ??????.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-accent/40" onClick={() => setBookingFilter("pending")}>
-                      <div>
-                        <p className="font-medium text-foreground">??????????? ????? ??????</p>
-                        <p className="mt-1 text-xs text-muted-foreground">????? ???????????? ????? ????????? ? ?????? ???????.</p>
-                      </div>
-                      <Badge variant="outline">{bookingStats.pending}</Badge>
-                    </button>
-                    <button className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-accent/40" onClick={() => setBookingFilter("confirmed")}>
-                      <div>
-                        <p className="font-medium text-foreground">????????? ?????????????? ??????</p>
-                        <p className="mt-1 text-xs text-muted-foreground">???????, ????? ????????? ?????? ???? ??? ?????????.</p>
-                      </div>
-                      <Badge variant="outline">{bookingStats.confirmed}</Badge>
-                    </button>
-                    <div className="rounded-2xl border border-dashed border-border px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">??????? ??????</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">???????? ???????: {filteredBookings.length}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">??????? ?????????? pending, ????? confirmed, ????? ?? ?????? ??????? ?????.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardContent className="pt-6">
-                  {bookingsLoading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : filteredBookings.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                      <p>??????? ??? ?????????? ??????? ???? ???</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {filteredBookings.map((booking) => {
-                        const date = new Date(booking.bookingDate);
-                        const dateStr = date.toLocaleDateString("ru-RU", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        });
-                        const svc = services.find((s) => s.id === booking.soloMasterServiceId);
-                        const statusColors = {
-                          pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-                          confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-                          completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-                          cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-                        } as const;
-                        const statusLabel = {
-                          pending: "???????",
-                          confirmed: "????????????",
-                          completed: "?????????",
-                          cancelled: "????????",
-                        } as const;
-                        return (
-                          <div key={booking.id} className="rounded-2xl border border-border bg-card/60 p-4 shadow-sm">
-                            <div className="flex items-start justify-between gap-3 flex-wrap">
-                              <div className="flex items-start gap-3">
-                                <Avatar className="mt-0.5 h-10 w-10 shrink-0">
-                                  <AvatarImage src={booking.clientAvatar ?? undefined} />
-                                  <AvatarFallback className="text-xs">
-                                    {booking.clientName?.[0] ?? "?"}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  {booking.clientName && (
-                                    <p className="mb-0.5 text-xs text-muted-foreground">{booking.clientName}</p>
-                                  )}
-                                  <p className="font-medium">{svc?.name?.ru || "??????"}</p>
-                                  <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3.5 w-3.5" />
-                                      {dateStr}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="h-3.5 w-3.5" />
-                                      {booking.startTime}-{booking.endTime}
-                                    </span>
-                                    {booking.isMobileBooking && (
-                                      <span className="flex items-center gap-1">
-                                        <MapPin className="h-3.5 w-3.5" />
-                                        ?????
-                                      </span>
-                                    )}
-                                    {booking.priceSnapshot != null && (
-                                      <span className="font-medium text-foreground">
-                                        {booking.priceSnapshot.toLocaleString()} UZS
-                                      </span>
-                                    )}
-                                  </div>
-                                  {booking.notes && (
-                                    <p className="mt-1 text-xs italic text-muted-foreground">
-                                      &ldquo;{booking.notes}&rdquo;
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${statusColors[booking.status as keyof typeof statusColors] || ""}`}>
-                                {statusLabel[booking.status as keyof typeof statusLabel] || booking.status}
-                              </span>
-                            </div>
-                            {booking.status === "pending" && (
-                              <div className="flex gap-2 pt-4">
-                                <Button
-                                  size="sm"
-                                  className="gap-1.5"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "confirmed" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <CheckCircle className="h-3.5 w-3.5" />
-                                  ???????????
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1.5 text-destructive hover:text-destructive"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  ????????
-                                </Button>
-                              </div>
-                            )}
-                            {booking.status === "confirmed" && (
-                              <div className="flex gap-2 pt-4">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1.5"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "completed" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <CheckCircle className="h-3.5 w-3.5" />
-                                  ?????????
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="gap-1.5 text-destructive hover:text-destructive"
-                                  onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
-                                  disabled={updateBookingStatusMutation.isPending}
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                  ????????
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>          <TabsContent value="services">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>{t("soloMaster.tabs.services", "Services")}</CardTitle>
-                  <CardDescription>
-                    {t("soloMaster.servicesDesc", "Services you offer to clients")}
-                  </CardDescription>
-                </div>
-                <Button onClick={() => setServiceDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("soloMaster.addService", "Add Service")}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {servicesLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : services.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>
-                      {t(
-                        "soloMaster.noServices",
-                        "No services added yet. Add your first service to start accepting bookings.",
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {services.map((svc) => (
-                      <div
-                        key={svc.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p
-                              className={`font-medium truncate ${!svc.isActive ? "text-muted-foreground line-through" : ""}`}
-                            >
-                              {svc.name.ru}
-                            </p>
-                            {!svc.isActive && (
-                              <Badge variant="secondary" className="text-xs shrink-0">
-                                Пауза
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                            <Badge variant="secondary" className="text-xs">
-                              {svc.category}
-                            </Badge>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" />
-                              {svc.duration} мин
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {svc.priceMin.toLocaleString()} UZS
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={
-                              svc.isActive
-                                ? "text-green-600 hover:text-amber-500"
-                                : "text-muted-foreground hover:text-green-600"
-                            }
-                            title={svc.isActive ? "Поставить на паузу" : "Включить услугу"}
-                            onClick={() =>
-                              toggleServiceMutation.mutate({ id: svc.id, isActive: !svc.isActive })
-                            }
-                            disabled={toggleServiceMutation.isPending}
-                          >
-                            <Power className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={() => deleteServiceMutation.mutate(svc.id)}
-                            disabled={deleteServiceMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="portfolio">
-            {/* Hidden file input — accepts images, multiple */}
-            <input
-              ref={portfolioInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handlePortfolioUpload}
-            />
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>{t("soloMaster.tabs.portfolio", "Portfolio")}</CardTitle>
-                  <CardDescription>
-                    {t("soloMaster.portfolioDesc", "Showcase your work")}
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={() => portfolioInputRef.current?.click()}
-                  disabled={portfolioUploading}
-                >
-                  {portfolioUploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-2" />
-                  )}
-                  {portfolioUploading ? "Загрузка..." : t("soloMaster.addPhoto", "Add Photo")}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {portfolioLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : portfolio.length === 0 ? (
-                  <div
-                    className="text-center py-16 border-2 border-dashed rounded-xl cursor-pointer hover:border-primary/50 transition-colors"
-                    onClick={() => portfolioInputRef.current?.click()}
-                  >
-                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-40" />
-                    <p className="text-muted-foreground">
-                      {t(
-                        "soloMaster.noPortfolio",
-                        "No portfolio items yet. Add photos to showcase your work.",
-                      )}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Нажмите чтобы выбрать фотографии
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {portfolio.map((item) => (
-                      <div
-                        key={item.id}
-                        className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
-                      >
-                        <img
-                          src={item.imageUrl}
-                          alt="Portfolio"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="h-8 w-8"
-                            onClick={() => deletePortfolioMutation.mutate(item.id)}
-                            disabled={deletePortfolioMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {/* Add more tile */}
-                    <div
-                      className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={() => portfolioInputRef.current?.click()}
-                    >
-                      <Plus className="h-8 w-8 text-muted-foreground opacity-50" />
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  Рабочее расписание
-                </CardTitle>
-                <CardDescription>Укажите рабочие часы для каждого дня недели</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {([1, 2, 3, 4, 5, 6, 0] as number[]).map((dayNum) => {
-                  const DAY_NAMES: Record<number, string> = {
-                    0: "Воскресенье",
-                    1: "Понедельник",
-                    2: "Вторник",
-                    3: "Среда",
-                    4: "Четверг",
-                    5: "Пятница",
-                    6: "Суббота",
-                  };
-                  const slot = scheduleHours.find((h) => h.dayOfWeek === dayNum);
-                  if (!slot) return null;
-                  const idx = scheduleHours.indexOf(slot);
-                  return (
-                    <div
-                      key={dayNum}
-                      className="flex items-center gap-3 py-2 border-b last:border-0"
-                    >
-                      <Switch
-                        checked={slot.isOpen}
-                        onCheckedChange={(checked) => {
-                          const updated = [...scheduleHours];
-                          updated[idx] = { ...updated[idx], isOpen: checked };
-                          setScheduleHours(updated);
-                        }}
-                      />
-                      <span className="w-28 text-sm font-medium shrink-0">{DAY_NAMES[dayNum]}</span>
-                      {slot.isOpen ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <input
-                            type="time"
-                            value={slot.openTime}
-                            onChange={(e) => {
-                              const updated = [...scheduleHours];
-                              updated[idx] = { ...updated[idx], openTime: e.target.value };
-                              setScheduleHours(updated);
-                            }}
-                            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                          />
-                          <span className="text-muted-foreground text-sm">—</span>
-                          <input
-                            type="time"
-                            value={slot.closeTime}
-                            onChange={(e) => {
-                              const updated = [...scheduleHours];
-                              updated[idx] = { ...updated[idx], closeTime: e.target.value };
-                              setScheduleHours(updated);
-                            }}
-                            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Выходной</span>
-                      )}
-                    </div>
-                  );
-                })}
-                <Button
-                  className="mt-4 gap-2"
-                  onClick={() => updateScheduleMutation.mutate()}
-                  disabled={updateScheduleMutation.isPending || scheduleHours.length === 0}
-                >
-                  {updateScheduleMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Сохранить расписание
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <div className="space-y-4">
-              {/* Photo upload card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Фото профиля</CardTitle>
-                  <CardDescription>Ваше фото видят клиенты на странице поиска</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-6">
-                    <div className="relative shrink-0">
-                      <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                        {avatarUploading ? (
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        ) : masterData.photo ? (
-                          <img
-                            src={masterData.photo}
-                            alt={masterData.name}
-                            className="h-24 w-24 rounded-full object-cover"
-                          />
-                        ) : (
-                          <Briefcase className="h-10 w-10 text-primary" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => avatarInputRef.current?.click()}
-                        disabled={avatarUploading}
-                        className="gap-2"
-                      >
-                        <Camera className="h-4 w-4" />
-                        {masterData.photo ? "Изменить фото" : "Загрузить фото"}
-                      </Button>
-                      <p className="text-xs text-muted-foreground">JPG, PNG до 5 МБ</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Profile edit inline form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Данные профиля
-                  </CardTitle>
-                  <CardDescription>Отображаются на вашей публичной странице</CardDescription>
-                </CardHeader>
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader><CardTitle>{tr("Пульс выручки", "Revenue pulse")}</CardTitle><CardDescription>{tr("Последние 7 дат по вашим записям.", "The last 7 visible dates from your bookings.")}</CardDescription></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="edit-name">Имя *</Label>
-                      <Input
-                        id="edit-name"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        placeholder="Ваше имя"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="edit-city">Город</Label>
-                      <Input
-                        id="edit-city"
-                        value={editCity}
-                        onChange={(e) => setEditCity(e.target.value)}
-                        placeholder="Ташкент"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="edit-phone" className="flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5" /> Телефон
-                      </Label>
-                      <Input
-                        id="edit-phone"
-                        value={editPhone}
-                        onChange={(e) => setEditPhone(e.target.value)}
-                        placeholder="+998 90 123 45 67"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="edit-telegram" className="flex items-center gap-1.5">
-                        <MessageCircle className="h-3.5 w-3.5" /> Telegram
-                      </Label>
-                      <Input
-                        id="edit-telegram"
-                        value={editTelegram}
-                        onChange={(e) => setEditTelegram(e.target.value)}
-                        placeholder="@username"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Режим работы</Label>
-                    <Select value={editServiceMode} onValueChange={setEditServiceMode}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="at_master">У мастера</SelectItem>
-                        <SelectItem value="mobile">Выезд к клиенту</SelectItem>
-                        <SelectItem value="both">Оба варианта</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit-bio">О себе</Label>
-                    <Textarea
-                      id="edit-bio"
-                      value={editBio}
-                      onChange={(e) => setEditBio(e.target.value)}
-                      placeholder="Расскажите о своём опыте и специализации..."
-                      rows={3}
-                    />
-                  </div>
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => updateProfileMutation.mutate()}
-                    disabled={updateProfileMutation.isPending || !editName.trim()}
-                  >
-                    {updateProfileMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                    )}
-                    Сохранить изменения
-                  </Button>
+                  {chartData.length ? chartData.map((row) => <div key={row.label} className="space-y-2"><div className="flex items-center justify-between gap-3 text-sm"><span className="text-muted-foreground">{row.label}</span><span className="font-medium text-foreground">{row.bookings} • {money(row.revenue)}</span></div><Progress value={Math.min(100, row.revenue ? (row.revenue / Math.max(...chartData.map((item) => item.revenue || 1))) * 100 : 0)} /></div>) : <EmptyState icon={PieChart} title={tr("Аналитика появится после первых записей", "No analytics yet")} description={tr("Откройте публичную страницу, услуги и расписание.", "Open your public page, services and schedule.")} action={{ label: tr("Перейти к услугам", "Go to services"), onClick: () => setActiveTab("services") }} />}
                 </CardContent>
               </Card>
-              <PushNotificationSettings />
             </div>
           </TabsContent>
+
+          <TabsContent value="profile" className="mt-6">
+            <div className="grid gap-4 xl:grid-cols-[0.72fr_1.28fr]">
+              <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Лицо мастера", "Identity and visuals")}</CardTitle><CardDescription>{tr("Аватар, статус и первый слой доверия.", "Avatar, status and the first layer of trust.")}</CardDescription></CardHeader><CardContent className="space-y-4"><div className="flex flex-col items-center gap-4 rounded-3xl border border-border/70 bg-muted/20 p-6 text-center"><Avatar className="h-28 w-28 rounded-[28px] border border-border/70"><AvatarImage src={master.photo || undefined} /><AvatarFallback className="rounded-[28px] text-2xl">{master.name?.slice(0, 1)?.toUpperCase() || "M"}</AvatarFallback></Avatar><div className="space-y-1"><p className="break-words text-xl font-semibold text-foreground">{master.name}</p><p className="break-words text-sm text-muted-foreground">{localize(master.bio, lang) || tr("Добавьте короткое позиционирование", "Add a short positioning")}</p></div><Button variant="outline" onClick={() => avatarInputRef.current?.click()} className="gap-2"><Upload className="h-4 w-4" />{tr("Сменить фото", "Change avatar")}</Button><input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { await uploadAvatar(file); toast({ title: tr("Аватар обновлён", "Avatar updated") }); } catch (error) { toast({ title: tr("Не удалось загрузить фото", "Upload failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" }); } finally { event.target.value = ""; } }} /></div></CardContent></Card>
+              <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Редактор профиля", "Profile editor")}</CardTitle><CardDescription>{tr("Всё, что формирует образ мастера в глазах клиента.", "Everything that shapes how the expert looks to the client.")}</CardDescription></CardHeader><CardContent className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>{tr("Публичное имя", "Public name")}</Label><Input value={profileForm.name} onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))} /></div><div className="space-y-2"><Label>{tr("Город", "City")}</Label><Input value={profileForm.city} onChange={(e) => setProfileForm((prev) => ({ ...prev, city: e.target.value }))} /></div><div className="space-y-2"><Label>{tr("Район / адрес", "Area or address")}</Label><Input value={profileForm.address} onChange={(e) => setProfileForm((prev) => ({ ...prev, address: e.target.value }))} /></div><div className="space-y-2"><Label>{tr("Телефон", "Phone")}</Label><Input value={profileForm.phone} onChange={(e) => setProfileForm((prev) => ({ ...prev, phone: e.target.value }))} /></div><div className="space-y-2"><Label>Telegram</Label><Input value={profileForm.telegram} onChange={(e) => setProfileForm((prev) => ({ ...prev, telegram: e.target.value }))} /></div><div className="space-y-2"><Label>Instagram</Label><Input value={profileForm.instagram} onChange={(e) => setProfileForm((prev) => ({ ...prev, instagram: e.target.value }))} /></div><div className="space-y-2"><Label>Slug / URL</Label><Input value={profileForm.slug} onChange={(e) => setProfileForm((prev) => ({ ...prev, slug: e.target.value }))} /></div><div className="space-y-2"><Label>{tr("Формат работы", "Work format")}</Label><Select value={profileForm.serviceMode} onValueChange={(value) => setProfileForm((prev) => ({ ...prev, serviceMode: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="at_master">{tr("У мастера", "At master location")}</SelectItem><SelectItem value="mobile">{tr("Выезд", "Mobile")}</SelectItem><SelectItem value="both">{tr("Оба формата", "Both")}</SelectItem></SelectContent></Select></div><div className="space-y-2 md:col-span-2"><Label>{tr("Описание", "Description")}</Label><Textarea rows={5} value={profileForm.bio} onChange={(e) => setProfileForm((prev) => ({ ...prev, bio: e.target.value }))} /></div><div className="md:col-span-2"><Button onClick={() => updateProfileMutation.mutate()} disabled={updateProfileMutation.isPending || !profileForm.name.trim()}>{updateProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Сохранить профиль", "Save profile")}</Button></div></CardContent></Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="publicPage" className="mt-6"><div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Управление витриной", "Public page control")}</CardTitle><CardDescription>{tr("Страница, которую клиент видит до записи.", "The page clients see before they book.")}</CardDescription></CardHeader><CardContent className="space-y-4"><div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">URL</p><p className="mt-2 break-all text-base font-medium text-foreground">{master.slug ? `${window.location.origin}/master/${master.slug}` : "—"}</p></div><div className="grid gap-3 sm:grid-cols-2"><Button onClick={() => setActiveTab("profile")}>{tr("Редактировать контент", "Edit content")}</Button><Button variant="outline" onClick={() => master.slug && window.open(`/master/${master.slug}`, "_blank")}>{tr("Предпросмотр", "Preview")}</Button></div></CardContent></Card><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Что делает страницу сильнее", "What makes the page stronger")}</CardTitle></CardHeader><CardContent className="grid gap-3 md:grid-cols-2">{[tr("Понятное позиционирование и описание"), tr("Минимум 5 активных услуг"), tr("Три-пять работ в портфолио"), tr("Актуальное расписание"), tr("Быстрые ответы на отзывы"), tr("Регулярное продвижение страницы")].map((item) => <div key={item} className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="break-words text-sm text-foreground">{item}</p></div>)}</CardContent></Card></div></TabsContent>
+
+          <TabsContent value="calendar" className="mt-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Рабочий календарь", "Working calendar")}</CardTitle><CardDescription>{tr("Текущие записи без прыжков между экранами.", "Current bookings without jumping between screens.")}</CardDescription></CardHeader><CardContent><CalendarWeekView bookings={bookings as any} isLoading={bookingsQuery.isLoading} showClient={true} /></CardContent></Card></TabsContent>
+
+          <TabsContent value="schedule" className="mt-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Рабочее расписание", "Working schedule")}</CardTitle><CardDescription>{tr("Это напрямую влияет на доступные слоты для клиента.", "This directly affects available slots for clients.")}</CardDescription></CardHeader><CardContent className="space-y-4">{scheduleForm.map((day, index) => <div key={day.dayOfWeek} className="grid gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 md:grid-cols-[0.9fr_0.5fr_0.8fr_0.8fr] md:items-center"><div><p className="font-medium text-foreground">{dayName(day.dayOfWeek, lang)}</p></div><div className="flex items-center gap-3"><Switch checked={day.isOpen} onCheckedChange={(checked) => setScheduleForm((prev) => prev.map((item, itemIndex) => itemIndex === index ? { ...item, isOpen: checked } : item))} /><span className="text-sm text-muted-foreground">{day.isOpen ? tr("Открыт", "Open") : tr("Выходной", "Off")}</span></div><Input value={day.openTime} type="time" disabled={!day.isOpen} onChange={(e) => setScheduleForm((prev) => prev.map((item, itemIndex) => itemIndex === index ? { ...item, openTime: e.target.value } : item))} /><Input value={day.closeTime} type="time" disabled={!day.isOpen} onChange={(e) => setScheduleForm((prev) => prev.map((item, itemIndex) => itemIndex === index ? { ...item, closeTime: e.target.value } : item))} /></div>)}<Button onClick={() => saveScheduleMutation.mutate()} disabled={saveScheduleMutation.isPending}>{saveScheduleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Сохранить расписание", "Save schedule")}</Button></CardContent></Card></TabsContent>
+
+          <TabsContent value="bookings" className="mt-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Панель записей", "Booking desk")}</CardTitle><CardDescription>{tr("Поиск, фильтры и действия в одном месте.", "Search, filters and actions in one place.")}</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid gap-3 lg:grid-cols-[1fr_220px]"><Input value={bookingSearch} onChange={(e) => setBookingSearch(e.target.value)} placeholder={tr("Поиск по клиенту, услуге или комментарию", "Search by client, service or note")} /><Select value={bookingFilter} onValueChange={setBookingFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{tr("Все статусы", "All statuses")}</SelectItem><SelectItem value="pending">{tr("Ожидают", "Pending")}</SelectItem><SelectItem value="confirmed">{tr("Подтверждены", "Confirmed")}</SelectItem><SelectItem value="completed">{tr("Завершены", "Completed")}</SelectItem><SelectItem value="cancelled">{tr("Отменены", "Cancelled")}</SelectItem></SelectContent></Select></div><div className="space-y-3">{filteredBookings.length ? filteredBookings.map((booking) => <div key={booking.id} className="rounded-3xl border border-border/70 bg-muted/20 p-4"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0 space-y-2"><div className="flex flex-wrap items-center gap-2"><p className="break-words font-medium text-foreground">{booking.clientName || tr("Клиент", "Client")}</p><Badge variant="outline" className={statusTone(booking.status)}>{booking.status}</Badge></div><p className="break-words text-sm text-muted-foreground">{localize(booking.service?.name, lang) || tr("Услуга не указана", "Service is not specified")}</p><div className="flex flex-wrap gap-4 text-sm text-muted-foreground"><span>{date(booking.bookingDate, locale)}</span><span>{booking.startTime}–{booking.endTime}</span><span>{money(booking.priceSnapshot)}</span><span>{booking.clientEmail || "—"}</span></div>{booking.notes && <p className="break-words text-sm text-foreground/80">{booking.notes}</p>}</div><div className="flex flex-wrap gap-2">{booking.status === "pending" && <Button size="sm" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "confirmed" })}>{tr("Подтвердить", "Confirm")}</Button>}{booking.status === "confirmed" && <Button size="sm" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "completed" })}>{tr("Завершить", "Complete")}</Button>}{["pending", "confirmed"].includes(booking.status) && <Button size="sm" variant="outline" onClick={() => updateBookingStatusMutation.mutate({ bookingId: booking.id, status: "cancelled" })}>{tr("Отменить", "Cancel")}</Button>}</div></div></div>) : <EmptyState icon={CalendarDays} title={tr("Записи не найдены", "No bookings found")} description={tr("Измените фильтры или откройте больше времени в расписании.", "Adjust filters or open more slots in the schedule.")} action={{ label: tr("Открыть расписание", "Open schedule"), onClick: () => setActiveTab("schedule") }} />}</div></CardContent></Card></TabsContent>
+
+          <TabsContent value="clients" className="mt-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Клиентская база", "Client desk")}</CardTitle><CardDescription>{tr("Постоянные клиенты, история визитов и чек в одном списке.", "Repeat clients, visit history and spending in one list.")}</CardDescription></CardHeader><CardContent className="space-y-3">{clients.length ? clients.map((client) => <div key={client.id} className="rounded-3xl border border-border/70 bg-muted/20 p-4"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex min-w-0 gap-3"><Avatar className="h-12 w-12 border border-border/70"><AvatarImage src={client.avatarUrl || undefined} /><AvatarFallback>{client.name.slice(0, 1).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0"><p className="break-words font-medium text-foreground">{client.name}</p><p className="break-words text-sm text-muted-foreground">{[client.city, client.email, client.phone].filter(Boolean).join(" • ") || "—"}</p><div className="mt-2 flex flex-wrap gap-2"><Badge variant="outline" className={statusTone(client.latestStatus || "pending")}>{client.latestStatus || "pending"}</Badge>{client.favoriteService && <Badge variant="outline">{client.favoriteService}</Badge>}</div></div></div><div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2"><span>{tr("Визитов", "Visits")}: <strong className="text-foreground">{client.totalBookings}</strong></span><span>{tr("Завершено", "Completed")}: <strong className="text-foreground">{client.completedBookings}</strong></span><span>{tr("Потратил", "Spent")}: <strong className="text-foreground">{money(client.totalSpent)}</strong></span><span>{tr("Последний визит", "Last visit")}: <strong className="text-foreground">{date(client.lastVisit, locale)}</strong></span></div></div></div>) : <EmptyState icon={Users} title={tr("Пока нет клиентской базы", "No clients yet")} description={tr("Как только пойдут записи, этот раздел превратится в ваш mini CRM.", "As soon as bookings arrive, this section will become your mini CRM.")} action={{ label: tr("Открыть страницу", "Open page"), onClick: () => setActiveTab("publicPage") }} />}</CardContent></Card></TabsContent>
+
+          <TabsContent value="services" className="mt-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-xl font-semibold text-foreground">{tr("Услуги и прайс", "Services and pricing")}</h3><p className="text-sm text-muted-foreground">{tr("Это коммерческое ядро вашей страницы.", "This is the commercial core of your page.")}</p></div><Button onClick={() => setServiceDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />{tr("Добавить услугу", "Add service")}</Button></div>{services.length ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{services.map((service) => <Card key={service.id} className="border-border/70 shadow-sm"><CardContent className="space-y-4 p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words font-medium text-foreground">{localize(service.name, lang)}</p><p className="mt-1 text-sm text-muted-foreground">{service.category}</p></div><Badge variant="outline" className={service.isActive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500" : "border-border bg-muted text-muted-foreground"}>{service.isActive ? tr("Активна", "Active") : tr("Скрыта", "Paused")}</Badge></div><div className="space-y-1 text-sm text-muted-foreground"><p>{money(service.priceMin)}{service.priceMax ? ` – ${money(service.priceMax)}` : ""}</p><p>{service.duration} {tr("мин", "min")}</p></div><p className="line-clamp-3 break-words text-sm text-foreground/80">{localize(service.description, lang) || tr("Описание пока не добавлено", "No description yet")}</p><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => toggleServiceMutation.mutate(service)}>{service.isActive ? tr("Скрыть", "Hide") : tr("Включить", "Enable")}</Button><Button size="sm" variant="outline" onClick={() => deleteServiceMutation.mutate(service.id)}><Trash2 className="mr-2 h-4 w-4" />{tr("Удалить", "Delete")}</Button></div></CardContent></Card>)}</div> : <div className="mt-6"><EmptyState icon={Sparkles} title={tr("Услуги ещё не добавлены", "No services yet")} description={tr("Добавьте первую услугу, чтобы публичная страница начала конвертировать просмотр в запись.", "Add the first service so the page can start converting visitors.")} action={{ label: tr("Добавить услугу", "Add service"), onClick: () => setServiceDialogOpen(true) }} /></div>}</TabsContent>
+
+          <TabsContent value="portfolio" className="mt-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-xl font-semibold text-foreground">{tr("Портфолио", "Portfolio")}</h3><p className="text-sm text-muted-foreground">{tr("Портфолио должно продавать, а не просто лежать.", "Portfolio should sell, not just exist.")}</p></div><Button onClick={() => portfolioInputRef.current?.click()} className="gap-2"><ImagePlus className="h-4 w-4" />{tr("Загрузить работы", "Upload works")}</Button><input ref={portfolioInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (event) => { try { await uploadPortfolio(event.target.files); } catch (error) { toast({ title: tr("Не удалось загрузить портфолио", "Upload failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" }); } finally { event.target.value = ""; } }} /></div>{portfolio.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{portfolio.map((item) => <Card key={item.id} className="overflow-hidden border-border/70 shadow-sm"><div className="aspect-[4/3] overflow-hidden bg-muted"><img src={item.imageUrl} alt="" className="h-full w-full object-cover" /></div><CardContent className="space-y-3 p-4"><p className="break-words text-sm text-muted-foreground">{localize(item.description, lang) || tr("Работа без подписи", "Work without caption")}</p><Button size="sm" variant="outline" onClick={() => deletePortfolioMutation.mutate(item.id)}><Trash2 className="mr-2 h-4 w-4" />{tr("Удалить", "Remove")}</Button></CardContent></Card>)}</div> : <div className="mt-6"><EmptyState icon={ImagePlus} title={tr("Портфолио пока пустое", "Portfolio is empty")} description={tr("Загрузите хотя бы 5 сильных работ, чтобы клиент быстрее принимал решение.", "Upload at least 5 strong works so clients can decide faster.")} action={{ label: tr("Загрузить работу", "Upload work"), onClick: () => portfolioInputRef.current?.click() }} /></div>}</TabsContent>
+
+          <TabsContent value="messages" className="mt-6"><div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Коммуникации", "Communication center")}</CardTitle><CardDescription>{tr("Клиентская активность и быстрые следующие шаги.", "Client activity and quick next steps.")}</CardDescription></CardHeader><CardContent className="space-y-3">{clients.slice(0, 6).map((client) => <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words font-medium text-foreground">{client.name}</p><p className="mt-1 break-words text-sm text-muted-foreground">{client.favoriteService || tr("Пока без любимой услуги", "No favorite service yet")}</p><p className="mt-2 text-sm text-muted-foreground">{tr("Последний визит", "Last visit")}: {date(client.lastVisit, locale)}</p></div><Badge variant="outline" className={statusTone(client.latestStatus || "pending")}>{client.latestStatus || "pending"}</Badge></div></div>)}</CardContent></Card><Card className="border-border/70 shadow-sm"><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle>{tr("Уведомления", "Notifications")}</CardTitle><CardDescription>{tr("Новые записи, смена статусов и продуктовые обновления.", "New bookings, status changes and product updates.")}</CardDescription></div><Button variant="outline" size="sm" onClick={() => markAllNotificationsMutation.mutate()}>{tr("Прочитать всё", "Read all")}</Button></div></CardHeader><CardContent>{notifications.length ? <ScrollArea className="h-[420px] pr-3"><div className="space-y-3">{notifications.map((notification) => <button key={notification.id} type="button" onClick={() => markNotificationReadMutation.mutate(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.isRead ? "border-border/60 bg-muted/10" : "border-primary/25 bg-primary/5"}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words font-medium text-foreground">{notification.message || tr("Системное обновление", "System update")}</p><p className="mt-1 text-sm text-muted-foreground">{dateTime(notification.createdAt, locale)}</p></div>{!notification.isRead && <Badge className="border-primary/20 bg-primary/10 text-primary">{tr("Новое", "New")}</Badge>}</div></button>)}</div></ScrollArea> : <EmptyState icon={Bell} title={tr("Пока нет уведомлений", "No notifications")} description={tr("Как только пойдут новые записи и изменения, эта зона оживёт.", "As bookings and changes appear, this area will become alive.")} />}</CardContent></Card></div></TabsContent>
+
+          <TabsContent value="support" className="mt-6"><div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]"><Card className="border-border/70 shadow-sm"><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle>{tr("Обращения", "Support tickets")}</CardTitle><CardDescription>{tr("Технические проблемы, споры, выплаты и вопросы по платформе.", "Technical issues, disputes, payments and platform questions.")}</CardDescription></div><Button onClick={() => setSupportDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />{tr("Новое обращение", "New ticket")}</Button></div></CardHeader><CardContent className="space-y-3">{supportTickets.length ? supportTickets.map((ticket) => <button key={ticket.id} type="button" onClick={() => setSelectedTicketId(ticket.id)} className={`w-full rounded-2xl border p-4 text-left transition ${selectedTicketId === ticket.id ? "border-primary/35 bg-primary/5" : "border-border/70 bg-muted/20"}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words font-medium text-foreground">{ticket.subject}</p><p className="mt-1 break-words text-sm text-muted-foreground">{ticket.category} • {dateTime(ticket.updatedAt || ticket.createdAt, locale)}</p></div><Badge variant="outline" className={statusTone(ticket.status)}>{ticket.status}</Badge></div></button>) : <EmptyState icon={LifeBuoy} title={tr("Обращений пока нет", "No tickets yet")} description={tr("Когда платформе нужно ваше описание проблемы — начинайте отсюда.", "When the platform needs your problem description, start from here.")} action={{ label: tr("Создать обращение", "Create ticket"), onClick: () => setSupportDialogOpen(true) }} />}</CardContent></Card><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Переписка по обращению", "Ticket thread")}</CardTitle><CardDescription>{tr("Держите контекст проблемы внутри платформы.", "Keep the context of the issue inside the platform.")}</CardDescription></CardHeader><CardContent className="space-y-4">{ticketDetailQuery.data ? <><div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4"><div className="min-w-0"><p className="break-words font-medium text-foreground">{ticketDetailQuery.data.ticket.subject}</p><p className="mt-1 text-sm text-muted-foreground">{ticketDetailQuery.data.ticket.category} • {ticketDetailQuery.data.ticket.status}</p></div>{ticketDetailQuery.data.ticket.status !== "closed" && <Button variant="outline" size="sm" onClick={() => closeTicketMutation.mutate(ticketDetailQuery.data!.ticket.id)}>{tr("Закрыть", "Close")}</Button>}</div><ScrollArea className="h-[320px] pr-3"><div className="space-y-3">{ticketDetailQuery.data.messages.map((message) => <div key={message.id} className={`rounded-2xl border p-4 ${message.senderType === "admin" ? "border-primary/25 bg-primary/5" : "border-border/70 bg-muted/20"}`}><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium text-foreground">{message.senderType === "admin" ? tr("Поддержка AURELLE", "AURELLE support") : tr("Вы", "You")}</p><p className="text-xs text-muted-foreground">{dateTime(message.createdAt, locale)}</p></div><p className="mt-2 break-words text-sm text-foreground/90">{message.message}</p></div>)}</div></ScrollArea><Textarea rows={4} value={supportReply} onChange={(e) => setSupportReply(e.target.value)} placeholder={tr("Уточните детали для администратора", "Clarify details for the admin")} /><Button onClick={() => replySupportMutation.mutate()} disabled={!supportReply.trim() || replySupportMutation.isPending}>{replySupportMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Отправить ответ", "Send reply")}</Button></> : <EmptyState icon={MessageSquare} title={tr("Выберите обращение", "Select a ticket")} description={tr("Здесь будет вся переписка с поддержкой и текущий статус обращения.", "Here you will see the full thread and the current ticket status.")} />}</CardContent></Card></div></TabsContent>
+
+          <TabsContent value="reviews" className="mt-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Отзывы и рейтинг", "Review desk")}</CardTitle><CardDescription>{tr("Следите за отзывами и отвечайте на них, не выходя из кабинета.", "Track fresh feedback and answer it without leaving the cabinet.")}</CardDescription></CardHeader><CardContent className="space-y-4">{reviews.length ? reviews.map((review) => <div key={review.id} className="rounded-3xl border border-border/70 bg-muted/20 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="break-words font-medium text-foreground">{review.clientName || tr("Клиент", "Client")}</p><Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500">{review.rating}/5</Badge></div><p className="mt-2 break-words text-sm text-foreground/90">{review.comment || tr("Клиент оставил только оценку", "Client left only a rating")}</p><p className="mt-2 text-xs text-muted-foreground">{dateTime(review.createdAt, locale)}</p></div></div>{review.ownerResponse ? <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4"><p className="text-xs uppercase tracking-[0.18em] text-primary">{tr("Ваш ответ", "Your reply")}</p><p className="mt-2 break-words text-sm text-foreground">{review.ownerResponse}</p></div> : <div className="mt-4 space-y-3"><Textarea rows={3} value={reviewReplyDrafts[review.id] || ""} onChange={(e) => setReviewReplyDrafts((prev) => ({ ...prev, [review.id]: e.target.value }))} placeholder={tr("Ответьте клиенту спокойно и профессионально", "Reply to the client professionally")} /><Button onClick={() => respondReviewMutation.mutate({ reviewId: review.id, ownerResponse: reviewReplyDrafts[review.id] || "" })} disabled={!reviewReplyDrafts[review.id]?.trim() || respondReviewMutation.isPending}>{tr("Отправить ответ", "Send reply")}</Button></div>}</div>) : <EmptyState icon={Star} title={tr("Пока нет отзывов", "No reviews yet")} description={tr("Как только появятся завершённые записи, этот блок станет вашей панелью репутации.", "As completed bookings appear, this block becomes your reputation desk.")} action={{ label: tr("Открыть записи", "Open bookings"), onClick: () => setActiveTab("bookings") }} />}</CardContent></Card></TabsContent>
+
+          <TabsContent value="analytics" className="mt-6"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><StatCard icon={PieChart} label={tr("Повторные клиенты", "Repeat clients")} value={clients.filter((item) => item.totalBookings > 1).length} hint={tr("Хороший прокси для удержания", "Good proxy for retention")} /><StatCard icon={Star} label={tr("Средний рейтинг", "Average rating")} value={master.averageRating || "0.0"} hint={tr("Публичный показатель качества", "Your public quality score")} /><StatCard icon={Users} label={tr("Активные клиенты", "Active clients")} value={clients.length} hint={tr("Люди, которые уже записывались к вам", "People who already booked with you")} /><StatCard icon={Wallet} label={tr("Итого за месяц", "Month total")} value={money(statsQuery.data?.monthRevenue)} hint={tr("Только завершённая выручка", "Completed revenue only")} /></div></TabsContent>
+
+          <TabsContent value="finance" className="mt-6 space-y-6"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><StatCard icon={Wallet} label={tr("За день", "Today")} value={money(revenueToday)} hint={tr("Только завершённые", "Completed only")} /><StatCard icon={Wallet} label={tr("За неделю", "Week")} value={money(revenueWeek)} hint={tr("Текущее рабочее окно", "Current rolling window")} /><StatCard icon={Wallet} label={tr("За месяц", "Month")} value={money(statsQuery.data?.monthRevenue)} hint={tr("Текущий месяц", "Current month")} /><StatCard icon={CheckCircle2} label={tr("Завершено", "Completed")} value={completedBookings.length} hint={tr("Записи, дошедшие до финала", "Bookings that reached the finish line")} /></div><PaymentHealthWidget scope="master" /></TabsContent>
+
+          <TabsContent value="settings" className="mt-6 space-y-6"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Правила записи", "Booking rules")}</CardTitle><CardDescription>{tr("Эти настройки влияют на логику слотов, которую видит клиент.", "These settings influence the slot logic the client sees.")}</CardDescription></CardHeader><CardContent className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>{tr("Буфер между записями (мин)", "Buffer between bookings (min)")}</Label><Input type="number" value={settingsForm.bufferMinutes} onChange={(e) => setSettingsForm((prev) => ({ ...prev, bufferMinutes: Number(e.target.value) || 0 }))} /></div><div className="space-y-2"><Label>{tr("Буфер на выезд (мин)", "Travel buffer (min)")}</Label><Input type="number" value={settingsForm.travelBufferMinutes} onChange={(e) => setSettingsForm((prev) => ({ ...prev, travelBufferMinutes: Number(e.target.value) || 0 }))} /></div><div className="space-y-2"><Label>{tr("Макс. глубина записи", "Max advance days")}</Label><Input type="number" value={settingsForm.maxAdvanceBookingDays} onChange={(e) => setSettingsForm((prev) => ({ ...prev, maxAdvanceBookingDays: Number(e.target.value) || 0 }))} /></div><div className="space-y-2"><Label>{tr("Мин. время до записи", "Min advance hours")}</Label><Input type="number" value={settingsForm.minAdvanceBookingHours} onChange={(e) => setSettingsForm((prev) => ({ ...prev, minAdvanceBookingHours: Number(e.target.value) || 0 }))} /></div><div className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 px-4 py-3 md:col-span-2"><div className="min-w-0"><p className="font-medium text-foreground">{tr("Автоподтверждение", "Auto confirm bookings")}</p><p className="text-sm text-muted-foreground">{tr("Используйте осторожно, когда расписание действительно дисциплинировано.", "Use carefully when the schedule is disciplined.")}</p></div><Switch checked={settingsForm.autoConfirmBookings} onCheckedChange={(checked) => setSettingsForm((prev) => ({ ...prev, autoConfirmBookings: checked }))} /></div><div className="md:col-span-2"><Button onClick={() => saveSettingsMutation.mutate()} disabled={saveSettingsMutation.isPending}>{saveSettingsMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Сохранить настройки", "Save settings")}</Button></div></CardContent></Card><PushNotificationSettings /></TabsContent>
+
+          <TabsContent value="security" className="mt-6"><div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]"><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Безопасность", "Security")}</CardTitle><CardDescription>{tr("Держите доступ чистым и предсказуемым.", "Keep access clean and predictable.")}</CardDescription></CardHeader><CardContent className="space-y-3"><div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">Email</p><p className="mt-2 break-words font-medium text-foreground">{user.email || "—"}</p></div><div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-sm text-muted-foreground">{tr("Телефон", "Phone")}</p><p className="mt-2 break-words font-medium text-foreground">{profileForm.phone || "—"}</p></div><Button variant="outline" onClick={() => logout()} className="gap-2"><ShieldCheck className="h-4 w-4" />{tr("Выйти из текущей сессии", "Log out current session")}</Button></CardContent></Card><Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>{tr("Операционные заметки", "Operational notes")}</CardTitle><CardDescription>{tr("Честно показываем, что уже подключено и что важно держать под контролем.", "A candid look at what is connected and what you should keep under control.")}</CardDescription></CardHeader><CardContent className="space-y-3"><Alert><ExternalLink className="h-4 w-4" /><AlertTitle>{tr("Публичная страница работает", "Public page is live")}</AlertTitle><AlertDescription>{master.slug ? `${window.location.origin}/master/${master.slug}` : tr("Добавьте slug в профиле, чтобы открыть страницу.", "Add slug in the profile to open the page.")}</AlertDescription></Alert><Alert><MessageSquare className="h-4 w-4" /><AlertTitle>{tr("Коммуникации в одном месте", "Communication in one place")}</AlertTitle><AlertDescription>{tr("Кабинет уже собирает клиентов, контекст записей, обращения и уведомления в одном месте.", "The workspace already pulls clients, booking context, support and notifications into one place.")}</AlertDescription></Alert></CardContent></Card></div></TabsContent>
         </Tabs>
       </div>
 
-      {/* Add Service Dialog */}
-      <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>{t("soloMaster.addService", "Add Service")}</DialogTitle>
-          </DialogHeader>
+      <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}><DialogContent className="sm:max-w-[520px]"><DialogHeader><DialogTitle>{tr("Новая услуга", "New service")}</DialogTitle></DialogHeader><div className="grid gap-4 py-2"><div className="space-y-2"><Label>{tr("Название услуги", "Service title")}</Label><Input value={newService.name} onChange={(e) => setNewService((prev) => ({ ...prev, name: e.target.value }))} /></div><div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>{tr("Категория", "Category")}</Label><Select value={newService.category} onValueChange={(value) => setNewService((prev) => ({ ...prev, category: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SERVICE_CATEGORIES.map((category) => <SelectItem key={category} value={category}>{category}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label>{tr("Формат", "Format")}</Label><Select value={newService.serviceMode} onValueChange={(value) => setNewService((prev) => ({ ...prev, serviceMode: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="at_master">{tr("У мастера", "At master location")}</SelectItem><SelectItem value="mobile">{tr("Выезд", "Mobile")}</SelectItem><SelectItem value="both">{tr("Оба формата", "Both")}</SelectItem></SelectContent></Select></div></div><div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>{tr("Цена", "Price")}</Label><Input type="number" value={newService.price} onChange={(e) => setNewService((prev) => ({ ...prev, price: e.target.value }))} /></div><div className="space-y-2"><Label>{tr("Длительность (мин)", "Duration (min)")}</Label><Input type="number" value={newService.duration} onChange={(e) => setNewService((prev) => ({ ...prev, duration: e.target.value }))} /></div></div><div className="space-y-2"><Label>{tr("Описание", "Description")}</Label><Textarea rows={4} value={newService.description} onChange={(e) => setNewService((prev) => ({ ...prev, description: e.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setServiceDialogOpen(false)}>{tr("Отмена", "Cancel")}</Button><Button onClick={() => createServiceMutation.mutate()} disabled={createServiceMutation.isPending || !newService.name.trim()}>{createServiceMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Создать услугу", "Create service")}</Button></DialogFooter></DialogContent></Dialog>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <Label htmlFor="svc-name">Название услуги *</Label>
-              <Input
-                id="svc-name"
-                placeholder="Маникюр классический"
-                value={serviceName}
-                onChange={(e) => setServiceName(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="svc-category">Категория *</Label>
-              <Select value={serviceCategory} onValueChange={setServiceCategory}>
-                <SelectTrigger id="svc-category" className="mt-1">
-                  <SelectValue placeholder="Выберите категорию" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SERVICE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="svc-price">Цена (UZS) *</Label>
-                <Input
-                  id="svc-price"
-                  type="number"
-                  placeholder="100000"
-                  value={servicePrice}
-                  onChange={(e) => setServicePrice(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="svc-duration">Длительность (мин) *</Label>
-                <Input
-                  id="svc-duration"
-                  type="number"
-                  placeholder="60"
-                  value={serviceDuration}
-                  onChange={(e) => setServiceDuration(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="svc-mode">Формат работы</Label>
-              <Select value={serviceMode} onValueChange={setServiceMode}>
-                <SelectTrigger id="svc-mode" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="at_master">У мастера</SelectItem>
-                  <SelectItem value="mobile">Выезд</SelectItem>
-                  <SelectItem value="both">У мастера и выезд</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setServiceDialogOpen(false)}>
-              Отмена
-            </Button>
-            <Button
-              onClick={() => createServiceMutation.mutate()}
-              disabled={
-                createServiceMutation.isPending ||
-                !serviceName.trim() ||
-                !serviceCategory ||
-                !servicePrice
-              }
-            >
-              {createServiceMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Добавить
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Dialog open={supportDialogOpen} onOpenChange={setSupportDialogOpen}><DialogContent className="sm:max-w-[560px]"><DialogHeader><DialogTitle>{tr("Создать обращение", "Create support ticket")}</DialogTitle></DialogHeader><div className="grid gap-4 py-2"><div className="space-y-2"><Label>{tr("Тема", "Subject")}</Label><Input value={newTicket.subject} onChange={(e) => setNewTicket((prev) => ({ ...prev, subject: e.target.value }))} /></div><div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label>{tr("Категория", "Category")}</Label><Select value={newTicket.category} onValueChange={(value) => setNewTicket((prev) => ({ ...prev, category: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="question">{tr("Вопрос", "Question")}</SelectItem><SelectItem value="booking">{tr("Проблема с записью", "Booking issue")}</SelectItem><SelectItem value="payment">{tr("Оплата", "Payment")}</SelectItem><SelectItem value="review">{tr("Спор по отзыву", "Review dispute")}</SelectItem><SelectItem value="technical">{tr("Техническая проблема", "Technical")}</SelectItem></SelectContent></Select></div><div className="space-y-2"><Label>{tr("Приоритет", "Priority")}</Label><Select value={newTicket.priority} onValueChange={(value) => setNewTicket((prev) => ({ ...prev, priority: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="low">{tr("Низкий", "Low")}</SelectItem><SelectItem value="normal">{tr("Обычный", "Normal")}</SelectItem><SelectItem value="high">{tr("Высокий", "High")}</SelectItem><SelectItem value="urgent">{tr("Срочный", "Urgent")}</SelectItem></SelectContent></Select></div></div><div className="space-y-2"><Label>{tr("Сообщение", "Message")}</Label><Textarea rows={6} value={newTicket.message} onChange={(e) => setNewTicket((prev) => ({ ...prev, message: e.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setSupportDialogOpen(false)}>{tr("Отмена", "Cancel")}</Button><Button onClick={() => createSupportTicketMutation.mutate()} disabled={createSupportTicketMutation.isPending || !newTicket.subject.trim() || !newTicket.message.trim()}>{createSupportTicketMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tr("Создать обращение", "Create ticket")}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

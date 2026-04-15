@@ -8,6 +8,9 @@ import {
   soloMasterServices,
   masterWorkingHours,
   bookings,
+  reviews,
+  supportTickets,
+  supportMessages,
   userProfiles,
   users,
 } from "@shared/schema";
@@ -20,13 +23,72 @@ import { fireCancellationEmail } from "../lib/booking-emails";
 
 const router = express.Router();
 
+function buildSoloMasterSlug(name: string, userId: string): string {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 50);
+
+  const suffix = userId.replace(/[^a-z0-9]/gi, "").slice(-8).toLowerCase() || "solo";
+  return `${base || "solo-master"}-${suffix}`;
+}
+
 // Helper to get solo master from authenticated user
 async function getSoloMaster(userId: string) {
   const [master] = await db
     .select()
     .from(masters)
     .where(and(eq(masters.userId, userId), eq(masters.isSoloMaster, true)));
-  return master;
+
+  if (master) {
+    return master;
+  }
+
+  // Self-heal draft master profile for users that are already marked as solo masters
+  // in user_profiles but lost the corresponding masters row after local resets/imports.
+  const [profile] = await db
+    .select()
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1);
+
+  if (profile?.role !== "solo_master") {
+    return undefined;
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const fallbackName =
+    profile.fullName?.trim() ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+    user?.email?.split("@")[0] ||
+    "Solo Master";
+
+  const [createdMaster] = await db
+    .insert(masters)
+    .values({
+      userId,
+      name: fallbackName,
+      phone: profile.phone || user?.phoneNumber || null,
+      city: profile.city || null,
+      isSoloMaster: true,
+      slug: buildSoloMasterSlug(fallbackName, userId),
+      status: "draft",
+    })
+    .returning();
+
+  await db
+    .insert(soloMasterSettings)
+    .values({ masterId: createdMaster.id })
+    .onConflictDoNothing();
+
+  logger.info("Recreated missing solo master profile from user profile", {
+    source: "solo-master-routes",
+    meta: { userId, masterId: createdMaster.id },
+  });
+
+  return createdMaster;
 }
 
 // Get solo master dashboard data
@@ -725,19 +787,32 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
 
     // Enrich with client profiles (avatar + name)
     const clientIds = Array.from(new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id)));
-    const clientProfilesData = clientIds.length > 0
-      ? await db.select({
-          id: userProfiles.id,
-          fullName: userProfiles.fullName,
-          avatarUrl: userProfiles.avatarUrl,
-          firstName: users.firstName,
-          email: users.email,
-        })
-        .from(userProfiles)
-        .leftJoin(users, eq(users.id, userProfiles.userId))
-        .where(inArray(userProfiles.id, clientIds))
-      : [];
+    const serviceIds = Array.from(
+      new Set(filtered.map((b) => b.soloMasterServiceId).filter((id): id is string => !!id)),
+    );
+    const [clientProfilesData, servicesData] = await Promise.all([
+      clientIds.length > 0
+        ? db
+            .select({
+              id: userProfiles.userId,
+              fullName: userProfiles.fullName,
+              avatarUrl: userProfiles.avatarUrl,
+              firstName: users.firstName,
+              email: users.email,
+            })
+            .from(userProfiles)
+            .leftJoin(users, eq(users.id, userProfiles.userId))
+            .where(inArray(userProfiles.userId, clientIds))
+        : Promise.resolve([]),
+      serviceIds.length > 0
+        ? db
+            .select()
+            .from(soloMasterServices)
+            .where(inArray(soloMasterServices.id, serviceIds))
+        : Promise.resolve([]),
+    ]);
     const clientMap = new Map(clientProfilesData.map((p) => [p.id, p]));
+    const serviceMap = new Map(servicesData.map((service) => [service.id, service]));
 
     const enriched = filtered.map((booking) => {
       const profile = booking.clientId ? clientMap.get(booking.clientId) : undefined;
@@ -750,6 +825,8 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         ...booking,
         clientName,
         clientAvatar: profile?.avatarUrl ?? null,
+        clientEmail: profile?.email ?? null,
+        service: booking.soloMasterServiceId ? serviceMap.get(booking.soloMasterServiceId) || null : null,
       };
     });
 
@@ -807,6 +884,380 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     logger.error("Update booking status error:", error);
     return res.status(500).json({ error: "Failed to update booking" });
+  }
+});
+
+// Get review feed for solo master
+router.get("/reviews", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const master = await getSoloMaster(userId);
+
+    if (!master) {
+      return res.status(404).json({ error: "Solo master profile not found" });
+    }
+
+    const masterReviews = await db
+      .select({
+        id: reviews.id,
+        clientId: reviews.clientId,
+        bookingId: reviews.bookingId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        ownerResponse: reviews.ownerResponse,
+        createdAt: reviews.createdAt,
+        clientName: userProfiles.fullName,
+        clientAvatar: userProfiles.avatarUrl,
+      })
+      .from(reviews)
+      .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.userId))
+      .where(eq(reviews.masterId, master.id))
+      .orderBy(desc(reviews.createdAt));
+
+    return res.json(masterReviews);
+  } catch (error) {
+    logger.error("Get solo master reviews error:", error);
+    return res.status(500).json({ error: "Failed to get reviews" });
+  }
+});
+
+// Respond to a review as solo master
+router.patch("/reviews/:id/respond", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const master = await getSoloMaster(userId);
+    const { id } = req.params;
+    const payload = z
+      .object({
+        ownerResponse: z.string().min(1).max(1500),
+      })
+      .safeParse(req.body);
+
+    if (!master) {
+      return res.status(404).json({ error: "Solo master profile not found" });
+    }
+
+    if (!payload.success) {
+      return res.status(400).json({ error: "Invalid response", details: payload.error.errors });
+    }
+
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(and(eq(reviews.id, id), eq(reviews.masterId, master.id)));
+
+    if (!review) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    const [updated] = await db
+      .update(reviews)
+      .set({ ownerResponse: payload.data.ownerResponse })
+      .where(eq(reviews.id, id))
+      .returning();
+
+    logAudit({
+      actorId: userId,
+      action: "solo_master.review.respond",
+      entityType: "review",
+      entityId: id,
+      details: { masterId: master.id },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
+    return res.json(updated);
+  } catch (error) {
+    logger.error("Respond to solo master review error:", error);
+    return res.status(500).json({ error: "Failed to respond to review" });
+  }
+});
+
+// Get client desk for solo master
+router.get("/clients", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const master = await getSoloMaster(userId);
+
+    if (!master) {
+      return res.status(404).json({ error: "Solo master profile not found" });
+    }
+
+    const masterBookings = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.masterId, master.id))
+      .orderBy(desc(bookings.bookingDate));
+
+    const clientIds = Array.from(
+      new Set(masterBookings.map((booking) => booking.clientId).filter((id): id is string => !!id)),
+    );
+
+    if (clientIds.length === 0) {
+      return res.json([]);
+    }
+
+    const [clientProfilesData, servicesData] = await Promise.all([
+      db
+        .select({
+          id: userProfiles.userId,
+          fullName: userProfiles.fullName,
+          avatarUrl: userProfiles.avatarUrl,
+          city: userProfiles.city,
+          phone: userProfiles.phone,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(userProfiles)
+        .leftJoin(users, eq(users.id, userProfiles.userId))
+        .where(inArray(userProfiles.userId, clientIds)),
+      db
+        .select({
+          id: soloMasterServices.id,
+          name: soloMasterServices.name,
+        })
+        .from(soloMasterServices)
+        .where(eq(soloMasterServices.masterId, master.id)),
+    ]);
+
+    const serviceMap = new Map(
+      servicesData.map((service) => [service.id, service.name?.ru || service.name?.en || service.name?.uz || ""]),
+    );
+
+    const clientMap = new Map(clientProfilesData.map((profile) => [profile.id, profile]));
+
+    const clientDesk = clientIds
+      .map((clientId) => {
+        const profile = clientMap.get(clientId);
+        const items = masterBookings.filter((booking) => booking.clientId === clientId);
+        const completed = items.filter((booking) => booking.status === "completed");
+        const cancelled = items.filter((booking) => booking.status === "cancelled");
+        const totalSpent = completed.reduce(
+          (sum, booking) => sum + Number(booking.priceSnapshot || 0),
+          0,
+        );
+        const serviceCounts = new Map<string, number>();
+        for (const booking of items) {
+          if (booking.soloMasterServiceId) {
+            serviceCounts.set(
+              booking.soloMasterServiceId,
+              (serviceCounts.get(booking.soloMasterServiceId) || 0) + 1,
+            );
+          }
+        }
+        const favoriteServiceId =
+          Array.from(serviceCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+        return {
+          id: clientId,
+          name:
+            profile?.fullName ||
+            [profile?.firstName, profile?.lastName].filter(Boolean).join(" ").trim() ||
+            profile?.email?.split("@")[0] ||
+            "Client",
+          avatarUrl: profile?.avatarUrl || null,
+          email: profile?.email || null,
+          phone: profile?.phone || null,
+          city: profile?.city || null,
+          totalBookings: items.length,
+          completedBookings: completed.length,
+          cancelledBookings: cancelled.length,
+          totalSpent,
+          lastVisit: items[0]?.bookingDate || null,
+          favoriteService: favoriteServiceId ? serviceMap.get(favoriteServiceId) || null : null,
+          latestStatus: items[0]?.status || null,
+          bookings: items.slice(0, 5),
+        };
+      })
+      .sort((a, b) => {
+        const aDate = a.lastVisit ? new Date(a.lastVisit).getTime() : 0;
+        const bDate = b.lastVisit ? new Date(b.lastVisit).getTime() : 0;
+        return bDate - aDate;
+      });
+
+    return res.json(clientDesk);
+  } catch (error) {
+    logger.error("Get solo master clients error:", error);
+    return res.status(500).json({ error: "Failed to get clients" });
+  }
+});
+
+// Get support tickets for solo master
+router.get("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+
+    const tickets = await db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.userId, userId))
+      .orderBy(desc(supportTickets.updatedAt), desc(supportTickets.createdAt));
+
+    return res.json(tickets);
+  } catch (error) {
+    logger.error("Get solo master support tickets error:", error);
+    return res.status(500).json({ error: "Failed to get support tickets" });
+  }
+});
+
+// Create support ticket for solo master
+router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const parsed = z
+      .object({
+        subject: z.string().min(1).max(255),
+        category: z.string().min(1).max(50),
+        message: z.string().min(1).max(4000),
+        priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+        attachments: z.array(z.string().max(500)).optional(),
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.errors });
+    }
+
+    const [ticket] = await db
+      .insert(supportTickets)
+      .values({
+        userId,
+        subject: parsed.data.subject,
+        category: parsed.data.category,
+        priority: parsed.data.priority || "normal",
+        status: "open",
+      })
+      .returning();
+
+    await db.insert(supportMessages).values({
+      ticketId: ticket.id,
+      senderId: userId,
+      senderType: "user",
+      message: parsed.data.message,
+      attachments: parsed.data.attachments || [],
+    });
+
+    logAudit({
+      actorId: userId,
+      action: "solo_master.support.create",
+      entityType: "support_ticket",
+      entityId: ticket.id,
+      details: { category: parsed.data.category, priority: parsed.data.priority || "normal" },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      result: "success",
+    }).catch(() => {});
+
+    return res.status(201).json(ticket);
+  } catch (error) {
+    logger.error("Create solo master support ticket error:", error);
+    return res.status(500).json({ error: "Failed to create support ticket" });
+  }
+});
+
+// Get support ticket details
+router.get("/support/tickets/:id", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const messages = await db
+      .select()
+      .from(supportMessages)
+      .where(eq(supportMessages.ticketId, id))
+      .orderBy(supportMessages.createdAt);
+
+    return res.json({ ticket, messages });
+  } catch (error) {
+    logger.error("Get solo master support ticket detail error:", error);
+    return res.status(500).json({ error: "Failed to get ticket details" });
+  }
+});
+
+// Reply inside support ticket
+router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+    const parsed = z
+      .object({
+        message: z.string().min(1).max(4000),
+        attachments: z.array(z.string().max(500)).optional(),
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid message data", details: parsed.error.errors });
+    }
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const [message] = await db
+      .insert(supportMessages)
+      .values({
+        ticketId: id,
+        senderId: userId,
+        senderType: "user",
+        message: parsed.data.message,
+        attachments: parsed.data.attachments || [],
+      })
+      .returning();
+
+    await db
+      .update(supportTickets)
+      .set({ updatedAt: new Date(), status: ticket.status === "closed" ? "open" : ticket.status })
+      .where(eq(supportTickets.id, id));
+
+    return res.status(201).json(message);
+  } catch (error) {
+    logger.error("Reply solo master support ticket error:", error);
+    return res.status(500).json({ error: "Failed to send ticket message" });
+  }
+});
+
+// Close support ticket
+router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, userId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const [updated] = await db
+      .update(supportTickets)
+      .set({ status: "closed", updatedAt: new Date(), resolvedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+
+    return res.json(updated);
+  } catch (error) {
+    logger.error("Close solo master support ticket error:", error);
+    return res.status(500).json({ error: "Failed to close ticket" });
   }
 });
 
