@@ -228,13 +228,13 @@ ID: ${booking.id.slice(0, 8)}
             variant={showFilters ? "secondary" : "outline"}
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
+            className="w-full gap-2 sm:w-auto"
           >
             <Filter className="h-4 w-4" />
             {t("marketplace.client.filter.byDate")}
           </Button>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SortAsc className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -250,7 +250,7 @@ ID: ${booking.id.slice(0, 8)}
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="text-muted-foreground"
+              className="w-full text-muted-foreground sm:w-auto"
             >
               <RefreshCw className="h-4 w-4 mr-1" />
               {t("marketplace.client.filter.clearFilters")}
@@ -403,7 +403,7 @@ ID: ${booking.id.slice(0, 8)}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <h3 className="font-medium text-foreground">{serviceName}</h3>
+                      <h3 className="break-words font-medium text-foreground">{serviceName}</h3>
                       <Badge className={STATUS_COLORS[booking.status || "pending"]}>
                         {t(`marketplace.client.status.${booking.status}`)}
                       </Badge>
@@ -418,21 +418,21 @@ ID: ${booking.id.slice(0, 8)}
                       )}
                     </div>
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Store className="h-4 w-4" />
-                        <span>{salonName}</span>
+                      <div className="flex items-start gap-2">
+                        <Store className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span className="break-words">{salonName}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2">
                         <Avatar className="h-6 w-6 shrink-0">
                           <AvatarImage src={booking.master?.photo ?? undefined} />
                           <AvatarFallback className="text-xs">
                             {booking.master?.name?.[0] ?? "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <span>{booking.master?.name}</span>
+                        <span className="break-words">{booking.master?.name}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                      <div className="flex items-start gap-2">
+                        <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
                           {bookingDate.toLocaleDateString(
                             currentLang === "ru"
@@ -443,8 +443,8 @@ ID: ${booking.id.slice(0, 8)}
                           )}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
+                      <div className="flex items-start gap-2">
+                        <Clock className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
                           {booking.startTime} - {booking.endTime}
                         </span>
@@ -454,10 +454,11 @@ ID: ${booking.id.slice(0, 8)}
                       {booking.priceSnapshot?.toLocaleString()} UZS
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => openBookingDetails(booking)}
                       data-testid={`button-booking-details-${booking.id}`}
                     >
@@ -468,6 +469,7 @@ ID: ${booking.id.slice(0, 8)}
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                         data-testid={`button-view-salon-${booking.id}`}
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
@@ -480,6 +482,7 @@ ID: ${booking.id.slice(0, 8)}
                           <Button
                             variant="default"
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={() => onOpenWriteReview(booking)}
                             data-testid={`button-write-review-${booking.id}`}
                           >
@@ -498,6 +501,7 @@ ID: ${booking.id.slice(0, 8)}
                           <Button
                             variant="secondary"
                             size="sm"
+                            className="w-full sm:w-auto"
                             data-testid={`button-rebook-${booking.id}`}
                           >
                             <RotateCcw className="h-4 w-4 mr-1" />
@@ -510,6 +514,7 @@ ID: ${booking.id.slice(0, 8)}
                       <Button
                         variant="destructive"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => openCancelDialog(booking.id)}
                         data-testid={`button-cancel-booking-${booking.id}`}
                       >
@@ -614,7 +619,7 @@ ID: ${booking.id.slice(0, 8)}
               </div>
 
               {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
@@ -639,16 +644,16 @@ ID: ${booking.id.slice(0, 8)}
               </div>
 
               {/* Price */}
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between gap-3 border-t pt-4">
                 <span className="text-muted-foreground">{t("marketplace.client.price")}</span>
-                <span className="text-xl font-bold">
+                <span className="break-words text-right text-xl font-bold">
                   {formatCurrency(selectedBooking.priceSnapshot || 0)}
                 </span>
               </div>
 
               {/* Booking ID */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
+              <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <span className="break-all">
                   {t("marketplace.client.bookingId")}: {selectedBooking.id.slice(0, 8)}
                 </span>
                 <div className="flex gap-1">

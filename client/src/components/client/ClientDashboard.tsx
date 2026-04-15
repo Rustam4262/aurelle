@@ -125,7 +125,7 @@ export function ClientDashboard({
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
             <div className="flex items-center justify-center gap-2 text-2xl font-bold text-foreground">
               <Calendar className="h-5 w-5 text-primary" />
@@ -145,9 +145,11 @@ export function ClientDashboard({
             </p>
           </div>
           <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-2 text-xl font-bold text-foreground">
+            <div className="flex flex-col items-center justify-center gap-2 text-xl font-bold text-foreground sm:flex-row">
               <Wallet className="h-5 w-5 text-primary" />
-              <span className="truncate">{formatCurrency(stats.totalSpent)}</span>
+              <span className="max-w-full break-words text-center text-lg leading-tight sm:text-xl">
+                {formatCurrency(stats.totalSpent)}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {t("marketplace.client.stats.totalSpent")}
@@ -166,16 +168,16 @@ export function ClientDashboard({
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link href="/">
           <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 <Search className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p className="font-medium">{t("marketplace.client.dashboard.findSalon")}</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0">
+                <p className="break-words font-medium">{t("marketplace.client.dashboard.findSalon")}</p>
+                <p className="break-words text-sm text-muted-foreground">
                   {t("marketplace.client.dashboard.findSalonDesc")}
                 </p>
               </div>
@@ -190,9 +192,9 @@ export function ClientDashboard({
             <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/20 group-hover:bg-green-200 dark:group-hover:bg-green-900/30 transition-colors">
               <CalendarPlus className="h-5 w-5 text-green-600" />
             </div>
-            <div>
-              <p className="font-medium">{t("marketplace.client.dashboard.myBookings")}</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0">
+              <p className="break-words font-medium">{t("marketplace.client.dashboard.myBookings")}</p>
+              <p className="break-words text-sm text-muted-foreground">
                 {t("marketplace.client.dashboard.myBookingsDesc")}
               </p>
             </div>
@@ -217,9 +219,9 @@ export function ClientDashboard({
             {upcomingBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="flex items-center gap-4 p-4 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
+                className="flex flex-col gap-4 rounded-lg bg-accent/30 p-4 transition-colors hover:bg-accent/50 sm:flex-row sm:items-center"
               >
-                <div className="flex-shrink-0 w-16 text-center">
+                <div className="w-full flex-shrink-0 text-left sm:w-16 sm:text-center">
                   <div className="text-xs text-muted-foreground uppercase">
                     {formatBookingDate(booking.bookingDate)}
                   </div>
@@ -230,10 +232,10 @@ export function ClientDashboard({
                     {getLocalizedName(booking.service?.name, i18n.language) ||
                       t("marketplace.client.unknownService")}
                   </p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     {booking.salon && (
                       <>
-                        <MapPin className="h-3 w-3" />
+                        <MapPin className="h-3 w-3 shrink-0" />
                         <span className="truncate">
                           {getLocalizedName(booking.salon.name, i18n.language)}
                         </span>
@@ -249,7 +251,7 @@ export function ClientDashboard({
                 </div>
                 <Badge
                   variant={booking.status === "confirmed" ? "default" : "secondary"}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 self-start sm:self-center"
                 >
                   {t(`marketplace.client.status.${booking.status}`)}
                 </Badge>

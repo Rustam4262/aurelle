@@ -895,36 +895,36 @@ export default function ClientPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.10),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_26%),linear-gradient(180deg,rgba(17,24,39,0.02),transparent_42%)] bg-background">
       <div className="border-b border-border/70 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <Link href="/">
               <Button variant="ghost" size="icon" className="shrink-0">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="min-w-0">
-              <h1 className="truncate font-serif text-xl text-foreground">{current.pageTitle}</h1>
-              <p className="truncate text-sm text-muted-foreground">{current.pageSubtitle}</p>
+              <h1 className="font-serif text-xl leading-tight text-foreground sm:text-2xl">{current.pageTitle}</h1>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground sm:max-w-2xl">{current.pageSubtitle}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="outline" size="sm" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
               {refreshMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}
-              Refresh
+              <span className="truncate">Refresh</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => void logout()} disabled={isLoggingOut}>
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => void logout()} disabled={isLoggingOut}>
               {isLoggingOut ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <LogOut className="mr-2 h-4 w-4" />
               )}
-              {current.signOutCta}
+              <span className="truncate">{current.signOutCta}</span>
             </Button>
           </div>
         </div>
@@ -947,7 +947,7 @@ export default function ClientPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <h2 className="font-serif text-3xl leading-tight text-foreground sm:text-4xl">
+                      <h2 className="text-balance font-serif text-2xl leading-tight text-foreground sm:text-4xl">
                         {current.heroTitle}
                       </h2>
                       <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -964,22 +964,22 @@ export default function ClientPage() {
 
                 <div className="grid min-w-full grid-cols-2 gap-3 sm:min-w-[250px]">
                   <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
                       {current.profileCompletion}
                     </p>
                     <p className="mt-3 text-3xl font-semibold text-foreground">{profileScore}%</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
                       {profileScore < 100 ? current.completeProfile : current.activeStatus}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
                       {current.inbox}
                     </p>
                     <p className="mt-3 text-3xl font-semibold text-foreground">
                       {stats.unreadNotifications + stats.unreadSupport}
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
                       {current.notificationsLabel} + {current.supportLabel}
                     </p>
                   </div>
@@ -997,22 +997,22 @@ export default function ClientPage() {
                         key={action.id}
                         asChild
                         variant="outline"
-                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4"
+                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
                       >
                         <Link href={action.href}>
                           <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                          {action.label}
+                          <span className="min-w-0 break-words">{action.label}</span>
                         </Link>
                       </Button>
                     ) : (
                       <Button
                         key={action.id}
                         variant="outline"
-                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4"
+                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
                         onClick={() => action.tab && setActiveTab(action.tab)}
                       >
                         <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                        {action.label}
+                        <span className="min-w-0 break-words">{action.label}</span>
                       </Button>
                     ),
                   )}
@@ -1032,12 +1032,12 @@ export default function ClientPage() {
                   <p className="text-sm text-muted-foreground">{current.nearestVisit}</p>
                   <CalendarClock className="h-4 w-4 text-primary" />
                 </div>
-                <p className="mt-3 text-xl font-semibold text-foreground">
+                <p className="mt-3 break-words text-xl font-semibold text-foreground">
                   {nextBooking
                     ? localizedName(nextBooking.service?.name, language) || "Service"
                     : current.allCaughtUp}
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 break-words text-sm text-muted-foreground">
                   {nextBooking
                     ? `${formatDate(nextBooking.bookingDate, language)} · ${nextBooking.startTime}`
                     : current.allCaughtUpText}
@@ -1111,7 +1111,7 @@ export default function ClientPage() {
               ["notifications", current.notificationsLabel],
               ["security", current.settings],
             ].map(([tabId, label]) => (
-              <TabsTrigger key={tabId} value={tabId} className="rounded-xl">
+              <TabsTrigger key={tabId} value={tabId} className="shrink-0 rounded-xl whitespace-nowrap">
                 <span>{label}</span>
                 {tabBadges[tabId as CabinetTab] ? (
                   <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">

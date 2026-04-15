@@ -290,8 +290,8 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
               control={form.control}
               name="notifyEmail"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
+                <FormItem className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 space-y-0.5">
                     <FormLabel className="text-base">
                       {t("marketplace.client.notifications.email")}
                     </FormLabel>
@@ -310,8 +310,8 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
               control={form.control}
               name="notifyReminder24h"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
+                <FormItem className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 space-y-0.5">
                     <FormLabel className="text-base">
                       {t("marketplace.client.notifications.reminder24h")}
                     </FormLabel>
@@ -330,8 +330,8 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
               control={form.control}
               name="notifyReminder2h"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
+                <FormItem className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 space-y-0.5">
                     <FormLabel className="text-base">
                       {t("marketplace.client.notifications.reminder2h")}
                     </FormLabel>
@@ -350,8 +350,8 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
               control={form.control}
               name="notifyBookingUpdates"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
+                <FormItem className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 space-y-0.5">
                     <FormLabel className="text-base">
                       {t("marketplace.client.notifications.bookingUpdates")}
                     </FormLabel>
@@ -370,8 +370,8 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
               control={form.control}
               name="notifyPromotions"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
+                <FormItem className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 space-y-0.5">
                     <FormLabel className="text-base">
                       {t("marketplace.client.notifications.promotions")}
                     </FormLabel>
@@ -389,6 +389,7 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
 
           <Button
             type="submit"
+            className="w-full sm:w-auto"
             disabled={updateProfileMutation.isPending}
             data-testid="button-save-profile"
           >

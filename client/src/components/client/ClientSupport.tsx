@@ -188,13 +188,13 @@ export function ClientSupport() {
     return (
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-start gap-4">
           <Button variant="ghost" size="icon" onClick={() => setSelectedTicketId(null)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h2 className="font-medium truncate">{selectedTicket.subject}</h2>
-            <div className="flex items-center gap-2 mt-1">
+            <h2 className="font-medium break-words">{selectedTicket.subject}</h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <Badge className={statusColors[selectedTicket.status as keyof typeof statusColors]}>
                 {t(`marketplace.client.support.status.${selectedTicket.status}`)}
               </Badge>
@@ -235,7 +235,7 @@ export function ClientSupport() {
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[85%] rounded-lg p-3 sm:max-w-[70%] ${
                       message.senderType === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
@@ -256,7 +256,7 @@ export function ClientSupport() {
           {/* Reply input */}
           {selectedTicket.status !== "closed" && (
             <div className="p-4 border-t">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Textarea
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
@@ -266,7 +266,7 @@ export function ClientSupport() {
                 <Button
                   onClick={handleSendReply}
                   disabled={!replyMessage.trim() || sendMessageMutation.isPending}
-                  className="self-end"
+                  className="w-full self-end sm:w-auto"
                 >
                   {sendMessageMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -382,7 +382,7 @@ export function ClientSupport() {
               <label className="text-sm font-medium mb-2 block">
                 {t("marketplace.client.support.category")}
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {quickCategories.map((cat) => (
                   <button
                     key={cat.id}
@@ -422,11 +422,12 @@ export function ClientSupport() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewTicketDialogOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setNewTicketDialogOpen(false)}>
               {t("common.cancel")}
             </Button>
             <Button
+              className="w-full sm:w-auto"
               onClick={handleCreateTicket}
               disabled={
                 !newTicketCategory ||

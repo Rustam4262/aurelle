@@ -136,19 +136,19 @@ export function ClientFavorites({
               </div>
 
               <div className="p-4">
-                <h3 className="font-medium text-foreground truncate mb-1">{salonName}</h3>
+                <h3 className="mb-1 line-clamp-2 font-medium text-foreground">{salonName}</h3>
                 {favorite.salon && (
                   <>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                    <div className="mb-2 flex items-start gap-1 text-sm text-muted-foreground">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{favorite.salon.address}</span>
+                      <span className="line-clamp-2">{favorite.salon.address}</span>
                     </div>
                     {salonDescription && (
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {salonDescription}
                       </p>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Link href={`/salon/${favorite.salonId}`} className="flex-1">
                         <Button
                           variant="default"
@@ -216,7 +216,7 @@ export function ClientFavorites({
               className="p-4 group"
               data-testid={`master-favorite-card-${favorite.id}`}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={favorite.master?.photo || undefined} />
                   <AvatarFallback className="text-lg">
@@ -225,12 +225,12 @@ export function ClientFavorites({
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-medium text-foreground truncate">
+                    <div className="min-w-0">
+                      <h3 className="break-words font-medium text-foreground">
                         {favorite.master?.name}
                       </h3>
                       {favorite.master?.specialties && (
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="line-clamp-2 text-sm text-muted-foreground">
                           {
                             getLocalizedText(
                               favorite.master.specialties as unknown as LocalizedText,
@@ -243,7 +243,7 @@ export function ClientFavorites({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 flex-shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                       onClick={() => removeMasterFavoriteMutation.mutate(favorite.masterId)}
                       disabled={removeMasterFavoriteMutation.isPending}
                     >
@@ -301,19 +301,19 @@ export function ClientFavorites({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="salons" className="flex items-center gap-2">
+      <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-2 sm:grid-cols-2">
+        <TabsTrigger value="salons" className="flex min-w-0 items-center gap-2 whitespace-normal">
           <Store className="h-4 w-4" />
-          {t("marketplace.client.favorites.salons")}
+          <span className="min-w-0 break-words">{t("marketplace.client.favorites.salons")}</span>
           {salonCount > 0 && (
             <span className="ml-1 text-xs bg-primary/10 px-2 py-0.5 rounded-full">
               {salonCount}
             </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="masters" className="flex items-center gap-2">
+        <TabsTrigger value="masters" className="flex min-w-0 items-center gap-2 whitespace-normal">
           <User className="h-4 w-4" />
-          {t("marketplace.client.favorites.masters")}
+          <span className="min-w-0 break-words">{t("marketplace.client.favorites.masters")}</span>
           {masterCount > 0 && (
             <span className="ml-1 text-xs bg-primary/10 px-2 py-0.5 rounded-full">
               {masterCount}

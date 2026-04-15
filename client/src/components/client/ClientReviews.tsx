@@ -165,11 +165,11 @@ export function ClientReviews({
               return (
                 <div
                   key={booking.id}
-                  className="flex items-center justify-between gap-4 p-3 rounded-lg bg-background"
+                  className="flex flex-col gap-4 rounded-lg bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{serviceName}</p>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="break-words font-medium">{serviceName}</p>
+                    <p className="break-words text-sm text-muted-foreground">
                       {salonName}
                       {booking.master && ` • ${booking.master.name}`}
                     </p>
@@ -182,7 +182,7 @@ export function ClientReviews({
                   <Button
                     size="sm"
                     onClick={() => onWriteReview?.(booking)}
-                    className="flex-shrink-0"
+                    className="w-full flex-shrink-0 sm:w-auto"
                   >
                     <PenLine className="h-4 w-4 mr-2" />
                     {t("marketplace.client.writeReview")}
@@ -201,10 +201,10 @@ export function ClientReviews({
 
         return (
           <Card key={review.id} className="p-4" data-testid={`review-card-${review.id}`}>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-2">
-                  <h3 className="font-medium text-foreground">{salonName}</h3>
+                  <h3 className="break-words font-medium text-foreground">{salonName}</h3>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -227,7 +227,7 @@ export function ClientReviews({
                 </p>
               </div>
               {canEdit && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 self-end sm:self-auto">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -287,10 +287,11 @@ export function ClientReviews({
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditReviewDialogOpen(false)}>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setEditReviewDialogOpen(false)}>
               {t("marketplace.client.close")}
             </Button>
             <Button
+              className="w-full sm:w-auto"
               onClick={handleEditReview}
               disabled={editReviewMutation.isPending}
               data-testid="button-save-review"
@@ -309,10 +310,11 @@ export function ClientReviews({
             <DialogDescription>{t("marketplace.client.deleteReviewConfirm")}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteReviewDialogOpen(false)}>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setDeleteReviewDialogOpen(false)}>
               {t("marketplace.client.close")}
             </Button>
             <Button
+              className="w-full sm:w-auto"
               variant="destructive"
               onClick={handleDeleteReview}
               disabled={deleteReviewMutation.isPending}
