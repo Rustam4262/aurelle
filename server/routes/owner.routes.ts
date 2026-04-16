@@ -16,7 +16,10 @@ import {
   users,
   masterServices,
   masterPortfolio,
+  reviews,
   auditLogs,
+  supportTickets,
+  supportMessages,
   insertSalonSchema,
   insertMasterSchema,
   insertServiceSchema,
@@ -3917,5 +3920,349 @@ router.delete(
     }
   },
 );
+
+router.get("/salons/:salonId/reviews", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const salonReviews = await db
+      .select({
+        id: reviews.id,
+        salonId: reviews.salonId,
+        masterId: reviews.masterId,
+        bookingId: reviews.bookingId,
+        clientId: reviews.clientId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        ownerResponse: reviews.ownerResponse,
+        createdAt: reviews.createdAt,
+        clientName: userProfiles.fullName,
+        clientAvatarUrl: userProfiles.avatarUrl,
+        masterName: masters.name,
+      })
+      .from(reviews)
+      .leftJoin(userProfiles, eq(userProfiles.id, reviews.clientId))
+      .leftJoin(masters, eq(masters.id, reviews.masterId))
+      .where(eq(reviews.salonId, salonId))
+      .orderBy(desc(reviews.createdAt));
+
+    return res.json(salonReviews);
+  } catch (error) {
+    logger.error("Get owner salon reviews error:", error);
+    return res.status(500).json({ error: "Failed to get reviews" });
+  }
+});
+
+router.patch("/reviews/:reviewId/respond", isAuthenticated, async (req: any, res) => {
+  try {
+    const { reviewId } = req.params;
+    const ownerId = req.user.claims.sub;
+    const parsed = z
+      .object({
+        ownerResponse: z.string().trim().min(1).max(2000),
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid response", details: parsed.error.errors });
+    }
+
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, reviewId));
+    if (!review?.salonId) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, review.salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    const [updated] = await db
+      .update(reviews)
+      .set({ ownerResponse: parsed.data.ownerResponse })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+
+    return res.json(updated);
+  } catch (error) {
+    logger.error("Respond to review error:", error);
+    return res.status(500).json({ error: "Failed to respond to review" });
+  }
+});
+
+router.get("/salons/:salonId/clients", isAuthenticated, async (req: any, res) => {
+  try {
+    const { salonId } = req.params;
+    const ownerId = req.user.claims.sub;
+
+    const [salon] = await db
+      .select()
+      .from(salons)
+      .where(and(eq(salons.id, salonId), eq(salons.ownerId, ownerId)));
+
+    if (!salon) {
+      return res.status(404).json({ error: "Salon not found" });
+    }
+
+    const salonBookings = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.salonId, salonId))
+      .orderBy(desc(bookings.bookingDate));
+
+    if (!salonBookings.length) {
+      return res.json([]);
+    }
+
+    const clientIds = Array.from(new Set(salonBookings.map((booking) => booking.clientId)));
+    const serviceIds = Array.from(
+      new Set(salonBookings.map((booking) => booking.serviceId).filter((id): id is string => Boolean(id))),
+    );
+    const masterIds = Array.from(
+      new Set(salonBookings.map((booking) => booking.masterId).filter((id): id is string => Boolean(id))),
+    );
+
+    const [profiles, authUsers, salonServices, salonMasters] = await Promise.all([
+      clientIds.length
+        ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+        : Promise.resolve([]),
+      clientIds.length
+        ? db.select().from(users).where(inArray(users.id, clientIds))
+        : Promise.resolve([]),
+      serviceIds.length
+        ? db.select().from(services).where(inArray(services.id, serviceIds))
+        : Promise.resolve([]),
+      masterIds.length
+        ? db.select().from(masters).where(inArray(masters.id, masterIds))
+        : Promise.resolve([]),
+    ]);
+
+    const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
+    const userMap = new Map(authUsers.map((account) => [account.id, account]));
+    const serviceMap = new Map(salonServices.map((service) => [service.id, service]));
+    const masterMap = new Map(salonMasters.map((master) => [master.id, master]));
+
+    const byClient = new Map<string, typeof salonBookings>();
+    for (const booking of salonBookings) {
+      const list = byClient.get(booking.clientId) || [];
+      list.push(booking);
+      byClient.set(booking.clientId, list);
+    }
+
+    const clients = Array.from(byClient.entries()).map(([clientId, items]) => {
+      const profile = profileMap.get(clientId);
+      const account = userMap.get(clientId);
+      const completed = items.filter((booking) => booking.status === "completed");
+      const cancelled = items.filter((booking) => booking.status === "cancelled");
+      const totalSpent = completed.reduce((sum, booking) => sum + (booking.priceSnapshot || 0), 0);
+
+      const serviceCounter = new Map<string, number>();
+      for (const booking of items) {
+        if (booking.serviceId) {
+          serviceCounter.set(booking.serviceId, (serviceCounter.get(booking.serviceId) || 0) + 1);
+        }
+      }
+      const favoriteServiceId =
+        Array.from(serviceCounter.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+      return {
+        id: clientId,
+        name:
+          profile?.fullName ||
+          [account?.firstName, account?.lastName].filter(Boolean).join(" ").trim() ||
+          account?.email?.split("@")[0] ||
+          "Client",
+        avatarUrl: profile?.avatarUrl || null,
+        email: account?.email || null,
+        phone: profile?.phone || null,
+        city: profile?.city || null,
+        totalBookings: items.length,
+        completedBookings: completed.length,
+        cancelledBookings: cancelled.length,
+        totalSpent,
+        lastVisit: items[0]?.bookingDate || null,
+        favoriteService: favoriteServiceId ? serviceMap.get(favoriteServiceId) || null : null,
+        favoriteMaster:
+          items.find((booking) => booking.masterId)?.masterId
+            ? masterMap.get(items.find((booking) => booking.masterId)!.masterId!) || null
+            : null,
+        latestStatus: items[0]?.status || null,
+        bookings: items.slice(0, 5),
+      };
+    });
+
+    return res.json(clients);
+  } catch (error) {
+    logger.error("Get owner salon clients error:", error);
+    return res.status(500).json({ error: "Failed to get clients" });
+  }
+});
+
+router.get("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const tickets = await db
+      .select()
+      .from(supportTickets)
+      .where(eq(supportTickets.userId, ownerId))
+      .orderBy(desc(supportTickets.updatedAt), desc(supportTickets.createdAt));
+
+    return res.json(tickets);
+  } catch (error) {
+    logger.error("Get owner support tickets error:", error);
+    return res.status(500).json({ error: "Failed to get support tickets" });
+  }
+});
+
+router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const parsed = z
+      .object({
+        subject: z.string().trim().min(3).max(255),
+        category: z.string().trim().min(2).max(50),
+        message: z.string().trim().min(5).max(5000),
+        priority: z.string().trim().max(20).optional(),
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid ticket payload", details: parsed.error.errors });
+    }
+
+    const [ticket] = await db
+      .insert(supportTickets)
+      .values({
+        userId: ownerId,
+        subject: parsed.data.subject,
+        category: parsed.data.category,
+        priority: parsed.data.priority || "normal",
+        status: "open",
+      })
+      .returning();
+
+    await db.insert(supportMessages).values({
+      ticketId: ticket.id,
+      senderId: ownerId,
+      senderType: "user",
+      message: parsed.data.message,
+      attachments: [],
+    });
+
+    return res.status(201).json(ticket);
+  } catch (error) {
+    logger.error("Create owner support ticket error:", error);
+    return res.status(500).json({ error: "Failed to create support ticket" });
+  }
+});
+
+router.get("/support/tickets/:id", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, ownerId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const messages = await db
+      .select()
+      .from(supportMessages)
+      .where(eq(supportMessages.ticketId, id))
+      .orderBy(supportMessages.createdAt);
+
+    return res.json({ ticket, messages });
+  } catch (error) {
+    logger.error("Get owner support ticket detail error:", error);
+    return res.status(500).json({ error: "Failed to get support ticket" });
+  }
+});
+
+router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id } = req.params;
+    const parsed = z
+      .object({
+        message: z.string().trim().min(1).max(5000),
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid message payload", details: parsed.error.errors });
+    }
+
+    const [ticket] = await db
+      .select()
+      .from(supportTickets)
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, ownerId)));
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    const [message] = await db
+      .insert(supportMessages)
+      .values({
+        ticketId: id,
+        senderId: ownerId,
+        senderType: "user",
+        message: parsed.data.message,
+        attachments: [],
+      })
+      .returning();
+
+    await db
+      .update(supportTickets)
+      .set({ updatedAt: new Date(), status: ticket.status === "closed" ? "open" : ticket.status })
+      .where(eq(supportTickets.id, id));
+
+    return res.status(201).json(message);
+  } catch (error) {
+    logger.error("Reply to owner support ticket error:", error);
+    return res.status(500).json({ error: "Failed to send support message" });
+  }
+});
+
+router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res) => {
+  try {
+    const ownerId = req.user.claims.sub;
+    const { id } = req.params;
+
+    const [ticket] = await db
+      .update(supportTickets)
+      .set({ status: "closed", updatedAt: new Date(), resolvedAt: new Date() })
+      .where(and(eq(supportTickets.id, id), eq(supportTickets.userId, ownerId)))
+      .returning();
+
+    if (!ticket) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    return res.json(ticket);
+  } catch (error) {
+    logger.error("Close owner support ticket error:", error);
+    return res.status(500).json({ error: "Failed to close support ticket" });
+  }
+});
 
 export default router;

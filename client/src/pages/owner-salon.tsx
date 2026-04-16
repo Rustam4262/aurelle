@@ -1,53 +1,127 @@
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
 import { Link, useParams } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/use-auth";
 import {
   ArrowLeft,
-  Calendar,
+  Building2,
+  CalendarClock,
   Camera,
   CheckCircle2,
-  CircleDashed,
-  Clock,
-  Mail,
+  Clock3,
+  Loader2,
   MapPin,
-  PauseCircle,
+  MessageSquare,
   Phone,
   RefreshCw,
-  Scissors,
+  Shield,
   Sparkles,
   Star,
   Store,
-  UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
-import type { Salon } from "@shared/schema";
 import { OwnerSalonInfo } from "@/components/owner/OwnerSalonInfo";
 import { OwnerSalonServices } from "@/components/owner/OwnerSalonServices";
 import { OwnerSalonStaff } from "@/components/owner/OwnerSalonStaff";
 import { OwnerSalonHours } from "@/components/owner/OwnerSalonHours";
 import { OwnerSalonBookings } from "@/components/owner/OwnerSalonBookings";
 import { OwnerSalonTeam } from "@/components/owner/OwnerSalonTeam";
-import { LanguageSwitcher } from "@/components/language-switcher";
 
-function getLocalizedText(
-  obj: { en: string; ru: string; uz: string } | null | undefined,
-  lang: string,
-): string {
-  if (!obj) return "";
-  const langKey = lang as keyof typeof obj;
-  return obj[langKey] || obj.en || "";
+type LocalizedRecord = { en?: string; ru?: string; uz?: string };
+
+type Salon = {
+  id: string;
+  name: LocalizedRecord | string;
+  description?: LocalizedRecord | string | null;
+  city?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  photos?: string[] | null;
+  status?: "draft" | "active" | "paused" | null;
+  averageRating?: number | string | null;
+  reviewCount?: number | null;
+};
+
+type ReviewItem = {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  ownerResponse?: string | null;
+  createdAt?: string | null;
+  clientName?: string | null;
+  masterName?: string | null;
+};
+
+type ClientItem = {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  totalSpent: number;
+  lastVisit?: string | null;
+};
+
+type SupportTicket = {
+  id: string;
+  subject: string;
+  category: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+type NotificationItem = {
+  id: string;
+  type: string;
+  message?: string | null;
+  isRead?: boolean | null;
+  createdAt?: string | null;
+};
+
+function localize(value: LocalizedRecord | string | null | undefined, language: string) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value[language as keyof LocalizedRecord] || value.ru || value.en || value.uz || "";
 }
 
-function statusLabel(status: string) {
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  try {
+    return new Intl.DateTimeFormat("ru-RU", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatMoney(value: number | null | undefined) {
+  return new Intl.NumberFormat("ru-RU").format(Math.round(value || 0));
+}
+
+function ownerStatusLabel(status?: string | null) {
   switch (status) {
     case "active":
-      return "Активен";
+      return "Опубликован";
     case "paused":
       return "На паузе";
     default:
@@ -55,127 +129,185 @@ function statusLabel(status: string) {
   }
 }
 
-function statusBadgeClass(status: string) {
+function ownerStatusBadgeClass(status?: string | null) {
   switch (status) {
     case "active":
-      return "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-300";
+      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
     case "paused":
-      return "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-300";
+      return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300";
     default:
-      return "bg-slate-500/10 text-slate-700 border-slate-500/20 dark:text-slate-300";
+      return "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300";
   }
 }
 
-async function fetchOwnerSalon(salonId: string): Promise<Salon> {
-  const response = await fetch(`/api/owner/salons/${salonId}`, {
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, { credentials: "include" });
+  if (response.status === 401) throw new Error("unauthorized");
+  if (response.status === 404) throw new Error("not_found");
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<T>;
+}
+
+async function patchJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "PATCH",
     credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-
-  if (response.status === 401) {
-    throw new Error("unauthorized");
-  }
-
-  if (response.status === 404) {
-    throw new Error("not_found");
-  }
-
-  if (!response.ok) {
-    throw new Error(`request_failed:${response.status}`);
-  }
-
-  return response.json() as Promise<Salon>;
+  if (response.status === 401) throw new Error("unauthorized");
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<T>;
 }
 
 export default function OwnerSalonPage() {
-  const t = i18n.t.bind(i18n);
-  const currentLang = i18n.language || "ru";
-  const { user, isLoading: authLoading } = useAuth({ requireAuth: true });
+  const { toast } = useToast();
+  const { user, isLoading } = useAuth({ requireAuth: true });
+  const language = i18n.language || "ru";
   const params = useParams<{ id: string }>();
   const salonId = params.id;
 
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("overview");
   const [salon, setSalon] = useState<Salon | null>(null);
-  const [salonLoading, setSalonLoading] = useState(true);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
 
-  const loadSalon = async () => {
+  const loadWorkspace = async () => {
     if (!salonId) return;
-
-    setRefreshing(true);
-    setLoadError(null);
-
+    setError(null);
     try {
-      const data = await fetchOwnerSalon(salonId);
-      setSalon(data);
-    } catch (error) {
-      if (error instanceof Error && error.message === "unauthorized") {
+      const [salonData, reviewsData, clientsData, ticketsData, notificationsData] = await Promise.all([
+        fetchJson<Salon>(`/api/owner/salons/${salonId}`),
+        fetchJson<ReviewItem[]>(`/api/owner/salons/${salonId}/reviews`),
+        fetchJson<ClientItem[]>(`/api/owner/salons/${salonId}/clients`),
+        fetchJson<SupportTicket[]>("/api/owner/support/tickets"),
+        fetchJson<NotificationItem[]>("/api/notifications"),
+      ]);
+      setSalon(salonData);
+      setReviews(reviewsData);
+      setClients(clientsData);
+      setTickets(ticketsData);
+      setNotifications(notificationsData);
+    } catch (loadErr) {
+      if (loadErr instanceof Error && loadErr.message === "unauthorized") {
         window.location.href = "/auth";
         return;
       }
-
-      if (error instanceof Error && error.message === "not_found") {
+      if (loadErr instanceof Error && loadErr.message === "not_found") {
         setSalon(null);
-        return;
+      } else {
+        setError("Не удалось открыть кабинет салона. Попробуйте обновить страницу.");
       }
-
-      setLoadError("Не удалось загрузить салон. Попробуйте обновить страницу.");
     } finally {
-      setSalonLoading(false);
+      setLoading(false);
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading || !user || !salonId) return;
-    void loadSalon();
-  }, [authLoading, user, salonId]);
+    if (isLoading || !user || !salonId) return;
+    void loadWorkspace();
+  }, [isLoading, user, salonId]);
 
-  if (authLoading || salonLoading) {
+  const salonName = localize(salon?.name, language) || "Салон";
+  const salonDescription = localize(salon?.description, language);
+  const rating = Number(salon?.averageRating || 0);
+  const photosCount = Array.isArray(salon?.photos) ? salon!.photos!.length : 0;
+  const unreadNotifications = notifications.filter((item) => !item.isRead).length;
+  const openTickets = tickets.filter((ticket) => ticket.status !== "closed").length;
+
+  const topClient = useMemo(() => {
+    return [...clients].sort((left, right) => right.totalSpent - left.totalSpent)[0];
+  }, [clients]);
+
+  const reviewWithoutResponse = useMemo(() => {
+    return reviews.find((review) => !review.ownerResponse);
+  }, [reviews]);
+
+  const reviewSummary = useMemo(() => {
+    const total = reviews.length;
+    const unanswered = reviews.filter((review) => !review.ownerResponse).length;
+    return { total, unanswered };
+  }, [reviews]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadWorkspace();
+  };
+
+  const handleStatusChange = async (status: "draft" | "active" | "paused") => {
+    if (!salonId) return;
+    try {
+      await patchJson(`/api/owner/salons/${salonId}/status`, { status });
+      toast({ title: "Статус обновлён", description: `Салон переведён в режим: ${ownerStatusLabel(status)}.` });
+      await handleRefresh();
+    } catch (statusErr) {
+      toast({
+        title: "Не удалось обновить статус",
+        description: statusErr instanceof Error ? statusErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRespondToReview = async (reviewId: string) => {
+    const responseText = (responseDrafts[reviewId] || "").trim();
+    if (!responseText) {
+      toast({
+        title: "Напишите ответ",
+        description: "Пустой ответ отправить нельзя.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await patchJson(`/api/owner/reviews/${reviewId}/respond`, { ownerResponse: responseText });
+      toast({ title: "Ответ сохранён", description: "Ответ на отзыв теперь виден в системе." });
+      setResponseDrafts((current) => ({ ...current, [reviewId]: "" }));
+      await handleRefresh();
+    } catch (reviewErr) {
+      toast({
+        title: "Не удалось отправить ответ",
+        description: reviewErr instanceof Error ? reviewErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.10),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.03),transparent_35%)] bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">{t("common.loading")}</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="inline-flex items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Загрузка салона
+        </div>
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   if (!salon) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.10),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.03),transparent_35%)] bg-background">
-        <div className="border-b border-border/70 bg-background/90 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <Link href="/owner">
-                <Button variant="ghost" size="icon" data-testid="button-back-salon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="font-serif text-xl text-foreground">Салон не найден</h1>
-                <p className="text-sm text-muted-foreground">
-                  Проверьте доступ или вернитесь к списку салонов
-                </p>
-              </div>
-            </div>
-            <LanguageSwitcher />
-          </div>
-        </div>
-
-        <div className="max-w-6xl mx-auto px-4 py-10 sm:px-6">
-          <Card className="p-8 text-center border-border/70 shadow-sm">
-            <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-5">{t("marketplace.owner.salonNotFound")}</p>
-            <div className="flex justify-center gap-3 flex-wrap">
-              <Link href="/owner">
-                <Button>{t("marketplace.owner.backToSalons")}</Button>
-              </Link>
-              <Button variant="outline" onClick={() => void loadSalon()} disabled={refreshing}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Попробовать снова
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          <Card className="border-border/70 p-8 text-center shadow-sm">
+            <Store className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h1 className="mt-4 font-serif text-3xl text-foreground">Салон не найден</h1>
+            <p className="mt-3 text-muted-foreground">Проверьте доступ или вернитесь к общему owner-списку.</p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Button asChild>
+                <Link href="/owner">К списку салонов</Link>
+              </Button>
+              <Button variant="outline" onClick={() => void handleRefresh()}>
+                Повторить
               </Button>
             </div>
           </Card>
@@ -184,241 +316,414 @@ export default function OwnerSalonPage() {
     );
   }
 
-  const salonName = getLocalizedText(
-    salon.name as { en: string; ru: string; uz: string },
-    currentLang,
-  );
-  const description = getLocalizedText(
-    salon.description as { en: string; ru: string; uz: string },
-    currentLang,
-  );
-  const status = salon.status || "draft";
-  const stats = useMemo(
-    () => ({
-      rating: Number(salon.averageRating || 0).toFixed(1),
-      reviews: Number(salon.reviewCount || 0),
-      photos: Array.isArray(salon.photos) ? salon.photos.length : 0,
-    }),
-    [salon],
-  );
-
-  const tabItems = [
-    { value: "info", label: t("marketplace.owner.info"), icon: Camera },
-    { value: "services", label: t("marketplace.owner.services"), icon: Scissors },
-    { value: "staff", label: t("marketplace.owner.staff"), icon: Users },
-    { value: "hours", label: t("marketplace.owner.hours"), icon: Clock },
-    { value: "team", label: t("team.title"), icon: UserCog },
-    { value: "bookings", label: t("marketplace.owner.bookings"), icon: Calendar },
-  ];
-
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.10),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.03),transparent_35%)] bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.05),transparent_36%)] bg-background">
       <div className="border-b border-border/70 bg-background/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
             <Link href="/owner">
-              <Button variant="ghost" size="icon" data-testid="button-back-salon">
+              <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="min-w-0">
-              <h1 className="font-serif text-xl text-foreground truncate">{salonName}</h1>
-              <p className="text-sm text-muted-foreground">{t("marketplace.owner.manageSalon")}</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Salon workspace</p>
+              <h1 className="truncate font-serif text-2xl text-foreground">{salonName}</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <Button variant="outline" size="sm" onClick={() => void loadSalon()} disabled={refreshing}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {refreshing ? t("common.loading") : "Обновить"}
+            <Button variant="outline" size="sm" onClick={() => void handleRefresh()} disabled={refreshing}>
+              {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Обновить
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6">
-        {loadError && (
-          <Card className="p-4 border-destructive/30 bg-destructive/5 text-destructive">
-            {loadError}
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+        {error && (
+          <Card className="border-destructive/30 bg-destructive/5 p-4 text-destructive">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={() => void handleRefresh()}>
+                Повторить загрузку
+              </Button>
+            </div>
           </Card>
         )}
 
-        <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
           <Card className="overflow-hidden border-border/70 shadow-sm">
-            <div className="p-6 sm:p-7 bg-[linear-gradient(135deg,rgba(190,24,93,0.08),rgba(14,165,233,0.08))]">
-              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
                     <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Центр управления салоном
+                    Управление конкретным салоном без битых переходов
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <h2 className="font-serif text-3xl text-foreground">{salonName}</h2>
-                    <Badge variant="outline" className={`border ${statusBadgeClass(status)}`}>
-                      {statusLabel(status)}
+                    <h2 className="break-words font-serif text-3xl text-foreground">{salonName}</h2>
+                    <Badge variant="outline" className={ownerStatusBadgeClass(salon.status)}>
+                      {ownerStatusLabel(salon.status)}
                     </Badge>
                   </div>
-                  <p className="mt-3 text-muted-foreground max-w-2xl">
-                    {description ||
-                      "Здесь собраны основные операции владельца: оформление карточки салона, услуги, команда, график и бронирования."}
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
+                    {salonDescription || "Здесь владелец управляет профилем салона, услугами, мастерами, отзывами, клиентами и операционной частью без переходов в разваленные страницы."}
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {salon.city}, {salon.address}
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      {salon.phone}
-                    </span>
-                    {salon.email && (
-                      <span className="inline-flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {salon.email}
+                  <div className="mt-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    {salon.city && (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1">
+                        <MapPin className="h-4 w-4" />
+                        {salon.city}
                       </span>
                     )}
+                    {salon.phone && (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1">
+                        <Phone className="h-4 w-4" />
+                        {salon.phone}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1">
+                      <Shield className="h-4 w-4" />
+                      Owner-доступ активен
+                    </span>
+                  </div>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href={`/salon/${salonId}`}>Открыть публичную страницу</Link>
+                    </Button>
+                    <Button variant="outline" onClick={() => void handleStatusChange("active")}>
+                      Опубликовать
+                    </Button>
+                    <Button variant="outline" onClick={() => void handleStatusChange("paused")}>
+                      Пауза
+                    </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:min-w-[250px]">
-                  <div className="rounded-2xl bg-background/80 px-4 py-3 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Рейтинг
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{stats.rating}</p>
-                    <p className="text-xs text-muted-foreground mt-1">средняя оценка салона</p>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:w-[320px]">
+                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Рейтинг</p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">{rating > 0 ? rating.toFixed(1) : "—"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">по отзывам клиентов</p>
                   </div>
-                  <div className="rounded-2xl bg-background/80 px-4 py-3 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Отзывы
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{stats.reviews}</p>
-                    <p className="text-xs text-muted-foreground mt-1">социальное доверие</p>
+                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы</p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">{Number(salon.reviewCount || 0)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">получено по салону</p>
+                  </div>
+                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиенты</p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">{clients.length}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">в CRM салона</p>
+                  </div>
+                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Фото</p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">{photosCount}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">в карточке салона</p>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-border/70 shadow-sm">
+          <Card className="border-border/70 p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-foreground">Быстрый обзор</p>
-                <p className="text-xs text-muted-foreground">Ключевое состояние карточки</p>
+                <p className="text-sm font-medium text-foreground">Операционный фокус</p>
+                <p className="text-xs text-muted-foreground">Что важно именно по этому салону</p>
               </div>
-              <Store className="h-5 w-5 text-primary" />
+              <Building2 className="h-5 w-5 text-primary" />
             </div>
             <Separator className="my-4" />
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Статус публикации</span>
-                <span className="font-medium text-foreground">{statusLabel(status)}</span>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиент с самым большим чеком</p>
+                <p className="mt-2 break-words text-lg font-semibold text-foreground">{topClient ? topClient.name : "Пока нет данных"}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {topClient ? `Потратил ${formatMoney(topClient.totalSpent)} UZS и сделал ${topClient.totalBookings} визитов.` : "Когда появится клиентская история, фокус появится здесь."}
+                </p>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Фото в карточке</span>
-                <span className="font-medium text-foreground">{stats.photos}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl bg-muted/25 px-4 py-3">
-                <span className="text-muted-foreground">Город</span>
-                <span className="font-medium text-foreground">{salon.city}</span>
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы без ответа</p>
+                <p className="mt-2 break-words text-lg font-semibold text-foreground">{reviewSummary.unanswered}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {reviewWithoutResponse ? `Свежий отзыв от ${reviewWithoutResponse.clientName || "клиента"} ждёт owner-ответа.` : "Все отзывы сейчас закрыты owner-ответом или ещё не поступили."}
+                </p>
               </div>
             </div>
           </Card>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-5 border-border/70 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Статус</p>
-              {status === "active" ? (
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-              ) : status === "paused" ? (
-                <PauseCircle className="h-5 w-5 text-amber-500" />
-              ) : (
-                <CircleDashed className="h-5 w-5 text-slate-500" />
-              )}
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{statusLabel(status)}</p>
-            <p className="mt-2 text-sm text-muted-foreground">состояние видимости на витрине</p>
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Клиенты</p><Users className="h-5 w-5 text-primary" /></div>
+            <p className="mt-4 text-3xl font-semibold text-foreground">{clients.length}</p>
+            <p className="mt-2 text-sm text-muted-foreground">в базе салона</p>
           </Card>
-          <Card className="p-5 border-border/70 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Рейтинг</p>
-              <Star className="h-5 w-5 text-amber-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{stats.rating}</p>
-            <p className="mt-2 text-sm text-muted-foreground">по отзывам клиентов</p>
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Открытые обращения</p><MessageSquare className="h-5 w-5 text-sky-500" /></div>
+            <p className="mt-4 text-3xl font-semibold text-foreground">{openTickets}</p>
+            <p className="mt-2 text-sm text-muted-foreground">нужны ответы платформы</p>
           </Card>
-          <Card className="p-5 border-border/70 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Отзывы</p>
-              <Star className="h-5 w-5 text-pink-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{stats.reviews}</p>
-            <p className="mt-2 text-sm text-muted-foreground">накопленный social proof</p>
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Непрочитанные</p><Clock3 className="h-5 w-5 text-amber-500" /></div>
+            <p className="mt-4 text-3xl font-semibold text-foreground">{unreadNotifications}</p>
+            <p className="mt-2 text-sm text-muted-foreground">уведомления по owner-потоку</p>
           </Card>
-          <Card className="p-5 border-border/70 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Фотографии</p>
-              <Camera className="h-5 w-5 text-sky-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{stats.photos}</p>
-            <p className="mt-2 text-sm text-muted-foreground">изображений в карточке салона</p>
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Отзывы</p><Star className="h-5 w-5 text-pink-500" /></div>
+            <p className="mt-4 text-3xl font-semibold text-foreground">{reviewSummary.total}</p>
+            <p className="mt-2 text-sm text-muted-foreground">по салону прямо сейчас</p>
           </Card>
         </section>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="overflow-x-auto pb-2">
-            <TabsList className="inline-grid min-w-full grid-cols-6 mb-6">
-              {tabItems.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    data-testid={`tab-salon-${tab.value}`}
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {tab.label}
-                  </TabsTrigger>
-                );
-              })}
+            <TabsList className="inline-flex min-w-max gap-2">
+              <TabsTrigger value="overview">Обзор салона</TabsTrigger>
+              <TabsTrigger value="profile">Профиль</TabsTrigger>
+              <TabsTrigger value="services">Услуги</TabsTrigger>
+              <TabsTrigger value="masters">Мастера</TabsTrigger>
+              <TabsTrigger value="schedule">Расписание</TabsTrigger>
+              <TabsTrigger value="bookings">Записи</TabsTrigger>
+              <TabsTrigger value="clients">Клиенты</TabsTrigger>
+              <TabsTrigger value="reviews">Отзывы</TabsTrigger>
+              <TabsTrigger value="support">Сообщения и платформа</TabsTrigger>
             </TabsList>
           </div>
+          <TabsContent value="overview" className="mt-0 space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                    {salon.status !== "active" ? "Салон ещё не опубликован и не принимает весь возможный входящий трафик." : "Салон опубликован и доступен клиентам на витрине."}
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                    {photosCount === 0 ? "В карточке салона нет фото. Это снижает доверие и конверсию в запись." : `В карточке уже ${photosCount} фото. Проверьте, достаточно ли они продают салон.`}
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                    {reviewSummary.unanswered > 0 ? `${reviewSummary.unanswered} отзыв(ов) без owner-ответа.` : "Все отзывы сейчас закрыты ответом или новых пока нет."}
+                  </div>
+                </div>
+              </Card>
 
-          <Card className="p-4 border-border/70 shadow-sm mb-6">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Сейчас открыт раздел:</span>
-              <Badge variant="secondary">
-                {tabItems.find((tab) => tab.value === activeTab)?.label ||
-                  t("marketplace.owner.info")}
-              </Badge>
-              <span>Управляйте данными салона без переходов между отдельными страницами.</span>
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Финансовый контур</h3>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Платежи</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">Ещё не подключены</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Показываем owner-friendly сценарий вместо мёртвой пустоты.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Что дальше</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">Подключить оплату</p>
+                    <p className="mt-2 text-sm text-muted-foreground">После активации здесь появятся выручка, транзакции и выплаты.</p>
+                  </div>
+                </div>
+              </Card>
             </div>
-          </Card>
+          </TabsContent>
 
-          <TabsContent value="info" className="mt-0">
-            <OwnerSalonInfo salon={salon} />
+          <TabsContent value="profile" className="mt-0">
+            <OwnerSalonInfo salon={salon as any} />
           </TabsContent>
 
           <TabsContent value="services" className="mt-0">
             <OwnerSalonServices salonId={salonId} />
           </TabsContent>
 
-          <TabsContent value="staff" className="mt-0">
+          <TabsContent value="masters" className="mt-0 space-y-4">
             <OwnerSalonStaff salonId={salonId} />
-          </TabsContent>
-
-          <TabsContent value="hours" className="mt-0">
-            <OwnerSalonHours salonId={salonId} />
-          </TabsContent>
-
-          <TabsContent value="team" className="mt-0">
             <OwnerSalonTeam salonId={salonId} />
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-0">
+            <OwnerSalonHours salonId={salonId} />
           </TabsContent>
 
           <TabsContent value="bookings" className="mt-0">
             <OwnerSalonBookings salonId={salonId} />
+          </TabsContent>
+
+          <TabsContent value="clients" className="mt-0">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Клиенты салона</h3>
+                  <p className="text-sm text-muted-foreground">Мини-CRM владельца по реальным бронированиям</p>
+                </div>
+                <Badge variant="outline" className="border-border/70">{clients.length} клиентов</Badge>
+              </div>
+              <div className="mt-5 space-y-3">
+                {clients.length > 0 ? (
+                  clients.map((client) => (
+                    <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="break-words text-base font-semibold text-foreground">{client.name}</p>
+                          <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            {client.email && <span className="break-all">{client.email}</span>}
+                            {client.phone && <span>{client.phone}</span>}
+                            {client.city && <span>{client.city}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-foreground">{formatMoney(client.totalSpent)} UZS</p>
+                          <p className="mt-1 text-sm text-muted-foreground">суммарно</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                        <div className="rounded-2xl bg-background/80 p-3">
+                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Визиты</p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">{client.totalBookings}</p>
+                        </div>
+                        <div className="rounded-2xl bg-background/80 p-3">
+                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Завершено</p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">{client.completedBookings}</p>
+                        </div>
+                        <div className="rounded-2xl bg-background/80 p-3">
+                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отмены</p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">{client.cancelledBookings}</p>
+                        </div>
+                        <div className="rounded-2xl bg-background/80 p-3">
+                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Последний визит</p>
+                          <p className="mt-2 text-sm font-medium text-foreground">{formatDate(client.lastVisit)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                    Пока нет клиентской истории. После первых броней раздел наполнится автоматически.
+                  </div>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reviews" className="mt-0">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Отзывы и owner-ответы</h3>
+                  <p className="text-sm text-muted-foreground">Свежая репутация салона и реакции владельца</p>
+                </div>
+                <Badge variant="outline" className="border-border/70">{reviewSummary.total} отзывов</Badge>
+              </div>
+
+              <div className="mt-5 space-y-4">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="break-words text-base font-semibold text-foreground">{review.clientName || "Клиент"}</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{review.masterName ? `Мастер: ${review.masterName}` : "Отзыв без привязки к мастеру"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-foreground">{review.rating}/5</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{formatDate(review.createdAt)}</p>
+                        </div>
+                      </div>
+                      {review.comment && <p className="mt-4 break-words text-sm leading-6 text-foreground">{review.comment}</p>}
+                      {review.ownerResponse ? (
+                        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.16em] text-primary">Ответ владельца</p>
+                          <p className="mt-2 break-words text-sm leading-6 text-foreground">{review.ownerResponse}</p>
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-3">
+                          <Textarea
+                            placeholder="Ответить на отзыв"
+                            rows={3}
+                            value={responseDrafts[review.id] || ""}
+                            onChange={(event) => setResponseDrafts((current) => ({ ...current, [review.id]: event.target.value }))}
+                          />
+                          <Button onClick={() => void handleRespondToReview(review.id)}>Сохранить ответ</Button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                    Пока нет отзывов. После завершённых записей они будут появляться здесь.
+                  </div>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="support" className="mt-0">
+            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Коммуникации салона</h3>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      Канал с платформой
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">Открытых owner-обращений: {openTickets}. Этот блок уже живой и связан с support tickets.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <CalendarClock className="h-4 w-4 text-primary" />
+                      Канал с клиентами
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">Прямой универсальный чат ещё не развёрнут на owner API, поэтому рабочим центром остаются брони, клиентская база и support-контур платформы.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Wallet className="h-4 w-4 text-primary" />
+                      Финансовые сигналы
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">Платёжный модуль ещё не активирован, но owner workspace уже готов для подключения этого контура.</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Owner-support и уведомления</h3>
+                <div className="mt-5 space-y-3">
+                  {tickets.length > 0 ? (
+                    tickets.map((ticket) => (
+                      <div key={ticket.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
+                            <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
+                          </div>
+                          <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
+                        </div>
+                        <p className="mt-3 text-sm text-muted-foreground">Обновлено: {formatDate(ticket.updatedAt)}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                      Пока нет сообщений к платформе. При первом owner-обращении история появится здесь.
+                    </div>
+                  )}
+
+                  {notifications.length > 0 && (
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <p className="text-sm font-medium text-foreground">Последние уведомления</p>
+                      <div className="mt-3 space-y-2">
+                        {notifications.slice(0, 4).map((item) => (
+                          <div key={item.id} className="rounded-xl bg-background/80 p-3 text-sm text-muted-foreground">
+                            <p className="break-words text-foreground">{item.message || item.type}</p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.16em]">{formatDate(item.createdAt)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
