@@ -17,6 +17,8 @@ env:
   PM2_APP_NAME: aurelle-production
   DEPLOY_DIR: /var/www/aurelle
   HEALTH_URL: http://localhost:5000/api/health/ping
+  PRODUCTION_HOST_FALLBACK: 62.113.58.208
+  PRODUCTION_PORT_FALLBACK: 22
 
 jobs:
   # ── 1. Pre-deploy checks (BLOCKING) ─────────────────────────────────────────
@@ -54,14 +56,26 @@ jobs:
     needs: checks  # only runs if pre-deploy checks pass
 
     steps:
+      - name: Production SSH preflight
+        env:
+          TARGET_HOST: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
+          TARGET_PORT: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+        run: |
+          set -euo pipefail
+          echo "Checking SSH reachability for ${TARGET_HOST}:${TARGET_PORT}"
+          timeout 10 bash -c "</dev/tcp/${TARGET_HOST}/${TARGET_PORT}"
+          echo "SSH preflight passed"
+
       # ── Pull & build on server ───────────────────────────────────────────────
       - name: Pull, build, reload
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
+          host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+          timeout: 60s
+          command_timeout: 25m
           script: |
             set -euo pipefail
             cd ${{ env.DEPLOY_DIR }}
@@ -97,10 +111,12 @@ jobs:
       - name: Health check
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
+          host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+          timeout: 60s
+          command_timeout: 10m
           script: |
             set -euo pipefail
 
@@ -143,10 +159,12 @@ jobs:
         if: failure()
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
+          host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+          timeout: 60s
+          command_timeout: 20m
           script: |
             set -euo pipefail
             cd ${{ env.DEPLOY_DIR }}
@@ -185,6 +203,7 @@ jobs:
 
       - name: Telegram — failure
         if: failure()
+        continue-on-error: true
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
