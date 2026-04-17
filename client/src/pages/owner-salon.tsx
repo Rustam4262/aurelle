@@ -23,6 +23,8 @@ import {
   MessageSquare,
   Phone,
   RefreshCw,
+  Search,
+  Send,
   Shield,
   Sparkles,
   Star,
@@ -82,8 +84,16 @@ type SupportTicket = {
   subject: string;
   category: string;
   status: string;
+  priority?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+};
+
+type SupportMessage = {
+  id: string;
+  senderType: "user" | "admin";
+  message: string;
+  createdAt?: string | null;
 };
 
 type NotificationItem = {
@@ -179,6 +189,20 @@ export default function OwnerSalonPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
+  const [supportDraft, setSupportDraft] = useState({
+    subject: "",
+    category: "general",
+    message: "",
+  });
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [selectedTicketMessages, setSelectedTicketMessages] = useState<SupportMessage[]>([]);
+  const [supportReply, setSupportReply] = useState("");
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportSending, setSupportSending] = useState(false);
+  const [supportCreating, setSupportCreating] = useState(false);
+  const [closingTicketId, setClosingTicketId] = useState<string | null>(null);
+  const [clientQuery, setClientQuery] = useState("");
+  const [reviewFilter, setReviewFilter] = useState<"all" | "unanswered" | "low" | "recent">("all");
 
   useEffect(() => {
     const requested = new URLSearchParams(location.split("?")[1] || "").get("tab") || "overview";
@@ -225,6 +249,12 @@ export default function OwnerSalonPage() {
     void loadWorkspace();
   }, [isLoading, user, salonId]);
 
+  useEffect(() => {
+    if (!selectedTicketId && tickets.length > 0) {
+      void loadSupportTicket(tickets[0].id);
+    }
+  }, [selectedTicketId, tickets]);
+
   const salonName = localize(salon?.name, language) || "Салон";
   const salonDescription = localize(salon?.description, language);
   const rating = Number(salon?.averageRating || 0);
@@ -243,8 +273,45 @@ export default function OwnerSalonPage() {
   const reviewSummary = useMemo(() => {
     const total = reviews.length;
     const unanswered = reviews.filter((review) => !review.ownerResponse).length;
-    return { total, unanswered };
+    const average = total
+      ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / total
+      : 0;
+    const fiveStars = reviews.filter((review) => Number(review.rating || 0) >= 5).length;
+    return { total, unanswered, average, fiveStars };
   }, [reviews]);
+
+  const filteredClients = useMemo(() => {
+    const query = clientQuery.trim().toLowerCase();
+    if (!query) return clients;
+
+    return clients.filter((client) =>
+      [client.name, client.email, client.phone, client.city]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    );
+  }, [clientQuery, clients]);
+
+  const filteredReviews = useMemo(() => {
+    switch (reviewFilter) {
+      case "unanswered":
+        return reviews.filter((review) => !review.ownerResponse);
+      case "low":
+        return reviews.filter((review) => Number(review.rating || 0) <= 3);
+      case "recent":
+        return [...reviews].sort((left, right) => {
+          const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+          const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+          return rightTime - leftTime;
+        });
+      default:
+        return reviews;
+    }
+  }, [reviewFilter, reviews]);
+
+  const selectedTicket = useMemo(
+    () => tickets.find((ticket) => ticket.id === selectedTicketId) ?? null,
+    [selectedTicketId, tickets],
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -286,6 +353,153 @@ export default function OwnerSalonPage() {
       toast({
         title: "Не удалось отправить ответ",
         description: reviewErr instanceof Error ? reviewErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadSupportTicket = async (ticketId: string) => {
+    setSupportLoading(true);
+    setSelectedTicketId(ticketId);
+    try {
+      const detail = await fetchJson<{ ticket: SupportTicket; messages: SupportMessage[] }>(
+        `/api/owner/support/tickets/${ticketId}`,
+      );
+      setSelectedTicketMessages(detail.messages || []);
+    } catch (ticketErr) {
+      toast({
+        title: "Не удалось открыть обращение",
+        description: ticketErr instanceof Error ? ticketErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  const handleCreateSupportTicket = async () => {
+    if (supportDraft.subject.trim().length < 3 || supportDraft.message.trim().length < 5) {
+      toast({
+        title: "Заполните обращение",
+        description: "Нужны тема и понятное описание проблемы.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSupportCreating(true);
+    try {
+      const response = await fetch("/api/owner/support/tickets", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `${supportDraft.subject.trim()} · ${salonName}`,
+          category: supportDraft.category.trim(),
+          message: supportDraft.message.trim(),
+        }),
+      });
+
+      if (response.status === 401) throw new Error("unauthorized");
+      if (!response.ok) throw new Error(await response.text());
+
+      const ticket = (await response.json()) as SupportTicket;
+      toast({ title: "Обращение создано", description: "Диалог с платформой уже открыт." });
+      setSupportDraft({ subject: "", category: "general", message: "" });
+      await handleRefresh();
+      await loadSupportTicket(ticket.id);
+    } catch (ticketErr) {
+      toast({
+        title: "Не удалось создать обращение",
+        description: ticketErr instanceof Error ? ticketErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    } finally {
+      setSupportCreating(false);
+    }
+  };
+
+  const handleSendSupportReply = async () => {
+    if (!selectedTicketId) return;
+    if (!supportReply.trim()) {
+      toast({
+        title: "Напишите сообщение",
+        description: "Пустой ответ отправить нельзя.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSupportSending(true);
+    try {
+      const response = await fetch(`/api/owner/support/tickets/${selectedTicketId}/messages`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: supportReply.trim() }),
+      });
+      if (response.status === 401) throw new Error("unauthorized");
+      if (!response.ok) throw new Error(await response.text());
+      setSupportReply("");
+      await handleRefresh();
+      await loadSupportTicket(selectedTicketId);
+      toast({ title: "Ответ отправлен", description: "Сообщение добавлено в историю обращения." });
+    } catch (replyErr) {
+      toast({
+        title: "Не удалось отправить сообщение",
+        description: replyErr instanceof Error ? replyErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    } finally {
+      setSupportSending(false);
+    }
+  };
+
+  const handleCloseSupportTicket = async (ticketId: string) => {
+    setClosingTicketId(ticketId);
+    try {
+      await patchJson(`/api/owner/support/tickets/${ticketId}/close`, {});
+      toast({ title: "Обращение закрыто", description: "При необходимости его можно открыть новым сообщением." });
+      await handleRefresh();
+      if (selectedTicketId === ticketId) {
+        await loadSupportTicket(ticketId);
+      }
+    } catch (closeErr) {
+      toast({
+        title: "Не удалось закрыть обращение",
+        description: closeErr instanceof Error ? closeErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    } finally {
+      setClosingTicketId(null);
+    }
+  };
+
+  const handleMarkNotificationRead = async (notificationId: string) => {
+    try {
+      await patchJson(`/api/notifications/${notificationId}/read`, {});
+      setNotifications((current) =>
+        current.map((item) => (item.id === notificationId ? { ...item, isRead: true } : item)),
+      );
+    } catch (notificationErr) {
+      toast({
+        title: "Не удалось обновить уведомление",
+        description:
+          notificationErr instanceof Error ? notificationErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await patchJson("/api/notifications/read-all", {});
+      setNotifications((current) => current.map((item) => ({ ...item, isRead: true })));
+    } catch (notificationErr) {
+      toast({
+        title: "Не удалось отметить уведомления",
+        description:
+          notificationErr instanceof Error ? notificationErr.message : "Попробуйте ещё раз.",
         variant: "destructive",
       });
     }
@@ -616,111 +830,186 @@ export default function OwnerSalonPage() {
           </TabsContent>
 
           <TabsContent value="clients" className="mt-0">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Клиенты салона</h3>
-                  <p className="text-sm text-muted-foreground">Мини-CRM владельца по реальным бронированиям</p>
+            <div className="space-y-4">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Клиенты салона</h3>
+                    <p className="text-sm text-muted-foreground">Мини-CRM владельца по реальным бронированиям</p>
+                  </div>
+                  <Badge variant="outline" className="border-border/70">{clients.length} клиентов</Badge>
                 </div>
-                <Badge variant="outline" className="border-border/70">{clients.length} клиентов</Badge>
-              </div>
-              <div className="mt-5 space-y-3">
-                {clients.length > 0 ? (
-                  clients.map((client) => (
-                    <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="break-words text-base font-semibold text-foreground">{client.name}</p>
-                          <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            {client.email && <span className="break-all">{client.email}</span>}
-                            {client.phone && <span>{client.phone}</span>}
-                            {client.city && <span>{client.city}</span>}
+                <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={clientQuery}
+                      onChange={(event) => setClientQuery(event.target.value)}
+                      placeholder="Поиск по имени, email, телефону или городу"
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Повторные</p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {clients.filter((client) => client.completedBookings > 1).length}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Топ-клиент</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">{topClient?.name || "—"}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Выручка</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {formatMoney(clients.reduce((sum, client) => sum + client.totalSpent, 0))} UZS
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="space-y-3">
+                  {filteredClients.length > 0 ? (
+                    filteredClients.map((client) => (
+                      <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="break-words text-base font-semibold text-foreground">{client.name}</p>
+                            <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                              {client.email && <span className="break-all">{client.email}</span>}
+                              {client.phone && <span>{client.phone}</span>}
+                              {client.city && <span>{client.city}</span>}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-foreground">{formatMoney(client.totalSpent)} UZS</p>
+                            <p className="mt-1 text-sm text-muted-foreground">суммарно</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-foreground">{formatMoney(client.totalSpent)} UZS</p>
-                          <p className="mt-1 text-sm text-muted-foreground">суммарно</p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                          <div className="rounded-2xl bg-background/80 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Визиты</p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">{client.totalBookings}</p>
+                          </div>
+                          <div className="rounded-2xl bg-background/80 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Завершено</p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">{client.completedBookings}</p>
+                          </div>
+                          <div className="rounded-2xl bg-background/80 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отмены</p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">{client.cancelledBookings}</p>
+                          </div>
+                          <div className="rounded-2xl bg-background/80 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Последний визит</p>
+                            <p className="mt-2 text-sm font-medium text-foreground">{formatDate(client.lastVisit)}</p>
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                        <div className="rounded-2xl bg-background/80 p-3">
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Визиты</p>
-                          <p className="mt-2 text-lg font-semibold text-foreground">{client.totalBookings}</p>
-                        </div>
-                        <div className="rounded-2xl bg-background/80 p-3">
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Завершено</p>
-                          <p className="mt-2 text-lg font-semibold text-foreground">{client.completedBookings}</p>
-                        </div>
-                        <div className="rounded-2xl bg-background/80 p-3">
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отмены</p>
-                          <p className="mt-2 text-lg font-semibold text-foreground">{client.cancelledBookings}</p>
-                        </div>
-                        <div className="rounded-2xl bg-background/80 p-3">
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Последний визит</p>
-                          <p className="mt-2 text-sm font-medium text-foreground">{formatDate(client.lastVisit)}</p>
-                        </div>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                      {clients.length
+                        ? "По текущему фильтру клиентов не найдено."
+                        : "Пока нет клиентской истории. После первых броней раздел наполнится автоматически."}
                     </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                    Пока нет клиентской истории. После первых броней раздел наполнится автоматически.
-                  </div>
-                )}
-              </div>
-            </Card>
+                  )}
+                </div>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-0">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Отзывы и owner-ответы</h3>
-                  <p className="text-sm text-muted-foreground">Свежая репутация салона и реакции владельца</p>
-                </div>
-                <Badge variant="outline" className="border-border/70">{reviewSummary.total} отзывов</Badge>
-              </div>
-
-              <div className="mt-5 space-y-4">
-                {reviews.length > 0 ? (
-                  reviews.map((review) => (
-                    <div key={review.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="break-words text-base font-semibold text-foreground">{review.clientName || "Клиент"}</p>
-                          <p className="mt-2 text-sm text-muted-foreground">{review.masterName ? `Мастер: ${review.masterName}` : "Отзыв без привязки к мастеру"}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-foreground">{review.rating}/5</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{formatDate(review.createdAt)}</p>
-                        </div>
-                      </div>
-                      {review.comment && <p className="mt-4 break-words text-sm leading-6 text-foreground">{review.comment}</p>}
-                      {review.ownerResponse ? (
-                        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.16em] text-primary">Ответ владельца</p>
-                          <p className="mt-2 break-words text-sm leading-6 text-foreground">{review.ownerResponse}</p>
-                        </div>
-                      ) : (
-                        <div className="mt-4 space-y-3">
-                          <Textarea
-                            placeholder="Ответить на отзыв"
-                            rows={3}
-                            value={responseDrafts[review.id] || ""}
-                            onChange={(event) => setResponseDrafts((current) => ({ ...current, [review.id]: event.target.value }))}
-                          />
-                          <Button onClick={() => void handleRespondToReview(review.id)}>Сохранить ответ</Button>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                    Пока нет отзывов. После завершённых записей они будут появляться здесь.
+            <div className="space-y-4">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Отзывы и owner-ответы</h3>
+                    <p className="text-sm text-muted-foreground">Свежая репутация салона и реакции владельца</p>
                   </div>
-                )}
-              </div>
-            </Card>
+                  <Badge variant="outline" className="border-border/70">{reviewSummary.total} отзывов</Badge>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-4">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Средний рейтинг</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.average.toFixed(1)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Без ответа</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.unanswered}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">5 звёзд</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.fiveStars}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужно сейчас</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {reviewWithoutResponse ? `Ответить ${reviewWithoutResponse.clientName || "клиенту"}` : "Всё закрыто"}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {[
+                    ["all", "Все"],
+                    ["unanswered", "Без ответа"],
+                    ["low", "3 и ниже"],
+                    ["recent", "Сначала новые"],
+                  ].map(([value, label]) => (
+                    <Button
+                      key={value}
+                      variant={reviewFilter === value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setReviewFilter(value as typeof reviewFilter)}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="space-y-4">
+                  {filteredReviews.length > 0 ? (
+                    filteredReviews.map((review) => (
+                      <div key={review.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="break-words text-base font-semibold text-foreground">{review.clientName || "Клиент"}</p>
+                            <p className="mt-2 text-sm text-muted-foreground">{review.masterName ? `Мастер: ${review.masterName}` : "Отзыв без привязки к мастеру"}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-foreground">{review.rating}/5</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{formatDate(review.createdAt)}</p>
+                          </div>
+                        </div>
+                        {review.comment && <p className="mt-4 break-words text-sm leading-6 text-foreground">{review.comment}</p>}
+                        {review.ownerResponse ? (
+                          <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                            <p className="text-xs uppercase tracking-[0.16em] text-primary">Ответ владельца</p>
+                            <p className="mt-2 break-words text-sm leading-6 text-foreground">{review.ownerResponse}</p>
+                          </div>
+                        ) : (
+                          <div className="mt-4 space-y-3">
+                            <Textarea
+                              placeholder="Ответить на отзыв"
+                              rows={3}
+                              value={responseDrafts[review.id] || ""}
+                              onChange={(event) => setResponseDrafts((current) => ({ ...current, [review.id]: event.target.value }))}
+                            />
+                            <Button onClick={() => void handleRespondToReview(review.id)}>Сохранить ответ</Button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                      {reviews.length ? "По выбранному фильтру отзывов ничего нет." : "Пока нет отзывов. После завершённых записей они будут появляться здесь."}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-0">
@@ -790,43 +1079,184 @@ export default function OwnerSalonPage() {
                     <p className="mt-2 text-sm text-muted-foreground">Платёжный модуль ещё не активирован, но owner workspace уже готов для подключения этого контура.</p>
                   </div>
                 </div>
+
+                <Separator className="my-5" />
+
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground">Новое обращение в платформу</h4>
+                    <p className="mt-1 text-sm text-muted-foreground">Создайте запрос по текущему салону и продолжайте диалог уже внутри тикета.</p>
+                  </div>
+                  <Input
+                    value={supportDraft.subject}
+                    onChange={(event) => setSupportDraft((current) => ({ ...current, subject: event.target.value }))}
+                    placeholder="Тема обращения"
+                  />
+                  <Input
+                    value={supportDraft.category}
+                    onChange={(event) => setSupportDraft((current) => ({ ...current, category: event.target.value }))}
+                    placeholder="Категория: moderation, payments, staff..."
+                  />
+                  <Textarea
+                    value={supportDraft.message}
+                    onChange={(event) => setSupportDraft((current) => ({ ...current, message: event.target.value }))}
+                    rows={4}
+                    placeholder="Опишите проблему или задачу по этому салону"
+                  />
+                  <Button className="w-full" onClick={() => void handleCreateSupportTicket()} disabled={supportCreating}>
+                    {supportCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
+                    Отправить обращение
+                  </Button>
+                </div>
               </Card>
 
               <Card className="border-border/70 p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground">Owner-support и уведомления</h3>
-                <div className="mt-5 space-y-3">
-                  {tickets.length > 0 ? (
-                    tickets.map((ticket) => (
-                      <div key={ticket.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
-                            <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
+                <div className="mt-5 grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                  <div className="space-y-3">
+                    {tickets.length > 0 ? (
+                      tickets.map((ticket) => (
+                        <button
+                          key={ticket.id}
+                          type="button"
+                          onClick={() => void loadSupportTicket(ticket.id)}
+                          className={`w-full rounded-2xl border p-4 text-left transition ${
+                            selectedTicketId === ticket.id
+                              ? "border-primary/40 bg-primary/5"
+                              : "border-border/70 bg-muted/20 hover:border-primary/20"
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
+                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
+                            </div>
+                            <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
                           </div>
-                          <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
-                        </div>
-                        <p className="mt-3 text-sm text-muted-foreground">Обновлено: {formatDate(ticket.updatedAt)}</p>
+                          <p className="mt-3 text-sm text-muted-foreground">Обновлено: {formatDate(ticket.updatedAt)}</p>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                        Пока нет сообщений к платформе. При первом owner-обращении история появится здесь.
                       </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                      Пока нет сообщений к платформе. При первом owner-обращении история появится здесь.
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {notifications.length > 0 && (
+                  <div className="space-y-4">
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <p className="text-sm font-medium text-foreground">Последние уведомления</p>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">Уведомления по салону</p>
+                        {unreadNotifications > 0 && (
+                          <Button variant="outline" size="sm" onClick={() => void handleMarkAllNotificationsRead()}>
+                            Прочитать всё
+                          </Button>
+                        )}
+                      </div>
                       <div className="mt-3 space-y-2">
                         {notifications.slice(0, 4).map((item) => (
                           <div key={item.id} className="rounded-xl bg-background/80 p-3 text-sm text-muted-foreground">
-                            <p className="break-words text-foreground">{item.message || item.type}</p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.16em]">{formatDate(item.createdAt)}</p>
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="break-words text-foreground">{item.message || item.type}</p>
+                                <p className="mt-1 text-xs uppercase tracking-[0.16em]">{formatDate(item.createdAt)}</p>
+                              </div>
+                              {!item.isRead && (
+                                <Button variant="ghost" size="sm" onClick={() => void handleMarkNotificationRead(item.id)}>
+                                  Новое
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         ))}
+                        {!notifications.length && (
+                          <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                            Пока нет новых уведомлений.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
+
+                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                      {selectedTicket ? (
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-base font-semibold text-foreground">{selectedTicket.subject}</p>
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                {selectedTicket.category} · обновлено {formatDate(selectedTicket.updatedAt)}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="border-border/70">{selectedTicket.status}</Badge>
+                              {selectedTicket.status !== "closed" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleCloseSupportTicket(selectedTicket.id)}
+                                  disabled={closingTicketId === selectedTicket.id}
+                                >
+                                  {closingTicketId === selectedTicket.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  Закрыть
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
+                            {supportLoading ? (
+                              <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                                <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
+                                Загружаем переписку
+                              </div>
+                            ) : selectedTicketMessages.length > 0 ? (
+                              selectedTicketMessages.map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`rounded-2xl border p-4 text-sm ${
+                                    message.senderType === "admin"
+                                      ? "border-border/70 bg-muted/20 text-foreground"
+                                      : "border-primary/15 bg-primary/8 text-foreground"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="font-medium text-foreground">
+                                      {message.senderType === "admin" ? "Платформа" : "Вы"}
+                                    </p>
+                                    <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      {formatDate(message.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p className="mt-2 break-words leading-6">{message.message}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                                У этого обращения пока нет истории сообщений.
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-3">
+                            <Textarea
+                              rows={4}
+                              value={supportReply}
+                              onChange={(event) => setSupportReply(event.target.value)}
+                              placeholder="Ответить платформе по этому обращению"
+                            />
+                            <Button className="w-full" onClick={() => void handleSendSupportReply()} disabled={supportSending}>
+                              {supportSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                              Отправить сообщение
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                          Выберите обращение слева, чтобы увидеть историю диалога и продолжить переписку.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </Card>
             </div>
