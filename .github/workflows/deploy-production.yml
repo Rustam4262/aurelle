@@ -66,8 +66,7 @@ jobs:
           timeout 10 bash -c "</dev/tcp/${TARGET_HOST}/${TARGET_PORT}"
           echo "SSH preflight passed"
 
-      # ── Pull & build on server ───────────────────────────────────────────────
-      - name: Pull, build, reload
+      - name: SSH command smoke
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
@@ -75,7 +74,25 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
           timeout: 60s
-          command_timeout: 25m
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            whoami
+            test -d "${{ env.DEPLOY_DIR }}"
+            cd "${{ env.DEPLOY_DIR }}"
+            git rev-parse --is-inside-work-tree
+            node -v
+            npm -v
+
+      - name: Fetch and reset production repo
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+          timeout: 60s
+          command_timeout: 5m
           script: |
             set -euo pipefail
             cd ${{ env.DEPLOY_DIR }}
@@ -87,6 +104,20 @@ jobs:
             echo "==> git fetch/reset"
             git fetch origin main
             git reset --hard origin/main
+            echo "Current: $(git rev-parse HEAD)"
+
+      - name: Install, build, reload
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST || env.PRODUCTION_HOST_FALLBACK }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || env.PRODUCTION_PORT_FALLBACK }}
+          timeout: 60s
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+            cd ${{ env.DEPLOY_DIR }}
 
             echo "==> npm ci"
             npm ci
