@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -26,6 +26,7 @@ import {
   Clock,
   AlertCircle,
   Users,
+  Search,
 } from "lucide-react";
 
 interface SalonManager {
@@ -71,6 +72,25 @@ const DEFAULT_PERMISSIONS = [
   MANAGER_PERMISSIONS.VIEW_ANALYTICS,
 ];
 
+const PERMISSION_PRESETS = {
+  operations: [
+    MANAGER_PERMISSIONS.READ_SALON_INFO,
+    MANAGER_PERMISSIONS.READ_DASHBOARD,
+    MANAGER_PERMISSIONS.READ_BOOKINGS,
+    MANAGER_PERMISSIONS.MANAGE_BOOKINGS,
+    MANAGER_PERMISSIONS.READ_CALENDAR,
+    MANAGER_PERMISSIONS.MANAGE_CALENDAR,
+  ],
+  catalog: [
+    MANAGER_PERMISSIONS.READ_SALON_INFO,
+    MANAGER_PERMISSIONS.READ_SERVICES,
+    MANAGER_PERMISSIONS.MANAGE_SERVICES,
+    MANAGER_PERMISSIONS.READ_MASTERS,
+    MANAGER_PERMISSIONS.MANAGE_MASTERS,
+  ],
+  full: Object.values(MANAGER_PERMISSIONS),
+};
+
 export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -82,6 +102,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
   }>({ open: false });
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(DEFAULT_PERMISSIONS);
+  const [managerSearch, setManagerSearch] = useState("");
 
   // Fetch managers
   const { data: managers = [], isLoading } = useQuery<SalonManager[]>({
@@ -238,18 +259,83 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
     }
   };
 
+  const managerSummary = useMemo(() => {
+    const active = managers.filter((manager) => manager.status === "active");
+    const pending = managers.filter((manager) => manager.status === "pending");
+    const revoked = managers.filter((manager) => manager.status === "revoked");
+    const permissionCoverage = active.reduce((acc, manager) => acc + manager.permissions.length, 0);
+
+    return {
+      total: managers.length,
+      active: active.length,
+      pending: pending.length,
+      revoked: revoked.length,
+      permissionCoverage,
+    };
+  }, [managers]);
+
+  const filteredManagers = useMemo(() => {
+    const normalizedSearch = managerSearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return managers;
+    }
+
+    return managers.filter((manager) => {
+      const target = `${manager.fullName || ""} ${manager.email}`.toLowerCase();
+      return target.includes(normalizedSearch);
+    });
+  }, [managerSearch, managers]);
+
+  const applyPermissionPreset = (preset: keyof typeof PERMISSION_PRESETS) => {
+    setSelectedPermissions(PERMISSION_PRESETS[preset]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
           <h3 className="text-lg font-semibold text-foreground">{t("marketplace.team.title")}</h3>
           <p className="text-sm text-muted-foreground">{t("marketplace.team.description")}</p>
         </div>
-        <Button onClick={() => setInviteDialogOpen(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          {t("marketplace.team.inviteManager")}
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:w-72">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={managerSearch}
+              onChange={(event) => setManagerSearch(event.target.value)}
+              placeholder="Поиск по имени или email"
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={() => setInviteDialogOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            {t("marketplace.team.inviteManager")}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-border/70 p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Активные</p>
+          <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.active}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Менеджеры с действующим доступом.</p>
+        </Card>
+        <Card className="border-border/70 p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Ожидают</p>
+          <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.pending}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Приглашения, которые ещё не приняли.</p>
+        </Card>
+        <Card className="border-border/70 p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отозваны</p>
+          <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.revoked}</p>
+          <p className="mt-2 text-sm text-muted-foreground">История доступов без потери контроля.</p>
+        </Card>
+        <Card className="border-border/70 p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Права</p>
+          <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.permissionCoverage}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Суммарно выданных разрешений по команде.</p>
+        </Card>
       </div>
 
       {/* Managers List */}
@@ -268,32 +354,49 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
         </Card>
       ) : (
         <div className="space-y-4">
-          {managers.map((manager) => (
+          {filteredManagers.length === 0 && (
+            <Card className="border-dashed p-8 text-center">
+              <p className="text-sm font-medium text-foreground">Ничего не найдено</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Попробуйте другой email, имя менеджера или очистите поиск.
+              </p>
+            </Card>
+          )}
+          {filteredManagers.map((manager) => (
             <Card key={manager.id} className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div>
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-3 flex flex-wrap items-center gap-3">
+                    <div className="min-w-0">
                       <h4 className="font-medium text-foreground">
                         {manager.fullName || t("marketplace.team.unnamed")}
                       </h4>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="mt-1 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                         <Mail className="h-3 w-3" />
-                        {manager.email}
+                        <span className="break-all">{manager.email}</span>
                       </div>
                     </div>
                     {getStatusBadge(manager.status)}
                   </div>
 
                   {/* Permissions */}
-                  <div className="mt-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                  <div className="mt-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
                       <Shield className="h-3 w-3" />
                       <span>
                         {t("marketplace.team.permissions")} ({manager.permissions.length})
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+                      <span className="text-xs uppercase tracking-[0.16em]">
+                        {manager.status === "active"
+                          ? "Рабочий доступ"
+                          : manager.status === "pending"
+                            ? "Ждёт активации"
+                            : "История"}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {manager.permissions.slice(0, 5).map((perm) => (
                         <Badge key={perm} variant="outline" className="text-xs">
                           {t(`marketplace.team.permission.${perm.replace("manager.", "")}`)}
@@ -308,7 +411,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                   </div>
 
                   {/* Timestamps */}
-                  <div className="mt-3 text-xs text-muted-foreground">
+                  <div className="mt-3 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
                     <div>
                       {t("marketplace.team.invitedAt")}:{" "}
                       {new Date(manager.invitedAt).toLocaleDateString()}
@@ -323,7 +426,7 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 xl:w-52 xl:justify-end">
                   {manager.status === "active" && (
                     <Button
                       variant="outline"
@@ -343,7 +446,8 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                       size="sm"
                       onClick={() => handleRevoke(manager.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="mr-1 h-4 w-4" />
+                      Отозвать
                     </Button>
                   )}
                 </div>
@@ -377,6 +481,17 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
             <div>
               <Label>{t("marketplace.team.selectPermissions")}</Label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("operations")}>
+                  Операции
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("catalog")}>
+                  Контент
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("full")}>
+                  Полный доступ
+                </Button>
+              </div>
               <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-md p-3">
                 {Object.entries(MANAGER_PERMISSIONS).map(([, value]) => (
                   <div key={value} className="flex items-center space-x-2">
@@ -443,6 +558,17 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
 
               <div>
                 <Label>{t("marketplace.team.permissions")}</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("operations")}>
+                    Операции
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("catalog")}>
+                    Контент
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("full")}>
+                    Полный доступ
+                  </Button>
+                </div>
                 <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-md p-3">
                   {Object.entries(MANAGER_PERMISSIONS).map(([, value]) => (
                     <div key={value} className="flex items-center space-x-2">
