@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
-import { Link, useParams } from "wouter";
+import { Link, useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -36,6 +36,7 @@ import { OwnerSalonStaff } from "@/components/owner/OwnerSalonStaff";
 import { OwnerSalonHours } from "@/components/owner/OwnerSalonHours";
 import { OwnerSalonBookings } from "@/components/owner/OwnerSalonBookings";
 import { OwnerSalonTeam } from "@/components/owner/OwnerSalonTeam";
+import { RevenueAnalytics } from "@/components/revenue-analytics";
 
 type LocalizedRecord = { en?: string; ru?: string; uz?: string };
 
@@ -163,6 +164,7 @@ async function patchJson<T>(url: string, body: unknown): Promise<T> {
 export default function OwnerSalonPage() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth({ requireAuth: true });
+  const [location, setLocation] = useLocation();
   const language = i18n.language || "ru";
   const params = useParams<{ id: string }>();
   const salonId = params.id;
@@ -177,6 +179,14 @@ export default function OwnerSalonPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const requested = new URLSearchParams(location.split("?")[1] || "").get("tab") || "overview";
+    const normalized = requested === "staff" ? "masters" : requested;
+    if (normalized !== activeTab) {
+      setActiveTab(normalized);
+    }
+  }, [activeTab, location]);
 
   const loadWorkspace = async () => {
     if (!salonId) return;
@@ -479,17 +489,28 @@ export default function OwnerSalonPage() {
           </Card>
         </section>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            setActiveTab(value);
+            setLocation(value === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${value}`);
+          }}
+          className="space-y-6"
+        >
           <div className="overflow-x-auto pb-2">
             <TabsList className="inline-flex min-w-max gap-2">
               <TabsTrigger value="overview">Обзор салона</TabsTrigger>
               <TabsTrigger value="profile">Профиль</TabsTrigger>
+              <TabsTrigger value="public">Публичная страница</TabsTrigger>
               <TabsTrigger value="services">Услуги</TabsTrigger>
               <TabsTrigger value="masters">Мастера</TabsTrigger>
               <TabsTrigger value="schedule">Расписание</TabsTrigger>
               <TabsTrigger value="bookings">Записи</TabsTrigger>
               <TabsTrigger value="clients">Клиенты</TabsTrigger>
               <TabsTrigger value="reviews">Отзывы</TabsTrigger>
+              <TabsTrigger value="analytics">Аналитика</TabsTrigger>
+              <TabsTrigger value="finance">Финансы</TabsTrigger>
+              <TabsTrigger value="access">Доступы</TabsTrigger>
               <TabsTrigger value="support">Сообщения и платформа</TabsTrigger>
             </TabsList>
           </div>
@@ -532,13 +553,58 @@ export default function OwnerSalonPage() {
             <OwnerSalonInfo salon={salon as any} />
           </TabsContent>
 
+          <TabsContent value="public" className="mt-0">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Публичная страница салона</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Управление витриной салона, публикацией и готовностью карточки к клиентскому трафику.
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link href={`/salon/${salonId}`}>Открыть витрину</Link>
+                </Button>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Статус</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{ownerStatusLabel(salon.status)}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Фото</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{photosCount} в карточке</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Описание</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{salonDescription ? "Заполнено" : "Нужно добавить"}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Контакты</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{salon.phone ? "Готово" : "Не хватает телефона"}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-3 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  {salon.status !== "active"
+                    ? "Салон пока не опубликован. После публикации карточка появится в клиентской витрине."
+                    : "Салон опубликован и доступен для клиентских переходов и бронирований."}
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  Проверьте фото, описание, услуги и расписание — именно эти блоки сильнее всего влияют на конверсию карточки.
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="services" className="mt-0">
             <OwnerSalonServices salonId={salonId} />
           </TabsContent>
 
           <TabsContent value="masters" className="mt-0 space-y-4">
             <OwnerSalonStaff salonId={salonId} />
-            <OwnerSalonTeam salonId={salonId} />
           </TabsContent>
 
           <TabsContent value="schedule" className="mt-0">
@@ -655,6 +721,46 @@ export default function OwnerSalonPage() {
                 )}
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0">
+            <RevenueAnalytics
+              salons={[
+                {
+                  id: salonId,
+                  name:
+                    typeof salon.name === "string"
+                      ? { ru: salon.name, en: salon.name, uz: salon.name }
+                      : (salon.name as { [key: string]: string }),
+                },
+              ]}
+            />
+          </TabsContent>
+
+          <TabsContent value="finance" className="mt-0">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <h3 className="text-lg font-semibold text-foreground">Финансы салона</h3>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Статус платежей</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">Платёжный контур ещё не подключён</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Вместо пустоты показываем понятный сценарий: когда провайдер будет подключён, здесь появятся выручка, оплаты и транзакции салона.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Что готовить</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">Реквизиты и правила оплаты</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Салонный workspace уже готов к будущему подключению финансового слоя без сломанных переходов.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="access" className="mt-0">
+            <OwnerSalonTeam salonId={salonId} />
           </TabsContent>
 
           <TabsContent value="support" className="mt-0">

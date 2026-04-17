@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OwnerWorkspaceSections } from "@/components/owner/OwnerWorkspaceSections";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -105,6 +107,33 @@ type SupportDraft = {
   subject: string;
   category: string;
   message: string;
+};
+
+type OwnerClientSummary = {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  totalSpent: number;
+  lastVisit?: string | null;
+  salonId: string;
+  salonName: string;
+};
+
+type OwnerReviewSummary = {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  ownerResponse?: string | null;
+  createdAt?: string | null;
+  clientName?: string | null;
+  masterName?: string | null;
+  salonId: string;
+  salonName: string;
 };
 
 const initialSalonDraft: SalonDraft = {
@@ -265,6 +294,7 @@ async function createSalonRequest(data: SalonDraft) {
 export default function OwnerPage() {
   const { toast } = useToast();
   const { user, isLoading, logout, isLoggingOut } = useAuth({ requireAuth: true });
+  const [location, setLocation] = useLocation();
   const t = i18n.t.bind(i18n);
   const language = i18n.language || "ru";
 
@@ -281,11 +311,25 @@ export default function OwnerPage() {
   const [creatingSalon, setCreatingSalon] = useState(false);
   const [sendingSupport, setSendingSupport] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [sectionLoading, setSectionLoading] = useState(false);
+  const [ownerClients, setOwnerClients] = useState<OwnerClientSummary[]>([]);
+  const [ownerReviews, setOwnerReviews] = useState<OwnerReviewSummary[]>([]);
+
+  const activeSection = useMemo(() => {
+    const searchIndex = location.indexOf("?");
+    const search = searchIndex >= 0 ? location.slice(searchIndex) : "";
+    return new URLSearchParams(search).get("tab") || "overview";
+  }, [location]);
 
   const ownerName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
     user?.email ||
     "Владелец салона";
+
+  const openOwnerSection = (section: string) => {
+    setLocation(section === "overview" ? "/owner" : `/owner?tab=${section}`);
+  };
 
   const loadOwnerWorkspace = async () => {
     setError(null);
@@ -321,6 +365,104 @@ export default function OwnerPage() {
     if (isLoading || !user) return;
     void loadOwnerWorkspace();
   }, [isLoading, user]);
+
+  useEffect(() => {
+    if (!user || salons.length === 0) {
+      setOwnerClients([]);
+      setOwnerReviews([]);
+      return;
+    }
+
+    if (activeSection !== "clients" && activeSection !== "reviews") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSectionData = async () => {
+      setSectionLoading(true);
+      try {
+        if (activeSection === "clients") {
+          const clientGroups = await Promise.all(
+            salons.map(async (salon) => {
+              const salonName = localize(salon.name, language) || "Салон";
+              const clients = await fetchJson<
+                Omit<OwnerClientSummary, "salonId" | "salonName">[]
+              >(`/api/owner/salons/${salon.id}/clients`);
+              return clients.map((client) => ({
+                ...client,
+                salonId: salon.id,
+                salonName,
+              }));
+            }),
+          );
+
+          if (!cancelled) {
+            const deduped = new Map<string, OwnerClientSummary>();
+            clientGroups.flat().forEach((client) => {
+              const key = client.email || client.phone || `${client.salonId}:${client.id}`;
+              const existing = deduped.get(key);
+              if (!existing || existing.totalSpent < client.totalSpent) {
+                deduped.set(key, client);
+              }
+            });
+            setOwnerClients(
+              [...deduped.values()].sort((left, right) => right.totalSpent - left.totalSpent),
+            );
+          }
+        }
+
+        if (activeSection === "reviews") {
+          const reviewGroups = await Promise.all(
+            salons.map(async (salon) => {
+              const salonName = localize(salon.name, language) || "Салон";
+              const reviews = await fetchJson<
+                Omit<OwnerReviewSummary, "salonId" | "salonName">[]
+              >(`/api/owner/salons/${salon.id}/reviews`);
+              return reviews.map((review) => ({
+                ...review,
+                salonId: salon.id,
+                salonName,
+              }));
+            }),
+          );
+
+          if (!cancelled) {
+            setOwnerReviews(
+              reviewGroups
+                .flat()
+                .sort(
+                  (left, right) =>
+                    new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime(),
+                ),
+            );
+          }
+        }
+      } catch (sectionErr) {
+        if (!cancelled) {
+          toast({
+            title:
+              activeSection === "clients"
+                ? "Не удалось загрузить клиентов"
+                : "Не удалось загрузить отзывы",
+            description:
+              sectionErr instanceof Error ? sectionErr.message : "Попробуйте обновить раздел.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setSectionLoading(false);
+        }
+      }
+    };
+
+    void loadSectionData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection, language, salons, toast, user]);
 
   const stats = useMemo(() => {
     const active = salons.filter((salon) => (salon.status || "draft") === "active").length;
@@ -482,6 +624,51 @@ export default function OwnerPage() {
     }
   };
 
+  const closeSupportTicket = async (ticketId: string) => {
+    try {
+      await patchJson(`/api/owner/support/tickets/${ticketId}/close`, {});
+      toast({
+        title: "Обращение закрыто",
+        description: "Тикет переведён в закрытый статус.",
+      });
+      await handleRefresh();
+    } catch (ticketErr) {
+      toast({
+        title: "Не удалось закрыть обращение",
+        description: ticketErr instanceof Error ? ticketErr.message : "Попробуйте ещё раз.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const analyticsSalons = useMemo(
+    () =>
+      salons.map((salon) => ({
+        id: salon.id,
+        name:
+          typeof salon.name === "string"
+            ? { ru: salon.name, en: salon.name, uz: salon.name }
+            : salon.name || { ru: "Салон", en: "Salon", uz: "Salon" },
+      })),
+    [salons],
+  );
+
+  const sectionTabs = [
+    { value: "overview", label: "Обзор", icon: Store },
+    { value: "salons", label: "Мои салоны", icon: Store },
+    { value: "add-salon", label: "Добавить салон", icon: FolderPlus },
+    { value: "staff", label: "Персонал", icon: UserCircle2 },
+    { value: "services", label: "Услуги", icon: Sparkles },
+    { value: "bookings", label: "Записи", icon: CalendarClock },
+    { value: "clients", label: "Клиенты", icon: UserCircle2 },
+    { value: "messages", label: "Сообщения", icon: MessageSquare },
+    { value: "reviews", label: "Отзывы", icon: Star },
+    { value: "analytics", label: "Аналитика", icon: Wallet },
+    { value: "support", label: "Поддержка", icon: Shield },
+    { value: "notifications", label: "Уведомления", icon: Bell },
+    { value: "settings", label: "Настройки", icon: Settings },
+  ];
+
   if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -536,7 +723,23 @@ export default function OwnerPage() {
           </Card>
         )}
 
-        <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <section className="overflow-x-auto pb-2">
+          <Tabs value={activeSection} onValueChange={openOwnerSection}>
+            <TabsList className="inline-flex min-w-max gap-2">
+              {sectionTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+        </section>
+
+        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.35fr_0.65fr]" : "hidden"}>
           <Card className="overflow-hidden border-border/70 shadow-sm">
             <div className="bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -647,7 +850,7 @@ export default function OwnerPage() {
           </Card>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className={activeSection === "overview" ? "grid gap-4 md:grid-cols-2 xl:grid-cols-4" : "hidden"}>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Салоны</p>
@@ -682,7 +885,7 @@ export default function OwnerPage() {
           </Card>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.1fr_0.9fr]" : "hidden"}>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -749,7 +952,7 @@ export default function OwnerPage() {
           </Card>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.15fr_0.85fr]" : "hidden"}>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -902,7 +1105,7 @@ export default function OwnerPage() {
           </Card>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[0.9fr_1.1fr]" : "hidden"}>
           <Card id="owner-support" className="border-border/70 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -979,6 +1182,43 @@ export default function OwnerPage() {
             </div>
           </Card>
         </section>
+
+        <OwnerWorkspaceSections
+          activeSection={activeSection}
+          salons={salons}
+          language={language}
+          wizardOpen={wizardOpen}
+          setWizardOpen={setWizardOpen}
+          salonDraft={salonDraft}
+          setSalonDraft={setSalonDraft}
+          supportDraft={supportDraft}
+          setSupportDraft={setSupportDraft}
+          creatingSalon={creatingSalon}
+          sendingSupport={sendingSupport}
+          sectionLoading={sectionLoading}
+          ownerClients={ownerClients}
+          ownerReviews={ownerReviews}
+          analyticsSalons={analyticsSalons}
+          tickets={tickets}
+          notifications={notifications}
+          stats={{
+            unreadNotifications: stats.unreadNotifications,
+            unresolvedTickets: stats.unresolvedTickets,
+          }}
+          onCreateSalon={handleCreateSalon}
+          onSupportTicket={handleSupportTicket}
+          onCloseSupportTicket={closeSupportTicket}
+          onStatusChange={handleStatusChange}
+          onMarkNotificationRead={markNotificationRead}
+          onMarkAllNotificationsRead={markAllNotificationsRead}
+          onRefresh={handleRefresh}
+          openOwnerSection={openOwnerSection}
+          localize={localize}
+          formatMoney={formatMoney}
+          formatDate={formatDate}
+          ownerStatusLabel={ownerStatusLabel}
+          ownerStatusBadgeClass={ownerStatusBadgeClass}
+        />
       </div>
     </div>
   );
