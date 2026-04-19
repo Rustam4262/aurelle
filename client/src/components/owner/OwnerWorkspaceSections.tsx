@@ -21,10 +21,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { SalonCreationWizard } from "@/components/salon-creation-wizard";
-import { BookingManagement } from "@/components/booking-management";
-import { MasterManagement } from "@/components/master-management";
-import { ServiceManagement } from "@/components/service-management";
-import { RevenueAnalytics } from "@/components/revenue-analytics";
 
 type LocalizedRecord = { en?: string; ru?: string; uz?: string };
 
@@ -627,9 +623,233 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
         </section>
       )}
 
-      {activeSection === "staff" && <MasterManagement />}
-      {activeSection === "services" && <ServiceManagement />}
-      {activeSection === "bookings" && <BookingManagement />}
+      {activeSection === "staff" && (
+        <section className="space-y-4">
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Персонал владельца</h3>
+                <p className="text-sm text-muted-foreground">
+                  Верхний owner-уровень теперь ведёт не в нестабильный старый экран, а в живую сетку салонов и их команд.
+                </p>
+              </div>
+              <Badge variant="outline" className="border-border/70">
+                {ownerSalonSummary.total} салонов
+              </Badge>
+            </div>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Активные объекты</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.active}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Уже готовы к назначению мастеров и ролей.</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужны доступы</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.needsAttention}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Проверьте публикацию, контакты и состояние карточек салонов.</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Быстрый маршрут</p>
+              <Button className="mt-4 w-full" onClick={() => openOwnerSection("salons")}>
+                Открыть мои салоны
+              </Button>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredSalons.length > 0 ? (
+              filteredSalons.map(({ salon, localizedName, attentionFlags, readinessPercent }) => (
+                <Card key={`staff-${salon.id}`} className="border-border/70 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Доступы, мастера и роли открываются внутри рабочего пространства конкретного салона.
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-border/70">
+                      {readinessPercent}% готовности
+                    </Badge>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {attentionFlags.length > 0 ? (
+                      attentionFlags.slice(0, 3).map((flag) => (
+                        <Badge key={`${salon.id}-${flag}`} variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                          {flag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                        Команда может работать без блокеров
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=masters`}>Открыть мастеров</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=access`}>Открыть доступы</Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
+                Сначала создайте салон, и здесь появится owner-слой для управления мастерами и доступами.
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeSection === "services" && (
+        <section className="space-y-4">
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Услуги по сети салонов</h3>
+                <p className="text-sm text-muted-foreground">
+                  Owner-уровень показывает, где нужно навести порядок в каталоге, а редактирование идёт уже внутри конкретного салона.
+                </p>
+              </div>
+              <Badge variant="outline" className="border-border/70">
+                {filteredSalons.length} в фокусе
+              </Badge>
+            </div>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Опубликованы</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.active}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Могут принимать трафик и бронирования.</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Черновики</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.draft}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Им особенно важно заполнить услуги и цены.</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нулевые отзывы</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.reviewCount === 0).length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Часто это значит, что каталог услуг ещё не продаёт как надо.</p>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredSalons.length > 0 ? (
+              filteredSalons.map(({ salon, localizedName, status, reviewCount }) => (
+                <Card key={`services-${salon.id}`} className="border-border/70 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Каталог услуг, порядок на витрине и цены управляются из рабочего пространства салона.
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={ownerStatusBadgeClass(status)}>
+                      {ownerStatusLabel(status)}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-muted/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отзывы</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">{reviewCount}</p>
+                    </div>
+                    <div className="rounded-2xl bg-muted/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Контур</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">{status === "active" ? "Готов к росту" : "Нужен owner-апрув"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=services`}>Открыть услуги</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=public`}>Открыть витрину</Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
+                Сначала добавьте салон, и здесь появится owner-уровень для каталога услуг.
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeSection === "bookings" && (
+        <section className="space-y-4">
+          <Card className="border-border/70 p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Записи по сети владельца</h3>
+                <p className="text-sm text-muted-foreground">
+                  Вместо падающего старого advanced-bookings owner видит устойчивую точку входа в бронирования каждого салона.
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => openOwnerSection("messages")}>
+                Открыть сообщения
+              </Button>
+            </div>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Салоны в сети</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.total}</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужны действия</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.needsAttention}</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Открытые обращения</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{stats.unresolvedTickets}</p>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredSalons.length > 0 ? (
+              filteredSalons.map(({ salon, localizedName, localizedCity, status }) => (
+                <Card key={`bookings-${salon.id}`} className="border-border/70 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {localizedCity || "Город не указан"}{salon.address ? `, ${salon.address}` : ""}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={ownerStatusBadgeClass(status)}>
+                      {ownerStatusLabel(status)}
+                    </Badge>
+                  </div>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Все рабочие бронирования, клиенты и статусы открываются внутри конкретного салона, где уже есть нужный контекст.
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=bookings`}>Открыть записи</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=clients`}>Открыть клиентов</Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
+                После создания первого салона здесь появится owner-слой по записям и CRM.
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
 
       {activeSection === "clients" && (
         <section className="space-y-4">
@@ -854,13 +1074,67 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             </div>
           </Card>
 
-          {analyticsSalons.length > 0 ? (
-            <RevenueAnalytics salons={analyticsSalons} />
-          ) : (
-            <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm">
-              Сначала создайте хотя бы один салон, и здесь появится аналитика по выручке и записям.
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Средний рейтинг</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">
+                {ownerSalonSummary.ratingAverage > 0 ? ownerSalonSummary.ratingAverage.toFixed(1) : "—"}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Общий сигнал по качеству сети владельца.</p>
             </Card>
-          )}
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Готовые карточки</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.readinessPercent === 100).length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Полностью собранные салоны, готовые к трафику.</p>
+            </Card>
+            <Card className="border-border/70 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Точки роста</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.reviewCount === 0).length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Салоны без отзывов, где важен первый клиентский опыт.</p>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredSalons.length > 0 ? (
+              filteredSalons.map(({ salon, localizedName, averageRating, reviewCount, readinessPercent }) => (
+                <Card key={`analytics-${salon.id}`} className="border-border/70 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Внутри карточки салона уже доступна детальная аналитика по записям, отзывам и состоянию workspace.
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-border/70">
+                      {readinessPercent}% готовности
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-muted/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Рейтинг</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">{averageRating > 0 ? averageRating.toFixed(1) : "—"}</p>
+                    </div>
+                    <div className="rounded-2xl bg-muted/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отзывы</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">{reviewCount}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=overview`}>Открыть салон</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/owner/salon/${salon.id}?tab=reviews`}>Открыть отзывы</Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm lg:col-span-2">
+                Сначала создайте хотя бы один салон, и здесь появится owner-аналитика по сети.
+              </Card>
+            )}
+          </div>
         </section>
       )}
 
