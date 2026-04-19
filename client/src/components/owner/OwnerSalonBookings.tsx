@@ -65,7 +65,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
             return (
               <div
                 key={booking.id}
-                className="flex items-start justify-between p-5 bg-muted/50 rounded-md gap-4"
+                className="flex flex-col gap-4 rounded-md bg-muted/50 p-5 lg:flex-row lg:items-start lg:justify-between"
                 data-testid={`booking-item-${booking.id}`}
               >
                 <div className="flex-1 space-y-2.5">
@@ -124,8 +124,8 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                   )}
                 </div>
 
-                <div className="flex flex-col items-end gap-3">
-                  <span className="font-semibold text-foreground text-lg whitespace-nowrap">
+                <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
+                  <span className="text-lg font-semibold text-foreground">
                     {booking.priceSnapshot?.toLocaleString()} UZS
                   </span>
                   <Select
@@ -135,7 +135,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                       assignMasterMutation.mutate({ bookingId: booking.id, masterId });
                     }}
                   >
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full min-w-[180px] lg:w-[180px]">
                       <SelectValue placeholder={t("marketplace.owner.selectMaster")} />
                     </SelectTrigger>
                     <SelectContent>

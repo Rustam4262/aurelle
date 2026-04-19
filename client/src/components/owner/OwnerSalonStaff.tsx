@@ -190,19 +190,19 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
             {masters.map((master) => (
               <div
                 key={master.id}
-                className="flex items-center gap-4 p-4 bg-muted/50 rounded-md"
+                className="flex flex-col gap-4 rounded-md bg-muted/50 p-4 sm:flex-row sm:items-center"
                 data-testid={`master-item-${master.id}`}
               >
                 <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                   <Users className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground">{master.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {master.experience} {t("marketplace.owner.yearsExp")}
                   </p>
                   {master.email && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 break-all text-xs text-muted-foreground">
                       {master.email} ({t("marketplace.owner.hasLogin")})
                     </p>
                   )}
@@ -210,6 +210,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="self-start sm:self-center"
                   onClick={() => deleteMasterMutation.mutate(master.id)}
                   data-testid={`button-delete-master-${master.id}`}
                 >

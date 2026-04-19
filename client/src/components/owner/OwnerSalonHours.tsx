@@ -91,7 +91,7 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="font-medium text-foreground">{t("marketplace.owner.workingHours")}</h3>
           <Button
             onClick={handleSaveHours}
@@ -109,16 +109,16 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
           {DAYS_OF_WEEK.map((day) => (
             <div
               key={day.value}
-              className="flex items-center gap-4 p-4 bg-muted/50 rounded-md"
+              className="flex flex-col gap-4 rounded-md bg-muted/50 p-4 lg:flex-row lg:items-center"
               data-testid={`hours-day-${day.value}`}
             >
-              <div className="w-32">
+              <div className="lg:w-32">
                 <span className="font-medium text-foreground">
                   {t(`marketplace.days.${day.labelKey}`)}
                 </span>
               </div>
 
-              <label className="flex items-center gap-2">
+              <label className="flex flex-wrap items-center gap-2">
                 <input
                   type="checkbox"
                   checked={workingHours[day.value]?.closed}
@@ -137,7 +137,7 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
               </label>
 
               {!workingHours[day.value]?.closed && (
-                <>
+                <div className="flex flex-wrap items-center gap-3">
                   <Input
                     type="time"
                     value={workingHours[day.value]?.open || "09:00"}
@@ -163,7 +163,7 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
                     className="w-32"
                     data-testid={`input-close-${day.value}`}
                   />
-                </>
+                </div>
               )}
             </div>
           ))}

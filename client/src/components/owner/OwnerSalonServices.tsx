@@ -233,10 +233,10 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
             {services.map((service) => (
               <div
                 key={service.id}
-                className="flex items-center justify-between p-4 bg-muted/50 rounded-md"
+                className="flex flex-col gap-4 rounded-md bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between"
                 data-testid={`service-item-${service.id}`}
               >
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-foreground">
                     {getLocalizedText(
                       service.name as { en: string; ru: string; uz: string },
@@ -248,8 +248,8 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
                     {t("marketplace.owner.min")}
                   </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-medium text-foreground">
+                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                  <span className="break-words font-medium text-foreground">
                     {service.priceMin.toLocaleString()}{" "}
                     {service.priceMax ? `- ${service.priceMax.toLocaleString()}` : ""} UZS
                   </span>

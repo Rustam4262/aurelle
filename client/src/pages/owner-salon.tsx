@@ -38,7 +38,6 @@ import { OwnerSalonStaff } from "@/components/owner/OwnerSalonStaff";
 import { OwnerSalonHours } from "@/components/owner/OwnerSalonHours";
 import { OwnerSalonBookings } from "@/components/owner/OwnerSalonBookings";
 import { OwnerSalonTeam } from "@/components/owner/OwnerSalonTeam";
-import { RevenueAnalytics } from "@/components/revenue-analytics";
 
 type LocalizedRecord = { en?: string; ru?: string; uz?: string };
 
@@ -103,6 +102,41 @@ type NotificationItem = {
   isRead?: boolean | null;
   createdAt?: string | null;
 };
+
+const ownerSalonTabValues = [
+  "overview",
+  "profile",
+  "public",
+  "services",
+  "masters",
+  "schedule",
+  "bookings",
+  "clients",
+  "reviews",
+  "analytics",
+  "finance",
+  "access",
+  "support",
+] as const;
+
+type OwnerSalonTab = (typeof ownerSalonTabValues)[number];
+
+function isOwnerSalonTab(value: string): value is OwnerSalonTab {
+  return ownerSalonTabValues.includes(value as OwnerSalonTab);
+}
+
+function readOwnerSalonTab(location: string): OwnerSalonTab {
+  const requested = new URLSearchParams(location.split("?")[1] || "").get("tab") || "overview";
+  const normalized = requested === "staff" ? "masters" : requested;
+  return isOwnerSalonTab(normalized) ? normalized : "overview";
+}
+
+function normalizeCollection<T extends { id: string }>(input: T[] | null | undefined): T[] {
+  if (!Array.isArray(input)) return [];
+  return input.filter((item): item is T => {
+    return Boolean(item && typeof item === "object" && typeof item.id === "string" && item.id.trim());
+  });
+}
 
 function localize(value: LocalizedRecord | string | null | undefined, language: string) {
   if (!value) return "";
@@ -179,7 +213,7 @@ export default function OwnerSalonPage() {
   const params = useParams<{ id: string }>();
   const salonId = params.id;
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<OwnerSalonTab>(() => readOwnerSalonTab(location));
   const [salon, setSalon] = useState<Salon | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -205,8 +239,7 @@ export default function OwnerSalonPage() {
   const [reviewFilter, setReviewFilter] = useState<"all" | "unanswered" | "low" | "recent">("all");
 
   useEffect(() => {
-    const requested = new URLSearchParams(location.split("?")[1] || "").get("tab") || "overview";
-    const normalized = requested === "staff" ? "masters" : requested;
+    const normalized = readOwnerSalonTab(location);
     if (normalized !== activeTab) {
       setActiveTab(normalized);
     }
@@ -224,10 +257,10 @@ export default function OwnerSalonPage() {
         fetchJson<NotificationItem[]>("/api/notifications"),
       ]);
       setSalon(salonData);
-      setReviews(reviewsData);
-      setClients(clientsData);
-      setTickets(ticketsData);
-      setNotifications(notificationsData);
+      setReviews(normalizeCollection(reviewsData));
+      setClients(normalizeCollection(clientsData));
+      setTickets(normalizeCollection(ticketsData));
+      setNotifications(normalizeCollection(notificationsData));
     } catch (loadErr) {
       if (loadErr instanceof Error && loadErr.message === "unauthorized") {
         window.location.href = "/auth";
@@ -513,6 +546,11 @@ export default function OwnerSalonPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadWorkspace();
+  };
+
+  const openSalonTab = (tab: OwnerSalonTab) => {
+    setActiveTab(tab);
+    setLocation(tab === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${tab}`);
   };
 
   const handleStatusChange = async (status: "draft" | "active" | "paused") => {
@@ -902,10 +940,7 @@ export default function OwnerSalonPage() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(value) => {
-            setActiveTab(value);
-            setLocation(value === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${value}`);
-          }}
+          onValueChange={(value) => openSalonTab(readOwnerSalonTab(`/owner/salon/${salonId}?tab=${value}`))}
           className="space-y-6"
         >
           <div className="overflow-x-auto pb-2">
@@ -944,10 +979,7 @@ export default function OwnerSalonPage() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
-                        setActiveTab(item.tab);
-                        setLocation(item.tab === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${item.tab}`);
-                      }}
+                      onClick={() => openSalonTab(item.tab)}
                       className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -985,10 +1017,7 @@ export default function OwnerSalonPage() {
                       <button
                         key={action.tab}
                         type="button"
-                        onClick={() => {
-                          setActiveTab(action.tab);
-                          setLocation(`/owner/salon/${salonId}?tab=${action.tab}`);
-                        }}
+                        onClick={() => openSalonTab(action.tab)}
                         className="rounded-2xl border border-border/70 bg-background p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -1038,10 +1067,7 @@ export default function OwnerSalonPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setActiveTab("clients");
-                      setLocation(`/owner/salon/${salonId}?tab=clients`);
-                    }}
+                    onClick={() => openSalonTab("clients")}
                   >
                     Открыть клиентов
                   </Button>
@@ -1481,18 +1507,82 @@ export default function OwnerSalonPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="analytics" className="mt-0">
-            <RevenueAnalytics
-              salons={[
-                {
-                  id: salonId,
-                  name:
-                    typeof salon.name === "string"
-                      ? { ru: salon.name, en: salon.name, uz: salon.name }
-                      : (salon.name as { [key: string]: string }),
-                },
-              ]}
-            />
+          <TabsContent value="analytics" className="mt-0 space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Аналитика салона</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Сводка по клиентам, отзывам и качеству карточки без тяжёлых отчётов и хрупких запросов.
+                    </p>
+                  </div>
+                  <Badge className="border-primary/25 bg-primary/10 text-primary">
+                    Профиль заполнен на {profileCompletion}%
+                  </Badge>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиенты</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{clients.length}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">База гостей, которых уже удерживает салон.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.total}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Средний рейтинг: {reviewSummary.average.toFixed(1)} / 5
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Без ответа</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.unanswered}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Отзывы, где нужно быстро ответить от имени салона.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">5 звёзд</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.fiveStars}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Лучшие сигналы качества по сервису салона.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Обращения</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{openTickets}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Открытые диалоги с платформой и поддержкой.</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Уведомления</p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">{unreadNotifications}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Новые сигналы, которые owner-команда ещё не разобрала.</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Что делать сейчас</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Быстрые переходы в те секции, которые реально двигают салон вперёд.
+                </p>
+                <div className="mt-5 space-y-3">
+                  {communicationTasks.map((task) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => openSalonTab(task.tab)}
+                      className="w-full rounded-2xl border border-border/70 bg-background p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-medium text-foreground">{task.title}</p>
+                        <Badge variant="outline" className="border-border/70 text-xs text-muted-foreground">
+                          {task.cta}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{task.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="finance" className="mt-0">
@@ -1595,7 +1685,7 @@ export default function OwnerSalonPage() {
                         <Button
                           variant={task.active ? "default" : "outline"}
                           className="mt-4 w-full sm:w-auto"
-                          onClick={() => setActiveTab(task.tab)}
+                          onClick={() => openSalonTab(task.tab)}
                         >
                           {task.cta}
                         </Button>
