@@ -1018,6 +1018,7 @@ export default function OwnerSalonPage() {
               </Card>
             </div>
 
+            {false && (
             <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
               <Card className="border-border/70 p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
@@ -1050,6 +1051,7 @@ export default function OwnerSalonPage() {
                 </div>
               </Card>
             </div>
+            )}
           </TabsContent>
 
           <TabsContent value="profile" className="mt-0">
