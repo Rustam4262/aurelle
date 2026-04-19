@@ -158,6 +158,28 @@ const initialSupportDraft: SupportDraft = {
   message: "",
 };
 
+const ownerSectionValues = [
+  "overview",
+  "salons",
+  "add-salon",
+  "staff",
+  "services",
+  "bookings",
+  "clients",
+  "messages",
+  "reviews",
+  "analytics",
+  "support",
+  "notifications",
+  "settings",
+] as const;
+
+function readOwnerSection() {
+  if (typeof window === "undefined") return "overview";
+  const requested = new URLSearchParams(window.location.search).get("tab") || "overview";
+  return ownerSectionValues.includes(requested as (typeof ownerSectionValues)[number]) ? requested : "overview";
+}
+
 function localize(value: LocalizedRecord | string | null | undefined, language: string) {
   if (!value) return "";
   if (typeof value === "string") return value;
@@ -316,11 +338,7 @@ export default function OwnerPage() {
   const [ownerClients, setOwnerClients] = useState<OwnerClientSummary[]>([]);
   const [ownerReviews, setOwnerReviews] = useState<OwnerReviewSummary[]>([]);
 
-  const activeSection = useMemo(() => {
-    const searchIndex = location.indexOf("?");
-    const search = searchIndex >= 0 ? location.slice(searchIndex) : "";
-    return new URLSearchParams(search).get("tab") || "overview";
-  }, [location]);
+  const [activeSection, setActiveSection] = useState(readOwnerSection);
 
   const ownerName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -328,8 +346,13 @@ export default function OwnerPage() {
     "Владелец салона";
 
   const openOwnerSection = (section: string) => {
+    setActiveSection(section);
     setLocation(section === "overview" ? "/owner" : `/owner?tab=${section}`);
   };
+
+  useEffect(() => {
+    setActiveSection(readOwnerSection());
+  }, [location]);
 
   const loadOwnerWorkspace = async () => {
     setError(null);
