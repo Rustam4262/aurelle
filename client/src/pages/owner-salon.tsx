@@ -413,6 +413,103 @@ export default function OwnerSalonPage() {
       .slice(0, 4);
   }, [clients]);
 
+  const communicationChannels = useMemo(
+    () => [
+      {
+        id: "platform",
+        title: "Платформа и поддержка",
+        value: `${openTickets} открыто`,
+        description:
+          openTickets > 0
+            ? "Есть живые обращения, которые требуют ответа владельца или команды поддержки."
+            : "Все вопросы к платформе сейчас закрыты, можно держать канал как резервный.",
+        icon: MessageSquare,
+        tone: openTickets > 0 ? "warning" : "neutral",
+      },
+      {
+        id: "notifications",
+        title: "Уведомления салона",
+        value: unreadNotifications > 0 ? `${unreadNotifications} новых` : "Чисто",
+        description:
+          unreadNotifications > 0
+            ? "В ленте есть новые сигналы по бронированиям, ответам и системным событиям."
+            : "Новых системных сигналов нет, контур уведомлений под контролем.",
+        icon: Clock3,
+        tone: unreadNotifications > 0 ? "warning" : "good",
+      },
+      {
+        id: "reviews",
+        title: "Отзывы и репутация",
+        value: reviewSummary.unanswered > 0 ? `${reviewSummary.unanswered} без ответа` : "Все закрыты",
+        description:
+          reviewSummary.unanswered > 0
+            ? "Ответы на отзывы стоит закрывать быстро, чтобы не терять доверие и повторные визиты."
+            : "У репутационного контура нет хвостов, можно сфокусироваться на росте.",
+        icon: Star,
+        tone: reviewSummary.unanswered > 0 ? "warning" : "good",
+      },
+      {
+        id: "clients",
+        title: "Клиентский контур",
+        value: `${clients.length} клиентов`,
+        description:
+          clients.length > 0
+            ? "База уже собрана: можно возвращаться к клиентам через записи, отзывы и историю визитов."
+            : "Как только появятся первые клиенты, здесь начнётся живая CRM-работа салона.",
+        icon: Users,
+        tone: "neutral",
+      },
+    ],
+    [clients.length, openTickets, reviewSummary.unanswered, unreadNotifications],
+  );
+
+  const communicationTasks = useMemo(() => {
+    const items = [
+      {
+        id: "tickets",
+        title: openTickets > 0 ? "Разобрать обращения платформы" : "Открыть поддержку салона",
+        description:
+          openTickets > 0
+            ? "Есть тикеты, которые лучше не оставлять без движения."
+            : "Проверьте, всё ли спокойно в support-контуре и нет ли новых запросов.",
+        tab: "support" as const,
+        cta: openTickets > 0 ? "Открыть тикеты" : "Открыть поддержку",
+        active: openTickets > 0,
+      },
+      {
+        id: "reviews",
+        title: reviewSummary.unanswered > 0 ? "Ответить на отзывы" : "Проверить репутацию салона",
+        description:
+          reviewSummary.unanswered > 0
+            ? "Есть отзывы без ответа, это прямой риск для доверия."
+            : "Все отзывы обработаны, но раздел полезно держать под рукой.",
+        tab: "reviews" as const,
+        cta: reviewSummary.unanswered > 0 ? "Перейти к отзывам" : "Открыть отзывы",
+        active: reviewSummary.unanswered > 0,
+      },
+      {
+        id: "bookings",
+        title: "Проверить ближайшие записи",
+        description: "Бронирования, клиенты и история визитов остаются главным operational flow салона.",
+        tab: "bookings" as const,
+        cta: "Открыть записи",
+        active: false,
+      },
+      {
+        id: "clients",
+        title: topClient ? `Вернуться к клиенту: ${topClient.name}` : "Открыть клиентскую базу",
+        description: topClient
+          ? "У салона уже есть самый ценный клиент по выручке. Его историю полезно держать под рукой."
+          : "Как только база заполнится, отсюда будет удобно идти в CRM и повторные продажи.",
+        tab: "clients" as const,
+        cta: "Открыть клиентов",
+        active: Boolean(topClient),
+      },
+    ];
+
+    return items.sort((left, right) => Number(right.active) - Number(left.active));
+  }, [openTickets, reviewSummary.unanswered, topClient]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadWorkspace();
@@ -1425,7 +1522,90 @@ export default function OwnerSalonPage() {
           </TabsContent>
 
           <TabsContent value="support" className="mt-0">
-            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="space-y-4">
+              <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Communication hub</p>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">Командный центр коммуникаций салона</h3>
+                      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                        Здесь собраны все живые сигналы owner-контура: поддержка платформы, отзывы, уведомления и клиентская база.
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="border-border/70">
+                      {communicationChannels.filter((channel) => channel.tone === "warning").length} требуют внимания
+                    </Badge>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    {communicationChannels.map((channel) => {
+                      const Icon = channel.icon;
+                      const toneClass =
+                        channel.tone === "warning"
+                          ? "border-amber-500/30 bg-amber-500/10"
+                          : channel.tone === "good"
+                            ? "border-emerald-500/25 bg-emerald-500/10"
+                            : "border-border/70 bg-muted/20";
+
+                      return (
+                        <div key={channel.id} className={`rounded-2xl border p-4 ${toneClass}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground">{channel.title}</p>
+                              <p className="mt-2 text-2xl font-semibold text-foreground">{channel.value}</p>
+                            </div>
+                            <div className="rounded-xl border border-border/60 bg-background/80 p-2">
+                              <Icon className="h-4 w-4 text-primary" />
+                            </div>
+                          </div>
+                          <p className="mt-3 text-sm leading-6 text-muted-foreground">{channel.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Next actions</p>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">Что сделать сейчас</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Вместо чтения пустых карточек владелец сразу видит, куда идти дальше и какой контур требует реакции.
+                      </p>
+                    </div>
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {communicationTasks.map((task) => (
+                      <div key={task.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">{task.title}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{task.description}</p>
+                          </div>
+                          {task.active && (
+                            <Badge className="border-transparent bg-primary/12 text-primary hover:bg-primary/12">
+                              Приоритет
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant={task.active ? "default" : "outline"}
+                          className="mt-4 w-full sm:w-auto"
+                          onClick={() => setActiveTab(task.tab)}
+                        >
+                          {task.cta}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
               <Card className="border-border/70 p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground">Коммуникации салона</h3>
                 <div className="mt-4 space-y-3">
@@ -1631,6 +1811,7 @@ export default function OwnerSalonPage() {
                   </div>
                 </div>
               </Card>
+            </div>
             </div>
           </TabsContent>
         </Tabs>
