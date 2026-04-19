@@ -313,6 +313,106 @@ export default function OwnerSalonPage() {
     [selectedTicketId, tickets],
   );
 
+  const profileCompletion = useMemo(() => {
+    const checkpoints = [
+      Boolean(salonName && salonName !== "РЎР°Р»РѕРЅ"),
+      Boolean(salonDescription),
+      Boolean(salon?.address),
+      Boolean(salon?.phone || salon?.email),
+      photosCount > 0,
+      Number(salon?.reviewCount || 0) > 0,
+      salon?.status === "active",
+    ];
+
+    return Math.round((checkpoints.filter(Boolean).length / checkpoints.length) * 100);
+  }, [photosCount, salon?.address, salon?.email, salon?.phone, salon?.reviewCount, salon?.status, salonDescription, salonName]);
+
+  const attentionItems = useMemo(
+    () => [
+      {
+        id: "publication",
+        title: salon?.status !== "active" ? "Салон ещё не опубликован" : "Публикация активна",
+        description:
+          salon?.status !== "active"
+            ? "Пока карточка неактивна, салон теряет органический трафик и новые бронирования с витрины."
+            : "Карточка доступна клиентам и участвует в выдаче платформы.",
+        tone: salon?.status !== "active" ? "warning" : "good",
+        action: salon?.status !== "active" ? "Перейти к публикации" : "Открыть витрину",
+        tab: "public",
+      },
+      {
+        id: "gallery",
+        title: photosCount === 0 ? "Нужно добавить фото" : `Фото загружены: ${photosCount}`,
+        description:
+          photosCount === 0
+            ? "Фотографии интерьера и услуг поднимают доверие и конверсию в запись."
+            : "Проверьте, что галерея действительно продаёт салон, а не просто заполняет блок.",
+        tone: photosCount === 0 ? "warning" : "neutral",
+        action: "Открыть профиль",
+        tab: "profile",
+      },
+      {
+        id: "reviews",
+        title: reviewSummary.unanswered > 0 ? `Отзывы без ответа: ${reviewSummary.unanswered}` : "Отзывы под контролем",
+        description:
+          reviewSummary.unanswered > 0
+            ? "Есть отзывы, на которые салон ещё не ответил. Это влияет на доверие и повторные визиты."
+            : "Все текущие отзывы уже закрыты ответом owner или новых отзывов пока нет.",
+        tone: reviewSummary.unanswered > 0 ? "warning" : "good",
+        action: "Перейти к отзывам",
+        tab: "reviews",
+      },
+      {
+        id: "support",
+        title: openTickets > 0 ? `Открытых обращений: ${openTickets}` : "Поддержка без зависаний",
+        description:
+          openTickets > 0
+            ? "По салону есть открытые диалоги с платформой. Их лучше не оставлять без движения."
+            : "Сейчас нет зависших вопросов к платформе и в поддержку.",
+        tone: openTickets > 0 ? "warning" : "neutral",
+        action: "Открыть сообщения и платформу",
+        tab: "support",
+      },
+    ],
+    [openTickets, photosCount, reviewSummary.unanswered, salon?.status],
+  );
+
+  const quickActions = useMemo(
+    () => [
+      {
+        title: "Профиль салона",
+        description: "Контакты, адрес, фото и упаковка карточки.",
+        tab: "profile",
+      },
+      {
+        title: "Услуги и цены",
+        description: "Проверьте каталог услуг и их порядок на витрине.",
+        tab: "services",
+      },
+      {
+        title: "Мастера и команда",
+        description: "Назначение сотрудников, ролей и рабочих зон.",
+        tab: "masters",
+      },
+      {
+        title: "Записи и CRM",
+        description: "Бронирования, клиенты и операционный поток салона.",
+        tab: "bookings",
+      },
+    ],
+    [],
+  );
+
+  const recentClients = useMemo(() => {
+    return [...clients]
+      .sort((left, right) => {
+        const leftTime = left.lastVisit ? new Date(left.lastVisit).getTime() : 0;
+        const rightTime = right.lastVisit ? new Date(right.lastVisit).getTime() : 0;
+        return rightTime - leftTime;
+      })
+      .slice(0, 4);
+  }, [clients]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadWorkspace();
@@ -729,6 +829,195 @@ export default function OwnerSalonPage() {
             </TabsList>
           </div>
           <TabsContent value="overview" className="mt-0 space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Приоритетные задачи, которые прямо сейчас влияют на видимость салона, доверие и новые записи.
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="border-border/70">
+                    {attentionItems.filter((item) => item.tone === "warning").length} в фокусе
+                  </Badge>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {attentionItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(item.tab);
+                        setLocation(item.tab === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${item.tab}`);
+                      }}
+                      className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground">{item.title}</p>
+                            <Badge
+                              variant="outline"
+                              className={
+                                item.tone === "good"
+                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                  : item.tone === "warning"
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                    : "border-border/70 text-muted-foreground"
+                              }
+                            >
+                              {item.tone === "good" ? "OK" : item.tone === "warning" ? "Внимание" : "Контроль"}
+                            </Badge>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                        </div>
+                        <ArrowLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-muted-foreground" />
+                      </div>
+                      <div className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-primary">{item.action}</div>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+
+              <div className="grid gap-4">
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Быстрые действия</h3>
+                  <div className="mt-4 grid gap-3">
+                    {quickActions.map((action) => (
+                      <button
+                        key={action.tab}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(action.tab);
+                          setLocation(`/owner/salon/${salonId}?tab=${action.tab}`);
+                        }}
+                        className="rounded-2xl border border-border/70 bg-background p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-foreground">{action.title}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{action.description}</p>
+                          </div>
+                          <ArrowLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-muted-foreground" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Готовность салона</h3>
+                  <div className="mt-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Профиль и витрина</p>
+                        <p className="mt-2 text-3xl font-semibold text-foreground">{profileCompletion}%</p>
+                      </div>
+                      <Badge variant="outline" className="border-border/70">
+                        {salon.status === "active" ? "Публикация включена" : "Пока не опубликован"}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/60">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${profileCompletion}%` }} />
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                      Чем ближе карточка к 100%, тем проще салону конвертировать просмотр в запись и удерживать доверие клиентов.
+                    </p>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Последние клиенты</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Живой срез CRM салона: визиты, частота возвратов и наиболее активные гости.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setActiveTab("clients");
+                      setLocation(`/owner/salon/${salonId}?tab=clients`);
+                    }}
+                  >
+                    Открыть клиентов
+                  </Button>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {recentClients.length > 0 ? (
+                    recentClients.map((client) => (
+                      <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground">{client.name}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {client.email || client.phone || "Контакт появится после записи"}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="border-border/70">
+                            {client.completedBookings} визитов
+                          </Badge>
+                        </div>
+                        <div className="mt-3 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                          <span>Сумма: {formatMoney(client.totalSpent)} UZS</span>
+                          <span>Отмены: {client.cancelledBookings}</span>
+                          <span>Последний визит: {formatDate(client.lastVisit)}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                      Как только начнутся реальные записи, здесь появятся последние клиенты, частота визитов и полезный CRM-контекст.
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Публичная витрина</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Контроль готовности карточки к клиентскому трафику и онлайн-записи.
+                    </p>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/salon/${salonId}`}>Смотреть витрину</Link>
+                  </Button>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {[
+                    { label: "Публикация", ready: salon.status === "active" },
+                    { label: "Описание салона", ready: Boolean(salonDescription) },
+                    { label: "Контакты", ready: Boolean(salon.phone || salon.email) },
+                    { label: "Адрес", ready: Boolean(salon.address) },
+                    { label: "Фотогалерея", ready: photosCount > 0 },
+                    { label: "Отзывы и доверие", ready: Number(salon.reviewCount || 0) > 0 },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                      <span className="text-sm text-foreground">{item.label}</span>
+                      <Badge
+                        variant="outline"
+                        className={
+                          item.ready
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                        }
+                      >
+                        {item.ready ? "Готово" : "Нужно заполнить"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
             <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
               <Card className="border-border/70 p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
@@ -768,6 +1057,87 @@ export default function OwnerSalonPage() {
           </TabsContent>
 
           <TabsContent value="public" className="mt-0">
+            <div className="mb-4 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+              <Card className="border-border/70 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Статус витрины</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Понять за 10 секунд, можно ли уже лить трафик на карточку салона.
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={
+                      salon.status === "active"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                    }
+                  >
+                    {salon.status === "active" ? "Готов к трафику" : "Нужно доработать"}
+                  </Badge>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {[
+                    { label: "Публикация", value: ownerStatusLabel(salon.status) },
+                    { label: "Фото", value: `${photosCount} в карточке` },
+                    { label: "Отзывы", value: `${reviewSummary.total} всего` },
+                    { label: "Средний рейтинг", value: rating > 0 ? rating.toFixed(1) : "—" },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+                      <p className="mt-2 text-sm font-semibold text-foreground">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="border-border/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground">Чек-лист витрины</h3>
+                <div className="mt-4 space-y-3">
+                  {[
+                    {
+                      label: "Есть описание салона",
+                      ready: Boolean(salonDescription),
+                      hint: "Короткий и внятный оффер повышает переход в запись.",
+                    },
+                    {
+                      label: "Есть адрес и контакты",
+                      ready: Boolean(salon.address && (salon.phone || salon.email)),
+                      hint: "Клиент должен быстро понять, где вы и как связаться.",
+                    },
+                    {
+                      label: "Добавлены фотографии",
+                      ready: photosCount > 0,
+                      hint: "Фотографии интерьера и работ усиливают доверие.",
+                    },
+                    {
+                      label: "Салон опубликован",
+                      ready: salon.status === "active",
+                      hint: "Без публикации карточка не приводит новый трафик.",
+                    },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">{item.label}</p>
+                        <Badge
+                          variant="outline"
+                          className={
+                            item.ready
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                          }
+                        >
+                          {item.ready ? "Готово" : "Нужно заполнить"}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.hint}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
             <Card className="border-border/70 p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
