@@ -37,6 +37,14 @@ type OwnerSalon = {
   updatedAt?: string | null;
 };
 
+function normalizeOwnerSalons(input: OwnerSalon[]) {
+  if (!Array.isArray(input)) return [] as OwnerSalon[];
+
+  return input.filter((salon): salon is OwnerSalon => {
+    return Boolean(salon && typeof salon === "object" && typeof salon.id === "string" && salon.id.trim());
+  });
+}
+
 type SupportTicket = {
   id: string;
   subject: string;
@@ -180,34 +188,35 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
   const [salonSearch, setSalonSearch] = useState("");
   const [salonStatusFilter, setSalonStatusFilter] = useState<"all" | "active" | "draft" | "paused">("all");
   const [salonSort, setSalonSort] = useState<"updated" | "rating" | "reviews">("updated");
+  const safeSalons = useMemo(() => normalizeOwnerSalons(salons), [salons]);
 
   const ownerSalonSummary = useMemo(() => {
-    const active = salons.filter((salon) => (salon.status || "draft") === "active");
-    const draft = salons.filter((salon) => (salon.status || "draft") === "draft");
-    const paused = salons.filter((salon) => (salon.status || "draft") === "paused");
+    const active = safeSalons.filter((salon) => (salon.status || "draft") === "active");
+    const draft = safeSalons.filter((salon) => (salon.status || "draft") === "draft");
+    const paused = safeSalons.filter((salon) => (salon.status || "draft") === "paused");
     const ratingAverage =
-      salons.length > 0
-        ? salons.reduce((acc, salon) => acc + Number(salon.averageRating || 0), 0) / salons.length
+      safeSalons.length > 0
+        ? safeSalons.reduce((acc, salon) => acc + Number(salon.averageRating || 0), 0) / safeSalons.length
         : 0;
-    const needsAttention = salons.filter((salon) => {
+    const needsAttention = safeSalons.filter((salon) => {
       const status = salon.status || "draft";
       return status !== "active" || !salon.address || (!salon.phone && !salon.email);
     });
 
     return {
-      total: salons.length,
+      total: safeSalons.length,
       active: active.length,
       draft: draft.length,
       paused: paused.length,
       needsAttention: needsAttention.length,
       ratingAverage,
     };
-  }, [salons]);
+  }, [safeSalons]);
 
   const filteredSalons = useMemo(() => {
     const normalizedSearch = salonSearch.trim().toLowerCase();
 
-    const mapped = salons
+    const mapped = safeSalons
       .map((salon) => {
         const status = salon.status || "draft";
         const localizedName = localize(salon.name, language) || "Салон";
@@ -264,7 +273,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
 
       return new Date(right.salon.updatedAt || 0).getTime() - new Date(left.salon.updatedAt || 0).getTime();
     });
-  }, [language, localize, salonSearch, salonSort, salonStatusFilter, salons]);
+  }, [language, localize, safeSalons, salonSearch, salonSort, salonStatusFilter]);
 
   return (
     <>
