@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getLocalizedText, formatCurrency } from "@/lib/i18n";
+import { buildTelegramUrl, formatTelegramLabel } from "@/lib/social-links";
 import {
   MapPin,
   Phone,
@@ -322,6 +323,8 @@ export default function PublicMasterPage() {
   }
 
   const bio = getLocalizedText(master.bio, currentLang);
+  const telegramUrl = buildTelegramUrl(master.telegram);
+  const telegramLabel = formatTelegramLabel(master.telegram);
 
   return (
     <div className="min-h-screen bg-background">
@@ -412,10 +415,10 @@ export default function PublicMasterPage() {
                     </a>
                   </Button>
                 )}
-                {master.telegram && (
+                {telegramUrl && (
                   <Button size="lg" variant="outline" className="gap-2" asChild>
                     <a
-                      href={`https://t.me/${master.telegram}`}
+                      href={telegramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -531,14 +534,15 @@ export default function PublicMasterPage() {
                           </a>
                         </Button>
                       )}
-                      {master.telegram && (
+                      {telegramUrl && (
                         <Button variant="outline" className="gap-2" asChild>
                           <a
-                            href={`https://t.me/${master.telegram}`}
+                            href={telegramUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Send className="h-4 w-4" />@{master.telegram}
+                            <Send className="h-4 w-4" />
+                            {telegramLabel || "Telegram"}
                           </a>
                         </Button>
                       )}
@@ -640,10 +644,10 @@ export default function PublicMasterPage() {
                       </a>
                     </Button>
                   )}
-                  {master.telegram && (
+                  {telegramUrl && (
                     <Button variant="outline" className="w-full gap-2" asChild>
                       <a
-                        href={`https://t.me/${master.telegram}`}
+                        href={telegramUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -685,7 +689,7 @@ export default function PublicMasterPage() {
                   </div>
                 )}
 
-                {(master.instagram || master.telegram) && (
+                {(master.instagram || telegramUrl) && (
                   <div>
                     <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                       {t("publicMaster.social", "Social")}
@@ -701,14 +705,15 @@ export default function PublicMasterPage() {
                           <Instagram className="h-4 w-4" />@{master.instagram}
                         </a>
                       )}
-                      {master.telegram && (
+                      {telegramUrl && (
                         <a
-                          href={`https://t.me/${master.telegram}`}
+                          href={telegramUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm hover:text-primary transition-colors"
                         >
-                          <Send className="h-4 w-4" />@{master.telegram}
+                          <Send className="h-4 w-4" />
+                          {telegramLabel || "Telegram"}
                         </a>
                       )}
                     </div>
@@ -753,15 +758,17 @@ export default function PublicMasterPage() {
           if (!open) setDistanceInfo({ status: "idle" });
         }}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1rem)] max-w-[500px] flex-col overflow-hidden p-0">
           <DialogHeader>
-            <DialogTitle>{t("publicMaster.bookService", "Book Service")}</DialogTitle>
+            <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+              <DialogTitle>{t("publicMaster.bookService", "Book Service")}</DialogTitle>
+            </div>
             <DialogDescription>
               {selectedService && getLocalizedText(selectedService.name, currentLang)}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 py-4 sm:px-6">
             {/* Service Mode Toggle */}
             {selectedService &&
               master.serviceMode !== "at_master" &&
@@ -838,7 +845,7 @@ export default function PublicMasterPage() {
               )}
 
             {/* Date Selection */}
-            <div>
+            <div className="min-w-0">
               <label className="text-sm font-medium mb-2 block">
                 {t("publicMaster.selectDate", "Select Date")}
               </label>
@@ -851,7 +858,7 @@ export default function PublicMasterPage() {
                 }}
                 disabled={(date) => isBefore(date, startOfDay(new Date()))}
                 locale={getDateLocale()}
-                className="rounded-md border"
+                className="w-full rounded-md border"
               />
             </div>
 
@@ -866,7 +873,7 @@ export default function PublicMasterPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : availability?.available && availability.slots.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {availability.slots
                       .filter((slot) => slot.available)
                       .map((slot) => (
@@ -945,7 +952,7 @@ export default function PublicMasterPage() {
             )}
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="sticky bottom-0 flex justify-end gap-2 border-t bg-background px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setBookingDialogOpen(false)}>
               {t("common.cancel", "Cancel")}
             </Button>

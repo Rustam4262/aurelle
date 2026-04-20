@@ -51,13 +51,15 @@ export function SalonBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1rem)] max-w-[425px] flex-col overflow-hidden p-0">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">
-            {t("marketplace.salon.bookService")}
-          </DialogTitle>
+          <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+            <DialogTitle className="font-serif text-2xl">
+              {t("marketplace.salon.bookService")}
+            </DialogTitle>
+          </div>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
           {selectedService && (
             <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
               <p className="font-medium text-foreground">
@@ -136,7 +138,7 @@ export function SalonBookingDialog({
             />
           </div>
         </div>
-        <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t">
+        <DialogFooter className="sticky bottom-0 flex-col gap-3 border-t bg-background px-4 py-4 sm:flex-row sm:px-6">
           <div className="flex-1 w-full">
             {selectedService && salonId && (
               <WaitlistButton
