@@ -1,9 +1,19 @@
 node_modules
-dist
+dist/
+build/
+client/dist/
+server/dist/
 .DS_Store
 server/public
 vite.config.ts.*
 *.tar.gz
+*.tgz
+*.tar
+*.zip
+*.dump
+*.backup
+*.b64
+*.vsix
 
 # Environment variables (NEVER commit these!)
 .env
@@ -12,7 +22,8 @@ vite.config.ts.*
 .env.*.local
 
 # Logs
-logs
+.logs/
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -30,6 +41,7 @@ backups/
 !scripts/*.sql
 !migrations/*.sql
 *.sql.gz
+production-bundle*/
 
 # IDE
 .vscode/*
@@ -51,9 +63,18 @@ tmp/
 temp/
 *.tmp
 tmpclaude-*
+*-before-cleanup.txt
+build-output.txt
+decode_output.txt
 
 # Replit state files
 .local/
+
+# Local project runtimes/data
+.pgdata/
+.tools/
+.ssh_key_codex
+admin-hash.txt
 
 # Mobile build artifacts
 android/app/build/

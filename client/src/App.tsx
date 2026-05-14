@@ -58,8 +58,12 @@ function Router() {
           <Route path="/terms" component={TermsPage} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/search" component={SearchPage} />
+          <Route path="/salons" component={SearchPage} />
           <Route path="/salon/:id" component={SalonPage} />
           <Route path="/auth" component={AuthPage} />
+          <Route path="/login">
+            <Redirect to="/auth" />
+          </Route>
           <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
           <Route path="/auth/reset-password" component={ResetPasswordPage} />
           <Route path="/accept-invitation" component={AcceptInvitationPage} />

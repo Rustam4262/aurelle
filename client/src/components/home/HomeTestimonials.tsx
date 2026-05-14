@@ -8,10 +8,14 @@ interface Testimonial {
   id: number;
   nameKey: string;
   roleKey: string;
-  avatar: string;
+  initials: string;
   rating: number;
   textKey: string;
   serviceKey: string;
+  fallbackName: string;
+  fallbackRole: string;
+  fallbackText: string;
+  fallbackService: string;
 }
 
 const getTestimonials = (): Testimonial[] => [
@@ -19,46 +23,66 @@ const getTestimonials = (): Testimonial[] => [
     id: 1,
     nameKey: "marketplace.home.testimonials.t1.name",
     roleKey: "marketplace.home.testimonials.t1.role",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anna",
+    initials: "AM",
     rating: 5,
     textKey: "marketplace.home.testimonials.t1.text",
     serviceKey: "marketplace.home.testimonials.t1.service",
+    fallbackName: "Anna M.",
+    fallbackRole: "Client",
+    fallbackText: "Booking a salon became simple and calm. I found a good master and confirmed the visit in minutes.",
+    fallbackService: "Hair styling",
   },
   {
     id: 2,
     nameKey: "marketplace.home.testimonials.t2.name",
     roleKey: "marketplace.home.testimonials.t2.role",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dmitry",
+    initials: "DK",
     rating: 5,
     textKey: "marketplace.home.testimonials.t2.text",
     serviceKey: "marketplace.home.testimonials.t2.service",
+    fallbackName: "Dmitry K.",
+    fallbackRole: "Salon owner",
+    fallbackText: "The dashboard helps our team keep bookings, services, and client messages in one place.",
+    fallbackService: "Salon management",
   },
   {
     id: 3,
     nameKey: "marketplace.home.testimonials.t3.name",
     roleKey: "marketplace.home.testimonials.t3.role",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
+    initials: "MS",
     rating: 5,
     textKey: "marketplace.home.testimonials.t3.text",
     serviceKey: "marketplace.home.testimonials.t3.service",
+    fallbackName: "Maria S.",
+    fallbackRole: "Master",
+    fallbackText: "Clients can see my work and book available times without extra calls.",
+    fallbackService: "Master profile",
   },
   {
     id: 4,
     nameKey: "marketplace.home.testimonials.t4.name",
     roleKey: "marketplace.home.testimonials.t4.role",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kate",
+    initials: "KR",
     rating: 5,
     textKey: "marketplace.home.testimonials.t4.text",
     serviceKey: "marketplace.home.testimonials.t4.service",
+    fallbackName: "Kate R.",
+    fallbackRole: "Client",
+    fallbackText: "The search and map made it easy to choose a salon close to me.",
+    fallbackService: "Salon search",
   },
   {
     id: 5,
     nameKey: "marketplace.home.testimonials.t5.name",
     roleKey: "marketplace.home.testimonials.t5.role",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+    initials: "AI",
     rating: 5,
     textKey: "marketplace.home.testimonials.t5.text",
     serviceKey: "marketplace.home.testimonials.t5.service",
+    fallbackName: "Alex I.",
+    fallbackRole: "Client",
+    fallbackText: "I like that the appointment details stay clear after booking.",
+    fallbackService: "Online booking",
   },
 ];
 
@@ -88,25 +112,31 @@ export function HomeTestimonials() {
   };
 
   const currentTestimonial = testimonials[currentIndex];
+  const title = t("marketplace.home.testimonials.title", "What clients say");
+  const subtitle = t(
+    "marketplace.home.testimonials.subtitle",
+    "Real stories from people who book and manage beauty services with AURELLE.",
+  );
+  const badge = t("marketplace.home.testimonials.badge", "Reviews");
+  const name = t(currentTestimonial.nameKey, currentTestimonial.fallbackName);
+  const role = t(currentTestimonial.roleKey, currentTestimonial.fallbackRole);
+  const text = t(currentTestimonial.textKey, currentTestimonial.fallbackText);
+  const service = t(currentTestimonial.serviceKey, currentTestimonial.fallbackService);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-muted/30 to-background relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/5 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-6 relative z-10">
+    <section className="py-24 bg-background relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6 relative">
         {/* Header */}
         <div className="text-center mb-16 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
             <Quote className="h-4 w-4" />
-            {t("marketplace.home.testimonials.badge")}
+            {badge}
           </div>
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 font-light">
-            {t("marketplace.home.testimonials.title")}
+            {title}
           </h2>
           <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto">
-            {t("marketplace.home.testimonials.subtitle")}
+            {subtitle}
           </p>
         </div>
 
@@ -116,7 +146,7 @@ export function HomeTestimonials() {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <Card className="p-8 md:p-12 relative overflow-hidden border-border/50 shadow-2xl shadow-primary/5 animate-in zoom-in duration-500">
+          <Card className="p-8 md:p-12 relative overflow-hidden border-border/60 bg-card text-card-foreground shadow-lg animate-in zoom-in duration-500">
             {/* Quote Icon */}
             <div className="absolute top-6 right-6 opacity-5">
               <Quote className="h-32 w-32 text-primary" />
@@ -132,26 +162,23 @@ export function HomeTestimonials() {
 
               {/* Testimonial Text */}
               <blockquote className="text-lg md:text-xl text-foreground mb-8 leading-relaxed font-light italic">
-                &ldquo;{t(currentTestimonial.textKey)}&rdquo;
+                &ldquo;{text}&rdquo;
               </blockquote>
 
               {/* Author Info */}
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-pink-500 rounded-full blur-md opacity-50"></div>
-                  <img
-                    src={currentTestimonial.avatar}
-                    alt={t(currentTestimonial.nameKey)}
-                    className="relative h-16 w-16 rounded-full bg-muted border-2 border-background"
-                  />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground text-lg font-semibold">
+                    {currentTestimonial.initials}
+                  </div>
                 </div>
                 <div>
                   <h4 className="font-semibold text-lg text-foreground">
-                    {t(currentTestimonial.nameKey)}
+                    {name}
                   </h4>
-                  <p className="text-sm text-muted-foreground">{t(currentTestimonial.roleKey)}</p>
+                  <p className="text-sm text-muted-foreground">{role}</p>
                   <p className="text-xs text-primary font-medium mt-0.5">
-                    {t(currentTestimonial.serviceKey)}
+                    {service}
                   </p>
                 </div>
               </div>
@@ -208,25 +235,25 @@ export function HomeTestimonials() {
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">10,000+</div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.happyClients")}
+              {t("marketplace.home.testimonials.stats.happyClients", "Happy clients")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">500+</div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.beautySalons")}
+              {t("marketplace.home.testimonials.stats.beautySalons", "Beauty salons")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">4.9</div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.avgRating")}
+              {t("marketplace.home.testimonials.stats.avgRating", "Average rating")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">50K+</div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.bookingsCompleted")}
+              {t("marketplace.home.testimonials.stats.bookingsCompleted", "Bookings completed")}
             </div>
           </div>
         </div>
