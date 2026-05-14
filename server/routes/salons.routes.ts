@@ -59,20 +59,16 @@ router.get("/stats/public", async (_req, res) => {
       .select({
         salonsCount: sql<number>`COUNT(*)`,
         citiesCount: sql<number>`COUNT(DISTINCT ${salons.city})`,
-        reviewsCount: sql<number>`COALESCE(SUM(${salons.reviewCount}), 0)`,
-        averageRating: sql<string>`
-          COALESCE(
-            ROUND(
-              SUM((COALESCE(${salons.averageRating}, '0'))::numeric * COALESCE(${salons.reviewCount}, 0))
-              / NULLIF(SUM(COALESCE(${salons.reviewCount}, 0)), 0),
-              1
-            ),
-            0
-          )::text
-        `,
       })
       .from(salons)
       .where(publicSalonWhere);
+
+    const [reviewStats] = await db
+      .select({
+        reviewsCount: sql<number>`COUNT(*)`,
+        averageRating: sql<string>`COALESCE(ROUND(AVG(${reviews.rating})::numeric, 1), 0)::text`,
+      })
+      .from(reviews);
 
     const [bookingStats] = await db
       .select({
@@ -85,8 +81,8 @@ router.get("/stats/public", async (_req, res) => {
     return res.json({
       salonsCount: Number(stats?.salonsCount ?? 0),
       citiesCount: Number(stats?.citiesCount ?? 0),
-      reviewsCount: Number(stats?.reviewsCount ?? 0),
-      averageRating: Number(stats?.averageRating ?? 0),
+      reviewsCount: Number(reviewStats?.reviewsCount ?? 0),
+      averageRating: Number(reviewStats?.averageRating ?? 0),
       bookingsCount: Number(bookingStats?.bookingsCount ?? 0),
       clientsCount: Number(bookingStats?.clientsCount ?? 0),
     });
