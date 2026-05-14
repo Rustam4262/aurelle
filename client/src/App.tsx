@@ -76,6 +76,7 @@ function Router() {
           <Route path="/client" component={ClientPage} />
           <Route path="/solo-master" component={SoloMasterPage} />
           <Route path="/solo-master/onboarding" component={SoloMasterOnboardingPage} />
+          <Route path="/admin/users/:id" component={AdminPage} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/admin/:rest*" component={AdminPage} />
           <Route path="/master/:slug" component={PublicMasterPage} />

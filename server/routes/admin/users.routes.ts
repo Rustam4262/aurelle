@@ -240,14 +240,38 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Enrich with profile and recent bookings
+    // Enrich with profile, platform roles, related business entities, and recent bookings.
     const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, id)).limit(1);
-    const recentBookings = await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.clientId, profile?.id ?? ""))
-      .orderBy(desc(bookings.bookingDate))
-      .limit(10);
+    const [rolesMap, ownedSalons, masterProfiles, recentBookings] = await Promise.all([
+      getBatchedUserRoles([id]),
+      db
+        .select({
+          id: salons.id,
+          name: salons.name,
+          city: salons.city,
+          status: salons.status,
+          isVerified: salons.isVerified,
+        })
+        .from(salons)
+        .where(eq(salons.ownerId, id)),
+      db
+        .select({
+          id: masters.id,
+          name: masters.name,
+          slug: masters.slug,
+          city: masters.city,
+          status: masters.status,
+          isSoloMaster: masters.isSoloMaster,
+        })
+        .from(masters)
+        .where(eq(masters.userId, id)),
+      db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.clientId, profile?.id ?? ""))
+        .orderBy(desc(bookings.bookingDate))
+        .limit(10),
+    ]);
 
     const softDeleteMeta = parseSoftDeleteReason(user.blockReason);
 
@@ -260,6 +284,9 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
         blockReason: softDeleteMeta ? (softDeleteMeta.reason || "Удалён администратором") : user.blockReason,
       },
       profile: profile ?? null,
+      roles: rolesMap.get(id) ?? ["client"],
+      ownedSalons,
+      masterProfiles,
       recentBookings,
     });
   } catch (error: any) {
