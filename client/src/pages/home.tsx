@@ -17,7 +17,7 @@ import { HomeFooter } from "@/components/home/HomeFooter";
 
 export default function Home() {
   const scrolled = useNavigationScroll(50);
-  const { salons, isLoading } = useMarketplaceData();
+  const { salons, isLoading, stats, reviews } = useMarketplaceData();
 
   return (
     <>
@@ -26,13 +26,13 @@ export default function Home() {
         <HomeNavigation scrolled={scrolled} />
 
         <main>
-          <HomeHero />
+          <HomeHero stats={stats} />
           <HomeCategories />
           <HomeSalons salons={salons} isLoading={isLoading} />
           <HomeMasters />
           <HomeMap salons={salons} />
-          <HomeStats />
-          <HomeTestimonials />
+          <HomeStats stats={stats} />
+          <HomeTestimonials stats={stats} reviews={reviews} />
           <HomeFAQ />
           <HomeCTA />
         </main>

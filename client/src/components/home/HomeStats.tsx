@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useCountUp } from "@/hooks/use-count-up";
+import type { MarketplaceStats } from "@/hooks/use-marketplace-data";
 
 interface StatItemProps {
   end: number;
@@ -35,12 +36,12 @@ function StatItem({ end, suffix = "", labelKey, delay = 0 }: StatItemProps) {
   );
 }
 
-export function HomeStats() {
-  const stats = [
-    { end: 500, suffix: "+", labelKey: "marketplace.stats.salons", delay: 0 },
-    { end: 10000, suffix: "+", labelKey: "marketplace.stats.clients", delay: 100 },
-    { end: 50000, suffix: "+", labelKey: "marketplace.stats.bookings", delay: 200 },
-    { end: 12, suffix: "", labelKey: "marketplace.stats.cities", delay: 300 },
+export function HomeStats({ stats }: { stats?: MarketplaceStats }) {
+  const statItems = [
+    { end: stats?.salonsCount ?? 0, labelKey: "marketplace.stats.salons", delay: 0 },
+    { end: stats?.clientsCount ?? 0, labelKey: "marketplace.stats.clients", delay: 100 },
+    { end: stats?.bookingsCount ?? 0, labelKey: "marketplace.stats.bookings", delay: 200 },
+    { end: stats?.citiesCount ?? 0, labelKey: "marketplace.stats.cities", delay: 300 },
   ];
 
   return (
@@ -54,7 +55,7 @@ export function HomeStats() {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-          {stats.map((stat, index) => (
+          {statItems.map((stat, index) => (
             <StatItem
               key={index}
               end={stat.end}

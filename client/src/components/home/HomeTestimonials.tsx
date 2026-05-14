@@ -3,125 +3,76 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
+import { getLocalizedText } from "@/lib/i18n";
+import type { MarketplaceStats, PublicReview } from "@/hooks/use-marketplace-data";
 
-interface Testimonial {
-  id: number;
-  nameKey: string;
-  roleKey: string;
-  initials: string;
-  rating: number;
-  textKey: string;
-  serviceKey: string;
-  fallbackName: string;
-  fallbackRole: string;
-  fallbackText: string;
-  fallbackService: string;
+function formatCount(value?: number) {
+  return new Intl.NumberFormat("ru-RU").format(value ?? 0);
 }
 
-const getTestimonials = (): Testimonial[] => [
-  {
-    id: 1,
-    nameKey: "marketplace.home.testimonials.t1.name",
-    roleKey: "marketplace.home.testimonials.t1.role",
-    initials: "AM",
-    rating: 5,
-    textKey: "marketplace.home.testimonials.t1.text",
-    serviceKey: "marketplace.home.testimonials.t1.service",
-    fallbackName: "Anna M.",
-    fallbackRole: "Client",
-    fallbackText: "Booking a salon became simple and calm. I found a good master and confirmed the visit in minutes.",
-    fallbackService: "Hair styling",
-  },
-  {
-    id: 2,
-    nameKey: "marketplace.home.testimonials.t2.name",
-    roleKey: "marketplace.home.testimonials.t2.role",
-    initials: "DK",
-    rating: 5,
-    textKey: "marketplace.home.testimonials.t2.text",
-    serviceKey: "marketplace.home.testimonials.t2.service",
-    fallbackName: "Dmitry K.",
-    fallbackRole: "Salon owner",
-    fallbackText: "The dashboard helps our team keep bookings, services, and client messages in one place.",
-    fallbackService: "Salon management",
-  },
-  {
-    id: 3,
-    nameKey: "marketplace.home.testimonials.t3.name",
-    roleKey: "marketplace.home.testimonials.t3.role",
-    initials: "MS",
-    rating: 5,
-    textKey: "marketplace.home.testimonials.t3.text",
-    serviceKey: "marketplace.home.testimonials.t3.service",
-    fallbackName: "Maria S.",
-    fallbackRole: "Master",
-    fallbackText: "Clients can see my work and book available times without extra calls.",
-    fallbackService: "Master profile",
-  },
-  {
-    id: 4,
-    nameKey: "marketplace.home.testimonials.t4.name",
-    roleKey: "marketplace.home.testimonials.t4.role",
-    initials: "KR",
-    rating: 5,
-    textKey: "marketplace.home.testimonials.t4.text",
-    serviceKey: "marketplace.home.testimonials.t4.service",
-    fallbackName: "Kate R.",
-    fallbackRole: "Client",
-    fallbackText: "The search and map made it easy to choose a salon close to me.",
-    fallbackService: "Salon search",
-  },
-  {
-    id: 5,
-    nameKey: "marketplace.home.testimonials.t5.name",
-    roleKey: "marketplace.home.testimonials.t5.role",
-    initials: "AI",
-    rating: 5,
-    textKey: "marketplace.home.testimonials.t5.text",
-    serviceKey: "marketplace.home.testimonials.t5.service",
-    fallbackName: "Alex I.",
-    fallbackRole: "Client",
-    fallbackText: "I like that the appointment details stay clear after booking.",
-    fallbackService: "Online booking",
-  },
-];
+function formatRating(value?: number) {
+  return (value ?? 0).toFixed(1);
+}
 
-export function HomeTestimonials() {
-  const { t } = useTranslation();
-  const testimonials = getTestimonials();
+function getInitials(name?: string | null) {
+  const cleanName = name?.trim();
+  if (!cleanName) return "AU";
+  return cleanName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+export function HomeTestimonials({
+  stats,
+  reviews,
+}: {
+  stats?: MarketplaceStats;
+  reviews: PublicReview[];
+}) {
+  const { t, i18n } = useTranslation();
+  const visibleReviews = reviews.filter((review) => review.comment?.trim());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Auto-rotate testimonials
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || visibleReviews.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000); // Change every 5 seconds
+      setCurrentIndex((prev) => (prev + 1) % visibleReviews.length);
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [isPaused, testimonials.length]);
+  }, [isPaused, visibleReviews.length]);
+
+  useEffect(() => {
+    if (currentIndex >= visibleReviews.length) {
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, visibleReviews.length]);
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    if (visibleReviews.length === 0) return;
+    setCurrentIndex((prev) => (prev - 1 + visibleReviews.length) % visibleReviews.length);
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    if (visibleReviews.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % visibleReviews.length);
   };
 
-  const currentTestimonial = testimonials[currentIndex];
-  const title = t("marketplace.home.testimonials.title", "What clients say");
+  const currentReview = visibleReviews[currentIndex];
+  const clientName = currentReview?.clientName || t("marketplace.home.testimonials.client", "Клиент AURELLE");
+  const salonName = currentReview?.salonName
+    ? getLocalizedText(currentReview.salonName, i18n.language)
+    : currentReview?.masterName || t("marketplace.home.testimonials.booking", "Запись через AURELLE");
+  const title = t("marketplace.home.testimonials.title", "Отзывы клиентов");
   const subtitle = t(
     "marketplace.home.testimonials.subtitle",
-    "Real stories from people who book and manage beauty services with AURELLE.",
+    "Показываем только реальные отзывы, оставленные после записей на платформе.",
   );
-  const badge = t("marketplace.home.testimonials.badge", "Reviews");
-  const name = t(currentTestimonial.nameKey, currentTestimonial.fallbackName);
-  const role = t(currentTestimonial.roleKey, currentTestimonial.fallbackRole);
-  const text = t(currentTestimonial.textKey, currentTestimonial.fallbackText);
-  const service = t(currentTestimonial.serviceKey, currentTestimonial.fallbackService);
+  const badge = t("marketplace.home.testimonials.badge", "Отзывы");
 
   return (
     <section className="py-24 bg-background relative overflow-hidden">
@@ -153,40 +104,53 @@ export function HomeTestimonials() {
             </div>
 
             <div className="relative z-10">
-              {/* Rating Stars */}
-              <div className="flex items-center gap-1 mb-6">
-                {Array.from({ length: currentTestimonial.rating }).map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-
-              {/* Testimonial Text */}
-              <blockquote className="text-lg md:text-xl text-foreground mb-8 leading-relaxed font-light italic">
-                &ldquo;{text}&rdquo;
-              </blockquote>
-
-              {/* Author Info */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground text-lg font-semibold">
-                    {currentTestimonial.initials}
+              {currentReview ? (
+                <>
+                  <div className="flex items-center gap-1 mb-6">
+                    {Array.from({ length: currentReview.rating }).map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                    ))}
                   </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-lg text-foreground">
-                    {name}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">{role}</p>
-                  <p className="text-xs text-primary font-medium mt-0.5">
-                    {service}
+
+                  <blockquote className="text-lg md:text-xl text-foreground mb-8 leading-relaxed font-light italic">
+                    &ldquo;{currentReview.comment}&rdquo;
+                  </blockquote>
+
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground text-lg font-semibold">
+                        {getInitials(clientName)}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg text-foreground">{clientName}</h4>
+                      <p className="text-sm text-muted-foreground">{salonName}</p>
+                      <p className="text-xs text-primary font-medium mt-0.5">
+                        {new Date(currentReview.createdAt || "").toLocaleDateString("ru-RU")}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="py-10 text-center">
+                  <Quote className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {t("marketplace.home.testimonials.emptyTitle", "Реальные отзывы скоро появятся")}
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+                    {t(
+                      "marketplace.home.testimonials.emptyDescription",
+                      "Секция будет заполнена отзывами клиентов после завершённых записей. Мы не показываем вымышленные отзывы.",
+                    )}
                   </p>
                 </div>
-              </div>
+              )}
             </div>
           </Card>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-8">
+          {visibleReviews.length > 1 ? (
+            <div className="flex items-center justify-between mt-8">
             {/* Previous Button */}
             <Button
               variant="outline"
@@ -199,7 +163,7 @@ export function HomeTestimonials() {
 
             {/* Dots Indicator */}
             <div className="flex items-center gap-2">
-              {testimonials.map((_, index) => (
+              {visibleReviews.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}
@@ -222,36 +186,39 @@ export function HomeTestimonials() {
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
-          </div>
+            </div>
+          ) : null}
 
           {/* Counter */}
-          <p className="text-center text-sm text-muted-foreground mt-4 font-medium">
-            {currentIndex + 1} / {testimonials.length}
-          </p>
+          {visibleReviews.length > 0 ? (
+            <p className="text-center text-sm text-muted-foreground mt-4 font-medium">
+              {currentIndex + 1} / {visibleReviews.length}
+            </p>
+          ) : null}
         </div>
 
         {/* Trust Badges */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">10,000+</div>
+            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.clientsCount)}</div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.happyClients", "Happy clients")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">500+</div>
+            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.salonsCount)}</div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.beautySalons", "Beauty salons")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">4.9</div>
+            <div className="text-3xl font-bold text-primary mb-1">{formatRating(stats?.averageRating)}</div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.avgRating", "Average rating")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">50K+</div>
+            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.bookingsCount)}</div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.bookingsCompleted", "Bookings completed")}
             </div>

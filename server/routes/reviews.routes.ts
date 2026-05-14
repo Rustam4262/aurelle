@@ -11,10 +11,40 @@ import {
   masters,
 } from "@shared/schema";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
+
+// Latest public reviews for the homepage. Only factual user-created reviews.
+router.get("/public/latest", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 5, 10);
+
+    const latestReviews = await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        createdAt: reviews.createdAt,
+        clientName: userProfiles.fullName,
+        salonName: salons.name,
+        masterName: masters.name,
+      })
+      .from(reviews)
+      .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
+      .leftJoin(salons, eq(reviews.salonId, salons.id))
+      .leftJoin(masters, eq(reviews.masterId, masters.id))
+      .where(and(sql`${reviews.comment} IS NOT NULL`, sql`btrim(${reviews.comment}) <> ''`))
+      .orderBy(desc(reviews.createdAt))
+      .limit(limit);
+
+    return res.json(latestReviews);
+  } catch (error) {
+    logger.error("Get latest public reviews error:", error);
+    return res.status(500).json({ error: "Failed to get latest reviews" });
+  }
+});
 
 // Create review
 router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {

@@ -19,22 +19,22 @@ import { trackEvent } from "../lib/analytics";
 
 const router = Router();
 
+const publicSalonWhere = and(
+  eq(salons.isActive, true),
+  sql`NOT EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = ${salons.ownerId}
+      AND u.is_blocked = true
+  )`,
+);
+
 // Get all active salons (for map display)
 router.get("/", async (req, res) => {
   try {
     const { city, minLat, maxLat, minLng, maxLng } = req.query;
 
-    const query = db.select().from(salons).where(
-      and(
-        eq(salons.isActive, true),
-        sql`NOT EXISTS (
-          SELECT 1
-          FROM users u
-          WHERE u.id = ${salons.ownerId}
-            AND u.is_blocked = true
-        )`,
-      ),
-    );
+    const query = db.select().from(salons).where(publicSalonWhere);
 
     const result = await query.orderBy(desc(salons.averageRating));
 
@@ -49,6 +49,50 @@ router.get("/", async (req, res) => {
   } catch (error) {
     logger.error("Get salons error:", error);
     return res.status(500).json({ error: "Failed to get salons" });
+  }
+});
+
+// Public marketplace statistics. Keep these numbers factual: no marketing estimates.
+router.get("/stats/public", async (_req, res) => {
+  try {
+    const [stats] = await db
+      .select({
+        salonsCount: sql<number>`COUNT(*)`,
+        citiesCount: sql<number>`COUNT(DISTINCT ${salons.city})`,
+        reviewsCount: sql<number>`COALESCE(SUM(${salons.reviewCount}), 0)`,
+        averageRating: sql<string>`
+          COALESCE(
+            ROUND(
+              SUM((COALESCE(${salons.averageRating}, '0'))::numeric * COALESCE(${salons.reviewCount}, 0))
+              / NULLIF(SUM(COALESCE(${salons.reviewCount}, 0)), 0),
+              1
+            ),
+            0
+          )::text
+        `,
+      })
+      .from(salons)
+      .where(publicSalonWhere);
+
+    const [bookingStats] = await db
+      .select({
+        bookingsCount: sql<number>`COUNT(*)`,
+        clientsCount: sql<number>`COUNT(DISTINCT ${bookings.clientId})`,
+      })
+      .from(bookings)
+      .where(ne(bookings.status, "cancelled"));
+
+    return res.json({
+      salonsCount: Number(stats?.salonsCount ?? 0),
+      citiesCount: Number(stats?.citiesCount ?? 0),
+      reviewsCount: Number(stats?.reviewsCount ?? 0),
+      averageRating: Number(stats?.averageRating ?? 0),
+      bookingsCount: Number(bookingStats?.bookingsCount ?? 0),
+      clientsCount: Number(bookingStats?.clientsCount ?? 0),
+    });
+  } catch (error) {
+    logger.error("Get public marketplace stats error:", error);
+    return res.status(500).json({ error: "Failed to get marketplace stats" });
   }
 });
 

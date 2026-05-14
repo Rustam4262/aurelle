@@ -15,10 +15,19 @@ import {
   Users,
 } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_beauty_salon__29a49bfb.jpg";
+import type { MarketplaceStats } from "@/hooks/use-marketplace-data";
 
 const cities = ["Tashkent", "Samarkand", "Bukhara"];
 
-export function HomeHero() {
+function formatCount(value?: number) {
+  return new Intl.NumberFormat("ru-RU").format(value ?? 0);
+}
+
+function formatRating(value?: number) {
+  return `${(value ?? 0).toFixed(1)}/5`;
+}
+
+export function HomeHero({ stats }: { stats?: MarketplaceStats }) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [, navigate] = useLocation();
@@ -104,15 +113,21 @@ export function HomeHero() {
 
             <div className="mt-10 grid gap-3 text-sm sm:grid-cols-3">
               <div className="rounded-3xl border border-border bg-white p-5 shadow-lg shadow-primary/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
-                <div className="text-3xl font-semibold text-slate-950 dark:text-white">500+</div>
+                <div className="text-3xl font-semibold text-slate-950 dark:text-white">
+                  {formatCount(stats?.salonsCount)}
+                </div>
                 <div className="mt-2 text-slate-600 dark:text-zinc-400">{t("marketplace.stats.salons")}</div>
               </div>
               <div className="rounded-3xl border border-border bg-white p-5 shadow-lg shadow-primary/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
-                <div className="text-3xl font-semibold text-slate-950 dark:text-white">10k+</div>
+                <div className="text-3xl font-semibold text-slate-950 dark:text-white">
+                  {formatCount(stats?.clientsCount)}
+                </div>
                 <div className="mt-2 text-slate-600 dark:text-zinc-400">{t("marketplace.stats.clients")}</div>
               </div>
               <div className="rounded-3xl border border-border bg-white p-5 shadow-lg shadow-primary/5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
-                <div className="text-3xl font-semibold text-slate-950 dark:text-white">4.9/5</div>
+                <div className="text-3xl font-semibold text-slate-950 dark:text-white">
+                  {formatRating(stats?.averageRating)}
+                </div>
                 <div className="mt-2 text-slate-600 dark:text-zinc-400">{t("marketplace.hero.trustedBooking")}</div>
               </div>
             </div>
