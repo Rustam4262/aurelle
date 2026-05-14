@@ -347,7 +347,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
     : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
 
   const SidebarContent = (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <div className={`border-b border-border/70 ${collapsed ? "px-3 py-5" : "px-5 py-5"}`}>
         <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
@@ -362,7 +362,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="px-3 py-4">
           {navGroups.map((group) => (
             <div key={group.heading ?? "dashboard"} className="mb-4 last:mb-0">
@@ -450,7 +450,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         )}
       </button>
 
-      <div className={`border-t border-border/70 ${collapsed ? "p-2" : "p-4"}`}>
+      <div className={`mt-auto shrink-0 border-t border-border/70 ${collapsed ? "p-2" : "p-4"}`}>
         {!collapsed ? (
           <>
             <div className="mb-3 flex items-center gap-3">
@@ -489,13 +489,13 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-background text-foreground md:flex">
       <aside
-        className={`hidden shrink-0 border-r border-border/70 bg-card/95 backdrop-blur md:flex md:flex-col ${
+        className={`sticky top-0 hidden h-screen shrink-0 border-r border-border/70 bg-card/95 backdrop-blur md:flex md:flex-col ${
           collapsed ? "md:w-20" : "md:w-80"
         } md:transition-all md:duration-200`}
       >
@@ -505,7 +505,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-[90%] max-w-[340px] flex-col border-r border-border bg-card shadow-2xl">
+          <aside className="absolute inset-y-0 left-0 flex h-screen w-[90%] max-w-[340px] flex-col border-r border-border bg-card shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
