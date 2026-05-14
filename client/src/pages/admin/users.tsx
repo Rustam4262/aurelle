@@ -204,6 +204,12 @@ export default function AdminUsers() {
     phoneVerified: number;
     newToday: number;
     activeLastWeek: number;
+    byRole?: {
+      client: number;
+      owner: number;
+      master: number;
+      admin: number;
+    };
   }>({
     queryKey: ["/api/admin/users/stats/overview"],
     staleTime: 60 * 1000,
@@ -220,7 +226,7 @@ export default function AdminUsers() {
         phoneVerified: overviewStats.phoneVerified,
         newToday: overviewStats.newToday,
         activeLastWeek: overviewStats.activeLastWeek,
-        byRole: {
+        byRole: overviewStats.byRole ?? {
           client: 0,
           owner: 0,
           master: 0,

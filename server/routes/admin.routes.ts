@@ -12,6 +12,7 @@ import activityRoutes from "./admin/activity.routes";
 import seedRoutes from "./admin/seed.routes";
 import billingRoutes from "./admin/billing.routes";
 import analyticsRoutes from "./admin/analytics.routes";
+import servicesRoutes from "./admin/services.routes";
 
 const router = Router();
 
@@ -26,6 +27,9 @@ router.use("/users", usersManagementRoutes);
 
 // Salon/Master Management
 router.use("/salons", salonsManagementRoutes);
+
+// Service Catalog
+router.use("/services", servicesRoutes);
 
 // Sanctions & Blocking
 router.use("/sanctions", sanctionsRoutes);

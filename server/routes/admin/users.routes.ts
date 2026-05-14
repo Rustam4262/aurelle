@@ -786,6 +786,26 @@ router.get("/stats/overview", requirePermission("users.read"), async (_req, res)
       .from(users)
       .where(and(sql`${users.lastActivityAt} >= ${sevenDaysAgo}`, notSoftDeleted(users.blockReason)));
 
+    const [roleCountsResult] = await db
+      .select({
+        client: sql<number>`count(*) FILTER (
+          WHERE ${users.id} NOT IN (SELECT user_id FROM admin_users WHERE is_active = true)
+            AND ${users.id} NOT IN (SELECT owner_id FROM salons WHERE owner_id IS NOT NULL)
+            AND ${users.id} NOT IN (SELECT user_id FROM masters WHERE user_id IS NOT NULL)
+        )`,
+        owner: sql<number>`count(*) FILTER (
+          WHERE ${users.id} IN (SELECT owner_id FROM salons WHERE owner_id IS NOT NULL)
+        )`,
+        master: sql<number>`count(*) FILTER (
+          WHERE ${users.id} IN (SELECT user_id FROM masters WHERE user_id IS NOT NULL)
+        )`,
+        admin: sql<number>`count(*) FILTER (
+          WHERE ${users.id} IN (SELECT user_id FROM admin_users WHERE is_active = true)
+        )`,
+      })
+      .from(users)
+      .where(notSoftDeleted(users.blockReason));
+
     res.json({
       total: Number(totalResult.count),
       active: Number(activeResult.count),
@@ -795,6 +815,12 @@ router.get("/stats/overview", requirePermission("users.read"), async (_req, res)
       phoneVerified: Number(phoneVerifiedResult.count),
       newToday: Number(newTodayResult.count),
       activeLastWeek: Number(activeWeekResult.count),
+      byRole: {
+        client: Number(roleCountsResult.client || 0),
+        owner: Number(roleCountsResult.owner || 0),
+        master: Number(roleCountsResult.master || 0),
+        admin: Number(roleCountsResult.admin || 0),
+      },
     });
   } catch (error: any) {
     logger.error("Get users stats error", error as Error, { source: "users-routes" });

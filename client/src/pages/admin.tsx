@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
+  CreditCard,
   FileText,
   Headphones,
   LayoutDashboard,
@@ -30,6 +31,7 @@ import {
   MessageSquare,
   PanelLeft,
   RefreshCw,
+  Scissors,
   Search,
   Shield,
   Sparkles,
@@ -44,23 +46,27 @@ const AdminDashboard = lazy(() => import("@/pages/admin/dashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin/users"));
 const AdminUserDetail = lazy(() => import("@/pages/admin/user-detail"));
 const AdminSalons = lazy(() => import("@/pages/admin/salons"));
+const AdminServices = lazy(() => import("@/pages/admin/services"));
 const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
 const AdminSanctions = lazy(() => import("@/pages/admin/sanctions"));
 const AdminChat = lazy(() => import("@/pages/admin/chat"));
 const AdminSupport = lazy(() => import("@/pages/admin/support"));
 const AdminAudit = lazy(() => import("@/pages/admin/audit"));
 const AdminActivity = lazy(() => import("@/pages/admin/activity"));
+const AdminBilling = lazy(() => import("@/pages/admin/billing"));
 
 const ROUTE_MAP = {
   "/admin/dashboard": AdminDashboard,
   "/admin/users": AdminUsers,
   "/admin/salons": AdminSalons,
+  "/admin/services": AdminServices,
   "/admin/activity": AdminActivity,
   "/admin/complaints": AdminComplaints,
   "/admin/sanctions": AdminSanctions,
   "/admin/chat": AdminChat,
   "/admin/support": AdminSupport,
   "/admin/audit": AdminAudit,
+  "/admin/billing": AdminBilling,
 } as const;
 
 const ROUTE_META: Record<string, { title: string; description: string }> = {
@@ -75,6 +81,14 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
   "/admin/salons": {
     title: "Бизнес",
     description: "Салоны, публикации и статусы верификации, которые влияют на доверие к платформе.",
+  },
+  "/admin/services": {
+    title: "Услуги",
+    description: "Единый каталог услуг салонов, владельцев и фриланс-мастеров.",
+  },
+  "/admin/billing": {
+    title: "Биллинг",
+    description: "Комиссии, GMV, выручка и сверка платежей по платформе.",
   },
   "/admin/activity": {
     title: "Активность",
@@ -277,6 +291,27 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       ],
     },
   ];
+
+  navGroups.splice(3, 0, {
+    heading: "Business tools",
+    items: [
+      {
+        path: "/admin/services",
+        label: "Услуги",
+        description: "Все услуги салонов и фриланс-мастеров",
+        icon: Scissors,
+        searchTags: ["services", "услуги", "masters", "salons"],
+      },
+      {
+        path: "/admin/billing",
+        label: "Биллинг",
+        description: "GMV, комиссии и сверка платежей",
+        icon: CreditCard,
+        badge: actionCenter?.paymentErrors24h,
+        searchTags: ["billing", "payments", "gmv", "финансы"],
+      },
+    ],
+  });
 
   const flatNavItems = navGroups.flatMap((group) => group.items);
   const filteredCommandItems = useMemo(() => {
