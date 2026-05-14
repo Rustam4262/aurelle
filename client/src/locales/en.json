@@ -139,7 +139,7 @@
     },
     "stats": {
       "salons": "Beauty Salons",
-      "clients": "Happy Clients",
+      "clients": "Clients",
       "bookings": "Bookings Made",
       "cities": "Cities"
     },
@@ -242,7 +242,7 @@
           "service": "Salon 'Image'"
         },
         "stats": {
-          "happyClients": "Happy Clients",
+          "happyClients": "Clients",
           "beautySalons": "Beauty Salons",
           "avgRating": "Average Rating",
           "bookingsCompleted": "Bookings Completed"

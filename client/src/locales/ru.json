@@ -139,7 +139,7 @@
     },
     "stats": {
       "salons": "Салонов красоты",
-      "clients": "Довольных клиентов",
+      "clients": "Клиентов",
       "bookings": "Записей",
       "cities": "Городов"
     },
@@ -244,7 +244,7 @@
           "service": "Салон 'Образ'"
         },
         "stats": {
-          "happyClients": "Довольных клиентов",
+          "happyClients": "Клиентов",
           "beautySalons": "Салонов красоты",
           "avgRating": "Средний рейтинг",
           "bookingsCompleted": "Записей выполнено"

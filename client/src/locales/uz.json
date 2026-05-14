@@ -139,7 +139,7 @@
     },
     "stats": {
       "salons": "Go'zallik salonlari",
-      "clients": "Mamnun mijozlar",
+      "clients": "Mijozlar",
       "bookings": "Bronlar",
       "cities": "Shaharlar"
     },
@@ -242,7 +242,7 @@
           "service": "Salon 'Obraz'"
         },
         "stats": {
-          "happyClients": "Mamnun mijozlar",
+          "happyClients": "Mijozlar",
           "beautySalons": "Go'zallik salonlari",
           "avgRating": "O'rtacha reyting",
           "bookingsCompleted": "Bajarilgan bronlar"
