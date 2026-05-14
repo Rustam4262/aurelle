@@ -27,6 +27,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 type RangeKey = "7d" | "30d" | "90d" | "all";
@@ -96,6 +103,12 @@ interface ReconciliationResponse {
   orphanWebhooks: Array<Record<string, unknown>>;
 }
 
+interface SalonOption {
+  id: string;
+  name: string | { en?: string; ru?: string; uz?: string };
+  city?: string | null;
+}
+
 function formatUzs(value: number) {
   return `${new Intl.NumberFormat("ru-RU").format(value)} UZS`;
 }
@@ -105,6 +118,12 @@ function formatDate(value: string | null | undefined) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Некорректная дата";
   return date.toLocaleString("ru-RU");
+}
+
+function salonLabel(value: SalonOption["name"]) {
+  if (!value) return "Без названия";
+  if (typeof value === "string") return value;
+  return value.ru || value.en || value.uz || "Без названия";
 }
 
 function NumberField({
@@ -144,6 +163,10 @@ export default function AdminBilling() {
 
   const feeConfigQuery = useQuery<FeeConfigResponse>({
     queryKey: ["/api/admin/billing/fee-config"],
+  });
+
+  const salonsQuery = useQuery<{ salons: SalonOption[] }>({
+    queryKey: ["/api/admin/salons", { limit: 200 }],
   });
 
   const revenueQuery = useQuery<RevenueResponse>({
@@ -518,11 +541,19 @@ export default function AdminBilling() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Input
-                value={overrideSalonId}
-                onChange={(event) => setOverrideSalonId(event.target.value)}
-                placeholder="salonId"
-              />
+              <Select value={overrideSalonId} onValueChange={setOverrideSalonId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите салон" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(salonsQuery.data?.salons ?? []).map((salon) => (
+                    <SelectItem key={salon.id} value={salon.id}>
+                      {salonLabel(salon.name)}
+                      {salon.city ? ` · ${salon.city}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <NumberField
                 value={overrideFeePercent}
                 onChange={setOverrideFeePercent}

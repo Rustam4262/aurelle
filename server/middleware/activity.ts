@@ -4,12 +4,16 @@ import { userActivitySessions, userActivityActions, users } from "@shared/schema
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { UAParser } from "ua-parser-js";
 import { logger } from "../lib/logger";
+import { getClientIp, isLocalIp } from "../lib/request-ip";
 
 // Track user login (create new session)
 export async function trackUserLogin(userId: string, req: Request) {
   try {
     const sessionId = req.sessionID;
-    const ipAddress = req.ip || req.socket.remoteAddress || "unknown";
+    const ipAddress = getClientIp(req) || "unknown";
+    if (process.env.NODE_ENV === "production" && isLocalIp(ipAddress)) {
+      return null;
+    }
     const userAgent = req.headers["user-agent"] || "unknown";
 
     const parser = new UAParser(userAgent);
@@ -147,7 +151,7 @@ export async function trackUserAction(
       entityType,
       entityId,
       metadata: metadata ? metadata : null,
-      ipAddress: req?.ip || req?.socket.remoteAddress || "unknown",
+      ipAddress: req ? getClientIp(req) : "unknown",
       userAgent: req?.headers["user-agent"] || "unknown",
     });
 

@@ -439,19 +439,7 @@ export default function AdminDashboard() {
         <MiniStat label="Записи" value={num(s.bookings.total)} meta={`+${num(s.bookings.newInPeriod)} за ${RANGE_LABELS[range]}`} icon={CalendarCheck2} iconTone="bg-emerald-500/10 text-emerald-600" />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Очередь действий</CardTitle>
-            <CardDescription>Админ должен действовать быстро. Здесь только задачи, а не декоративная статистика.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {queue.map((item) => (
-              <ListItem key={item.title} {...item} />
-            ))}
-          </CardContent>
-        </Card>
-
+      <section className="grid gap-6">
         <Card className="border-border/70 shadow-sm">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between gap-4">

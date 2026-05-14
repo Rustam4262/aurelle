@@ -3,6 +3,7 @@ import { db } from "../db";
 import { adminUsers, adminRoles, auditLogs, sanctions } from "@shared/admin-schema";
 import { eq, and, or, gte, isNull } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { getClientIp } from "../lib/request-ip";
 
 // Extend Express Request type to include admin info
 declare global {
@@ -159,7 +160,7 @@ export async function logAuditAction(data: {
       ...rest,
       details,
       result: "success",
-      ipAddress: req?.ip || undefined,
+      ipAddress: req ? getClientIp(req) : undefined,
       userAgent: req?.get("user-agent") || undefined,
     });
   } catch (error) {

@@ -363,7 +363,7 @@ router.get("/platform-health", requirePermission("analytics.read"), async (_req,
           db.select({
             total: sql<number>`count(*)`,
             blocked: sql<number>`count(*) FILTER (WHERE ${users.isBlocked} = true)`,
-          }).from(users),
+          }).from(users).where(notSoftDeleted(users.blockReason)),
           db.select({ count: sql<number>`count(*)` }).from(userActivitySessions).where(
             gte(userActivitySessions.loginAt, oneDayAgo)
           ),
@@ -377,7 +377,7 @@ router.get("/platform-health", requirePermission("analytics.read"), async (_req,
             total: sql<number>`count(*)`,
             emailVerified: sql<number>`count(*) FILTER (WHERE ${users.emailVerified} = true)`,
             phoneVerified: sql<number>`count(*) FILTER (WHERE ${users.phoneVerified} = true)`,
-          }).from(users),
+          }).from(users).where(notSoftDeleted(users.blockReason)),
         ]);
 
       const total = Number(blockedStats[0].total) || 1;
