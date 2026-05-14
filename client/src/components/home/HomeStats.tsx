@@ -1,6 +1,4 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import { useCountUp } from "@/hooks/use-count-up";
 import type { MarketplaceStats } from "@/hooks/use-marketplace-data";
 
 interface StatItemProps {
@@ -10,20 +8,13 @@ interface StatItemProps {
   delay?: number;
 }
 
-function StatItem({ end, suffix = "", labelKey, delay = 0 }: StatItemProps) {
+function StatItem({ end, suffix = "", labelKey }: StatItemProps) {
   const { t } = useTranslation();
-  const { value, elementRef } = useCountUp({
-    start: 0,
-    end,
-    duration: 2500 + delay,
-    separator: ",",
-    suffix,
-  });
+  const value = new Intl.NumberFormat("ru-RU").format(end) + suffix;
 
   return (
     <div className="text-center group">
       <p
-        ref={elementRef as React.RefObject<HTMLParagraphElement>}
         className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter"
       >
         {value}
