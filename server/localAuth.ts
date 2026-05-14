@@ -10,7 +10,7 @@ import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLi
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
 import { trackEvent } from "./lib/analytics";
-import { sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
+import { getEmailConfigStatus, sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
 import { isSoftDeletedUser } from "./lib/user-deletion";
 
 const registerSchema = z.object({
@@ -199,6 +199,19 @@ export function setupLocalAuth(app: Express) {
       }
 
       const { email } = parsed.data;
+      const emailStatus = getEmailConfigStatus();
+
+      if (!emailStatus.enabled) {
+        logger.warn("Password reset requested while email is disabled", {
+          source: "localAuth",
+          meta: { reason: emailStatus.reason },
+        });
+        return res.status(503).json({
+          success: false,
+          code: "EMAIL_SERVICE_UNAVAILABLE",
+          message: "Password reset email is temporarily unavailable",
+        });
+      }
 
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
@@ -223,10 +236,19 @@ export function setupLocalAuth(app: Express) {
 
       const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
 
-      // Send password reset email (fire-and-forget — don't block response)
-      sendPasswordResetEmail(email, resetLink).catch((err) =>
-        logger.error("Failed to send password reset email", err as Error, { source: "localAuth" }),
-      );
+      // Only report success after the reset email is actually accepted by SMTP.
+      const sent = await sendPasswordResetEmail(email, resetLink);
+      if (!sent) {
+        logger.error("Failed to send password reset email", undefined, {
+          source: "localAuth",
+          meta: { userId: user.id },
+        });
+        return res.status(503).json({
+          success: false,
+          code: "RESET_EMAIL_DELIVERY_FAILED",
+          message: "Failed to send password reset email",
+        });
+      }
 
       // In development, include token in response for easy testing
       const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};

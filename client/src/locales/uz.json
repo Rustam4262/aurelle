@@ -2940,6 +2940,8 @@
     "redirectingToLogin": "Kirish sahifasiga yo'naltirilmoqda...",
     "invalidResetLink": "Noto'g'ri havola",
     "passwordResetFailed": "Parolni tiklab bo'lmadi",
+    "emailServiceUnavailable": "Parolni tiklash emaili vaqtincha mavjud emas. Iltimos, qo'llab-quvvatlash xizmatiga murojaat qiling.",
+    "resetEmailDeliveryFailed": "Parolni tiklash emailini yubora olmadik. Iltimos, keyinroq qayta urinib ko'ring.",
     "passwordsDoNotMatch": "Parollar mos kelmaydi",
     "passwordTooShort": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
     "networkError": "Tarmoq xatosi. Qayta urinib ko'ring.",

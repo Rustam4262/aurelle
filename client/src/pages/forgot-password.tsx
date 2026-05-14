@@ -32,7 +32,13 @@ export default function ForgotPassword() {
       if (response.ok) {
         setSuccess(true);
       } else {
-        setError(data.message || t("auth.passwordResetFailed", "Failed to send reset email"));
+        const messageKey =
+          data.code === "EMAIL_SERVICE_UNAVAILABLE"
+            ? "auth.emailServiceUnavailable"
+            : data.code === "RESET_EMAIL_DELIVERY_FAILED"
+              ? "auth.resetEmailDeliveryFailed"
+              : "auth.passwordResetFailed";
+        setError(data.message ? t(messageKey, data.message) : t("auth.passwordResetFailed", "Failed to send reset email"));
       }
     } catch {
       setError(t("auth.networkError", "Network error. Please try again."));

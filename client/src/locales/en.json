@@ -2941,6 +2941,8 @@
     "redirectingToLogin": "Redirecting to login page...",
     "invalidResetLink": "Invalid Reset Link",
     "passwordResetFailed": "Failed to reset password",
+    "emailServiceUnavailable": "Password reset email is temporarily unavailable. Please contact support.",
+    "resetEmailDeliveryFailed": "We could not send the password reset email. Please try again later.",
     "passwordsDoNotMatch": "Passwords do not match",
     "passwordTooShort": "Password must be at least 8 characters",
     "networkError": "Network error. Please try again.",
