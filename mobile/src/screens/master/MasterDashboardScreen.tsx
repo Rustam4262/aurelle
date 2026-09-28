@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -69,18 +64,14 @@ export function MasterDashboardScreen() {
           </View>
           <View className="flex-1 bg-blue-50 p-3 rounded-2xl">
             <Ionicons name="calendar-outline" size={20} color="#3b82f6" />
-            <Text className="text-2xl font-bold text-gray-800 mt-2">
-              {todayBookings.length}
-            </Text>
+            <Text className="text-2xl font-bold text-gray-800 mt-2">{todayBookings.length}</Text>
             <Text className="text-xs text-gray-500">Сегодня</Text>
           </View>
         </View>
 
         {/* Today schedule */}
         <View className="mx-4 mt-4">
-          <Text className="text-base font-bold text-gray-800 mb-3">
-            Расписание сегодня
-          </Text>
+          <Text className="text-base font-bold text-gray-800 mb-3">Расписание сегодня</Text>
           {todayBookings.length === 0 ? (
             <View className="bg-white rounded-2xl p-6 items-center">
               <Ionicons name="sunny-outline" size={32} color="#d1d5db" />
@@ -88,14 +79,9 @@ export function MasterDashboardScreen() {
             </View>
           ) : (
             todayBookings.map((b) => (
-              <View
-                key={b.id}
-                className="bg-white rounded-xl p-4 mb-2 flex-row items-center"
-              >
+              <View key={b.id} className="bg-white rounded-xl p-4 mb-2 flex-row items-center">
                 <View className="w-12 items-center mr-3">
-                  <Text className="text-sm font-bold text-primary">
-                    {b.scheduledTime}
-                  </Text>
+                  <Text className="text-sm font-bold text-primary">{b.scheduledTime}</Text>
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-gray-800">

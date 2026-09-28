@@ -33,11 +33,7 @@ function getNextDays(n = 14): { label: string; value: string }[] {
     const d = addDays(new Date(), i);
     return {
       value: format(d, "yyyy-MM-dd"),
-      label: i === 0
-        ? "Сегодня"
-        : i === 1
-        ? "Завтра"
-        : format(d, "d MMM", { locale: ru }),
+      label: i === 0 ? "Сегодня" : i === 1 ? "Завтра" : format(d, "d MMM", { locale: ru }),
     };
   });
 }
@@ -92,7 +88,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
         notes,
       });
       navigation.navigate("BookingsList");
-      Alert.alert("Готово!", "Запись создана успешно 🎉");
+      Alert.alert("Готово!", "Запись создана успешно");
     } catch (e: any) {
       Alert.alert("Ошибка", e?.response?.data?.error ?? "Не удалось создать запись");
     }
@@ -114,10 +110,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
           </Text>
           {/* Progress bar */}
           <View className="h-1 bg-gray-100 rounded mt-1">
-            <View
-              className="h-1 bg-primary rounded"
-              style={{ width: `${progress}%` }}
-            />
+            <View className="h-1 bg-primary rounded" style={{ width: `${progress}%` }} />
           </View>
         </View>
       </View>
@@ -203,9 +196,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
                   {master.rating != null && (
                     <View className="flex-row items-center">
                       <Ionicons name="star" size={12} color="#f59e0b" />
-                      <Text className="text-sm text-gray-600 ml-1">
-                        {master.rating.toFixed(1)}
-                      </Text>
+                      <Text className="text-sm text-gray-600 ml-1">{master.rating.toFixed(1)}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -232,9 +223,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
                     setSelectedTime(null);
                   }}
                   className={`mr-2 px-4 py-3 rounded-xl border ${
-                    selectedDate === item.value
-                      ? "bg-primary border-primary"
-                      : "border-gray-200"
+                    selectedDate === item.value ? "bg-primary border-primary" : "border-gray-200"
                   }`}
                 >
                   <Text
@@ -263,9 +252,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
                     key={slot.time}
                     onPress={() => setSelectedTime(slot.time)}
                     className={`px-4 py-2.5 rounded-xl border ${
-                      selectedTime === slot.time
-                        ? "bg-primary border-primary"
-                        : "border-gray-200"
+                      selectedTime === slot.time ? "bg-primary border-primary" : "border-gray-200"
                     }`}
                   >
                     <Text
@@ -285,9 +272,7 @@ export function BookingFlowScreen({ navigation, route }: Props) {
         {/* STEP: Confirm */}
         {step === "confirm" && selectedService && (
           <View className="py-4">
-            <Text className="text-lg font-bold text-gray-800 mb-4">
-              Проверьте данные записи
-            </Text>
+            <Text className="text-lg font-bold text-gray-800 mb-4">Проверьте данные записи</Text>
 
             {[
               { label: "Услуга", value: localizedName(selectedService.name) },
@@ -305,7 +290,10 @@ export function BookingFlowScreen({ navigation, route }: Props) {
               },
               { label: "Длительность", value: `${selectedService.durationMinutes} мин` },
             ].map((row) => (
-              <View key={row.label} className="flex-row justify-between py-3 border-b border-gray-100">
+              <View
+                key={row.label}
+                className="flex-row justify-between py-3 border-b border-gray-100"
+              >
                 <Text className="text-gray-500">{row.label}</Text>
                 <Text className="text-gray-800 font-medium">{row.value}</Text>
               </View>
@@ -324,7 +312,9 @@ export function BookingFlowScreen({ navigation, route }: Props) {
               selectedTime ? "bg-primary" : "bg-gray-200"
             }`}
           >
-            <Text className={`font-bold text-base ${selectedTime ? "text-white" : "text-gray-400"}`}>
+            <Text
+              className={`font-bold text-base ${selectedTime ? "text-white" : "text-gray-400"}`}
+            >
               Далее
             </Text>
           </TouchableOpacity>

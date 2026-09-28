@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@shared/models/auth";
 import { logger } from "@/lib/logger";
 import { setUser as setSentryUser } from "@/lib/sentry";
+import { clearPendingBooking } from "@/lib/booking-context";
 
 async function fetchUser(): Promise<User | null> {
   try {
@@ -86,6 +87,9 @@ export function useAuth(options?: { requireAuth?: boolean; redirectTo?: string }
     if (isLoggingOut) return;
 
     setIsLoggingOut(true);
+    // A guest's in-progress booking attempt must never carry over to whoever
+    // logs in next on the same device/tab.
+    clearPendingBooking();
     try {
       await doLogout();
       window.location.href = "/auth";

@@ -19,20 +19,25 @@ export async function trackUserLogin(userId: string, req: Request) {
     const parser = new UAParser(userAgent);
     const deviceInfo = parser.getResult();
 
-    const [session] = await db.insert(userActivitySessions).values({
-      userId,
-      sessionId,
-      loginAt: new Date(),
-      lastActivityAt: new Date(),
-      ipAddress,
-      userAgent,
-      deviceType: deviceInfo.device.type || "desktop",
-      browser: `${deviceInfo.browser.name || "unknown"} ${deviceInfo.browser.version || ""}`.trim(),
-      os: `${deviceInfo.os.name || "unknown"} ${deviceInfo.os.version || ""}`.trim(),
-    }).returning();
+    const [session] = await db
+      .insert(userActivitySessions)
+      .values({
+        userId,
+        sessionId,
+        loginAt: new Date(),
+        lastActivityAt: new Date(),
+        ipAddress,
+        userAgent,
+        deviceType: deviceInfo.device.type || "desktop",
+        browser:
+          `${deviceInfo.browser.name || "unknown"} ${deviceInfo.browser.version || ""}`.trim(),
+        os: `${deviceInfo.os.name || "unknown"} ${deviceInfo.os.version || ""}`.trim(),
+      })
+      .returning();
 
     // Update user stats
-    await db.update(users)
+    await db
+      .update(users)
       .set({
         lastLoginAt: new Date(),
         lastActivityAt: new Date(),
@@ -40,7 +45,9 @@ export async function trackUserLogin(userId: string, req: Request) {
       })
       .where(eq(users.id, userId));
 
-    logger.info(`User login tracked: ${userId} (session: ${sessionId})`, { source: "activity-middleware" });
+    logger.info(`User login tracked: ${userId} (session: ${sessionId})`, {
+      source: "activity-middleware",
+    });
     return session;
   } catch (error: any) {
     logger.error("Failed to track user login", error as Error, { source: "activity-middleware" });
@@ -57,16 +64,16 @@ export async function trackUserLogout(sessionId: string) {
     const [session] = await db
       .select()
       .from(userActivitySessions)
-      .where(and(
-        eq(userActivitySessions.sessionId, sessionId),
-        isNull(userActivitySessions.logoutAt)
-      ))
+      .where(
+        and(eq(userActivitySessions.sessionId, sessionId), isNull(userActivitySessions.logoutAt)),
+      )
       .limit(1);
 
     if (session) {
       const duration = Math.floor((now.getTime() - new Date(session.loginAt).getTime()) / 1000);
 
-      await db.update(userActivitySessions)
+      await db
+        .update(userActivitySessions)
         .set({
           logoutAt: now,
           durationSeconds: duration,
@@ -75,13 +82,16 @@ export async function trackUserLogout(sessionId: string) {
         .where(eq(userActivitySessions.id, session.id));
 
       // Update total session time for user
-      await db.update(users)
+      await db
+        .update(users)
         .set({
           totalSessionTimeSeconds: sql`${users.totalSessionTimeSeconds} + ${duration}`,
         })
         .where(eq(users.id, session.userId));
 
-      logger.info(`User logout tracked: ${session.userId} (duration: ${duration}s)`, { source: "activity-middleware" });
+      logger.info(`User logout tracked: ${session.userId} (duration: ${duration}s)`, {
+        source: "activity-middleware",
+      });
     }
   } catch (error: any) {
     logger.error("Failed to track user logout", error as Error, { source: "activity-middleware" });
@@ -109,23 +119,26 @@ export function trackActivityHeartbeat() {
     (async () => {
       try {
         // Update last activity for active session
-        await db.update(userActivitySessions)
+        await db
+          .update(userActivitySessions)
           .set({
             lastActivityAt: new Date(),
             updatedAt: new Date(),
           })
-          .where(and(
-            eq(userActivitySessions.userId, userId),
-            eq(userActivitySessions.sessionId, sessionId),
-            isNull(userActivitySessions.logoutAt)
-          ));
+          .where(
+            and(
+              eq(userActivitySessions.userId, userId),
+              eq(userActivitySessions.sessionId, sessionId),
+              isNull(userActivitySessions.logoutAt),
+            ),
+          );
 
         // Update user's last activity
-        await db.update(users)
-          .set({ lastActivityAt: new Date() })
-          .where(eq(users.id, userId));
+        await db.update(users).set({ lastActivityAt: new Date() }).where(eq(users.id, userId));
       } catch (error: any) {
-        logger.error("Failed to update activity heartbeat", error as Error, { source: "activity-middleware" });
+        logger.error("Failed to update activity heartbeat", error as Error, {
+          source: "activity-middleware",
+        });
       }
     })();
 
@@ -141,7 +154,7 @@ export async function trackUserAction(
   entityType?: string,
   entityId?: string,
   metadata?: any,
-  req?: Request
+  req?: Request,
 ) {
   try {
     await db.insert(userActivityActions).values({
@@ -156,7 +169,8 @@ export async function trackUserAction(
     });
 
     // Increment actions count for session
-    await db.update(userActivitySessions)
+    await db
+      .update(userActivitySessions)
       .set({
         actionsCount: sql`${userActivitySessions.actionsCount} + 1`,
       })

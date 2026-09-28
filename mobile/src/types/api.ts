@@ -60,7 +60,7 @@ export interface Booking {
 }
 
 export interface AvailabilitySlot {
-  time: string;      // "HH:mm"
+  time: string; // "HH:mm"
   available: boolean;
 }
 

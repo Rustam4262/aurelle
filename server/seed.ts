@@ -34,8 +34,6 @@ export async function seedDatabase() {
           "/assets/stock_images/professional_makeup__5e401efd.jpg",
         ],
         isActive: true,
-        averageRating: "4.8",
-        reviewCount: 24,
       },
       {
         ownerId: "seed-owner-2",
@@ -60,8 +58,6 @@ export async function seedDatabase() {
           "/assets/stock_images/facial_spa_treatment_d93c5b9f.jpg",
         ],
         isActive: true,
-        averageRating: "4.9",
-        reviewCount: 18,
       },
       {
         ownerId: "seed-owner-3",
@@ -87,8 +83,6 @@ export async function seedDatabase() {
           "/assets/stock_images/professional_manicur_d36d8576.jpg",
         ],
         isActive: true,
-        averageRating: "4.7",
-        reviewCount: 31,
       },
     ];
 
@@ -116,8 +110,6 @@ export async function seedDatabase() {
           uz: "10 yillik tajribaga ega usta",
         },
         experience: 10,
-        averageRating: "4.9",
-        reviewCount: 45,
         isActive: true,
       },
       {
@@ -135,8 +127,6 @@ export async function seedDatabase() {
           uz: "Tirnoq xizmati mutaxassisi",
         },
         experience: 7,
-        averageRating: "4.8",
-        reviewCount: 32,
         isActive: true,
       },
       {
@@ -154,8 +144,6 @@ export async function seedDatabase() {
           uz: "Sertifikatlangan massaj terapevti va SPA mutaxassisi",
         },
         experience: 12,
-        averageRating: "5.0",
-        reviewCount: 28,
         isActive: true,
       },
     ];
@@ -315,7 +303,7 @@ export async function seedDatabase() {
     logger.info("Database seeding completed successfully", { source: "seed" });
     logger.info(
       `Summary - Salons: ${insertedSalons.length}, Masters: ${insertedMasters.length}, Services: ${insertedServices.length}, Links: ${masterServiceLinks.length}`,
-      { source: "seed" }
+      { source: "seed" },
     );
 
     return {

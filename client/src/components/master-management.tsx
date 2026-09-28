@@ -242,9 +242,12 @@ export function MasterManagement() {
       data: {
         ...editFormData,
         specialties: {
-          en: editFormData.specialization.split(",").map(s => s.trim()).filter(Boolean),
+          en: editFormData.specialization
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           ru: [],
-          uz: []
+          uz: [],
         },
         workingHours,
       },
@@ -292,7 +295,7 @@ export function MasterManagement() {
           </div>
           {salons.length > 0 && (
             <Button
-              onClick={() => window.location.href = `/owner/salon/${salons[0].id}?tab=staff`}
+              onClick={() => (window.location.href = `/owner/salon/${salons[0].id}?tab=staff`)}
               className="gap-2"
             >
               <Plus className="h-4 w-4" />

@@ -15,6 +15,7 @@ import {
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger";
+import { cancelBookingReminders } from "../lib/reminders";
 
 const router = Router();
 
@@ -209,17 +210,18 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         ? db.select().from(salons).where(inArray(salons.id, salonIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select({
-            id: userProfiles.id,
-            fullName: userProfiles.fullName,
-            avatarUrl: userProfiles.avatarUrl,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            email: users.email,
-          })
-          .from(userProfiles)
-          .leftJoin(users, eq(users.id, userProfiles.userId))
-          .where(inArray(userProfiles.id, clientIds))
+        ? db
+            .select({
+              id: userProfiles.id,
+              fullName: userProfiles.fullName,
+              avatarUrl: userProfiles.avatarUrl,
+              firstName: users.firstName,
+              lastName: users.lastName,
+              email: users.email,
+            })
+            .from(userProfiles)
+            .leftJoin(users, eq(users.id, userProfiles.userId))
+            .where(inArray(userProfiles.id, clientIds))
         : Promise.resolve([]),
     ]);
 
@@ -298,6 +300,15 @@ router.patch("/bookings/:bookingId/status", isAuthenticated, async (req: any, re
       .set(updateData)
       .where(eq(bookings.id, bookingId))
       .returning();
+
+    if (parsed.data.status === "cancelled") {
+      cancelBookingReminders(updated.id).catch((err) =>
+        logger.error("Failed to cancel reminders", {
+          source: "masters.routes",
+          meta: { bookingId: updated.id, error: String(err) },
+        }),
+      );
+    }
 
     return res.json(updated);
   } catch (error) {

@@ -60,7 +60,11 @@ router.get("/fee-config", requirePermission("analytics.read"), async (_req, res)
 
     res.json({
       global: globalConfig
-        ? { feePercent: Number(globalConfig.feePercent), description: globalConfig.description, updatedAt: globalConfig.updatedAt }
+        ? {
+            feePercent: Number(globalConfig.feePercent),
+            description: globalConfig.description,
+            updatedAt: globalConfig.updatedAt,
+          }
         : { feePercent: 0, description: null, updatedAt: null },
       salonOverrides: salonOverrides.map((r) => ({
         salonId: r.salonId,
@@ -99,7 +103,11 @@ router.put("/fee-config", requirePermission("billing.write"), async (req, res) =
     if (existing) {
       await db
         .update(platformFeeConfig)
-        .set({ feePercent: String(feePercent), description: description ?? null, updatedAt: new Date() })
+        .set({
+          feePercent: String(feePercent),
+          description: description ?? null,
+          updatedAt: new Date(),
+        })
         .where(eq(platformFeeConfig.id, existing.id));
     } else {
       await db.insert(platformFeeConfig).values({
@@ -153,7 +161,11 @@ router.put("/fee-config/salon/:salonId", requirePermission("billing.write"), asy
     if (existing) {
       await db
         .update(platformFeeConfig)
-        .set({ feePercent: String(feePercent), description: description ?? null, updatedAt: new Date() })
+        .set({
+          feePercent: String(feePercent),
+          description: description ?? null,
+          updatedAt: new Date(),
+        })
         .where(eq(platformFeeConfig.id, existing.id));
     } else {
       await db.insert(platformFeeConfig).values({
@@ -194,9 +206,7 @@ router.delete(
       const { salonId } = req.params;
       const userId = getUserId(req);
 
-      await db
-        .delete(platformFeeConfig)
-        .where(eq(platformFeeConfig.salonId, salonId));
+      await db.delete(platformFeeConfig).where(eq(platformFeeConfig.salonId, salonId));
 
       await logAuditAction({
         actorUserId: userId,
@@ -249,18 +259,22 @@ router.get("/revenue", requirePermission("analytics.read"), async (req, res) => 
     const [pending] = await db
       .select({ count: sql<number>`count(*)` })
       .from(payments)
-      .where(and(
-        sql`${payments.status} = 'pending'`,
-        cutoff ? gte(payments.createdAt, cutoff) : undefined,
-      ));
+      .where(
+        and(
+          sql`${payments.status} = 'pending'`,
+          cutoff ? gte(payments.createdAt, cutoff) : undefined,
+        ),
+      );
 
     const [failed] = await db
       .select({ count: sql<number>`count(*)` })
       .from(payments)
-      .where(and(
-        sql`${payments.status} IN ('failed','cancelled')`,
-        cutoff ? gte(payments.createdAt, cutoff) : undefined,
-      ));
+      .where(
+        and(
+          sql`${payments.status} IN ('failed','cancelled')`,
+          cutoff ? gte(payments.createdAt, cutoff) : undefined,
+        ),
+      );
 
     res.json({
       range: range || "all",
@@ -270,9 +284,7 @@ router.get("/revenue", requirePermission("analytics.read"), async (req, res) => 
         platformFeeUzs: Number(totals.fees),
         netUzs: Number(totals.net),
         avgFeePercent: Number(totals.avgFeePercent),
-        takeRate: totals.gmv > 0
-          ? Number(((totals.fees / totals.gmv) * 100).toFixed(2))
-          : 0,
+        takeRate: totals.gmv > 0 ? Number(((totals.fees / totals.gmv) * 100).toFixed(2)) : 0,
       },
       pending: { count: Number(pending.count) },
       failed: { count: Number(failed.count) },
@@ -323,17 +335,24 @@ router.get("/gmv", requirePermission("analytics.read"), async (req, res) => {
     `);
     if (!viewCheck.rows[0]?.exists) {
       logger.info("gmv_daily view not yet created — returning empty", { source: "billing-routes" });
-      return res.json({ range: range || "all", from: fromDate, to: toDate, daily: [], totals: null });
+      return res.json({
+        range: range || "all",
+        from: fromDate,
+        to: toDate,
+        daily: [],
+        totals: null,
+      });
     }
 
-    const rows = fromDate && toDate
-      ? await db.execute(sql`
+    const rows =
+      fromDate && toDate
+        ? await db.execute(sql`
           SELECT day, succeeded_count, failed_count, pending_count, gmv_uzs, fee_uzs, net_uzs
           FROM gmv_daily
           WHERE day >= ${fromDate}::date AND day <= ${toDate}::date
           ORDER BY day
         `)
-      : await db.execute(sql`
+        : await db.execute(sql`
           SELECT day, succeeded_count, failed_count, pending_count, gmv_uzs, fee_uzs, net_uzs
           FROM gmv_daily
           ORDER BY day
@@ -383,9 +402,8 @@ router.get("/gmv", requirePermission("analytics.read"), async (req, res) => {
       daily,
       totals: {
         ...totals,
-        takeRatePct: totals.gmvUzs > 0
-          ? Number(((totals.feeUzs / totals.gmvUzs) * 100).toFixed(2))
-          : 0,
+        takeRatePct:
+          totals.gmvUzs > 0 ? Number(((totals.feeUzs / totals.gmvUzs) * 100).toFixed(2)) : 0,
       },
     });
   } catch (err) {
@@ -453,15 +471,15 @@ router.get("/reconciliation", requirePermission("analytics.read"), async (_req, 
       LIMIT 100
     `);
 
-    const missingFee    = (missingFeeRows.rows    ?? []) as unknown[];
-    const mathMismatch  = (mathMismatchRows.rows  ?? []) as unknown[];
-    const orphanWebhooks= (orphanWebhookRows.rows ?? []) as unknown[];
+    const missingFee = (missingFeeRows.rows ?? []) as unknown[];
+    const mathMismatch = (mathMismatchRows.rows ?? []) as unknown[];
+    const orphanWebhooks = (orphanWebhookRows.rows ?? []) as unknown[];
 
     res.json({
       summary: {
-        missingFeeCount:     missingFee.length,
-        mathMismatchCount:   mathMismatch.length,
-        orphanWebhookCount:  orphanWebhooks.length,
+        missingFeeCount: missingFee.length,
+        mathMismatchCount: mathMismatch.length,
+        orphanWebhookCount: orphanWebhooks.length,
         hasIssues: missingFee.length + mathMismatch.length + orphanWebhooks.length > 0,
       },
       missingFee,

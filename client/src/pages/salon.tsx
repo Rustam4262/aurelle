@@ -1,4 +1,5 @@
-import { useParams, useLocation } from "wouter";
+import { useEffect, useRef } from "react";
+import { useParams, useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import type { Service, Master } from "@shared/schema";
 import { MapPin, Phone, Calendar, Scissors, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ComplaintDialog } from "@/components/ComplaintDialog";
+import { savePendingBooking, readPendingBooking, clearPendingBooking } from "@/lib/booking-context";
 
 // Sub-components
 import { SalonHeader } from "@/components/salon/SalonHeader";
@@ -27,6 +29,7 @@ export default function SalonPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const search = useSearch();
 
   const {
     salonQuery,
@@ -55,11 +58,75 @@ export default function SalonPage() {
 
   const onBook = (service: Service, master?: Master) => {
     if (!user) {
+      savePendingBooking({ salonId: id!, serviceId: service.id, masterId: master?.id });
+      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
       navigate("/auth");
       return;
     }
     handleBookService(service, master);
   };
+
+  // Restores a booking attempt saved before a guest was sent to /auth, and
+  // handles "book again" links (?serviceId=&masterId=) from the client's own
+  // bookings list. Runs once the salon's own data has loaded so a removed
+  // service/master can actually be checked against something real.
+  const restoreAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (restoreAttemptedRef.current) return;
+    if (!user || !salonQuery.data || !servicesQuery.data || !mastersQuery.data) return;
+    restoreAttemptedRef.current = true;
+
+    const salon = salonQuery.data;
+    const isBookable = Boolean(salon.isActive) && salon.status === "active";
+
+    const findService = (serviceId: string) => servicesQuery.data!.find((s) => s.id === serviceId);
+    const findMaster = (masterId: string) => mastersQuery.data!.find((m) => m.id === masterId);
+
+    const pending = readPendingBooking();
+    if (pending && pending.salonId === id) {
+      clearPendingBooking();
+      if (isBookable && pending.serviceId) {
+        const service = findService(pending.serviceId);
+        if (service) {
+          const master = pending.masterId ? findMaster(pending.masterId) : undefined;
+          handleBookService(service, master, {
+            bookingDate: pending.bookingDate,
+            bookingTime: pending.bookingTime,
+          });
+        } else {
+          toast({
+            title: t("marketplace.salon.serviceNoLongerAvailable"),
+            variant: "destructive",
+          });
+        }
+      }
+      return;
+    }
+
+    const params = new URLSearchParams(search);
+    const serviceId = params.get("serviceId");
+    if (serviceId) {
+      navigate(`/salon/${id}`, { replace: true });
+      if (!isBookable) return;
+      const service = findService(serviceId);
+      if (!service) {
+        toast({
+          title: t("marketplace.salon.serviceNoLongerAvailable"),
+          variant: "destructive",
+        });
+        return;
+      }
+      const masterId = params.get("masterId");
+      const master = masterId ? findMaster(masterId) : undefined;
+      if (masterId && !master) {
+        toast({ title: t("marketplace.salon.masterNoLongerAvailable") });
+      }
+      // Deliberately no date/time/price/notes carried over — those are stale
+      // for a repeat visit even when the service itself is unchanged.
+      handleBookService(service, master);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, salonQuery.data, servicesQuery.data, mastersQuery.data, search, id]);
 
   if (dataLoading) {
     return (
@@ -87,10 +154,7 @@ export default function SalonPage() {
     );
   }
 
-  const address = getLocalizedText(
-    salon.address as unknown as { en: string; ru: string; uz: string },
-    currentLang,
-  );
+  const address = salon.address ?? "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -235,6 +299,7 @@ export default function SalonPage() {
           salonId={id}
           selectedService={selectedService}
           selectedMaster={selectedMaster}
+          workingHours={hoursQuery.data}
           bookingDate={bookingDate}
           setBookingDate={setBookingDate}
           bookingTime={bookingTime}

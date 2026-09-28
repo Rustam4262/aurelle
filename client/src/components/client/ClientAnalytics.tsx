@@ -61,7 +61,7 @@ export function ClientAnalytics({ bookings }: ClientAnalyticsProps) {
           </div>
           <p className="text-2xl font-bold">{formatCurrency(analytics.thisMonthSpent)}</p>
           <p className="text-xs text-muted-foreground">
-            {analytics.thisMonthVisits} {t("marketplace.client.analytics.visits")}
+            {t("marketplace.client.analytics.visits", { count: analytics.thisMonthVisits })}
           </p>
         </Card>
 
@@ -77,7 +77,7 @@ export function ClientAnalytics({ bookings }: ClientAnalyticsProps) {
           </div>
           <p className="text-2xl font-bold">{formatCurrency(analytics.thisYearSpent)}</p>
           <p className="text-xs text-muted-foreground">
-            {analytics.thisYearVisits} {t("marketplace.client.analytics.visits")}
+            {t("marketplace.client.analytics.visits", { count: analytics.thisYearVisits })}
           </p>
         </Card>
 
@@ -106,7 +106,7 @@ export function ClientAnalytics({ bookings }: ClientAnalyticsProps) {
           </div>
           <p className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</p>
           <p className="text-xs text-muted-foreground">
-            {stats.completedBookings} {t("marketplace.client.analytics.visits")}
+            {t("marketplace.client.analytics.visits", { count: stats.completedBookings })}
           </p>
         </Card>
       </div>

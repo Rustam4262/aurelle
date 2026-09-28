@@ -191,7 +191,16 @@ export async function setupWebSocket(httpServer: HttpServer): Promise<void> {
   // Set up Redis pub/sub before accepting WS connections
   await setupRedisPubSub();
 
-  wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  const socketServer = new WebSocketServer({ noServer: true, path: "/ws" });
+  wss = socketServer;
+
+  // Leave other upgrade paths to their handlers, including Vite's HMR server.
+  httpServer.on("upgrade", (req, socket, head) => {
+    if (req.url?.split("?")[0] !== "/ws") return;
+    socketServer.handleUpgrade(req, socket, head, (ws) => {
+      socketServer.emit("connection", ws, req);
+    });
+  });
 
   wss.on("connection", async (rawWs, req) => {
     const ws = rawWs as AuthedWebSocket;

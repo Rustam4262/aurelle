@@ -1,3 +1,4 @@
+import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar } from "@/components/ui/calendar";
@@ -244,7 +245,7 @@ export function BookingCalendar({
       <div key={period} className="space-y-1">
         <div className="flex items-center justify-between text-xs sticky top-0 bg-background/95 backdrop-blur py-1 z-10">
           <div className="flex items-center gap-2">
-            <span>{icon}</span>
+            <SymbolIcon name={icon} />
             <span className="font-medium text-muted-foreground">
               {getPeriodLabel(period, currentLang)}
             </span>
@@ -410,7 +411,7 @@ export function BookingCalendar({
             <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{getDayQualityIcon(dayInsights.quality)}</span>
+                  <SymbolIcon name={getDayQualityIcon(dayInsights.quality)} className="h-5 w-5" />
                   <span className="font-medium text-sm">{dayInsights.recommendation}</span>
                 </div>
                 {selectedDate && isSameDayFns(selectedDate, today) && (
@@ -458,10 +459,10 @@ export function BookingCalendar({
             {/* Grouped Slots by Time Period */}
             <ScrollArea className="h-[360px]">
               <div className="space-y-4 pr-4">
-                {renderSlotGroup("morning", groupedSlots.morning, "🌅")}
-                {renderSlotGroup("midday", groupedSlots.midday, "☀️")}
-                {renderSlotGroup("afternoon", groupedSlots.afternoon, "🌤️")}
-                {renderSlotGroup("evening", groupedSlots.evening, "🌙")}
+                {renderSlotGroup("morning", groupedSlots.morning, "morning")}
+                {renderSlotGroup("midday", groupedSlots.midday, "midday")}
+                {renderSlotGroup("afternoon", groupedSlots.afternoon, "afternoon")}
+                {renderSlotGroup("evening", groupedSlots.evening, "evening")}
               </div>
             </ScrollArea>
           </>

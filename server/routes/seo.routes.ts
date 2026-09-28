@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { salons, masters } from "@shared/schema";
-import { and, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 const router = Router();
 
@@ -36,24 +36,27 @@ Crawl-delay: 0
 router.get("/sitemap.xml", async (_req, res) => {
   try {
     const baseUrl = process.env.BASE_URL || "https://aurelle.uz";
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
-    // Fetch all active salons
+    // Only published, publicly visible listings belong in the sitemap —
+    // draft/paused salons and masters shouldn't be offered to crawlers.
     const allSalons = await db
       .select({
         id: salons.id,
         updatedAt: salons.updatedAt,
       })
-      .from(salons);
+      .from(salons)
+      .where(and(eq(salons.isActive, true), eq(salons.status, "active")));
 
-    // Fetch all active masters with slugs
     const allMasters = await db
       .select({
         slug: masters.slug,
         updatedAt: masters.createdAt,
       })
       .from(masters)
-      .where(isNotNull(masters.slug));
+      .where(
+        and(isNotNull(masters.slug), eq(masters.isActive, true), eq(masters.status, "active")),
+      );
 
     // Build sitemap XML
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -126,7 +129,9 @@ router.get("/sitemap.xml", async (_req, res) => {
 
     // Add salon URLs
     for (const salon of allSalons) {
-      const lastmod = salon.updatedAt ? new Date(salon.updatedAt).toISOString().split('T')[0] : today;
+      const lastmod = salon.updatedAt
+        ? new Date(salon.updatedAt).toISOString().split("T")[0]
+        : today;
       sitemap += `  <url>
     <loc>${baseUrl}/salon/${salon.id}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -139,7 +144,9 @@ router.get("/sitemap.xml", async (_req, res) => {
     // Add master URLs
     for (const master of allMasters) {
       if (master.slug) {
-        const lastmod = master.updatedAt ? new Date(master.updatedAt).toISOString().split('T')[0] : today;
+        const lastmod = master.updatedAt
+          ? new Date(master.updatedAt).toISOString().split("T")[0]
+          : today;
         sitemap += `  <url>
     <loc>${baseUrl}/master/${master.slug}</loc>
     <lastmod>${lastmod}</lastmod>

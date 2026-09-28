@@ -26,7 +26,7 @@ export function HomeFooter() {
             </div>
           </div>
 
-          <div className="md:col-span-2 md:col-start-7">
+          <div className="min-w-0 break-words md:col-span-2 md:col-start-7">
             <h4 className="font-bold text-xs uppercase tracking-widest text-foreground mb-6">
               {t("marketplace.footer.forClients")}
             </h4>
@@ -58,7 +58,7 @@ export function HomeFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="min-w-0 break-words md:col-span-2">
             <h4 className="font-bold text-xs uppercase tracking-widest text-foreground mb-6">
               {t("marketplace.footer.forOwners")}
             </h4>
@@ -82,7 +82,7 @@ export function HomeFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="min-w-0 break-words md:col-span-2">
             <h4 className="font-bold text-xs uppercase tracking-widest text-foreground mb-6">
               {t("marketplace.footer.platform")}
             </h4>

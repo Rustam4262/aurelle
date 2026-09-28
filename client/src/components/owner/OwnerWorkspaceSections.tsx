@@ -1,3 +1,5 @@
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -8,15 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2,
   FolderPlus,
-  Bell,
   MessageSquare,
-  Settings,
-  Shield,
-  Store,
-  Search,
   CirclePause,
   FileText,
-  Star,
   ChevronRight,
   Wallet,
 } from "lucide-react";
@@ -41,7 +37,9 @@ function normalizeOwnerSalons(input: OwnerSalon[]) {
   if (!Array.isArray(input)) return [] as OwnerSalon[];
 
   return input.filter((salon): salon is OwnerSalon => {
-    return Boolean(salon && typeof salon === "object" && typeof salon.id === "string" && salon.id.trim());
+    return Boolean(
+      salon && typeof salon === "object" && typeof salon.id === "string" && salon.id.trim(),
+    );
   });
 }
 
@@ -166,7 +164,6 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
     sectionLoading,
     ownerClients,
     ownerReviews,
-    analyticsSalons,
     tickets,
     notifications,
     stats,
@@ -186,7 +183,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
   } = props;
 
   const [salonSearch, setSalonSearch] = useState("");
-  const [salonStatusFilter, setSalonStatusFilter] = useState<"all" | "active" | "draft" | "paused">("all");
+  const [salonStatusFilter, setSalonStatusFilter] = useState<"all" | "active" | "draft" | "paused">(
+    "all",
+  );
   const [salonSort, setSalonSort] = useState<"updated" | "rating" | "reviews">("updated");
   const safeSalons = useMemo(() => normalizeOwnerSalons(salons), [salons]);
 
@@ -196,7 +195,8 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
     const paused = safeSalons.filter((salon) => (salon.status || "draft") === "paused");
     const ratingAverage =
       safeSalons.length > 0
-        ? safeSalons.reduce((acc, salon) => acc + Number(salon.averageRating || 0), 0) / safeSalons.length
+        ? safeSalons.reduce((acc, salon) => acc + Number(salon.averageRating || 0), 0) /
+          safeSalons.length
         : 0;
     const needsAttention = safeSalons.filter((salon) => {
       const status = salon.status || "draft";
@@ -258,7 +258,8 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
           return true;
         }
 
-        const haystack = `${localizedName} ${localizedCity || ""} ${salon.address || ""} ${salon.phone || ""} ${salon.email || ""}`.toLowerCase();
+        const haystack =
+          `${localizedName} ${localizedCity || ""} ${salon.address || ""} ${salon.phone || ""} ${salon.email || ""}`.toLowerCase();
         return haystack.includes(normalizedSearch);
       });
 
@@ -271,137 +272,94 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
         return right.reviewCount - left.reviewCount;
       }
 
-      return new Date(right.salon.updatedAt || 0).getTime() - new Date(left.salon.updatedAt || 0).getTime();
+      return (
+        new Date(right.salon.updatedAt || 0).getTime() -
+        new Date(left.salon.updatedAt || 0).getTime()
+      );
     });
   }, [language, localize, safeSalons, salonSearch, salonSort, salonStatusFilter]);
 
+  const [directorySearch, setDirectorySearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [selectedSalon, setSelectedSalon] = useState("all");
+  const [reviewFilter, setReviewFilter] = useState("all");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const visibleClients = ownerClients.filter(
+    (client) =>
+      (selectedSalon === "all" || client.salonId === selectedSalon) &&
+      [client.name, client.email, client.phone, client.salonName]
+        .join(" ")
+        .toLowerCase()
+        .includes(clientSearch.trim().toLowerCase()),
+  );
+  const visibleReviews = ownerReviews.filter(
+    (review) =>
+      (selectedSalon === "all" || review.salonId === selectedSalon) &&
+      (reviewFilter === "all" || !review.ownerResponse),
+  );
+  const visibleNotifications = notifications.filter((item) => !unreadOnly || !item.isRead);
+  const directorySalons = safeSalons.filter((salon) =>
+    [localize(salon.name, language), salon.address, localize(salon.city, language)]
+      .join(" ")
+      .toLowerCase()
+      .includes(directorySearch.trim().toLowerCase()),
+  );
+  const salonFilter = (
+    <select
+      aria-label="Фильтр по салону"
+      value={selectedSalon}
+      onChange={(event) => setSelectedSalon(event.target.value)}
+      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+    >
+      <option value="all">Все салоны</option>
+      {safeSalons.map((salon) => (
+        <option key={salon.id} value={salon.id}>
+          {localize(salon.name, language)}
+        </option>
+      ))}
+    </select>
+  );
   return (
     <>
       {activeSection === "salons" && (
         <section className="space-y-4">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Мои салоны</h3>
-                <p className="text-sm text-muted-foreground">
-                  Рабочая сетка владельца: состояние публикации, готовность карточек и быстрый вход в управление.
-                </p>
-              </div>
-              <Button onClick={() => setWizardOpen(true)}>
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Добавить салон
-              </Button>
-            </div>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Сеть</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.total}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Всего объектов в owner-контуре.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Активные</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.active}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Уже доступны клиентскому трафику.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Черновики</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.draft}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Ещё не доведены до публикации.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">На паузе</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.paused}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Временно выключены из витрины.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Фокус</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.needsAttention}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Нуждаются во внимании прямо сейчас.</p>
-            </Card>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <span>Всего: {ownerSalonSummary.total}</span>
+            <span>· Активные: {ownerSalonSummary.active}</span>
+            <span>· Черновики: {ownerSalonSummary.draft}</span>
+            <span>· На паузе: {ownerSalonSummary.paused}</span>
           </div>
-
-          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Управление сетью</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Быстрый фильтр по объектам, приоритетам и состоянию публикации.
-                  </p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:w-[620px] xl:grid-cols-[1.3fr_0.85fr_0.85fr]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={salonSearch}
-                      onChange={(event) => setSalonSearch(event.target.value)}
-                      placeholder="Поиск по названию, городу, адресу, телефону"
-                      className="pl-9"
-                    />
-                  </div>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                    value={salonStatusFilter}
-                    onChange={(event) =>
-                      setSalonStatusFilter(event.target.value as "all" | "active" | "draft" | "paused")
-                    }
-                  >
-                    <option value="all">Все статусы</option>
-                    <option value="active">Активные</option>
-                    <option value="draft">Черновики</option>
-                    <option value="paused">На паузе</option>
-                  </select>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                    value={salonSort}
-                    onChange={(event) => setSalonSort(event.target.value as "updated" | "rating" | "reviews")}
-                  >
-                    <option value="updated">Сначала новые</option>
-                    <option value="rating">По рейтингу</option>
-                    <option value="reviews">По отзывам</option>
-                  </select>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="border-border/70 p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Фокус владельца</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Где сейчас чаще всего теряется конверсия и почему стоит зайти именно туда.
-                  </p>
-                </div>
-                <Star className="mt-1 h-5 w-5 text-primary" />
-              </div>
-              <div className="mt-5 space-y-3">
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-sm font-medium text-foreground">Средний рейтинг сети</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {ownerSalonSummary.ratingAverage > 0 ? ownerSalonSummary.ratingAverage.toFixed(1) : "—"}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">Репутация по всем объектам владельца.</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-sm font-medium text-foreground">Неполные карточки</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {filteredSalons.filter((item) => item.readinessPercent < 100).length}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">Не хватает адреса, контактов или публикации.</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-sm font-medium text-foreground">Нулевые отзывы</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {filteredSalons.filter((item) => item.reviewCount === 0).length}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">Им нужен первый клиентский опыт и живые ответы.</p>
-                </div>
-              </div>
-            </Card>
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+            <Input
+              aria-label="Поиск моих салонов"
+              placeholder="Название, город или адрес"
+              value={salonSearch}
+              onChange={(event) => setSalonSearch(event.target.value)}
+            />
+            <select
+              aria-label="Статус салона"
+              value={salonStatusFilter}
+              onChange={(event) =>
+                setSalonStatusFilter(event.target.value as typeof salonStatusFilter)
+              }
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">Все статусы</option>
+              <option value="active">Активные</option>
+              <option value="draft">Черновики</option>
+              <option value="paused">На паузе</option>
+            </select>
+            <select
+              aria-label="Сортировка салонов"
+              value={salonSort}
+              onChange={(event) => setSalonSort(event.target.value as typeof salonSort)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="updated">По обновлению</option>
+              <option value="rating">По рейтингу</option>
+              <option value="reviews">По отзывам</option>
+            </select>
           </div>
-
           <div className="grid gap-4 lg:grid-cols-2">
             {filteredSalons.length > 0 ? (
               filteredSalons.map(
@@ -430,7 +388,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                           {localizedCity || "Город не указан"}
                         </p>
                         {salon.address && (
-                          <p className="mt-1 break-words text-sm text-muted-foreground">{salon.address}</p>
+                          <p className="mt-1 break-words text-sm text-muted-foreground">
+                            {salon.address}
+                          </p>
                         )}
                       </div>
                       <div className="text-right">
@@ -445,22 +405,36 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-4">
                       <div className="rounded-2xl bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Статус</p>
-                        <p className="mt-2 text-sm font-medium text-foreground">{ownerStatusLabel(status)}</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Статус
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {ownerStatusLabel(status)}
+                        </p>
                       </div>
                       <div className="rounded-2xl bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Контакт</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Контакт
+                        </p>
                         <p className="mt-2 break-words text-sm font-medium text-foreground">
                           {salon.phone || salon.email || "Не указан"}
                         </p>
                       </div>
                       <div className="rounded-2xl bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Обновлён</p>
-                        <p className="mt-2 text-sm font-medium text-foreground">{formatDate(salon.updatedAt)}</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Обновлён
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {formatDate(salon.updatedAt)}
+                        </p>
                       </div>
                       <div className="rounded-2xl bg-muted/20 p-3">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Готовность</p>
-                        <p className="mt-2 text-sm font-medium text-foreground">{readinessPercent}%</p>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Готовность
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {readinessPercent}%
+                        </p>
                       </div>
                     </div>
 
@@ -534,7 +508,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                         </div>
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4" />
-                          <span>{status === "active" ? "Готов к бронированиям" : "Трафик ограничен"}</span>
+                          <span>
+                            {status === "active" ? "Готов к бронированиям" : "Трафик ограничен"}
+                          </span>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
@@ -565,7 +541,8 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Создание нового салона</h3>
                 <p className="text-sm text-muted-foreground">
-                  Полный wizard для аккуратного старта: профиль, фото, график и подготовка к публикации.
+                  Полный wizard для аккуратного старта: профиль, фото, график и подготовка к
+                  публикации.
                 </p>
               </div>
               <FolderPlus className="h-5 w-5 text-primary" />
@@ -590,30 +567,39 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
           <Card className="border-border/70 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-foreground">Быстрый черновик</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Если нужен быстрый старт без полного wizard, можно создать минимальный черновик прямо здесь.
+              Если нужен быстрый старт без полного wizard, можно создать минимальный черновик прямо
+              здесь.
             </p>
             <div className="mt-5 space-y-3">
               <Input
                 placeholder="Название салона (RU)"
                 value={salonDraft.nameRu}
-                onChange={(event) => setSalonDraft((current) => ({ ...current, nameRu: event.target.value }))}
+                onChange={(event) =>
+                  setSalonDraft((current) => ({ ...current, nameRu: event.target.value }))
+                }
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <Input
                   placeholder="Телефон"
                   value={salonDraft.phone}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, phone: event.target.value }))}
+                  onChange={(event) =>
+                    setSalonDraft((current) => ({ ...current, phone: event.target.value }))
+                  }
                 />
                 <Input
                   placeholder="Email салона"
                   value={salonDraft.email}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, email: event.target.value }))}
+                  onChange={(event) =>
+                    setSalonDraft((current) => ({ ...current, email: event.target.value }))
+                  }
                 />
               </div>
               <Input
                 placeholder="Адрес"
                 value={salonDraft.address}
-                onChange={(event) => setSalonDraft((current) => ({ ...current, address: event.target.value }))}
+                onChange={(event) =>
+                  setSalonDraft((current) => ({ ...current, address: event.target.value }))
+                }
               />
               <Textarea
                 rows={4}
@@ -623,8 +609,16 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                   setSalonDraft((current) => ({ ...current, descriptionRu: event.target.value }))
                 }
               />
-              <Button className="w-full" onClick={() => void onCreateSalon()} disabled={creatingSalon}>
-                {creatingSalon ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FolderPlus className="mr-2 h-4 w-4" />}
+              <Button
+                className="w-full"
+                onClick={() => void onCreateSalon()}
+                disabled={creatingSalon}
+              >
+                {creatingSalon ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FolderPlus className="mr-2 h-4 w-4" />
+                )}
                 Создать черновик
               </Button>
             </div>
@@ -632,236 +626,104 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
         </section>
       )}
 
-      {activeSection === "staff" && (
+      {["staff", "services", "bookings"].includes(activeSection) && (
         <section className="space-y-4">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Персонал владельца</h3>
-                <p className="text-sm text-muted-foreground">
-                  Верхний owner-уровень теперь ведёт не в нестабильный старый экран, а в живую сетку салонов и их команд.
-                </p>
-              </div>
-              <Badge variant="outline" className="border-border/70">
-                {ownerSalonSummary.total} салонов
-              </Badge>
-            </div>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Активные объекты</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.active}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Уже готовы к назначению мастеров и ролей.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужны доступы</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.needsAttention}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Проверьте публикацию, контакты и состояние карточек салонов.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Быстрый маршрут</p>
-              <Button className="mt-4 w-full" onClick={() => openOwnerSection("salons")}>
-                Открыть мои салоны
-              </Button>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {filteredSalons.length > 0 ? (
-              filteredSalons.map(({ salon, localizedName, attentionFlags, readinessPercent }) => (
-                <Card key={`staff-${salon.id}`} className="border-border/70 p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Доступы, мастера и роли открываются внутри рабочего пространства конкретного салона.
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="border-border/70">
-                      {readinessPercent}% готовности
-                    </Badge>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {attentionFlags.length > 0 ? (
-                      attentionFlags.slice(0, 3).map((flag) => (
-                        <Badge key={`${salon.id}-${flag}`} variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                          {flag}
-                        </Badge>
-                      ))
-                    ) : (
-                      <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                        Команда может работать без блокеров
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Button asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=masters`}>Открыть мастеров</Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=access`}>Открыть доступы</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
-                Сначала создайте салон, и здесь появится owner-слой для управления мастерами и доступами.
-              </Card>
-            )}
-          </div>
-        </section>
-      )}
-
-      {activeSection === "services" && (
-        <section className="space-y-4">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Услуги по сети салонов</h3>
-                <p className="text-sm text-muted-foreground">
-                  Owner-уровень показывает, где нужно навести порядок в каталоге, а редактирование идёт уже внутри конкретного салона.
-                </p>
-              </div>
-              <Badge variant="outline" className="border-border/70">
-                {filteredSalons.length} в фокусе
-              </Badge>
-            </div>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Опубликованы</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.active}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Могут принимать трафик и бронирования.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Черновики</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.draft}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Им особенно важно заполнить услуги и цены.</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нулевые отзывы</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.reviewCount === 0).length}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Часто это значит, что каталог услуг ещё не продаёт как надо.</p>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {filteredSalons.length > 0 ? (
-              filteredSalons.map(({ salon, localizedName, status, reviewCount }) => (
-                <Card key={`services-${salon.id}`} className="border-border/70 p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Каталог услуг, порядок на витрине и цены управляются из рабочего пространства салона.
-                      </p>
-                    </div>
-                    <Badge variant="outline" className={ownerStatusBadgeClass(status)}>
-                      {ownerStatusLabel(status)}
-                    </Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отзывы</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{reviewCount}</p>
-                    </div>
-                    <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Контур</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{status === "active" ? "Готов к росту" : "Нужен owner-апрув"}</p>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Button asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=services`}>Открыть услуги</Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=public`}>Открыть витрину</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
-                Сначала добавьте салон, и здесь появится owner-уровень для каталога услуг.
-              </Card>
-            )}
-          </div>
-        </section>
-      )}
-
-      {activeSection === "bookings" && (
-        <section className="space-y-4">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Записи по сети владельца</h3>
-                <p className="text-sm text-muted-foreground">
-                  Вместо падающего старого advanced-bookings owner видит устойчивую точку входа в бронирования каждого салона.
-                </p>
-              </div>
-              <Button variant="outline" onClick={() => openOwnerSection("messages")}>
-                Открыть сообщения
-              </Button>
-            </div>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Салоны в сети</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.total}</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужны действия</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{ownerSalonSummary.needsAttention}</p>
-            </Card>
-            <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Открытые обращения</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{stats.unresolvedTickets}</p>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {filteredSalons.length > 0 ? (
-              filteredSalons.map(({ salon, localizedName, localizedCity, status }) => (
-                <Card key={`bookings-${salon.id}`} className="border-border/70 p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {localizedCity || "Город не указан"}{salon.address ? `, ${salon.address}` : ""}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className={ownerStatusBadgeClass(status)}>
-                      {ownerStatusLabel(status)}
-                    </Badge>
-                  </div>
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Все рабочие бронирования, клиенты и статусы открываются внутри конкретного салона, где уже есть нужный контекст.
+          <p className="text-sm text-muted-foreground">
+            {activeSection === "bookings"
+              ? "Выберите салон для просмотра записей и расписания."
+              : activeSection === "staff"
+                ? "Выберите салон для управления мастерами и доступами команды."
+                : "Выберите салон для изменения услуг, цен и длительности процедур."}
+          </p>
+          <Input
+            aria-label="Поиск салона"
+            placeholder="Название салона или адрес"
+            value={directorySearch}
+            onChange={(event) => setDirectorySearch(event.target.value)}
+          />
+          <div className="space-y-3">
+            {directorySalons.map((salon) => (
+              <Card
+                key={salon.id}
+                className="flex flex-wrap items-center justify-between gap-4 p-5"
+              >
+                <div>
+                  <h3 className="font-semibold">{localize(salon.name, language)}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {salon.address || localize(salon.city, language)}
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Button asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=bookings`}>Открыть записи</Link>
+                  <Badge variant="outline" className="mt-2">
+                    {ownerStatusLabel(salon.status)}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild>
+                    <Link
+                      href={
+                        "/owner/salon/" +
+                        salon.id +
+                        "?tab=" +
+                        (activeSection === "staff" ? "masters" : activeSection)
+                      }
+                    >
+                      {activeSection === "staff"
+                        ? "Мастера"
+                        : activeSection === "bookings"
+                          ? "Открыть записи"
+                          : "Услуги и цены"}
+                    </Link>
+                  </Button>
+                  {activeSection !== "services" && (
+                    <Button asChild variant="outline">
+                      <Link
+                        href={
+                          "/owner/salon/" +
+                          salon.id +
+                          "?tab=" +
+                          (activeSection === "staff" ? "access" : "schedule")
+                        }
+                      >
+                        {activeSection === "staff" ? "Доступы команды" : "Расписание"}
+                      </Link>
                     </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=clients`}>Открыть клиентов</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground lg:col-span-2">
-                После создания первого салона здесь появится owner-слой по записям и CRM.
+                  )}
+                </div>
               </Card>
-            )}
+            ))}
           </div>
+          {!directorySalons.length && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">
+                {safeSalons.length
+                  ? "По вашему запросу салоны не найдены."
+                  : "Сначала добавьте салон, чтобы начать работу."}
+              </p>
+              <Button
+                className="mt-4"
+                variant="outline"
+                onClick={() =>
+                  safeSalons.length ? setDirectorySearch("") : openOwnerSection("add-salon")
+                }
+              >
+                {safeSalons.length ? "Сбросить поиск" : "Добавить салон"}
+              </Button>
+            </Card>
+          )}
         </section>
       )}
 
       {activeSection === "clients" && (
         <section className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <Input
+              className="min-w-0 flex-1"
+              aria-label="Поиск клиентов"
+              placeholder="Имя, телефон или email"
+              value={clientSearch}
+              onChange={(event) => setClientSearch(event.target.value)}
+            />
+            {salonFilter}
+          </div>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -881,13 +743,18 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
               <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
               Загружаем клиентскую базу владельца
             </Card>
-          ) : ownerClients.length > 0 ? (
+          ) : visibleClients.length > 0 ? (
             <div className="grid gap-4 lg:grid-cols-2">
-              {ownerClients.map((client) => (
-                <Card key={`${client.salonId}-${client.id}`} className="border-border/70 p-5 shadow-sm">
+              {visibleClients.map((client) => (
+                <Card
+                  key={`${client.salonId}-${client.id}`}
+                  className="border-border/70 p-5 shadow-sm"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{client.name}</h3>
+                      <h3 className="break-words text-lg font-semibold text-foreground">
+                        {client.name}
+                      </h3>
                       <p className="mt-2 text-sm text-muted-foreground">{client.salonName}</p>
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                         {client.email && <span className="break-all">{client.email}</span>}
@@ -896,31 +763,53 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-semibold text-foreground">{formatMoney(client.totalSpent)}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">UZS всего</p>
+                      <p className="text-lg font-semibold text-foreground">
+                        {formatMoney(client.totalSpent)}
+                      </p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        UZS всего
+                      </p>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-4">
                     <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Визиты</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{client.totalBookings}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        Визиты
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {client.totalBookings}
+                      </p>
                     </div>
                     <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Завершено</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{client.completedBookings}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        Завершено
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {client.completedBookings}
+                      </p>
                     </div>
                     <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отмены</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{client.cancelledBookings}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        Отмены
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {client.cancelledBookings}
+                      </p>
                     </div>
                     <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Последний визит</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{formatDate(client.lastVisit)}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        Последний визит
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {formatDate(client.lastVisit)}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-4">
                     <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${client.salonId}?tab=clients`}>Открыть салон клиента</Link>
+                      <Link href={`/owner/salon/${client.salonId}?tab=clients`}>
+                        Открыть салон клиента
+                      </Link>
                     </Button>
                   </div>
                 </Card>
@@ -928,93 +817,71 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             </div>
           ) : (
             <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm">
-              После первых бронирований здесь появится живая клиентская база по всем салонам владельца.
+              {ownerClients.length
+                ? "По выбранным фильтрам клиентов нет."
+                : "После первой записи здесь появятся ваши клиенты."}
             </Card>
           )}
         </section>
       )}
 
       {activeSection === "messages" && (
-        <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-foreground">Коммуникации владельца</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Единая точка входа в сигналы по платформе, owner-support и рабочие переходы в кабинеты салонов.
-            </p>
-            <div className="mt-5 space-y-3">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-sm font-medium text-foreground">Непрочитанные уведомления</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{stats.unreadNotifications}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Сигналы по записям, публикации и изменениям в owner-контуре.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-sm font-medium text-foreground">Открытые обращения</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{stats.unresolvedTickets}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Тикеты и переписка с платформой по модерации, доступам и техвопросам.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-                Клиентские чаты лучше всего открывать прямо из рабочего пространства конкретного салона, где уже есть контекст по отзывам, клиентам и бронированиям.
-              </div>
+        <section className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Обращения в поддержку и связь с платформой. Уведомления о событиях находятся в отдельном
+            разделе.
+          </p>
+          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div>
+              <h3 className="font-semibold">Поддержка платформы</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Открытых обращений: {stats.unresolvedTickets}
+              </p>
             </div>
+            <Button onClick={() => openOwnerSection("support")}>Написать в поддержку</Button>
           </Card>
-
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
+          {tickets.slice(0, 5).map((ticket) => (
+            <Card key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Последние сигналы</h3>
-                <p className="text-sm text-muted-foreground">Живой inbox владельца без лишнего шума.</p>
+                <h3 className="font-medium">{ticket.subject}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatDate(ticket.updatedAt || ticket.createdAt)}
+                </p>
               </div>
-              {stats.unreadNotifications > 0 && (
-                <Button variant="outline" size="sm" onClick={() => void onMarkAllNotificationsRead()}>
-                  Прочитать всё
-                </Button>
-              )}
-            </div>
-            <div className="mt-5 space-y-3">
-              {notifications.length > 0 ? (
-                notifications.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-medium text-foreground">{item.message || item.type}</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.type}</p>
-                      </div>
-                      <Badge variant="outline" className={item.isRead ? "border-border/70" : "border-primary/30 bg-primary/5 text-primary"}>
-                        {item.isRead ? "Прочитано" : "Новое"}
-                      </Badge>
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <span className="text-sm text-muted-foreground">{formatDate(item.createdAt)}</span>
-                      {!item.isRead && (
-                        <Button variant="ghost" size="sm" onClick={() => void onMarkNotificationRead(item.id)}>
-                          Отметить прочитанным
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                  У владельца пока нет входящих сигналов. Когда появятся записи, ответы платформы или изменения статусов, они соберутся здесь.
-                </div>
-              )}
-            </div>
-          </Card>
+              <Button variant="outline" onClick={() => openOwnerSection("support")}>
+                К обращениям
+              </Button>
+            </Card>
+          ))}
+          {!tickets.length && (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Переписки с поддержкой пока нет.
+            </p>
+          )}
         </section>
       )}
 
       {activeSection === "reviews" && (
         <section className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            {salonFilter}
+            <select
+              aria-label="Фильтр отзывов"
+              value={reviewFilter}
+              onChange={(event) => setReviewFilter(event.target.value)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">Все отзывы</option>
+              <option value="unanswered">Без ответа</option>
+            </select>
+          </div>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Отзывы по сети владельца</h3>
                 <p className="text-sm text-muted-foreground">
-                  Сводная репутация по всем салонам с быстрым переходом в нужное рабочее пространство.
+                  Сводная репутация по всем салонам с быстрым переходом в нужное рабочее
+                  пространство.
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
@@ -1028,32 +895,52 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
               <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
               Загружаем отзывы по всей сети
             </Card>
-          ) : ownerReviews.length > 0 ? (
+          ) : visibleReviews.length > 0 ? (
             <div className="space-y-4">
-              {ownerReviews.map((review) => (
-                <Card key={`${review.salonId}-${review.id}`} className="border-border/70 p-5 shadow-sm">
+              {visibleReviews.map((review) => (
+                <Card
+                  key={`${review.salonId}-${review.id}`}
+                  className="border-border/70 p-5 shadow-sm"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{review.clientName || "Клиент"}</h3>
+                      <h3 className="break-words text-lg font-semibold text-foreground">
+                        {review.clientName || "Клиент"}
+                      </h3>
                       <p className="mt-2 text-sm text-muted-foreground">{review.salonName}</p>
                       {review.masterName && (
-                        <p className="mt-1 text-sm text-muted-foreground">Мастер: {review.masterName}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Мастер: {review.masterName}
+                        </p>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold text-foreground">{review.rating}/5</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{formatDate(review.createdAt)}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {formatDate(review.createdAt)}
+                      </p>
                     </div>
                   </div>
                   {review.comment && (
-                    <p className="mt-4 break-words text-sm leading-6 text-foreground">{review.comment}</p>
+                    <p className="mt-4 break-words text-sm leading-6 text-foreground">
+                      {review.comment}
+                    </p>
                   )}
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <Badge variant="outline" className={review.ownerResponse ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"}>
+                    <Badge
+                      variant="outline"
+                      className={
+                        review.ownerResponse
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                          : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                      }
+                    >
                       {review.ownerResponse ? "Есть ответ владельца" : "Требует ответа"}
                     </Badge>
                     <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${review.salonId}?tab=reviews`}>Открыть в салоне</Link>
+                      <Link href={`/owner/salon/${review.salonId}?tab=reviews`}>
+                        Открыть в салоне
+                      </Link>
                     </Button>
                   </div>
                 </Card>
@@ -1061,7 +948,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             </div>
           ) : (
             <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm">
-              После первых завершённых визитов отзывы по всем салонам владельца появятся здесь.
+              {ownerReviews.length
+                ? "По выбранным фильтрам отзывов нет."
+                : "Отзывы появятся после завершённых визитов клиентов."}
             </Card>
           )}
         </section>
@@ -1074,7 +963,8 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Аналитика владельца</h3>
                 <p className="text-sm text-muted-foreground">
-                  Доход, средний чек и динамика по сети салонов без переходов в отдельные внешние панели.
+                  Сводка по салонам и репутации. Подробные финансовые отчёты доступны в кабинете
+                  каждого салона.
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
@@ -1085,62 +975,93 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
 
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Средний рейтинг</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">
-                {ownerSalonSummary.ratingAverage > 0 ? ownerSalonSummary.ratingAverage.toFixed(1) : "—"}
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                Средний рейтинг
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">Общий сигнал по качеству сети владельца.</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">
+                {ownerSalonSummary.ratingAverage > 0
+                  ? ownerSalonSummary.ratingAverage.toFixed(1)
+                  : "—"}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Общий сигнал по качеству сети владельца.
+              </p>
             </Card>
             <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Готовые карточки</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.readinessPercent === 100).length}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Полностью собранные салоны, готовые к трафику.</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                Готовые карточки
+              </p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">
+                {filteredSalons.filter((item) => item.readinessPercent === 100).length}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Полностью собранные салоны, готовые к трафику.
+              </p>
             </Card>
             <Card className="border-border/70 p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Точки роста</p>
-              <p className="mt-3 text-2xl font-semibold text-foreground">{filteredSalons.filter((item) => item.reviewCount === 0).length}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Салоны без отзывов, где важен первый клиентский опыт.</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                Точки роста
+              </p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">
+                {filteredSalons.filter((item) => item.reviewCount === 0).length}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Салоны без отзывов, где важен первый клиентский опыт.
+              </p>
             </Card>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             {filteredSalons.length > 0 ? (
-              filteredSalons.map(({ salon, localizedName, averageRating, reviewCount, readinessPercent }) => (
-                <Card key={`analytics-${salon.id}`} className="border-border/70 p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="break-words text-lg font-semibold text-foreground">{localizedName}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Внутри карточки салона уже доступна детальная аналитика по записям, отзывам и состоянию workspace.
-                      </p>
+              filteredSalons.map(
+                ({ salon, localizedName, averageRating, reviewCount, readinessPercent }) => (
+                  <Card key={`analytics-${salon.id}`} className="border-border/70 p-5 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words text-lg font-semibold text-foreground">
+                          {localizedName}
+                        </h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Внутри карточки салона уже доступна детальная аналитика по записям,
+                          отзывам и состоянию workspace.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-border/70">
+                        {readinessPercent}% готовности
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="border-border/70">
-                      {readinessPercent}% готовности
-                    </Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Рейтинг</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{averageRating > 0 ? averageRating.toFixed(1) : "—"}</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Рейтинг
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {averageRating > 0 ? averageRating.toFixed(1) : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          Отзывы
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-foreground">{reviewCount}</p>
+                      </div>
                     </div>
-                    <div className="rounded-2xl bg-muted/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отзывы</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">{reviewCount}</p>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <Button asChild>
+                        <Link href={`/owner/salon/${salon.id}?tab=analytics`}>
+                          Открыть аналитику
+                        </Link>
+                      </Button>
+                      <Button variant="outline" asChild>
+                        <Link href={`/owner/salon/${salon.id}?tab=reviews`}>Открыть отзывы</Link>
+                      </Button>
                     </div>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Button asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=overview`}>Открыть салон</Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/owner/salon/${salon.id}?tab=reviews`}>Открыть отзывы</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                ),
+              )
             ) : (
               <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm lg:col-span-2">
-                Сначала создайте хотя бы один салон, и здесь появится owner-аналитика по сети.
+                Сначала создайте хотя бы один салон, и здесь появится аналитика салонов.
               </Card>
             )}
           </div>
@@ -1152,20 +1073,25 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
           <Card className="border-border/70 p-5 shadow-sm">
             <h3 className="text-lg font-semibold text-foreground">Написать платформе</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Технические проблемы, модерация, платежи, клиенты и owner-вопросы в одном канале.
+              Технические проблемы, модерация, платежи, клиенты и вопросы владельца в одном канале.
             </p>
             <div className="mt-5 space-y-3">
               <Input
+                aria-label="Тема обращения"
                 placeholder="Тема обращения"
                 value={supportDraft.subject}
-                onChange={(event) => setSupportDraft((current) => ({ ...current, subject: event.target.value }))}
+                onChange={(event) =>
+                  setSupportDraft((current) => ({ ...current, subject: event.target.value }))
+                }
               />
               <label className="space-y-2 text-sm text-muted-foreground">
                 <span>Категория</span>
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
                   value={supportDraft.category}
-                  onChange={(event) => setSupportDraft((current) => ({ ...current, category: event.target.value }))}
+                  onChange={(event) =>
+                    setSupportDraft((current) => ({ ...current, category: event.target.value }))
+                  }
                 >
                   <option value="account">Аккаунт и доступ</option>
                   <option value="moderation">Модерация</option>
@@ -1176,13 +1102,24 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                 </select>
               </label>
               <Textarea
+                aria-label="Сообщение в поддержку"
                 placeholder="Опишите вопрос или проблему"
                 rows={6}
                 value={supportDraft.message}
-                onChange={(event) => setSupportDraft((current) => ({ ...current, message: event.target.value }))}
+                onChange={(event) =>
+                  setSupportDraft((current) => ({ ...current, message: event.target.value }))
+                }
               />
-              <Button className="w-full" onClick={() => void onSupportTicket()} disabled={sendingSupport}>
-                {sendingSupport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
+              <Button
+                className="w-full"
+                onClick={() => void onSupportTicket()}
+                disabled={sendingSupport}
+              >
+                {sendingSupport ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                )}
                 Отправить обращение
               </Button>
             </div>
@@ -1192,7 +1129,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">История обращений</h3>
-                <p className="text-sm text-muted-foreground">Текущие и закрытые owner-тикеты по платформе.</p>
+                <p className="text-sm text-muted-foreground">
+                  Текущие и закрытые обращения по платформе.
+                </p>
               </div>
               <Badge variant="outline" className="border-border/70">
                 {tickets.length} тикетов
@@ -1201,19 +1140,50 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             <div className="mt-5 space-y-3">
               {tickets.length > 0 ? (
                 tickets.map((ticket) => (
-                  <div key={ticket.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <div
+                    key={ticket.id}
+                    className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
+                        <p className="break-words text-sm font-medium text-foreground">
+                          {ticket.subject}
+                        </p>
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          {(
+                            {
+                              bug: "Ошибка",
+                              payment: "Оплата",
+                              question: "Вопрос",
+                              suggestion: "Предложение",
+                            } as Record<string, string>
+                          )[ticket.category] || ticket.category}
+                        </p>
                       </div>
-                      <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
+                      <Badge variant="outline" className="border-border/70">
+                        {(
+                          {
+                            open: "Открыто",
+                            in_progress: "В работе",
+                            resolved: "Решено",
+                            closed: "Закрыто",
+                          } as Record<string, string>
+                        )[ticket.status] || ticket.status}
+                      </Badge>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <span className="text-sm text-muted-foreground">Создано: {formatDate(ticket.createdAt)}</span>
-                      <span className="text-sm text-muted-foreground">Обновлено: {formatDate(ticket.updatedAt)}</span>
+                      <span className="text-sm text-muted-foreground">
+                        Создано: {formatDate(ticket.createdAt)}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        Обновлено: {formatDate(ticket.updatedAt)}
+                      </span>
                       {ticket.status !== "closed" && (
-                        <Button variant="ghost" size="sm" onClick={() => void onCloseSupportTicket(ticket.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void onCloseSupportTicket(ticket.id)}
+                        >
                           Закрыть
                         </Button>
                       )}
@@ -1232,12 +1202,26 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
 
       {activeSection === "notifications" && (
         <section className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              variant={unreadOnly ? "outline" : "default"}
+              onClick={() => setUnreadOnly(false)}
+            >
+              Все
+            </Button>
+            <Button
+              variant={unreadOnly ? "default" : "outline"}
+              onClick={() => setUnreadOnly(true)}
+            >
+              Непрочитанные ({stats.unreadNotifications})
+            </Button>
+          </div>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Центр уведомлений</h3>
                 <p className="text-sm text-muted-foreground">
-                  Все owner-сигналы: публикация, события по салонам, статусы и ответы платформы.
+                  Все уведомления: публикация, события по салонам, статусы и ответы платформы.
                 </p>
               </div>
               {stats.unreadNotifications > 0 && (
@@ -1248,22 +1232,39 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
             </div>
           </Card>
           <div className="space-y-3">
-            {notifications.length > 0 ? (
-              notifications.map((item) => (
+            {visibleNotifications.length > 0 ? (
+              visibleNotifications.map((item) => (
                 <Card key={item.id} className="border-border/70 p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="break-words text-sm font-medium text-foreground">{item.message || item.type}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.type}</p>
+                      <p className="break-words text-sm font-medium text-foreground">
+                        {item.message || item.type}
+                      </p>
+                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        {item.type}
+                      </p>
                     </div>
-                    <Badge variant="outline" className={item.isRead ? "border-border/70" : "border-primary/30 bg-primary/5 text-primary"}>
+                    <Badge
+                      variant="outline"
+                      className={
+                        item.isRead
+                          ? "border-border/70"
+                          : "border-primary/30 bg-primary/5 text-primary"
+                      }
+                    >
                       {item.isRead ? "Прочитано" : "Новое"}
                     </Badge>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-muted-foreground">{formatDate(item.createdAt)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(item.createdAt)}
+                    </span>
                     {!item.isRead && (
-                      <Button variant="ghost" size="sm" onClick={() => void onMarkNotificationRead(item.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void onMarkNotificationRead(item.id)}
+                      >
                         Отметить прочитанным
                       </Button>
                     )}
@@ -1272,7 +1273,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
               ))
             ) : (
               <Card className="border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground shadow-sm">
-                Когда по owner-панели появятся новые сигналы, они соберутся здесь.
+                {unreadOnly ? "Все уведомления прочитаны." : "Новых событий пока нет."}
               </Card>
             )}
           </div>
@@ -1280,49 +1281,40 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
       )}
 
       {activeSection === "settings" && (
-        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-foreground">Настройки владельца</h3>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Роль</p>
-                <p className="mt-2 text-sm font-medium text-foreground">Владелец салона</p>
+        <section className="space-y-4">
+          <Card className="p-5">
+            <h3 className="font-semibold">Внешний вид и язык</h3>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+              <div>
+                <p className="text-sm font-medium">Тема интерфейса</p>
+                <p className="text-sm text-muted-foreground">
+                  Светлая, тёмная или как на устройстве
+                </p>
               </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Салоны</p>
-                <p className="mt-2 text-sm font-medium text-foreground">{salons.length} в кабинете</p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Уведомления</p>
-                <p className="mt-2 text-sm font-medium text-foreground">{stats.unreadNotifications} непрочитанных</p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Безопасность</p>
-                <p className="mt-2 text-sm font-medium text-foreground">Owner-доступ активен</p>
-              </div>
+              <ThemeToggle />
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <p className="text-sm font-medium">Язык интерфейса</p>
+              <LanguageSwitcher />
             </div>
           </Card>
-
-          <Card className="border-border/70 p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-foreground">Рабочие переходы</h3>
-            <div className="mt-5 grid gap-3">
-              <Button variant="outline" className="justify-start" onClick={() => openOwnerSection("support")}>
-                <Shield className="mr-2 h-4 w-4" />
-                Перейти в поддержку
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => openOwnerSection("notifications")}>
-                <Bell className="mr-2 h-4 w-4" />
-                Открыть уведомления
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => openOwnerSection("salons")}>
-                <Store className="mr-2 h-4 w-4" />
-                Управлять салонами
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => void onRefresh()}>
-                <Settings className="mr-2 h-4 w-4" />
-                Обновить owner-панель
-              </Button>
-            </div>
+          <Card className="p-5">
+            <h3 className="font-semibold">Безопасность аккаунта</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Для смены пароля запросите письмо на вашу почту.
+            </p>
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/auth/forgot-password">Сменить пароль</Link>
+            </Button>
+          </Card>
+          <Card className="p-5">
+            <h3 className="font-semibold">Команда и права доступа</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Доступ сотрудников настраивается отдельно для каждого салона.
+            </p>
+            <Button variant="outline" className="mt-4" onClick={() => openOwnerSection("staff")}>
+              Управлять доступами
+            </Button>
           </Card>
         </section>
       )}

@@ -29,7 +29,7 @@ test.describe("Auth page — 401 regression", () => {
     await page.waitForLoadState("networkidle");
 
     // Login form must be visible
-    const emailInput = page.locator('[data-testid="input-email"]');
+    const emailInput = page.getByRole("textbox", { name: "Email", exact: true });
     await expect(emailInput).toBeVisible({ timeout: 10_000 });
 
     // Error boundary must NOT appear
@@ -56,7 +56,7 @@ test.describe("Auth page — 401 regression", () => {
     await page.goto("/auth");
     await page.waitForLoadState("networkidle");
 
-    const emailInput = page.locator('[data-testid="input-email"]');
+    const emailInput = page.getByRole("textbox", { name: "Email", exact: true });
     await expect(emailInput).toBeVisible({ timeout: 10_000 });
 
     const errorHeading = page.getByText("Что-то пошло не так", { exact: false });
@@ -72,7 +72,7 @@ test.describe("Auth page — 401 regression", () => {
     await page.goto("/auth");
     await page.waitForLoadState("networkidle");
 
-    const emailInput = page.locator('[data-testid="input-email"]');
+    const emailInput = page.getByRole("textbox", { name: "Email", exact: true });
     await expect(emailInput).toBeVisible({ timeout: 10_000 });
 
     const errorHeading = page.getByText("Что-то пошло не так", { exact: false });

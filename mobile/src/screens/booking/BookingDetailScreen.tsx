@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -54,10 +47,14 @@ export function BookingDetailScreen({ navigation, route }: Props) {
 
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
   const salonName = booking.salon
-    ? typeof booking.salon.name === "string" ? booking.salon.name : booking.salon.name.ru
+    ? typeof booking.salon.name === "string"
+      ? booking.salon.name
+      : booking.salon.name.ru
     : "Салон";
   const serviceName = booking.service
-    ? typeof booking.service.name === "string" ? booking.service.name : booking.service.name.ru
+    ? typeof booking.service.name === "string"
+      ? booking.service.name
+      : booking.service.name.ru
     : "";
   const masterName = booking.master
     ? [booking.master.firstName, booking.master.lastName].filter(Boolean).join(" ")

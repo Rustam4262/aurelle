@@ -21,10 +21,7 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
     salon.description as { en?: string; ru?: string; uz?: string },
     currentLang,
   );
-  const city = getLocalizedText(
-    salon.city as { en?: string; ru?: string; uz?: string },
-    currentLang,
-  );
+  const city = salon.city ?? "";
 
   return (
     <Link href={`/salon/${salon.id}`}>
@@ -141,7 +138,7 @@ export function HomeSalons({ salons, isLoading }: { salons: Salon[]; isLoading: 
               {t("marketplace.salons.title")}
             </h2>
             <p className="text-muted-foreground text-lg font-light">
-              {salons.length > 0 ? t("marketplace.salons.subtitle") : t("marketplace.salons.empty")}
+              {salons.length > 0 ? t("marketplace.salons.subtitle") : t("audience.empty")}
             </p>
           </div>
           {salons.length > 0 && (
@@ -173,14 +170,14 @@ export function HomeSalons({ salons, isLoading }: { salons: Salon[]; isLoading: 
               {t("marketplace.salons.noSalons")}
             </h3>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto font-light leading-relaxed">
-              {t("marketplace.salons.beFirst")}
+              {t("audience.catalogHint")}
             </p>
-            <Link href="/owner">
+            <Link href="/search?audience=all">
               <Button
                 className="rounded-full px-8 h-12 shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all font-medium"
                 data-testid="button-register-salon-empty"
               >
-                {t("marketplace.nav.registerSalon")}
+                {t("audience.catalog")}
               </Button>
             </Link>
           </Card>
@@ -189,3 +186,4 @@ export function HomeSalons({ salons, isLoading }: { salons: Salon[]; isLoading: 
     </section>
   );
 }
+

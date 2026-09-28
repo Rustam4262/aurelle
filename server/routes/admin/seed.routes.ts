@@ -21,7 +21,9 @@ router.post("/test-users", requirePermission("users.write"), async (req, res) =>
     const seedToken = process.env.SEED_TOKEN;
     if (process.env.NODE_ENV === "production") {
       if (!seedToken || req.body.seedToken !== seedToken) {
-        return res.status(403).json({ error: "Forbidden: valid SEED_TOKEN required in production" });
+        return res
+          .status(403)
+          .json({ error: "Forbidden: valid SEED_TOKEN required in production" });
       }
     }
 

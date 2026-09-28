@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useForm, Controller } from "react-hook-form";
@@ -21,7 +22,11 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -48,10 +53,10 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
       {sent ? (
         <View className="items-center mt-8">
-          <Text className="text-5xl mb-4">📧</Text>
-          <Text className="text-xl font-semibold text-gray-800 mb-2">
-            Письмо отправлено
-          </Text>
+          <View className="mb-4">
+            <Ionicons name="mail-outline" size={40} color="#C81D60" />
+          </View>
+          <Text className="text-xl font-semibold text-gray-800 mb-2">Письмо отправлено</Text>
           <Text className="text-gray-500 text-center px-4">
             Проверьте почту и перейдите по ссылке для сброса пароля
           </Text>
@@ -86,11 +91,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             )}
           />
 
-          <Button
-            title="Отправить ссылку"
-            onPress={onSubmit}
-            loading={loading}
-          />
+          <Button title="Отправить ссылку" onPress={onSubmit} loading={loading} />
         </View>
       )}
     </ScreenWrapper>

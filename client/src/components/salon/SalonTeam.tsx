@@ -47,7 +47,7 @@ export function MasterCard({
           )}
           {master.experience && (
             <p className="text-muted-foreground text-sm mb-2">
-              {master.experience} {t("marketplace.salon.experience")}
+              {t("marketplace.salon.experience", { count: master.experience })}
             </p>
           )}
           {bio && <p className="text-muted-foreground text-sm line-clamp-2">{bio}</p>}

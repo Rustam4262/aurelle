@@ -1,6 +1,10 @@
 import { db } from "../db";
 import { reviews, salons, masters } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+
+// Hidden reviews (removed by admin moderation) never count toward the
+// public rating average or review count.
+const notHidden = sql`(${reviews.isHidden} IS NOT TRUE)`;
 
 export async function updateSalonRating(salonId: string) {
   const result = await db
@@ -9,7 +13,7 @@ export async function updateSalonRating(salonId: string) {
       count: sql<number>`COUNT(*)`,
     })
     .from(reviews)
-    .where(eq(reviews.salonId, salonId));
+    .where(and(eq(reviews.salonId, salonId), notHidden));
 
   if (result[0]) {
     await db
@@ -29,7 +33,7 @@ export async function updateMasterRating(masterId: string) {
       count: sql<number>`COUNT(*)`,
     })
     .from(reviews)
-    .where(eq(reviews.masterId, masterId));
+    .where(and(eq(reviews.masterId, masterId), notHidden));
 
   if (result[0]) {
     await db

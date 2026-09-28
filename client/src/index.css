@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+.audience-hero-background {
+  background:
+    radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 40%),
+    linear-gradient(180deg, hsl(var(--background)), hsl(var(--accent) / 0.4));
+}
+html[data-audience="men"] {
+  --primary: 211 38% 38%;
+  --primary-foreground: 210 25% 98%;
+  --ring: 211 38% 38%;
+  --accent: 211 16% 78%;
+  --accent-foreground: 215 18% 20%;
+  --sidebar-primary: 211 38% 38%;
+  --sidebar-ring: 211 38% 38%;
+  --sidebar-accent: 211 16% 78%;
+  --chart-1: 211 38% 38%;
+}
+html.dark[data-audience="men"] {
+  --background: 215 12% 8%;
+  --card: 215 11% 11%;
+  --popover: 215 11% 13%;
+  --primary: 210 44% 67%;
+  --primary-foreground: 215 30% 12%;
+  --ring: 210 44% 67%;
+  --accent: 213 18% 20%;
+  --accent-foreground: 210 20% 95%;
+  --sidebar-primary: 210 44% 67%;
+  --sidebar-ring: 210 44% 67%;
+  --sidebar-accent: 213 18% 20%;
+  --chart-1: 210 44% 67%;
+}
+
 /* LIGHT MODE */
 :root {
   /* Safe area variables */
@@ -15,35 +46,35 @@
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
-  --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
-  --border: 0 0% 90%;
-  --card: 0 0% 98%;
-  --card-foreground: 0 0% 9%;
-  --card-border: 0 0% 94%;
-  --sidebar: 0 0% 96%;
-  --sidebar-foreground: 0 0% 9%;
-  --sidebar-border: 0 0% 92%;
-  --sidebar-primary: 340 85% 45%;
-  --sidebar-primary-foreground: 340 85% 98%;
-  --sidebar-accent: 0 0% 92%;
-  --sidebar-accent-foreground: 0 0% 9%;
-  --sidebar-ring: 340 85% 45%;
-  --popover: 0 0% 95%;
-  --popover-foreground: 0 0% 9%;
-  --popover-border: 0 0% 91%;
-  --primary: 340 85% 45%;
-  --primary-foreground: 340 85% 98%;
-  --secondary: 0 0% 91%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 4% 88%;
-  --muted-foreground: 0 0% 35%;
-  --accent: 340 12% 90%;
-  --accent-foreground: 340 8% 15%;
+  --background: 30 8% 83%;
+  --foreground: 24 8% 18%;
+  --border: 30 7% 73%;
+  --card: 30 10% 88%;
+  --card-foreground: 24 8% 18%;
+  --card-border: 30 7% 77%;
+  --sidebar: 30 8% 85%;
+  --sidebar-foreground: 24 8% 18%;
+  --sidebar-border: 30 7% 73%;
+  --sidebar-primary: 340 75% 55%;
+  --sidebar-primary-foreground: 340 75% 98%;
+  --sidebar-accent: 340 24% 79%;
+  --sidebar-accent-foreground: 24 8% 18%;
+  --sidebar-ring: 340 75% 55%;
+  --popover: 30 10% 88%;
+  --popover-foreground: 24 8% 18%;
+  --popover-border: 30 7% 73%;
+  --primary: 340 75% 55%;
+  --primary-foreground: 340 75% 98%;
+  --secondary: 30 8% 80%;
+  --secondary-foreground: 24 8% 20%;
+  --muted: 30 7% 81%;
+  --muted-foreground: 24 5% 32%;
+  --accent: 340 28% 80%;
+  --accent-foreground: 340 8% 22%;
   --destructive: 0 84% 48%;
   --destructive-foreground: 0 84% 98%;
-  --input: 0 0% 75%;
-  --ring: 340 85% 45%;
+  --input: 30 7% 65%;
+  --ring: 340 75% 55%;
   --chart-1: 340 70% 40%;
   --chart-2: 320 65% 45%;
   --chart-3: 300 60% 50%;
@@ -66,31 +97,45 @@
 
   /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
-  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-primary-border: hsl(
+    from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --sidebar-accent-border: hsl(var(--sidebar-accent));
-  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(
+    from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --primary-border: hsl(var(--primary));
-  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border: hsl(
+    from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --secondary-border: hsl(var(--secondary));
-  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(
+    from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --muted-border: hsl(var(--muted));
-  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(
+    from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --accent-border: hsl(var(--accent));
-  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(
+    from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
-  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(
+    from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 }
 
 .dark {
@@ -144,31 +189,45 @@
 
   /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
-  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-primary-border: hsl(
+    from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --sidebar-accent-border: hsl(var(--sidebar-accent));
-  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(
+    from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --primary-border: hsl(var(--primary));
-  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border: hsl(
+    from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --secondary-border: hsl(var(--secondary));
-  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(
+    from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --muted-border: hsl(var(--muted));
-  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(
+    from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --accent-border: hsl(var(--accent));
-  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(
+    from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
-  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(
+    from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
 }
 
 @layer base {
@@ -290,9 +349,11 @@
     padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 0px));
   }
 
-  .no-default-hover-elevate {}
+  .no-default-hover-elevate {
+  }
 
-  .no-default-active-elevate {}
+  .no-default-active-elevate {
+  }
 
   /**
    * Toggleable backgrounds go behind the content. Hoverable/active goes on top.
@@ -362,4 +423,10 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+}
+
+html[data-audience="men"] .audience-client-surface {
+  background:
+    radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 40%),
+    hsl(var(--background));
 }

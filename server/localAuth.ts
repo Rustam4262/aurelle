@@ -12,6 +12,8 @@ import { trackUserLogin } from "./middleware/activity";
 import { trackEvent } from "./lib/analytics";
 import { getEmailConfigStatus, sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
 import { isSoftDeletedUser } from "./lib/user-deletion";
+import { isAuthenticated } from "./auth";
+import { logAudit } from "./lib/audit";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -32,6 +34,11 @@ const requestResetSchema = z.object({
 
 const confirmResetSchema = z.object({
   token: z.string().length(64),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password required"),
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -191,134 +198,147 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Request password reset - generates token and sends email
-  app.post("/api/auth/request-password-reset", resetLimiter, async (req: Request, res: Response) => {
-    try {
-      const parsed = requestResetSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
-      }
+  app.post(
+    "/api/auth/request-password-reset",
+    resetLimiter,
+    async (req: Request, res: Response) => {
+      try {
+        const parsed = requestResetSchema.safeParse(req.body);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+        }
 
-      const { email } = parsed.data;
-      const emailStatus = getEmailConfigStatus();
+        const { email } = parsed.data;
+        const emailStatus = getEmailConfigStatus();
 
-      if (!emailStatus.enabled) {
-        logger.warn("Password reset requested while email is disabled", {
-          source: "localAuth",
-          meta: { reason: emailStatus.reason },
+        if (!emailStatus.enabled) {
+          logger.warn("Password reset requested while email is disabled", {
+            source: "localAuth",
+            meta: { reason: emailStatus.reason },
+          });
+          return res.status(503).json({
+            success: false,
+            code: "EMAIL_SERVICE_UNAVAILABLE",
+            message: "Password reset email is temporarily unavailable",
+          });
+        }
+
+        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+        // Always return success to prevent email enumeration
+        if (!user || isSoftDeletedUser(user)) {
+          return res.json({
+            success: true,
+            message: "If this email exists, you will receive password reset instructions",
+          });
+        }
+
+        // Generate secure random token
+        const token = crypto.randomBytes(32).toString("hex"); // 64 hex chars
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+        // Save token to database
+        await db.insert(passwordResetTokens).values({
+          userId: user.id,
+          token,
+          expiresAt,
         });
-        return res.status(503).json({
-          success: false,
-          code: "EMAIL_SERVICE_UNAVAILABLE",
-          message: "Password reset email is temporarily unavailable",
-        });
-      }
 
-      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
 
-      // Always return success to prevent email enumeration
-      if (!user || isSoftDeletedUser(user)) {
-        return res.json({
+        // Only report success after the reset email is actually accepted by SMTP.
+        const sent = await sendPasswordResetEmail(email, resetLink);
+        if (!sent) {
+          logger.error("Failed to send password reset email", undefined, {
+            source: "localAuth",
+            meta: { userId: user.id },
+          });
+          return res.status(503).json({
+            success: false,
+            code: "RESET_EMAIL_DELIVERY_FAILED",
+            message: "Failed to send password reset email",
+          });
+        }
+
+        // In development, include token in response for easy testing
+        const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
+
+        res.json({
           success: true,
           message: "If this email exists, you will receive password reset instructions",
+          ...devResponse,
         });
+      } catch (error) {
+        logger.error("Password reset request error", error as Error, { source: "localAuth" });
+        res.status(500).json({ message: "Password reset request failed" });
       }
-
-      // Generate secure random token
-      const token = crypto.randomBytes(32).toString("hex"); // 64 hex chars
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
-
-      // Save token to database
-      await db.insert(passwordResetTokens).values({
-        userId: user.id,
-        token,
-        expiresAt,
-      });
-
-      const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
-
-      // Only report success after the reset email is actually accepted by SMTP.
-      const sent = await sendPasswordResetEmail(email, resetLink);
-      if (!sent) {
-        logger.error("Failed to send password reset email", undefined, {
-          source: "localAuth",
-          meta: { userId: user.id },
-        });
-        return res.status(503).json({
-          success: false,
-          code: "RESET_EMAIL_DELIVERY_FAILED",
-          message: "Failed to send password reset email",
-        });
-      }
-
-      // In development, include token in response for easy testing
-      const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
-
-      res.json({
-        success: true,
-        message: "If this email exists, you will receive password reset instructions",
-        ...devResponse,
-      });
-    } catch (error) {
-      logger.error("Password reset request error", error as Error, { source: "localAuth" });
-      res.status(500).json({ message: "Password reset request failed" });
-    }
-  });
+    },
+  );
 
   // Confirm password reset with token
-  app.post("/api/auth/confirm-password-reset", resetLimiter, async (req: Request, res: Response) => {
-    try {
-      const parsed = confirmResetSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
-      }
+  app.post(
+    "/api/auth/confirm-password-reset",
+    resetLimiter,
+    async (req: Request, res: Response) => {
+      try {
+        const parsed = confirmResetSchema.safeParse(req.body);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+        }
 
-      const { token, newPassword } = parsed.data;
+        const { token, newPassword } = parsed.data;
 
-      // Find valid token
-      const [resetToken] = await db
-        .select()
-        .from(passwordResetTokens)
-        .where(
-          and(
-            eq(passwordResetTokens.token, token),
-            gt(passwordResetTokens.expiresAt, new Date()),
-            isNull(passwordResetTokens.usedAt),
-          ),
-        )
-        .limit(1);
+        // Find valid token
+        const [resetToken] = await db
+          .select()
+          .from(passwordResetTokens)
+          .where(
+            and(
+              eq(passwordResetTokens.token, token),
+              gt(passwordResetTokens.expiresAt, new Date()),
+              isNull(passwordResetTokens.usedAt),
+            ),
+          )
+          .limit(1);
 
-      if (!resetToken) {
-        return res.status(400).json({
-          message: "Invalid or expired reset token",
+        if (!resetToken) {
+          return res.status(400).json({
+            message: "Invalid or expired reset token",
+          });
+        }
+
+        const [resetUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, resetToken.userId))
+          .limit(1);
+        if (!resetUser || isSoftDeletedUser(resetUser)) {
+          return res.status(403).json({ message: "Account removed by administrator" });
+        }
+
+        // Hash new password
+        const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+        // Update user password
+        await db.update(users).set({ passwordHash }).where(eq(users.id, resetToken.userId));
+
+        // Mark token as used
+        await db
+          .update(passwordResetTokens)
+          .set({ usedAt: new Date() })
+          .where(eq(passwordResetTokens.id, resetToken.id));
+
+        res.json({
+          success: true,
+          message:
+            "Password has been reset successfully. You can now log in with your new password.",
         });
+      } catch (error) {
+        logger.error("Password reset confirmation error", error as Error, { source: "localAuth" });
+        res.status(500).json({ message: "Password reset failed" });
       }
-
-      const [resetUser] = await db.select().from(users).where(eq(users.id, resetToken.userId)).limit(1);
-      if (!resetUser || isSoftDeletedUser(resetUser)) {
-        return res.status(403).json({ message: "Account removed by administrator" });
-      }
-
-      // Hash new password
-      const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
-
-      // Update user password
-      await db.update(users).set({ passwordHash }).where(eq(users.id, resetToken.userId));
-
-      // Mark token as used
-      await db
-        .update(passwordResetTokens)
-        .set({ usedAt: new Date() })
-        .where(eq(passwordResetTokens.id, resetToken.id));
-
-      res.json({
-        success: true,
-        message: "Password has been reset successfully. You can now log in with your new password.",
-      });
-    } catch (error) {
-      logger.error("Password reset confirmation error", error as Error, { source: "localAuth" });
-      res.status(500).json({ message: "Password reset failed" });
-    }
-  });
+    },
+  );
 
   // Verify email with token
   app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
@@ -374,7 +394,10 @@ export function setupLocalAuth(app: Express) {
 
       // Always return success to prevent email enumeration
       if (!user || user.emailVerified) {
-        return res.json({ success: true, message: "If eligible, a verification email has been sent" });
+        return res.json({
+          success: true,
+          message: "If eligible, a verification email has been sent",
+        });
       }
 
       await sendVerificationEmail(user.id, email);

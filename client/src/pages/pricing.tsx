@@ -22,11 +22,7 @@ const PLANS: Plan[] = [
     priceMonthly: 0,
     trialDays: 0,
     icon: <Star className="h-5 w-5" />,
-    featuresKeys: [
-      "pricing.plans.free.f1",
-      "pricing.plans.free.f2",
-      "pricing.plans.free.f3",
-    ],
+    featuresKeys: ["pricing.plans.free.f1", "pricing.plans.free.f2", "pricing.plans.free.f3"],
   },
   {
     slug: "starter",
@@ -171,9 +167,7 @@ export default function PricingPage() {
         </Card>
 
         {/* FAQ note */}
-        <p className="text-center text-sm text-muted-foreground mt-10">
-          {t("pricing.vatNote")}
-        </p>
+        <p className="text-center text-sm text-muted-foreground mt-10">{t("pricing.vatNote")}</p>
       </div>
     </div>
   );

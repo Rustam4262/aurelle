@@ -35,6 +35,7 @@ import {
   Search,
   Shield,
   Sparkles,
+  Star,
   Store,
   Users,
   X,
@@ -49,6 +50,7 @@ const AdminSalons = lazy(() => import("@/pages/admin/salons"));
 const AdminServices = lazy(() => import("@/pages/admin/services"));
 const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
 const AdminSanctions = lazy(() => import("@/pages/admin/sanctions"));
+const AdminReviews = lazy(() => import("@/pages/admin/reviews"));
 const AdminChat = lazy(() => import("@/pages/admin/chat"));
 const AdminSupport = lazy(() => import("@/pages/admin/support"));
 const AdminAudit = lazy(() => import("@/pages/admin/audit"));
@@ -63,6 +65,7 @@ const ROUTE_MAP = {
   "/admin/activity": AdminActivity,
   "/admin/complaints": AdminComplaints,
   "/admin/sanctions": AdminSanctions,
+  "/admin/reviews": AdminReviews,
   "/admin/chat": AdminChat,
   "/admin/support": AdminSupport,
   "/admin/audit": AdminAudit,
@@ -96,11 +99,16 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
   },
   "/admin/complaints": {
     title: "Модерация жалоб",
-    description: "Очередь кейсов, по которым администратору нужно принять решение без лишнего шума.",
+    description:
+      "Очередь кейсов, по которым администратору нужно принять решение без лишнего шума.",
   },
   "/admin/sanctions": {
     title: "Санкции",
     description: "Ограничения, сроки действия и риск-профиль пользователей, требующих контроля.",
+  },
+  "/admin/reviews": {
+    title: "Модерация отзывов",
+    description: "Скрытие отзывов, нарушающих правила платформы, без потери истории для аудита.",
   },
   "/admin/support": {
     title: "Обращения",
@@ -172,7 +180,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
 
-  const { data: actionCenter, refetch: refetchActionCenter, isFetching } = useQuery<ActionCenterData>({
+  const {
+    data: actionCenter,
+    refetch: refetchActionCenter,
+    isFetching,
+  } = useQuery<ActionCenterData>({
     queryKey: ["/api/admin/dashboard/action-center"],
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -249,6 +261,13 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
           icon: Shield,
           badge: actionCenter?.expiringToday,
           searchTags: ["санкции", "blocks", "risk"],
+        },
+        {
+          path: "/admin/reviews",
+          label: "Отзывы",
+          description: "Скрытие отзывов, нарушающих правила",
+          icon: Star,
+          searchTags: ["отзывы", "reviews", "moderation"],
         },
       ],
     },
@@ -344,7 +363,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
         title: "Карточка пользователя",
         description: "История аккаунта, статусы и точечные действия администратора.",
       }
-    : ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"];
+    : (ROUTE_META[location] ?? ROUTE_META["/admin/dashboard"]);
 
   const SidebarContent = (
     <div className="flex h-full min-h-0 flex-col">
@@ -355,7 +374,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
           {!collapsed && (
             <div>
-              <p className="font-serif text-xl font-semibold leading-none text-foreground">AURELLE</p>
+              <p className="font-serif text-xl font-semibold leading-none text-foreground">
+                AURELLE
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">Admin control center</p>
             </div>
           )}
@@ -399,7 +420,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                               <p className="truncate text-sm font-medium">{item.label}</p>
                               <p
                                 className={`truncate text-xs ${
-                                  isActive ? "text-primary-foreground/75" : "text-muted-foreground/75"
+                                  isActive
+                                    ? "text-primary-foreground/75"
+                                    : "text-muted-foreground/75"
                                 }`}
                               >
                                 {item.description}
@@ -459,7 +482,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
-                  {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Администратор"}
+                  {user?.firstName
+                    ? `${user.firstName} ${user.lastName || ""}`.trim()
+                    : "Администратор"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
               </div>
@@ -468,7 +493,12 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               <LanguageSwitcher variant="outline" className="h-8 flex-1 text-xs" />
               <ThemeToggle />
             </div>
-            <Button variant="outline" size="sm" className="h-8 w-full gap-2 text-xs" onClick={() => logout()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-full gap-2 text-xs"
+              onClick={() => logout()}
+            >
               <LogOut className="h-3.5 w-3.5" />
               Выйти
             </Button>
@@ -504,7 +534,10 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
           <aside className="absolute inset-y-0 left-0 flex h-screen w-[90%] max-w-[340px] flex-col border-r border-border bg-card shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <div className="flex items-center gap-3">
@@ -531,12 +564,20 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-start gap-3">
-                  <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileSidebarOpen(true)}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="md:hidden"
+                    onClick={() => setMobileSidebarOpen(true)}
+                  >
                     <PanelLeft className="h-4 w-4" />
                   </Button>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="gap-1 border border-primary/10 bg-primary/5 text-primary">
+                      <Badge
+                        variant="secondary"
+                        className="gap-1 border border-primary/10 bg-primary/5 text-primary"
+                      >
                         <Sparkles className="h-3 w-3" />
                         Рабочее место администратора
                       </Badge>
@@ -547,15 +588,24 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                         </Badge>
                       )}
                     </div>
-                    <h1 className="mt-3 text-[1.9rem] font-serif font-semibold tracking-tight">{routeMeta.title}</h1>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{routeMeta.description}</p>
+                    <h1 className="mt-3 text-[1.9rem] font-serif font-semibold tracking-tight">
+                      {routeMeta.title}
+                    </h1>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+                      {routeMeta.description}
+                    </p>
                   </div>
                 </div>
 
                 <div className="hidden items-center gap-2 lg:flex">
                   <LanguageSwitcher variant="outline" className="h-10" />
                   <ThemeToggle />
-                  <Button variant="outline" className="gap-2" onClick={() => refetchActionCenter()} disabled={isFetching}>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => refetchActionCenter()}
+                    disabled={isFetching}
+                  >
                     <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                     Обновить
                   </Button>
@@ -581,7 +631,13 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   <Command className="h-3 w-3" />
                   Ctrl K
                 </Badge>
-                <Button type="button" variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileSidebarOpen(true)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setMobileSidebarOpen(true)}
+                >
                   <Menu className="h-4 w-4" />
                 </Button>
               </form>
@@ -597,7 +653,8 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
           <DialogHeader>
             <DialogTitle>Быстрые переходы</DialogTitle>
             <DialogDescription>
-              Открой нужный раздел или сразу перейди в пользователей с подготовленным поисковым запросом.
+              Открой нужный раздел или сразу перейди в пользователей с подготовленным поисковым
+              запросом.
             </DialogDescription>
           </DialogHeader>
 
@@ -638,17 +695,24 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                           <Icon className="h-4 w-4 shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">{item.label}</p>
-                            <p className={`truncate text-xs ${isActive ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
+                            <p
+                              className={`truncate text-xs ${isActive ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+                            >
                               {item.description}
                             </p>
                           </div>
-                          {hasBadge && <Badge variant={isActive ? "secondary" : "destructive"}>{item.badge}</Badge>}
+                          {hasBadge && (
+                            <Badge variant={isActive ? "secondary" : "destructive"}>
+                              {item.badge}
+                            </Badge>
+                          )}
                         </button>
                       );
                     })}
                     {filteredCommandItems.length === 0 && (
                       <div className="px-3 py-6 text-sm text-muted-foreground">
-                        Ничего не найдено по разделам. Можно сразу открыть поиск по пользователям справа.
+                        Ничего не найдено по разделам. Можно сразу открыть поиск по пользователям
+                        справа.
                       </div>
                     )}
                   </div>
@@ -658,14 +722,17 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               <div className="rounded-lg border border-border bg-muted/20 p-4">
                 <h3 className="text-sm font-semibold">Поиск пользователя</h3>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Введи email, телефон или имя, и мы откроем раздел пользователей с готовым фильтром.
+                  Введи email, телефон или имя, и мы откроем раздел пользователей с готовым
+                  фильтром.
                 </p>
                 <Button className="mt-4 w-full" onClick={handleOpenUsersSearch}>
                   Открыть поиск пользователей
                 </Button>
 
                 <div className="mt-6 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Приоритет сейчас</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Приоритет сейчас
+                  </p>
                   {flatNavItems
                     .filter((item) => (item.badge ?? 0) > 0)
                     .slice(0, 4)
@@ -731,7 +798,9 @@ export default function AdminPage() {
   }
 
   const isUserDetailRoute = isUserRoute(location);
-  const PageComponent = isUserDetailRoute ? AdminUserDetail : (ROUTE_MAP[location as keyof typeof ROUTE_MAP] ?? AdminDashboard);
+  const PageComponent = isUserDetailRoute
+    ? AdminUserDetail
+    : (ROUTE_MAP[location as keyof typeof ROUTE_MAP] ?? AdminDashboard);
 
   return (
     <AdminLayout>

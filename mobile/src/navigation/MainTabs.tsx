@@ -49,16 +49,8 @@ export function MainTabs() {
         },
       })}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeStack}
-        options={{ tabBarLabel: "Главная" }}
-      />
-      <Tab.Screen
-        name="BookingsTab"
-        component={BookingStack}
-        options={{ tabBarLabel: "Записи" }}
-      />
+      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: "Главная" }} />
+      <Tab.Screen name="BookingsTab" component={BookingStack} options={{ tabBarLabel: "Записи" }} />
 
       {role === "salon_owner" && (
         <Tab.Screen

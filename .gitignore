@@ -76,6 +76,14 @@ decode_output.txt
 .ssh_key_codex
 admin-hash.txt
 
+# One-off scripts and binary leftovers that must never be committed
+fix-admin-hash.sh
+deploy-auth-speed.sh
+fix_all.py
+decode_test.py
+*.pptx
+prod-home-after-deploy.png
+
 # Mobile build artifacts
 android/app/build/
 android/build/

@@ -47,7 +47,11 @@ export function PWAInstallPrompt() {
       <>
         {!showIOSHint && (
           <div className="fixed bottom-4 left-4 right-4 z-50 bg-white border border-gray-200 rounded-2xl shadow-lg p-4 flex items-center gap-3 md:max-w-sm md:left-auto md:right-4">
-            <img src="/icons/icon-96.webp" alt="Aurelle" className="w-12 h-12 rounded-xl flex-shrink-0" />
+            <img
+              src="/icons/icon-96.webp"
+              alt="Aurelle"
+              className="w-12 h-12 rounded-xl flex-shrink-0"
+            />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-gray-900">{t("pwa.installApp")}</p>
               <p className="text-xs text-gray-500 truncate">{t("pwa.addToHomeScreen")}</p>
@@ -58,7 +62,10 @@ export function PWAInstallPrompt() {
             >
               {t("pwa.howToInstall")}
             </button>
-            <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+            <button
+              onClick={handleDismiss}
+              className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -75,15 +82,23 @@ export function PWAInstallPrompt() {
               </div>
               <ol className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-                  <span>{t("pwa.step1")} <Share className="w-4 h-4 inline-block mx-1 text-blue-500" /></span>
+                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>
+                    {t("pwa.step1")} <Share className="w-4 h-4 inline-block mx-1 text-blue-500" />
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                    2
+                  </span>
                   <span dangerouslySetInnerHTML={{ __html: t("pwa.step2") }} />
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                  <span className="w-6 h-6 rounded-full bg-[#C81D60] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                    3
+                  </span>
                   <span dangerouslySetInnerHTML={{ __html: t("pwa.step3") }} />
                 </li>
               </ol>

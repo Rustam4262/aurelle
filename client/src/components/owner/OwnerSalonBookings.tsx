@@ -77,9 +77,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                       </AvatarFallback>
                     </Avatar>
                     {booking.client?.fullName && (
-                      <span className="font-medium text-foreground">
-                        {booking.client.fullName}
-                      </span>
+                      <span className="font-medium text-foreground">{booking.client.fullName}</span>
                     )}
                     {booking.service && (
                       <span className="flex items-center gap-1.5 text-muted-foreground">

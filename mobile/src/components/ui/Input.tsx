@@ -24,21 +24,14 @@ export function Input({
 
   return (
     <View className="mb-4">
-      {label && (
-        <Text className="text-sm font-medium text-gray-700 mb-1.5">{label}</Text>
-      )}
+      {label && <Text className="text-sm font-medium text-gray-700 mb-1.5">{label}</Text>}
       <View
         className={`flex-row items-center border rounded-xl px-3 bg-white ${
           error ? "border-red-400" : "border-gray-200"
         }`}
       >
         {leftIcon && (
-          <Ionicons
-            name={leftIcon}
-            size={18}
-            color="#9ca3af"
-            style={{ marginRight: 8 }}
-          />
+          <Ionicons name={leftIcon} size={18} color="#9ca3af" style={{ marginRight: 8 }} />
         )}
         <TextInput
           className="flex-1 py-3 text-base text-gray-800"

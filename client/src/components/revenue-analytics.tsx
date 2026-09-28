@@ -2,10 +2,22 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
-import { DollarSign, TrendingUp, CreditCard, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import {
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  Calendar as CalendarIcon,
+  Loader2,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -30,7 +42,11 @@ interface AnalyticsData {
   totalRevenue: number;
   totalBookings: number;
   averageCheck: number;
-  revenueByService: { serviceName: { [key: string]: string } | string; revenue: number; count: number }[];
+  revenueByService: {
+    serviceName: { [key: string]: string } | string;
+    revenue: number;
+    count: number;
+  }[];
   revenueByMaster: { masterName: string; revenue: number; count: number }[];
   dailyRevenue: { date: string; revenue: number }[];
 }
@@ -76,7 +92,7 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
 
   const currentLang = i18n.language;
   const getLocalizedName = (nameObj: any) => {
-    if (typeof nameObj === 'string') return nameObj;
+    if (typeof nameObj === "string") return nameObj;
     return nameObj?.[currentLang] || nameObj?.en || "Unknown";
   };
 
@@ -115,15 +131,14 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
                 variant={"outline"}
                 className={cn(
                   "w-[240px] justify-start text-left font-normal",
-                  !dateRange && "text-muted-foreground"
+                  !dateRange && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {dateRange?.from ? (
                   dateRange.to ? (
                     <>
-                      {format(dateRange.from, "LLL dd, y")} -{" "}
-                      {format(dateRange.to, "LLL dd, y")}
+                      {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
                     </>
                   ) : (
                     format(dateRange.from, "LLL dd, y")
@@ -139,16 +154,16 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
                 mode="range"
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
-                onSelect={(range: any) => setDateRange(range || { from: new Date(), to: new Date() })}
+                onSelect={(range: any) =>
+                  setDateRange(range || { from: new Date(), to: new Date() })
+                }
                 numberOfMonths={2}
               />
             </PopoverContent>
           </Popover>
         </div>
 
-        <Button variant="outline">
-          {t("analytics.exportInfo", "Export Report")}
-        </Button>
+        <Button variant="outline">{t("analytics.exportInfo", "Export Report")}</Button>
       </div>
 
       {/* KPI Cards */}
@@ -189,7 +204,7 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round((data.totalRevenue / 30))} / day</div>
+            <div className="text-2xl font-bold">{Math.round(data.totalRevenue / 30)} / day</div>
             <p className="text-xs text-muted-foreground">
               {t("analytics.avgDaily", "approx. daily revenue")}
             </p>
@@ -207,10 +222,7 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
             <ResponsiveContainer width="100%" height={350}>
               <LineChart data={data.dailyRevenue}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(value) => format(new Date(value), "MMM d")}
-                />
+                <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), "MMM d")} />
                 <YAxis />
                 <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
@@ -250,7 +262,13 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
                     return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                      <text
+                        x={x}
+                        y={y}
+                        fill="white"
+                        textAnchor={x > cx ? "start" : "end"}
+                        dominantBaseline="central"
+                      >
                         {`${(percent * 100).toFixed(0)}%`}
                       </text>
                     );
@@ -276,7 +294,11 @@ export function RevenueAnalytics({ salons }: RevenueAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.revenueByMaster} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart
+                data={data.revenueByMaster}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" hide />
                 <YAxis dataKey="masterName" type="category" width={100} />

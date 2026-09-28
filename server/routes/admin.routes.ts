@@ -13,6 +13,7 @@ import seedRoutes from "./admin/seed.routes";
 import billingRoutes from "./admin/billing.routes";
 import analyticsRoutes from "./admin/analytics.routes";
 import servicesRoutes from "./admin/services.routes";
+import reviewsRoutes from "./admin/reviews.routes";
 
 const router = Router();
 
@@ -36,6 +37,9 @@ router.use("/sanctions", sanctionsRoutes);
 
 // Complaints & Moderation
 router.use("/complaints", complaintsRoutes);
+
+// Review Moderation
+router.use("/reviews", reviewsRoutes);
 
 // Support Chat (admin↔admin threads)
 router.use("/chat", chatRoutes);

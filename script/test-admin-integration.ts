@@ -167,7 +167,9 @@ async function testIntegration() {
 
     const foundIndexes = expectedIndexes.filter((idx) => indexes.includes(idx));
 
-    console.log(`   ℹ️  Found ${foundIndexes.length} of ${expectedIndexes.length} critical indexes`);
+    console.log(
+      `   ℹ️  Found ${foundIndexes.length} of ${expectedIndexes.length} critical indexes`,
+    );
 
     if (foundIndexes.length === expectedIndexes.length) {
       console.log("   ✅ All critical indexes created");
@@ -187,7 +189,7 @@ async function testIntegration() {
     const usersCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
     const salonsCount = await db.execute(sql`SELECT COUNT(*) as count FROM salons`);
     const sessionsCount = await db.execute(
-      sql`SELECT COUNT(*) as count FROM user_activity_sessions`
+      sql`SELECT COUNT(*) as count FROM user_activity_sessions`,
     );
 
     console.log(`   📊 Users: ${(usersCount.rows[0] as any).count}`);
@@ -204,7 +206,7 @@ async function testIntegration() {
   console.log("\n7️⃣  Checking blocked users...");
   try {
     const blockedCount = await db.execute(
-      sql`SELECT COUNT(*) as count FROM users WHERE is_blocked = true`
+      sql`SELECT COUNT(*) as count FROM users WHERE is_blocked = true`,
     );
 
     console.log(`   📊 Blocked users: ${(blockedCount.rows[0] as any).count}`);
@@ -218,7 +220,7 @@ async function testIntegration() {
   console.log("\n8️⃣  Checking verified salons...");
   try {
     const verifiedCount = await db.execute(
-      sql`SELECT COUNT(*) as count FROM salons WHERE is_verified = true`
+      sql`SELECT COUNT(*) as count FROM salons WHERE is_verified = true`,
     );
 
     console.log(`   📊 Verified salons: ${(verifiedCount.rows[0] as any).count}`);
@@ -248,7 +250,7 @@ async function testIntegration() {
     process.exit(0);
   } else {
     console.log(
-      "\n⚠️  Some tests failed. Please run the migration: migrations/0017_create_user_activity_tracking.sql"
+      "\n⚠️  Some tests failed. Please run the migration: migrations/0017_create_user_activity_tracking.sql",
     );
     process.exit(1);
   }

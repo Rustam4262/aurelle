@@ -1,7 +1,7 @@
 /**
  * Setup Demo Data for AURELLE
  * Creates test salon, services, and masters for development
- * 
+ *
  * Run with: tsx server/setup-demo.ts
  */
 
@@ -42,11 +42,7 @@ const DEMO_MASTERS = [
 ];
 
 async function getUserIdByEmail(email: string): Promise<string | null> {
-  const results = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  const results = await db.select().from(users).where(eq(users.email, email)).limit(1);
   return results.length > 0 ? results[0].id : null;
 }
 
@@ -56,10 +52,7 @@ async function setupDemoData() {
   try {
     // 1. Check if demo salon exists
     logger.info("📍 Checking for existing salon...");
-    const existingSalons = await db
-      .select()
-      .from(salons)
-      .where(eq(salons.isActive, true));
+    const existingSalons = await db.select().from(salons).where(eq(salons.isActive, true));
 
     let salonId: string;
 
@@ -88,8 +81,6 @@ async function setupDemoData() {
           latitude: "41.2995000",
           longitude: "69.2401000",
           isActive: true,
-          averageRating: "4.8",
-          reviewCount: 0,
         })
         .returning({ id: salons.id });
 
@@ -169,9 +160,7 @@ async function setupDemoData() {
       const userId = await getUserIdByEmail(masterData.email);
 
       if (!userId) {
-        logger.info(
-          `  ⚠️ Skipped: ${masterData.name} (${masterData.email}) - user not found`,
-        );
+        logger.info(`  ⚠️ Skipped: ${masterData.name} (${masterData.email}) - user not found`);
         continue;
       }
 
@@ -183,9 +172,7 @@ async function setupDemoData() {
         .limit(1);
 
       if (existingMaster.length > 0) {
-        logger.info(
-          `  ℹ️ Master already exists: ${masterData.name} (${masterData.email})`,
-        );
+        logger.info(`  ℹ️ Master already exists: ${masterData.name} (${masterData.email})`);
         continue;
       }
 
@@ -204,15 +191,11 @@ async function setupDemoData() {
           experience: 5,
           isActive: true,
           phone: "+998" + Math.random().toString().slice(2, 12),
-          averageRating: "4.5",
-          reviewCount: 0,
         })
         .returning({ id: masters.id });
 
       const masterId = mRow.id || "";
-      logger.info(
-        `  ✅ Added: ${masterData.name} (${masterData.specialties.join(", ")})`,
-      );
+      logger.info(`  ✅ Added: ${masterData.name} (${masterData.specialties.join(", ")})`);
 
       // Set master working hours (9 AM - 7 PM, 6 days a week)
       const DAY_MAP: Record<string, number> = {

@@ -69,11 +69,10 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
     setMounted(true);
   }, []);
 
-  const isDarkTheme =
-    !mounted
-      ? true
-      : theme === "dark" ||
-        (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const isDarkTheme = !mounted
+    ? true
+    : theme === "dark" ||
+      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const navTextClass = scrolled ? "text-foreground" : isDarkTheme ? "text-white" : "text-slate-950";
   const navMutedTextClass = scrolled
@@ -108,22 +107,30 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
 
           <div className="hidden md:flex items-center gap-6">
             <Link href="/">
-              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
+              <span
+                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
+              >
                 {t("marketplace.nav.explore")}
               </span>
             </Link>
             <Link href="/search?tab=masters">
-              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
+              <span
+                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
+              >
                 {t("home.masters.navLink") || "Мастера"}
               </span>
             </Link>
             <Link href="/about">
-              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
+              <span
+                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
+              >
                 {t("about.title")}
               </span>
             </Link>
             <Link href="/owner">
-              <span className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}>
+              <span
+                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
+              >
                 {t("marketplace.nav.forOwners")}
               </span>
             </Link>
@@ -133,11 +140,7 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
             <ThemeToggle />
             <LanguageSwitcher scrolled={scrolled} textClass={navGhostButtonClass} />
             <Link href="/auth">
-              <Button
-                variant="ghost"
-                className={navGhostButtonClass}
-                data-testid="button-login"
-              >
+              <Button variant="ghost" className={navGhostButtonClass} data-testid="button-login">
                 {t("marketplace.nav.login")}
               </Button>
             </Link>
@@ -158,7 +161,9 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
               className="p-2 transition-transform active:scale-90"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               data-testid="button-mobile-menu"
-              aria-label={mobileMenuOpen ? t("a11y.closeMenu") : t("a11y.openMenu")}
+              aria-label={
+                mobileMenuOpen ? t("marketplace.a11y.closeMenu") : t("marketplace.a11y.openMenu")
+              }
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
             >

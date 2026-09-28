@@ -16,12 +16,15 @@ import {
   supportMessages,
   bookingDrafts,
 } from "@shared/schema";
-import { eq, and, desc, inArray, ne } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { sendBookingConfirmation, sendBookingCancellation, isEmailConfigured } from "../email";
 import { invalidateDashboardCache } from "../lib/cache";
 import { trackEvent } from "../lib/analytics";
+import { validateBookingSlot } from "../lib/booking-availability";
+import { getBookingConflictError } from "../lib/booking-db-errors";
+import { scheduleBookingReminders, cancelBookingReminders } from "../lib/reminders";
 
 const router = Router();
 
@@ -36,98 +39,6 @@ async function getClientFromUser(
 
   // Any authenticated user can access client dashboard
   return { profile: profile || null, userId };
-}
-
-// Helper function to check for booking time conflicts
-async function checkBookingConflict(params: {
-  masterId: string | null;
-  salonId: string;
-  bookingDate: Date;
-  startTime: string;
-  endTime: string;
-  excludeBookingId?: string;
-  bufferMinutes?: number;
-}): Promise<{ hasConflict: boolean; conflictingBooking?: any }> {
-  const {
-    masterId,
-    salonId,
-    bookingDate,
-    startTime,
-    endTime,
-    excludeBookingId,
-    bufferMinutes = 10,
-  } = params;
-
-  // Convert time strings to minutes for easier comparison
-  const parseTime = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    return hours * 60 + minutes;
-  };
-
-  const requestedStart = parseTime(startTime);
-  const requestedEnd = parseTime(endTime);
-
-  // Add buffer to the requested times
-  const bufferedStart = requestedStart - bufferMinutes;
-  const bufferedEnd = requestedEnd + bufferMinutes;
-
-  // Convert back to time strings for database query
-  const formatTime = (totalMinutes: number): string => {
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-  };
-
-  const bufferedStartTime = formatTime(Math.max(0, bufferedStart));
-  const bufferedEndTime = formatTime(Math.min(1440, bufferedEnd)); // 1440 = 24 hours in minutes
-
-  // Build the query conditions
-  const conditions = [
-    eq(bookings.bookingDate, bookingDate),
-    // Exclude cancelled bookings
-    ne(bookings.status, "cancelled" as any),
-  ];
-
-  // If masterId is provided, check master's schedule
-  // Otherwise, check salon's overall capacity (not implemented yet, would need capacity tracking)
-  if (masterId) {
-    conditions.push(eq(bookings.masterId, masterId));
-  } else {
-    // If no master specified, just check same salon
-    conditions.push(eq(bookings.salonId, salonId));
-  }
-
-  // Exclude current booking if updating
-  if (excludeBookingId) {
-    conditions.push(ne(bookings.id, excludeBookingId));
-  }
-
-  // Get all bookings for this master/salon on the same day
-  const existingBookings = await db
-    .select()
-    .from(bookings)
-    .where(and(...conditions));
-
-  // Check for time overlaps
-  for (const booking of existingBookings) {
-    const existingStart = parseTime(booking.startTime);
-    const existingEnd = parseTime(booking.endTime);
-    const existingBufferedStart = existingStart - bufferMinutes;
-    const existingBufferedEnd = existingEnd + bufferMinutes;
-
-    // Check if there's an overlap
-    // Overlap occurs if: (start1 < end2) AND (start2 < end1)
-    const hasOverlap = bufferedStart < existingBufferedEnd && existingBufferedStart < bufferedEnd;
-
-    if (hasOverlap) {
-      return {
-        hasConflict: true,
-        conflictingBooking: booking,
-      };
-    }
-  }
-
-  return { hasConflict: false };
 }
 
 // Get client profile
@@ -163,7 +74,11 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
       avatarUrl: z.string().max(500).optional().nullable(),
       city: z.string().max(100).optional(),
       gender: z.string().max(20).optional(),
-      birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+      birthday: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional()
+        .or(z.literal("")),
       notifyEmail: z.boolean().optional(),
       notifyReminder24h: z.boolean().optional(),
       notifyReminder2h: z.boolean().optional(),
@@ -247,7 +162,8 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Salon not found" });
     }
 
-    // Verify service exists and belongs to salon
+    // Verify service exists and belongs to salon (kept as a distinct 404 for a
+    // clear "this service doesn't exist" case before the deeper slot checks).
     const [service] = await db
       .select()
       .from(services)
@@ -256,78 +172,62 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Service not found" });
     }
 
-    // Verify master if provided
-    if (masterId) {
-      const [master] = await db
-        .select()
-        .from(masters)
-        .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
-      if (!master) {
-        return res.status(404).json({ error: "Master not found" });
-      }
-    }
-
-    // Calculate end time based on service duration
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const startMinutes = startHour * 60 + startMinute;
-    const endMinutes = startMinutes + service.duration;
-    const endHour = Math.floor(endMinutes / 60);
-    const endMinute = endMinutes % 60;
-    const endTime = `${endHour.toString().padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}`;
-
-    // Get salon settings for buffer time
+    // Get salon settings for double-booking policy.
     const [settings] = await db
       .select()
       .from(salonSettings)
       .where(eq(salonSettings.salonId, salonId));
-    const bufferMinutes = settings?.bufferMinutes ?? 10; // Default to 10 minutes if no settings
     const allowDoubleBooking = settings?.allowDoubleBooking ?? false;
 
-    // Check for booking conflicts BEFORE creating (unless double booking is allowed)
-    if (!allowDoubleBooking) {
-      const conflictCheck = await checkBookingConflict({
-        masterId: masterId || null,
-        salonId,
-        bookingDate: new Date(bookingDate),
-        startTime,
-        endTime,
-        bufferMinutes,
-      });
+    // Duration, working-hours, break and (unless explicitly allowed) conflict
+    // checks all live in one shared module used by every booking write path —
+    // the client's startTime is trusted, but duration/endTime/price never are.
+    const validation = await validateBookingSlot({
+      salonId,
+      masterId: masterId || null,
+      serviceId,
+      dateISO: bookingDate,
+      startTime,
+      skipConflictCheck: allowDoubleBooking,
+    });
 
-      if (conflictCheck.hasConflict) {
-        const conflicting = conflictCheck.conflictingBooking;
-        return res.status(409).json({
-          error: "Time slot not available",
-          message: masterId
-            ? `This master already has a booking from ${conflicting.startTime} to ${conflicting.endTime}. Please choose a different time.`
-            : `This time slot is not available. Please choose a different time.`,
-          conflictingBooking: {
-            startTime: conflicting.startTime,
-            endTime: conflicting.endTime,
-            date: conflicting.bookingDate,
-          },
-        });
-      }
+    if (!validation.ok) {
+      return res.status(409).json({
+        code: validation.code,
+        error: "Time slot not available",
+        message: "This time slot is not available. Please choose a different time.",
+      });
     }
 
+    const { endTime, priceMin } = validation;
+
     // Create booking
-    const [newBooking] = await db
-      .insert(bookings)
-      .values({
-        clientId: userId,
-        salonId,
-        serviceId,
-        masterId: masterId || null,
-        bookingDate: new Date(bookingDate),
-        startTime,
-        endTime,
-        status: "pending",
-        priceSnapshot: service.priceMin,
-        notes: notes || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    let newBooking: typeof bookings.$inferSelect;
+    try {
+      [newBooking] = await db
+        .insert(bookings)
+        .values({
+          clientId: userId,
+          salonId,
+          serviceId,
+          masterId: masterId || null,
+          bookingDate: new Date(bookingDate),
+          startTime,
+          endTime,
+          status: "pending",
+          priceSnapshot: priceMin,
+          notes: notes || null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+    } catch (insertErr) {
+      const conflict = getBookingConflictError(insertErr);
+      if (conflict) {
+        return res.status(409).json(conflict);
+      }
+      throw insertErr;
+    }
 
     // Send confirmation email if email is configured
     const userEmail = req.user?.claims?.email;
@@ -392,8 +292,24 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
       req,
       properties: { salonId, serviceId, masterId: masterId ?? null, bookingId: newBooking.id },
     });
+    // Schedule reminders — this is the main web booking-dialog path, which
+    // previously never called this at all.
+    scheduleBookingReminders(
+      newBooking.id,
+      new Date(newBooking.bookingDate).toISOString(),
+      newBooking.startTime,
+      newBooking.notificationVersion,
+    ).catch((err) =>
+      logger.error("Failed to schedule reminders", {
+        source: "client.routes",
+        meta: { bookingId: newBooking.id, error: String(err) },
+      }),
+    );
     // Clear any resume-booking draft for this user (booking succeeded)
-    void db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId)).catch(() => {});
+    void db
+      .delete(bookingDrafts)
+      .where(eq(bookingDrafts.userId, userId))
+      .catch(() => {});
     return res.status(201).json(newBooking);
   } catch (error) {
     logger.error("Create booking error:", error);
@@ -510,6 +426,13 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(bookings.id, id))
       .returning();
+
+    cancelBookingReminders(updated.id).catch((err) =>
+      logger.error("Failed to cancel reminders", {
+        source: "client.routes",
+        meta: { bookingId: updated.id, error: String(err) },
+      }),
+    );
 
     // Send cancellation email if email is configured
     const cancelUserEmail = req.user?.claims?.email;
@@ -1154,12 +1077,18 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
 // в”Ђв”Ђв”Ђ Booking Drafts (Resume Booking) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 const draftSchema = z.object({
-  salonId:       z.string().optional(),
-  serviceId:     z.string().optional(),
-  masterId:      z.string().optional(),
-  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  properties:    z.record(z.unknown()).optional(),
+  salonId: z.string().optional(),
+  serviceId: z.string().optional(),
+  masterId: z.string().optional(),
+  scheduledDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  scheduledTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
+  properties: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1208,12 +1137,12 @@ router.post("/bookings/draft", isAuthenticated, async (req: any, res) => {
       .insert(bookingDrafts)
       .values({
         userId,
-        salonId:       salonId       ?? null,
-        serviceId:     serviceId     ?? null,
-        masterId:      masterId      ?? null,
+        salonId: salonId ?? null,
+        serviceId: serviceId ?? null,
+        masterId: masterId ?? null,
         scheduledDate: scheduledDate ?? null,
         scheduledTime: scheduledTime ?? null,
-        properties:    properties    ?? {},
+        properties: properties ?? {},
         expiresAt,
       })
       .returning();
@@ -1241,5 +1170,3 @@ router.delete("/bookings/draft", isAuthenticated, async (req: any, res) => {
 });
 
 export default router;
-
-

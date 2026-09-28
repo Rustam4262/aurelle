@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { randomUUID, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { db } from "../db";
 import { sendManagerInvitationEmail } from "../email";
 import bcrypt from "bcrypt";
@@ -35,6 +35,13 @@ import {
   DEFAULT_MANAGER_PERMISSIONS,
 } from "../lib/rbac";
 import { logAudit } from "../lib/audit";
+import { validateBookingSlot } from "../lib/booking-availability";
+import { getBookingConflictError } from "../lib/booking-db-errors";
+import {
+  scheduleBookingReminders,
+  cancelBookingReminders,
+  rescheduleBookingReminders,
+} from "../lib/reminders";
 import { eq, and, desc, inArray, gte, lte, lt, ne, sql, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
@@ -74,10 +81,7 @@ router.get(
       const allSalonIds = ownerSalons.map((s) => s.id);
 
       // Build filters
-      const conditions = [
-        eq(bookings.status, "completed"),
-        inArray(bookings.salonId, allSalonIds),
-      ];
+      const conditions = [eq(bookings.status, "completed"), inArray(bookings.salonId, allSalonIds)];
 
       if (salonId && salonId !== "all") {
         conditions.push(eq(bookings.salonId, salonId as string));
@@ -88,7 +92,9 @@ router.get(
       }
 
       const end = endDate ? new Date(endDate as string) : new Date();
-      const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(end.getDate() - 30));
+      const start = startDate
+        ? new Date(startDate as string)
+        : new Date(new Date().setDate(end.getDate() - 30));
 
       const dateCondition = and(gte(bookings.bookingDate, start), lte(bookings.bookingDate, end));
       if (dateCondition) {
@@ -151,25 +157,24 @@ router.get(
         totalRevenue: parseFloat(totals?.revenue || "0"),
         totalBookings: totals?.count || 0,
         averageCheck: totals?.count ? parseFloat(totals.revenue || "0") / totals.count : 0,
-        revenueByService: revenueByService.map(s => ({
+        revenueByService: revenueByService.map((s) => ({
           ...s,
           revenue: parseFloat(s.revenue || "0"),
         })),
-        revenueByMaster: revenueByMaster.map(m => ({
+        revenueByMaster: revenueByMaster.map((m) => ({
           ...m,
           revenue: parseFloat(m.revenue || "0"),
         })),
-        dailyRevenue: dailyRevenue.map(d => ({
+        dailyRevenue: dailyRevenue.map((d) => ({
           date: d.date,
           revenue: parseFloat(d.revenue || "0"),
         })),
       });
-
     } catch (error) {
       logger.error("Get revenue analytics error:", error);
       return res.status(500).json({ error: "Failed to get revenue analytics" });
     }
-  }
+  },
 );
 
 // Create salon
@@ -203,6 +208,9 @@ router.post(
         email: req.body.email || null,
         photos: photoUrls,
         status: req.body.status || "draft",
+        // Keep in sync with the status-change endpoint: a draft/paused salon
+        // must not be publicly visible just because isActive defaults to true.
+        isActive: (req.body.status || "draft") === "active",
       };
 
       const parsed = insertSalonSchema.safeParse(salonData);
@@ -219,7 +227,10 @@ router.post(
       }
 
       // Create salon
-      const [salon] = await db.insert(salons).values([parsed.data as any]).returning();
+      const [salon] = await db
+        .insert(salons)
+        .values([parsed.data as any])
+        .returning();
 
       // Create working hours if provided
       if (workingHoursData && workingHoursData.length > 0) {
@@ -244,7 +255,7 @@ router.post(
       logger.error("Create salon error", error as Error, { source: "owner.routes" });
       return res.status(500).json({ error: "Failed to create salon" });
     }
-  }
+  },
 );
 
 // Get owner's salons
@@ -771,16 +782,17 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
         ? db.select().from(services).where(inArray(services.id, serviceIds))
         : Promise.resolve([]),
       clientIds.length > 0
-        ? db.select({
-            id: userProfiles.id,
-            fullName: userProfiles.fullName,
-            avatarUrl: userProfiles.avatarUrl,
-            firstName: users.firstName,
-            email: users.email,
-          })
-          .from(userProfiles)
-          .leftJoin(users, eq(users.id, userProfiles.userId))
-          .where(inArray(userProfiles.id, clientIds))
+        ? db
+            .select({
+              id: userProfiles.id,
+              fullName: userProfiles.fullName,
+              avatarUrl: userProfiles.avatarUrl,
+              firstName: users.firstName,
+              email: users.email,
+            })
+            .from(userProfiles)
+            .leftJoin(users, eq(users.id, userProfiles.userId))
+            .where(inArray(userProfiles.id, clientIds))
         : Promise.resolve([]),
     ]);
 
@@ -790,16 +802,11 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
     const enrichedBookings = salonBookings.map((booking) => {
       const profile = clientsMap.get(booking.clientId);
       const clientDisplayName =
-        profile?.fullName ||
-        profile?.firstName ||
-        profile?.email?.split("@")[0] ||
-        null;
+        profile?.fullName || profile?.firstName || profile?.email?.split("@")[0] || null;
       return {
         ...booking,
         service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
-        client: profile
-          ? { fullName: clientDisplayName, avatarUrl: profile.avatarUrl }
-          : null,
+        client: profile ? { fullName: clientDisplayName, avatarUrl: profile.avatarUrl } : null,
       };
     });
 
@@ -811,124 +818,142 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
 });
 
 // Get advanced bookings with filtering — premium feature
-router.get("/bookings/advanced", isAuthenticated, requireFeature("analytics.advanced"), async (req: any, res) => {
-  try {
-    const ownerId = req.user.claims.sub;
-    const { status, salonId, masterId, dateFrom, dateTo, search } = req.query;
+router.get(
+  "/bookings/advanced",
+  isAuthenticated,
+  requireFeature("analytics.advanced"),
+  async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const { status, salonId, masterId, dateFrom, dateTo, search } = req.query;
 
-    // Get owner's salons first
-    const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
+      // Get owner's salons first
+      const ownerSalons = await db.select().from(salons).where(eq(salons.ownerId, ownerId));
 
-    if (ownerSalons.length === 0) {
-      return res.json({ bookings: [], total: 0 });
+      if (ownerSalons.length === 0) {
+        return res.json({ bookings: [], total: 0 });
+      }
+
+      const ownerSalonIds = ownerSalons.map((s) => s.id);
+
+      // Build query
+      const conditions = [inArray(bookings.salonId, ownerSalonIds)];
+
+      if (status && status !== " " && typeof status === "string") {
+        conditions.push(eq(bookings.status, status as any));
+      }
+
+      if (salonId && salonId !== " " && typeof salonId === "string") {
+        conditions.push(eq(bookings.salonId, salonId));
+      }
+
+      if (masterId && masterId !== " " && typeof masterId === "string") {
+        conditions.push(eq(bookings.masterId, masterId));
+      }
+
+      if (dateFrom && typeof dateFrom === "string") {
+        conditions.push(gte(bookings.bookingDate, new Date(dateFrom)));
+      }
+
+      if (dateTo && typeof dateTo === "string") {
+        conditions.push(lte(bookings.bookingDate, new Date(dateTo)));
+      }
+
+      const bookingQuery = db
+        .select()
+        .from(bookings)
+        .where(and(...conditions))
+        .orderBy(desc(bookings.bookingDate));
+
+      // Execute query
+      const matchingBookings = await bookingQuery;
+
+      // Filter by search (client name) manually or via localized search if possible
+      // Since client name is in userProfiles, we need to fetch/join.
+      // Let's fetch related data first.
+
+      if (matchingBookings.length === 0) {
+        return res.json({ bookings: [], total: 0 });
+      }
+
+      // Collect IDs
+      const serviceIds = Array.from(
+        new Set(matchingBookings.map((b) => b.serviceId).filter((id) => id !== null)),
+      ) as string[];
+      const masterIds = Array.from(
+        new Set(matchingBookings.map((b) => b.masterId).filter((id) => id !== null)),
+      ) as string[];
+      const clientIds = Array.from(new Set(matchingBookings.map((b) => b.clientId)));
+      const bookingSalonIds = Array.from(
+        new Set(matchingBookings.map((b) => b.salonId).filter((id) => id !== null)),
+      ) as string[];
+
+      // Fetch related data
+      const [servicesData, mastersData, clientsData, salonsData] = await Promise.all([
+        serviceIds.length > 0
+          ? db.select().from(services).where(inArray(services.id, serviceIds))
+          : [],
+        masterIds.length > 0 ? db.select().from(masters).where(inArray(masters.id, masterIds)) : [],
+        clientIds.length > 0
+          ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds))
+          : [],
+        bookingSalonIds.length > 0
+          ? db.select().from(salons).where(inArray(salons.id, bookingSalonIds))
+          : [],
+      ]);
+
+      const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
+      const mastersMap = new Map(mastersData.map((m) => [m.id, m]));
+      const clientsMap = new Map(clientsData.map((c) => [c.id, c]));
+      const salonsMap = new Map(salonsData.map((s) => [s.id, s]));
+
+      // Enrich and filter by search if needed
+      let enrichedBookings = matchingBookings.map((booking) => {
+        const client = clientsMap.get(booking.clientId);
+        const salon = booking.salonId ? salonsMap.get(booking.salonId) : null;
+        const master = booking.masterId ? mastersMap.get(booking.masterId) : null;
+        const service = booking.serviceId ? servicesMap.get(booking.serviceId) : null;
+
+        // Handle salon name (jsonb)
+        const salonNameObj = salon?.name as any;
+
+        // Handle master name (string)
+        const masterName = master?.name
+          ? { en: master.name, ru: master.name, uz: master.name }
+          : undefined;
+
+        // Handle service name (jsonb)
+        const serviceNameObj = service?.name as any;
+
+        return {
+          ...booking,
+          clientName: client?.fullName || "Unknown",
+          clientEmail: "", // We'd need to join with 'users' table for email, profile only has 'fullName'. assuming profile has it or we skip it. UserProfile schema check needed. userProfiles usually has userId.
+          clientAvatar: client?.avatarUrl || null,
+          salonName: salonNameObj,
+          masterName: masterName, // frontend expects obj
+          serviceName: serviceNameObj,
+          // formatted date/time are usually handled on frontend, but we pass raw
+        };
+      });
+
+      if (search && typeof search === "string") {
+        const searchLower = search.toLowerCase();
+        enrichedBookings = enrichedBookings.filter(
+          (b) => b.clientName && b.clientName.toLowerCase().includes(searchLower),
+        );
+      }
+
+      return res.json({
+        bookings: enrichedBookings,
+        total: enrichedBookings.length,
+      });
+    } catch (error) {
+      logger.error("Get advanced bookings error:", error);
+      return res.status(500).json({ error: "Failed to fetch bookings" });
     }
-
-    const ownerSalonIds = ownerSalons.map(s => s.id);
-
-    // Build query
-    const conditions = [inArray(bookings.salonId, ownerSalonIds)];
-
-    if (status && status !== " " && typeof status === "string") {
-      conditions.push(eq(bookings.status, status as any));
-    }
-
-    if (salonId && salonId !== " " && typeof salonId === "string") {
-      conditions.push(eq(bookings.salonId, salonId));
-    }
-
-    if (masterId && masterId !== " " && typeof masterId === "string") {
-      conditions.push(eq(bookings.masterId, masterId));
-    }
-
-    if (dateFrom && typeof dateFrom === "string") {
-      conditions.push(gte(bookings.bookingDate, new Date(dateFrom)));
-    }
-
-    if (dateTo && typeof dateTo === "string") {
-      conditions.push(lte(bookings.bookingDate, new Date(dateTo)));
-    }
-
-    let bookingQuery = db
-      .select()
-      .from(bookings)
-      .where(and(...conditions))
-      .orderBy(desc(bookings.bookingDate));
-
-    // Execute query
-    const matchingBookings = await bookingQuery;
-
-    // Filter by search (client name) manually or via localized search if possible
-    // Since client name is in userProfiles, we need to fetch/join.
-    // Let's fetch related data first.
-
-    if (matchingBookings.length === 0) {
-      return res.json({ bookings: [], total: 0 });
-    }
-
-    // Collect IDs
-    const serviceIds = Array.from(new Set(matchingBookings.map(b => b.serviceId).filter(id => id !== null))) as string[];
-    const masterIds = Array.from(new Set(matchingBookings.map(b => b.masterId).filter(id => id !== null))) as string[];
-    const clientIds = Array.from(new Set(matchingBookings.map(b => b.clientId)));
-    const bookingSalonIds = Array.from(new Set(matchingBookings.map(b => b.salonId).filter(id => id !== null))) as string[];
-
-    // Fetch related data
-    const [servicesData, mastersData, clientsData, salonsData] = await Promise.all([
-      serviceIds.length > 0 ? db.select().from(services).where(inArray(services.id, serviceIds)) : [],
-      masterIds.length > 0 ? db.select().from(masters).where(inArray(masters.id, masterIds)) : [],
-      clientIds.length > 0 ? db.select().from(userProfiles).where(inArray(userProfiles.id, clientIds)) : [],
-      bookingSalonIds.length > 0 ? db.select().from(salons).where(inArray(salons.id, bookingSalonIds)) : []
-    ]);
-
-    const servicesMap = new Map(servicesData.map(s => [s.id, s]));
-    const mastersMap = new Map(mastersData.map(m => [m.id, m]));
-    const clientsMap = new Map(clientsData.map(c => [c.id, c]));
-    const salonsMap = new Map(salonsData.map(s => [s.id, s]));
-
-    // Enrich and filter by search if needed
-    let enrichedBookings = matchingBookings.map(booking => {
-      const client = clientsMap.get(booking.clientId);
-      const salon = booking.salonId ? salonsMap.get(booking.salonId) : null;
-      const master = booking.masterId ? mastersMap.get(booking.masterId) : null;
-      const service = booking.serviceId ? servicesMap.get(booking.serviceId) : null;
-
-      // Handle salon name (jsonb)
-      const salonNameObj = salon?.name as any;
-
-      // Handle master name (string)
-      const masterName = master?.name ? { en: master.name, ru: master.name, uz: master.name } : undefined;
-
-      // Handle service name (jsonb)
-      const serviceNameObj = service?.name as any;
-
-      return {
-        ...booking,
-        clientName: client?.fullName || "Unknown",
-        clientEmail: "", // We'd need to join with 'users' table for email, profile only has 'fullName'. assuming profile has it or we skip it. UserProfile schema check needed. userProfiles usually has userId.
-        clientAvatar: client?.avatarUrl || null,
-        salonName: salonNameObj,
-        masterName: masterName, // frontend expects obj
-        serviceName: serviceNameObj,
-        // formatted date/time are usually handled on frontend, but we pass raw
-      };
-    });
-
-    if (search && typeof search === "string") {
-      const searchLower = search.toLowerCase();
-      enrichedBookings = enrichedBookings.filter(b =>
-        (b.clientName && b.clientName.toLowerCase().includes(searchLower))
-      );
-    }
-
-    return res.json({
-      bookings: enrichedBookings,
-      total: enrichedBookings.length
-    });
-
-  } catch (error) {
-    logger.error("Get advanced bookings error:", error);
-    return res.status(500).json({ error: "Failed to fetch bookings" });
-  }
-});
+  },
+);
 
 // Get all bookings across owner's salons (for calendar)
 router.get("/bookings", isAuthenticated, async (req: any, res) => {
@@ -1021,6 +1046,15 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
       .where(eq(bookings.id, id))
       .returning();
 
+    if (status === "cancelled") {
+      cancelBookingReminders(updated.id).catch((err) =>
+        logger.error("Failed to cancel reminders", {
+          source: "owner.routes",
+          meta: { bookingId: updated.id, error: String(err) },
+        }),
+      );
+    }
+
     return res.json(updated);
   } catch (error) {
     logger.error("Update booking status error:", error);
@@ -1106,6 +1140,7 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
         name: services.name,
         description: services.description,
         category: services.category,
+        audience: services.audience,
         priceMin: services.priceMin,
         priceMax: services.priceMax,
         duration: services.duration,
@@ -1122,14 +1157,14 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
     const bookingStats =
       serviceIds.length > 0
         ? await db
-          .select({
-            serviceId: bookings.serviceId,
-            bookingCount: sql<number>`count(*)::int`,
-            lastBookedAt: sql<string>`max(${bookings.createdAt})`,
-          })
-          .from(bookings)
-          .where(inArray(bookings.serviceId, serviceIds))
-          .groupBy(bookings.serviceId)
+            .select({
+              serviceId: bookings.serviceId,
+              bookingCount: sql<number>`count(*)::int`,
+              lastBookedAt: sql<string>`max(${bookings.createdAt})`,
+            })
+            .from(bookings)
+            .where(inArray(bookings.serviceId, serviceIds))
+            .groupBy(bookings.serviceId)
         : [];
 
     const statsMap = new Map(bookingStats.map((s) => [s.serviceId, s]));
@@ -1137,7 +1172,7 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
     const servicesWithStats = allServices.map((service) => {
       const stats = statsMap.get(service.id);
 
-      // Parse salon name if it's a JSON string/object (it's stored as jsonb but we want string for display if simpler, 
+      // Parse salon name if it's a JSON string/object (it's stored as jsonb but we want string for display if simpler,
       // but frontend expects string "salonName". The select above joins with salons.name which is likely a json object {en:..., ru:...})
       // The frontend Interface says `salonName: string`.
       // Let's check how `salonName` is handled. If `salons.name` is an object, we might need to pick a default language or return the object.
@@ -1146,16 +1181,17 @@ router.get("/services/stats", isAuthenticated, async (req: any, res) => {
       // If it's an object, React will error.
       // We should probably format it here or change frontend to handle object.
       // `salons.name` is defined as `jsonb` or similar in schema? verification needed.
-      // Schema says `name` is `jsonb` usually for multilanguage. 
+      // Schema says `name` is `jsonb` usually for multilanguage.
       // Let's assume we return the 'en' name or a stringified version for now, OR update frontend.
       // Looking at `owner.routes.ts` `GET /salons`, it returns raw `salons` rows.
       // In `ServiceManagement`, `salonName` is displayed directly.
       // Let's cast it to string safely or pick 'en'.
 
       const salonNameObj = service.salonName as any;
-      const salonNameStr = typeof salonNameObj === 'object'
-        ? (salonNameObj.en || Object.values(salonNameObj)[0] || "Salon")
-        : String(salonNameObj);
+      const salonNameStr =
+        typeof salonNameObj === "object"
+          ? salonNameObj.en || Object.values(salonNameObj)[0] || "Salon"
+          : String(salonNameObj);
 
       return {
         ...service,
@@ -1214,33 +1250,39 @@ router.get("/masters/stats", isAuthenticated, async (req: any, res) => {
     const bookingCounts =
       masterIds.length > 0
         ? await db
-          .select({
-            masterId: bookings.masterId,
-            totalBookings: sql<number>`count(*)::int`,
-            completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
-            totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
-          })
-          .from(bookings)
-          .where(
-            and(
-              inArray(bookings.masterId, masterIds),
-              gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
-            ),
-          )
-          .groupBy(bookings.masterId)
+            .select({
+              masterId: bookings.masterId,
+              totalBookings: sql<number>`count(*)::int`,
+              completedBookings: sql<number>`count(case when ${bookings.status} = 'completed' then 1 end)::int`,
+              totalRevenue: sql<string>`sum(${bookings.priceSnapshot})::numeric`,
+            })
+            .from(bookings)
+            .where(
+              and(
+                inArray(bookings.masterId, masterIds),
+                gte(bookings.bookingDate, sql`CURRENT_DATE - INTERVAL '30 days'`),
+              ),
+            )
+            .groupBy(bookings.masterId)
         : [];
 
-
-
     // Get working hours for these masters
-    let hoursMap = new Map();
+    const hoursMap = new Map();
     if (masterIds.length > 0) {
       const hours = await db
         .select()
         .from(masterWorkingHours)
         .where(inArray(masterWorkingHours.masterId, masterIds));
 
-      const dayKeys = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKeys = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
 
       hours.forEach((h) => {
         if (!hoursMap.has(h.masterId)) hoursMap.set(h.masterId, {});
@@ -1308,11 +1350,15 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
         .optional(),
       experience: z.number().optional(),
       isActive: z.boolean().optional(),
-      workingHours: z.record(z.object({
-        start: z.string(),
-        end: z.string(),
-        isWorking: z.boolean()
-      })).optional(),
+      workingHours: z
+        .record(
+          z.object({
+            start: z.string(),
+            end: z.string(),
+            isWorking: z.boolean(),
+          }),
+        )
+        .optional(),
     });
 
     const validatedData = updateSchema.parse(req.body);
@@ -1335,7 +1381,13 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
       await db.delete(masterWorkingHours).where(eq(masterWorkingHours.masterId, masterId));
 
       const dayMap: Record<string, number> = {
-        "sunday": 0, "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6
+        sunday: 0,
+        monday: 1,
+        tuesday: 2,
+        wednesday: 3,
+        thursday: 4,
+        friday: 5,
+        saturday: 6,
       };
 
       const hoursToInsert = [];
@@ -1346,7 +1398,7 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
             dayOfWeek: dayMap[day],
             openTime: schedule.start || "09:00",
             closeTime: schedule.end || "18:00",
-            isClosed: !schedule.isWorking
+            isClosed: !schedule.isWorking,
           });
         }
       }
@@ -1448,7 +1500,6 @@ router.delete("/masters/:masterId/portfolio/:imageId", isAuthenticated, async (r
   }
 });
 
-
 // Duplicate service to another salon
 router.post("/services/:serviceId/duplicate", isAuthenticated, async (req: any, res) => {
   try {
@@ -1490,6 +1541,7 @@ router.post("/services/:serviceId/duplicate", isAuthenticated, async (req: any, 
         name: sourceService.name,
         description: sourceService.description,
         category: sourceService.category,
+        audience: sourceService.audience,
         priceMin: sourceService.priceMin,
         priceMax: sourceService.priceMax,
         duration: sourceService.duration,
@@ -2186,7 +2238,7 @@ router.get("/dashboard/overview", isAuthenticated, async (req: any, res) => {
     const todayCompletionRate =
       todayBookings.length > 0
         ? (todayBookings.filter((b) => b.status === "completed").length / todayBookings.length) *
-        100
+          100
         : 0;
 
     // Week stats
@@ -2472,7 +2524,7 @@ router.get("/dashboard/alerts", isAuthenticated, async (req: any, res) => {
       ]);
 
       const hasServices = new Set(salonsWithServices.map((r) => r.salonId));
-      const hasMasters  = new Set(salonsWithMasters.map((r) => r.salonId));
+      const hasMasters = new Set(salonsWithMasters.map((r) => r.salonId));
 
       for (const salon of ownerSalons) {
         if (!hasServices.has(salon.id)) {
@@ -2986,20 +3038,12 @@ router.post(
         clientPhone,
         bookingDate,
         startTime,
-        endTime,
         notes,
       } = req.body;
 
-      // Validation
-      if (
-        !salonId ||
-        !serviceId ||
-        !clientName ||
-        !clientPhone ||
-        !bookingDate ||
-        !startTime ||
-        !endTime
-      ) {
+      // Validation — endTime is intentionally not accepted: it's always
+      // derived server-side from the service's own duration.
+      if (!salonId || !serviceId || !clientName || !clientPhone || !bookingDate || !startTime) {
         return res.status(400).json({
           error: "Missing required fields",
           required: [
@@ -3009,7 +3053,6 @@ router.post(
             "clientPhone",
             "bookingDate",
             "startTime",
-            "endTime",
           ],
         });
       }
@@ -3024,94 +3067,112 @@ router.post(
         return res.status(403).json({ error: "Salon not found or access denied" });
       }
 
-      // Get service details for price
-      const [service] = await db
-        .select()
-        .from(services)
-        .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
+      // Duration, working-hours, break and conflict checks — same shared
+      // module used by every booking write path, so a walk-in an owner enters
+      // manually can't silently end up outside published hours.
+      const dateISO = String(bookingDate).slice(0, 10);
+      const validation = await validateBookingSlot({
+        salonId,
+        masterId: masterId || null,
+        serviceId,
+        dateISO,
+        startTime,
+      });
 
-      if (!service) {
-        return res.status(404).json({ error: "Service not found in this salon" });
+      if (!validation.ok) {
+        return res.status(409).json({
+          code: validation.code,
+          error: "Time slot not available",
+          message: "This time slot is not available. Please choose a different time.",
+        });
       }
 
-      // Check for slot conflicts if master is specified
-      if (masterId) {
-        const conflictingBookings = await db
-          .select()
-          .from(bookings)
-          .where(
-            and(
-              eq(bookings.masterId, masterId),
-              eq(bookings.bookingDate, new Date(bookingDate)),
-              ne(bookings.status, "cancelled"),
-              // Check time overlap
-              sql`(${bookings.startTime} < ${endTime} AND ${bookings.endTime} > ${startTime})`,
-            ),
-          );
+      const { endTime, priceMin } = validation;
 
-        if (conflictingBookings.length > 0) {
-          return res.status(409).json({
-            error: "Master is already booked during this time",
-            conflicts: conflictingBookings,
-          });
-        }
-      }
-
-      // Check or create client profile
+      // Check or create client profile. bookings.clientId has a foreign key
+      // to users.id, so a guest walk-in still needs a real (passwordless)
+      // users row behind it — user_profiles.userId can't be a bare
+      // randomUUID() that points at nothing, which previously made every
+      // manual booking fail its insert with a foreign-key violation.
       let [clientProfile] = await db
         .select()
         .from(userProfiles)
         .where(eq(userProfiles.phone, clientPhone));
 
-      // If client doesn't exist, create a guest profile
       if (!clientProfile) {
+        const [guestUser] = await db
+          .insert(users)
+          .values({ phoneNumber: clientPhone, provider: "local" })
+          .returning();
         const [newProfile] = await db
           .insert(userProfiles)
           .values({
             fullName: clientName,
             phone: clientPhone,
             role: "client",
-            userId: randomUUID(), // Generated ID for guest (no auth account)
+            userId: guestUser.id,
           })
           .returning();
         clientProfile = newProfile;
       }
 
       // Create booking
-      const [booking] = await db
-        .insert(bookings)
-        .values({
-          clientId: clientProfile.id,
-          salonId,
-          serviceId,
-          masterId: masterId || null,
-          bookingDate: new Date(bookingDate),
-          startTime,
-          endTime,
-          status: "confirmed", // Owner-created bookings are auto-confirmed
-          priceSnapshot: service.priceMin,
-          notes: notes || `Manual booking created by owner (${clientName}, ${clientPhone})`,
-          modifiedBy: ownerId,
-          modificationHistory: [
-            {
-              timestamp: new Date().toISOString(),
-              action: "manual_create",
-              changedBy: ownerId,
-              changes: {
-                clientName,
-                clientPhone,
-                createdBy: "owner",
+      let booking: typeof bookings.$inferSelect;
+      try {
+        [booking] = await db
+          .insert(bookings)
+          .values({
+            clientId: clientProfile.userId,
+            salonId,
+            serviceId,
+            masterId: masterId || null,
+            bookingDate: new Date(bookingDate),
+            startTime,
+            endTime,
+            status: "confirmed", // Owner-created bookings are auto-confirmed
+            priceSnapshot: priceMin,
+            notes: notes || `Manual booking created by owner (${clientName}, ${clientPhone})`,
+            modifiedBy: ownerId,
+            modificationHistory: [
+              {
+                timestamp: new Date().toISOString(),
+                action: "manual_create",
+                changedBy: ownerId,
+                changes: {
+                  clientName,
+                  clientPhone,
+                  createdBy: "owner",
+                },
               },
-            },
-          ],
-        })
-        .returning();
+            ],
+          })
+          .returning();
+      } catch (insertErr) {
+        const conflict = getBookingConflictError(insertErr);
+        if (conflict) {
+          return res.status(409).json(conflict);
+        }
+        throw insertErr;
+      }
 
       // Create notification for the master if assigned
       if (masterId) {
         const bookingDateStr = new Date(bookingDate).toISOString().split("T")[0];
         await createNewBookingNotification(db, masterId, bookingDateStr, startTime, booking.id);
       }
+
+      // Schedule reminders — manual/walk-in bookings never had these before.
+      scheduleBookingReminders(
+        booking.id,
+        new Date(booking.bookingDate).toISOString(),
+        booking.startTime,
+        booking.notificationVersion,
+      ).catch((err) =>
+        logger.error("Failed to schedule reminders for manual booking", {
+          source: "owner.routes",
+          meta: { bookingId: booking.id, error: String(err) },
+        }),
+      );
 
       // Log audit
       await logAudit({
@@ -3149,13 +3210,14 @@ router.patch(
     try {
       const { id } = req.params;
       const ownerId = req.user.claims.sub;
-      const { newBookingDate, newStartTime, newEndTime, reason } = req.body;
+      const { newBookingDate, newStartTime, reason } = req.body;
 
-      // Validation
-      if (!newBookingDate || !newStartTime || !newEndTime) {
+      // newEndTime is intentionally not accepted — it's always derived
+      // server-side from the booking's own service duration.
+      if (!newBookingDate || !newStartTime) {
         return res.status(400).json({
           error: "Missing required fields",
-          required: ["newBookingDate", "newStartTime", "newEndTime"],
+          required: ["newBookingDate", "newStartTime"],
         });
       }
 
@@ -3179,29 +3241,28 @@ router.patch(
         return res.status(403).json({ error: "Not authorized" });
       }
 
-      // Check for conflicts
-      if (booking.masterId) {
-        const conflictingBookings = await db
-          .select()
-          .from(bookings)
-          .where(
-            and(
-              eq(bookings.masterId, booking.masterId),
-              eq(bookings.bookingDate, new Date(newBookingDate)),
-              ne(bookings.status, "cancelled"),
-              ne(bookings.id, id), // Exclude current booking
-              // Check time overlap
-              sql`(${bookings.startTime} < ${newEndTime} AND ${bookings.endTime} > ${newStartTime})`,
-            ),
-          );
+      // Duration, working-hours, break and conflict checks — same shared
+      // module used by every booking write path.
+      const dateISO = String(newBookingDate).slice(0, 10);
+      const validation = await validateBookingSlot({
+        salonId: booking.salonId,
+        masterId: booking.masterId,
+        serviceId: booking.serviceId,
+        soloMasterServiceId: booking.soloMasterServiceId,
+        dateISO,
+        startTime: newStartTime,
+        excludeBookingId: id,
+      });
 
-        if (conflictingBookings.length > 0) {
-          return res.status(409).json({
-            error: "Master is already booked during this time",
-            conflicts: conflictingBookings,
-          });
-        }
+      if (!validation.ok) {
+        return res.status(409).json({
+          code: validation.code,
+          error: "Time slot not available",
+          message: "This time slot is not available. Please choose a different time.",
+        });
       }
+
+      const newEndTime = validation.endTime;
 
       // Update booking
       const historyEntry = {
@@ -3218,18 +3279,40 @@ router.patch(
 
       const currentHistory = (booking.modificationHistory as any[]) || [];
 
-      const [updated] = await db
-        .update(bookings)
-        .set({
-          bookingDate: new Date(newBookingDate),
-          startTime: newStartTime,
-          endTime: newEndTime,
-          updatedAt: new Date(),
-          modifiedBy: ownerId,
-          modificationHistory: [...currentHistory, historyEntry],
-        })
-        .where(eq(bookings.id, id))
-        .returning();
+      let updated: typeof bookings.$inferSelect;
+      try {
+        updated = await db.transaction(async (tx) => {
+          const [row] = await tx
+            .update(bookings)
+            .set({
+              bookingDate: new Date(newBookingDate),
+              startTime: newStartTime,
+              endTime: newEndTime,
+              updatedAt: new Date(),
+              modifiedBy: ownerId,
+              modificationHistory: [...currentHistory, historyEntry],
+              notificationVersion: sql`${bookings.notificationVersion} + 1`,
+            })
+            .where(eq(bookings.id, id))
+            .returning();
+
+          await rescheduleBookingReminders(
+            row.id,
+            new Date(row.bookingDate).toISOString(),
+            row.startTime,
+            row.notificationVersion,
+            tx,
+          );
+
+          return row;
+        });
+      } catch (updateErr) {
+        const conflict = getBookingConflictError(updateErr);
+        if (conflict) {
+          return res.status(409).json(conflict);
+        }
+        throw updateErr;
+      }
 
       // Log audit
       await logAudit({
@@ -3747,10 +3830,14 @@ router.post(
         .where(eq(salonManagers.id, manager.id))
         .then(() => sendManagerInvitationEmail(email, salon, inviteToken))
         .catch((err: unknown) =>
-          logger.error("Failed to send manager invitation email", err instanceof Error ? err : new Error(String(err)), {
-            source: "owner-routes",
-            meta: { managerId: manager.id, email },
-          }),
+          logger.error(
+            "Failed to send manager invitation email",
+            err instanceof Error ? err : new Error(String(err)),
+            {
+              source: "owner-routes",
+              meta: { managerId: manager.id, email },
+            },
+          ),
         );
 
       return res.status(201).json(manager);
@@ -4030,10 +4117,14 @@ router.get("/salons/:salonId/clients", isAuthenticated, async (req: any, res) =>
 
     const clientIds = Array.from(new Set(salonBookings.map((booking) => booking.clientId)));
     const serviceIds = Array.from(
-      new Set(salonBookings.map((booking) => booking.serviceId).filter((id): id is string => Boolean(id))),
+      new Set(
+        salonBookings.map((booking) => booking.serviceId).filter((id): id is string => Boolean(id)),
+      ),
     );
     const masterIds = Array.from(
-      new Set(salonBookings.map((booking) => booking.masterId).filter((id): id is string => Boolean(id))),
+      new Set(
+        salonBookings.map((booking) => booking.masterId).filter((id): id is string => Boolean(id)),
+      ),
     );
 
     const [profiles, authUsers, salonServices, salonMasters] = await Promise.all([
@@ -4096,10 +4187,9 @@ router.get("/salons/:salonId/clients", isAuthenticated, async (req: any, res) =>
         totalSpent,
         lastVisit: items[0]?.bookingDate || null,
         favoriteService: favoriteServiceId ? serviceMap.get(favoriteServiceId) || null : null,
-        favoriteMaster:
-          items.find((booking) => booking.masterId)?.masterId
-            ? masterMap.get(items.find((booking) => booking.masterId)!.masterId!) || null
-            : null,
+        favoriteMaster: items.find((booking) => booking.masterId)?.masterId
+          ? masterMap.get(items.find((booking) => booking.masterId)!.masterId!) || null
+          : null,
         latestStatus: items[0]?.status || null,
         bookings: items.slice(0, 5),
       };
@@ -4141,7 +4231,9 @@ router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
       .safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid ticket payload", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Invalid ticket payload", details: parsed.error.errors });
     }
 
     const [ticket] = await db
@@ -4208,7 +4300,9 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
       .safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid message payload", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Invalid message payload", details: parsed.error.errors });
     }
 
     const [ticket] = await db
@@ -4264,5 +4358,33 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
     return res.status(500).json({ error: "Failed to close support ticket" });
   }
 });
+
+router.patch(
+  "/salons/:salonId/services/:serviceId/audience",
+  isAuthenticated,
+  async (req: any, res) => {
+    try {
+      const parsed = z
+        .object({ audience: z.enum(["women", "men", "unisex"]).nullable() })
+        .safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: "Invalid audience" });
+      const [salon] = await db
+        .select({ id: salons.id })
+        .from(salons)
+        .where(and(eq(salons.id, req.params.salonId), eq(salons.ownerId, req.user.claims.sub)));
+      if (!salon) return res.status(404).json({ error: "Salon not found" });
+      const [service] = await db
+        .update(services)
+        .set(parsed.data)
+        .where(and(eq(services.id, req.params.serviceId), eq(services.salonId, salon.id)))
+        .returning();
+      if (!service) return res.status(404).json({ error: "Service not found" });
+      return res.json(service);
+    } catch (error) {
+      logger.error("Service audience update failed", error);
+      return res.status(500).json({ error: "Failed to update service" });
+    }
+  },
+);
 
 export default router;

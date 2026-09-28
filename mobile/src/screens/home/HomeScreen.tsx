@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -33,22 +26,16 @@ export function HomeScreen({ navigation }: Props) {
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       {/* Header */}
       <View className="px-4 pt-2 pb-4 bg-white">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">
-          Найдите мастера
-        </Text>
+        <Text className="text-2xl font-bold text-gray-900 mb-3">Найдите мастера</Text>
 
         {/* Search bar */}
         <TouchableOpacity
           className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3"
-          onPress={() =>
-            navigation.navigate("Search", { query: searchQuery })
-          }
+          onPress={() => navigation.navigate("Search", { query: searchQuery })}
           activeOpacity={0.8}
         >
           <Ionicons name="search-outline" size={18} color="#9ca3af" />
-          <Text className="ml-2 text-gray-400 text-base flex-1">
-            Салон, мастер, услуга...
-          </Text>
+          <Text className="ml-2 text-gray-400 text-base flex-1">Салон, мастер, услуга...</Text>
         </TouchableOpacity>
       </View>
 
@@ -67,16 +54,10 @@ export function HomeScreen({ navigation }: Props) {
               <TouchableOpacity
                 onPress={() => setSelectedCity(city)}
                 className={`mr-2 px-4 py-1.5 rounded-full border ${
-                  active
-                    ? "bg-primary border-primary"
-                    : "border-gray-200 bg-white"
+                  active ? "bg-primary border-primary" : "border-gray-200 bg-white"
                 }`}
               >
-                <Text
-                  className={`text-sm font-medium ${
-                    active ? "text-white" : "text-gray-600"
-                  }`}
-                >
+                <Text className={`text-sm font-medium ${active ? "text-white" : "text-gray-600"}`}>
                   {item}
                 </Text>
               </TouchableOpacity>

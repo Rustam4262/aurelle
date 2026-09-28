@@ -29,9 +29,7 @@ api.interceptors.response.use(
   (response) => {
     const setCookie = response.headers["set-cookie"];
     if (setCookie) {
-      const cookieStr = Array.isArray(setCookie)
-        ? setCookie.join("; ")
-        : setCookie;
+      const cookieStr = Array.isArray(setCookie) ? setCookie.join("; ") : setCookie;
       SecureStore.setItemAsync(SESSION_KEY, cookieStr).catch(() => {});
     }
     return response;

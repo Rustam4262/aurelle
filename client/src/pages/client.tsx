@@ -98,6 +98,7 @@ type CopyDictionary = Record<
     profileCta: string;
     supportCta: string;
     signOutCta: string;
+    refreshCta: string;
     accountStatus: string;
     profileStatus: string;
     completeProfile: string;
@@ -168,6 +169,7 @@ const copy: CopyDictionary = {
     profileCta: "Редактировать профиль",
     supportCta: "Открыть поддержку",
     signOutCta: "Выйти из аккаунта",
+    refreshCta: "Обновить",
     accountStatus: "Статус аккаунта",
     profileStatus: "Статус профиля",
     completeProfile: "Заполнить профиль",
@@ -213,7 +215,8 @@ const copy: CopyDictionary = {
     safety: "Xavfsizlik",
     openSupport: "Ochiq murojaatlar",
     allCaughtUp: "Hozir hammasi joyida",
-    allCaughtUpText: "Yangi vazifalar yo'q: keyingi tashrifni izlash yoki profilni yangilash mumkin.",
+    allCaughtUpText:
+      "Yangi vazifalar yo'q: keyingi tashrifni izlash yoki profilni yangilash mumkin.",
     noNotifications: "Hozircha bildirishnomalar yo'q",
     noNotificationsText:
       "Yangi yozuvlar, status o'zgarishlari yoki javoblar paydo bo'lsa, ular shu yerda ko'rinadi.",
@@ -236,6 +239,7 @@ const copy: CopyDictionary = {
     profileCta: "Profilni tahrirlash",
     supportCta: "Yordamga o'tish",
     signOutCta: "Akkauntdan chiqish",
+    refreshCta: "Yangilash",
     accountStatus: "Akkaunt holati",
     profileStatus: "Profil holati",
     completeProfile: "Profilni to'ldirish",
@@ -281,7 +285,8 @@ const copy: CopyDictionary = {
     safety: "Security",
     openSupport: "Open tickets",
     allCaughtUp: "You are all caught up",
-    allCaughtUpText: "No urgent tasks right now. You can plan the next visit or refine your profile.",
+    allCaughtUpText:
+      "No urgent tasks right now. You can plan the next visit or refine your profile.",
     noNotifications: "No notifications yet",
     noNotificationsText:
       "New bookings, status updates, and replies will appear here as they arrive.",
@@ -289,8 +294,7 @@ const copy: CopyDictionary = {
     unread: "Unread",
     read: "Read",
     communicationsTitle: "Visit communication hub",
-    communicationsText:
-      "Fast access to salons, masters, and the journeys where you may need help.",
+    communicationsText: "Fast access to salons, masters, and the journeys where you may need help.",
     bookingLinked: "Linked to booking",
     openSalon: "Open salon",
     openBookings: "Open bookings",
@@ -304,6 +308,7 @@ const copy: CopyDictionary = {
     profileCta: "Edit profile",
     supportCta: "Open support",
     signOutCta: "Sign out",
+    refreshCta: "Refresh",
     accountStatus: "Account status",
     profileStatus: "Profile status",
     completeProfile: "Complete profile",
@@ -492,6 +497,13 @@ function NotificationCenter({
   );
 }
 
+const BOOKING_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  confirmed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+};
+
 function CommunicationsTab({
   bookings,
   language,
@@ -503,6 +515,7 @@ function CommunicationsTab({
   onOpenSupport: () => void;
   onOpenBookings: () => void;
 }) {
+  const { t } = useTranslation();
   const current = copy[(language as keyof typeof copy) || "ru"];
   const communicationItems = bookings.slice(0, 6);
 
@@ -549,7 +562,9 @@ function CommunicationsTab({
                   <p className="mt-1 text-sm text-muted-foreground">{booking.master.name}</p>
                 )}
               </div>
-              <Badge variant="outline">{booking.status}</Badge>
+              <Badge className={BOOKING_STATUS_COLORS[booking.status || "pending"]}>
+                {t(`marketplace.client.status.${booking.status}`)}
+              </Badge>
             </div>
             <div className="mt-4 space-y-1 text-sm text-muted-foreground">
               <p>{formatDate(booking.bookingDate, language)}</p>
@@ -749,7 +764,8 @@ export default function ClientPage() {
   });
 
   const cancelBookingMutation = useMutation({
-    mutationFn: async (bookingId: string) => apiRequest("DELETE", `/api/client/bookings/${bookingId}`),
+    mutationFn: async (bookingId: string) =>
+      apiRequest("DELETE", `/api/client/bookings/${bookingId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client/bookings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
@@ -793,8 +809,7 @@ export default function ClientPage() {
       ({
         userId: user?.id || "",
         role: "client",
-        fullName:
-          [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.email || "",
+        fullName: [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.email || "",
         createdAt: new Date(),
         updatedAt: new Date(),
       }) as UserProfile,
@@ -847,7 +862,12 @@ export default function ClientPage() {
   const heroActions = [
     { id: "find-salon", label: current.findSalon, icon: Search, href: "/search" },
     { id: "find-master", label: current.findMaster, icon: Sparkles, href: "/search" },
-    { id: "bookings", label: current.myBookings, icon: CalendarClock, tab: "bookings" as CabinetTab },
+    {
+      id: "bookings",
+      label: current.myBookings,
+      icon: CalendarClock,
+      tab: "bookings" as CabinetTab,
+    },
     { id: "favorites", label: current.favorites, icon: Heart, tab: "favorites" as CabinetTab },
     { id: "reviews", label: current.myReviews, icon: Star, tab: "reviews" as CabinetTab },
     { id: "messages", label: current.messages, icon: MessageCircle, tab: "messages" as CabinetTab },
@@ -893,7 +913,7 @@ export default function ClientPage() {
     notificationsQuery.isLoading;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.10),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_26%),linear-gradient(180deg,rgba(17,24,39,0.02),transparent_42%)] bg-background">
+    <div className="audience-client-surface min-h-screen dark:bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.10),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_26%),linear-gradient(180deg,rgba(17,24,39,0.02),transparent_42%)] bg-background">
       <div className="border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
@@ -903,22 +923,38 @@ export default function ClientPage() {
               </Button>
             </Link>
             <div className="min-w-0">
-              <h1 className="font-serif text-xl leading-tight text-foreground sm:text-2xl">{current.pageTitle}</h1>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground sm:max-w-2xl">{current.pageSubtitle}</p>
+              <h1 className="font-serif text-xl leading-tight text-foreground sm:text-2xl">
+                {current.pageTitle}
+              </h1>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground sm:max-w-2xl">
+                {current.pageSubtitle}
+              </p>
             </div>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
             <ThemeToggle />
             <LanguageSwitcher />
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-none"
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+            >
               {refreshMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}
-              <span className="truncate">Refresh</span>
+              <span className="truncate">{current.refreshCta}</span>
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => void logout()} disabled={isLoggingOut}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-none"
+              onClick={() => void logout()}
+              disabled={isLoggingOut}
+            >
               {isLoggingOut ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -930,275 +966,328 @@ export default function ClientPage() {
         </div>
       </div>
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
-        <section className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <div className="bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    {current.heroEyebrow}
-                  </div>
-                  <div className="mt-5 flex items-start gap-4">
-                    <Avatar className="h-16 w-16 ring-4 ring-background/80 shadow-md">
-                      <AvatarImage src={profileData.avatarUrl || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-lg text-primary">
-                        {displayName[0] || "C"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <h2 className="text-balance font-serif text-2xl leading-tight text-foreground sm:text-4xl">
-                        {current.heroTitle}
-                      </h2>
-                      <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
-                        {current.heroText}
-                      </p>
-                      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                        <span>{user.email || "—"}</span>
-                        {profileData.phone && <span>{profileData.phone}</span>}
-                        {profileData.city && <span>{profileData.city}</span>}
+        <Tabs
+          value={activeTab === "notifications" ? "messages" : activeTab}
+          onValueChange={(value) => setActiveTab(value as CabinetTab)}
+          orientation="vertical"
+          className="grid w-full items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]"
+        >
+          <aside
+            className="rounded-2xl border border-border/70 bg-card p-3 lg:sticky lg:top-6"
+            aria-label={current.pageTitle}
+          >
+            <TabsList className="flex h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
+              {[
+                ["overview", language === "ru" ? "Личный кабинет" : current.pageTitle, UserCircle2],
+                ["profile", current.profileCta, UserCircle2],
+                ["bookings", current.myBookings, CalendarClock],
+                ["reviews", current.myReviews, Star],
+                ["favorites", current.favorites, Heart],
+                ["messages", current.messages, MessageCircle],
+                ["support", current.support, LifeBuoy],
+                ["security", current.settings, Settings2],
+              ].map(([tabId, label, Icon]) => {
+                const id = tabId as CabinetTab;
+                const NavIcon = Icon as typeof UserCircle2;
+                const nested = ["profile", "bookings", "reviews", "favorites"].includes(id);
+                const count =
+                  id === "messages"
+                    ? stats.unreadSupport + stats.unreadNotifications
+                    : tabBadges[id];
+                return (
+                  <TabsTrigger
+                    key={id}
+                    value={id}
+                    className={
+                      "w-full justify-start gap-3 whitespace-normal rounded-xl px-3 py-3 text-left data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none " +
+                      (nested ? "pl-7 text-sm" : "font-semibold") +
+                      (id === "messages" ? " mt-3 border-t border-border/70" : "")
+                    }
+                  >
+                    <NavIcon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{label as string}</span>
+                    {count ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        {count}
+                      </span>
+                    ) : null}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </aside>
+          <div className="min-w-0">
+            <TabsContent value="overview" className="mt-0 space-y-6">
+              <section className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <div className="bg-card dark:bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs text-muted-foreground">
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                          {current.heroEyebrow}
+                        </div>
+                        <div className="mt-5 flex items-start gap-4">
+                          <Avatar className="h-16 w-16 ring-4 ring-background/80 shadow-md">
+                            <AvatarImage src={profileData.avatarUrl || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-lg text-primary">
+                              {displayName[0]?.toUpperCase() || "C"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <h2 className="text-balance font-serif text-2xl leading-tight text-foreground sm:text-4xl">
+                              {current.heroTitle}
+                            </h2>
+                            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
+                              {current.heroText}
+                            </p>
+                            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                              <span>{user.email || "—"}</span>
+                              {profileData.phone && <span>{profileData.phone}</span>}
+                              {profileData.city && <span>{profileData.city}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid min-w-full grid-cols-2 gap-3 sm:min-w-[250px]">
+                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
+                            {current.profileCompletion}
+                          </p>
+                          <p className="mt-3 text-3xl font-semibold text-foreground">
+                            {profileScore}%
+                          </p>
+                          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                            {profileScore < 100 ? current.completeProfile : current.activeStatus}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
+                            {current.inbox}
+                          </p>
+                          <p className="mt-3 text-3xl font-semibold text-foreground">
+                            {stats.unreadNotifications + stats.unreadSupport}
+                          </p>
+                          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                            {current.notificationsLabel} + {current.supportLabel}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="my-6 bg-border/60" />
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">{current.quickActions}</p>
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {heroActions.map((action) =>
+                          action.href ? (
+                            <Button
+                              key={action.id}
+                              asChild
+                              variant="outline"
+                              className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
+                            >
+                              <Link href={action.href}>
+                                <action.icon className="mr-3 h-4 w-4 shrink-0" />
+                                <span className="min-w-0 break-words">{action.label}</span>
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button
+                              key={action.id}
+                              variant="outline"
+                              className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
+                              onClick={() => action.tab && setActiveTab(action.tab)}
+                            >
+                              <action.icon className="mr-3 h-4 w-4 shrink-0" />
+                              <span className="min-w-0 break-words">{action.label}</span>
+                            </Button>
+                          ),
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </Card>
 
-                <div className="grid min-w-full grid-cols-2 gap-3 sm:min-w-[250px]">
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
-                      {current.profileCompletion}
-                    </p>
-                    <p className="mt-3 text-3xl font-semibold text-foreground">{profileScore}%</p>
-                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                      {profileScore < 100 ? current.completeProfile : current.activeStatus}
-                    </p>
+                <Card className="border-border/70 p-6 shadow-sm">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{current.whatNow}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{current.whatNowText}</p>
                   </div>
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
-                      {current.inbox}
-                    </p>
-                    <p className="mt-3 text-3xl font-semibold text-foreground">
-                      {stats.unreadNotifications + stats.unreadSupport}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                      {current.notificationsLabel} + {current.supportLabel}
-                    </p>
+                  <div className="mt-5 space-y-3">
+                    <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">{current.nearestVisit}</p>
+                        <CalendarClock className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="mt-3 break-words text-xl font-semibold text-foreground">
+                        {nextBooking
+                          ? localizedName(nextBooking.service?.name, language) || "Service"
+                          : current.allCaughtUp}
+                      </p>
+                      <p className="mt-2 break-words text-sm text-muted-foreground">
+                        {nextBooking
+                          ? `${formatDate(nextBooking.bookingDate, language)} · ${nextBooking.startTime}`
+                          : current.allCaughtUpText}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">{current.pendingReview}</p>
+                        <Star className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <p className="mt-3 text-xl font-semibold text-foreground">
+                        {stats.pendingReviewBookings.length}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        className="mt-2 h-auto p-0 text-primary"
+                        onClick={() => setActiveTab("reviews")}
+                      >
+                        {current.myReviews}
+                      </Button>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">{current.openSupport}</p>
+                        <LifeBuoy className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="mt-3 text-xl font-semibold text-foreground">
+                        {stats.openSupportCount}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        className="mt-2 h-auto p-0 text-primary"
+                        onClick={() => setActiveTab("support")}
+                      >
+                        {current.support}
+                      </Button>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">{current.safety}</p>
+                        <ShieldCheck className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="mt-3 text-xl font-semibold text-foreground">
+                        {current.activeStatus}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        className="mt-2 h-auto p-0 text-primary"
+                        onClick={() => setActiveTab("security")}
+                      >
+                        {current.settings}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </Card>
+              </section>
+
+              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <p className="text-sm text-muted-foreground">{current.activeBookings}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">{stats.activeCount}</p>
+                </Card>
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <p className="text-sm text-muted-foreground">{current.upcomingVisits}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">
+                    {stats.upcomingCount}
+                  </p>
+                </Card>
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <p className="text-sm text-muted-foreground">{current.completedVisits}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">
+                    {stats.completedCount}
+                  </p>
+                </Card>
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <p className="text-sm text-muted-foreground">{current.cancelledVisits}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">
+                    {stats.cancelledCount}
+                  </p>
+                </Card>
+              </section>
+
+              <ClientDashboard
+                bookings={bookings}
+                favorites={favorites}
+                onNavigateToTab={(tab) => setActiveTab(tab as CabinetTab)}
+              />
+            </TabsContent>
+
+            <TabsContent value="profile" className="mt-0">
+              <ClientProfile profileData={profileData} />
+            </TabsContent>
+
+            <TabsContent value="bookings" className="mt-0">
+              <ClientBookings
+                bookings={bookings}
+                isLoading={bookingsQuery.isLoading}
+                onCancelBooking={(bookingId) => cancelBookingMutation.mutate(bookingId)}
+                isCancelling={cancelBookingMutation.isPending}
+                onOpenWriteReview={openReviewDialog}
+                hasReviewForBooking={(bookingId) =>
+                  reviews.some((review) => review.bookingId === bookingId)
+                }
+              />
+            </TabsContent>
+
+            <TabsContent value="favorites" className="mt-0">
+              <ClientFavorites
+                favorites={favorites}
+                masterFavorites={masterFavorites}
+                isLoading={favoritesQuery.isLoading}
+                isMasterFavoritesLoading={masterFavoritesQuery.isLoading}
+              />
+            </TabsContent>
+
+            <TabsContent value="reviews" className="mt-0">
+              <ClientReviews
+                reviews={reviews}
+                isLoading={reviewsQuery.isLoading}
+                pendingReviewBookings={stats.pendingReviewBookings}
+                onWriteReview={openReviewDialog}
+              />
+            </TabsContent>
+
+            <TabsContent value="messages" className="mt-0">
+              <CommunicationsTab
+                bookings={bookings}
+                language={language}
+                onOpenSupport={() => setActiveTab("support")}
+                onOpenBookings={() => setActiveTab("bookings")}
+              />
+              <div className="mt-6">
+                <NotificationCenter
+                  notifications={notifications}
+                  unreadCount={stats.unreadNotifications}
+                  language={language}
+                  markRead={(id) => markNotificationReadMutation.mutate(id)}
+                  markAllRead={() => markAllNotificationsReadMutation.mutate()}
+                  isMarkingAll={markAllNotificationsReadMutation.isPending}
+                />
               </div>
+            </TabsContent>
 
-              <Separator className="my-6 bg-border/60" />
+            <TabsContent value="support" className="mt-0">
+              <ClientSupport />
+            </TabsContent>
 
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">{current.quickActions}</p>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {heroActions.map((action) =>
-                    action.href ? (
-                      <Button
-                        key={action.id}
-                        asChild
-                        variant="outline"
-                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
-                      >
-                        <Link href={action.href}>
-                          <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                          <span className="min-w-0 break-words">{action.label}</span>
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button
-                        key={action.id}
-                        variant="outline"
-                        className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
-                        onClick={() => action.tab && setActiveTab(action.tab)}
-                      >
-                        <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                        <span className="min-w-0 break-words">{action.label}</span>
-                      </Button>
-                    ),
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-border/70 p-6 shadow-sm">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">{current.whatNow}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{current.whatNowText}</p>
-            </div>
-            <div className="mt-5 space-y-3">
-              <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{current.nearestVisit}</p>
-                  <CalendarClock className="h-4 w-4 text-primary" />
-                </div>
-                <p className="mt-3 break-words text-xl font-semibold text-foreground">
-                  {nextBooking
-                    ? localizedName(nextBooking.service?.name, language) || "Service"
-                    : current.allCaughtUp}
-                </p>
-                <p className="mt-2 break-words text-sm text-muted-foreground">
-                  {nextBooking
-                    ? `${formatDate(nextBooking.bookingDate, language)} · ${nextBooking.startTime}`
-                    : current.allCaughtUpText}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{current.pendingReview}</p>
-                  <Star className="h-4 w-4 text-amber-500" />
-                </div>
-                <p className="mt-3 text-xl font-semibold text-foreground">
-                  {stats.pendingReviewBookings.length}
-                </p>
-                <Button variant="ghost" className="mt-2 h-auto p-0 text-primary" onClick={() => setActiveTab("reviews")}>
-                  {current.myReviews}
-                </Button>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{current.openSupport}</p>
-                  <LifeBuoy className="h-4 w-4 text-primary" />
-                </div>
-                <p className="mt-3 text-xl font-semibold text-foreground">{stats.openSupportCount}</p>
-                <Button variant="ghost" className="mt-2 h-auto p-0 text-primary" onClick={() => setActiveTab("support")}>
-                  {current.support}
-                </Button>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{current.safety}</p>
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                </div>
-                <p className="mt-3 text-xl font-semibold text-foreground">{current.activeStatus}</p>
-                <Button variant="ghost" className="mt-2 h-auto p-0 text-primary" onClick={() => setActiveTab("security")}>
-                  {current.settings}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-border/70 p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{current.activeBookings}</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">{stats.activeCount}</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{current.upcomingVisits}</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">{stats.upcomingCount}</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{current.completedVisits}</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">{stats.completedCount}</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{current.cancelledVisits}</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">{stats.cancelledCount}</p>
-          </Card>
-        </section>
-
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CabinetTab)} className="w-full">
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl bg-muted/50 p-1">
-            {[
-              ["overview", current.pageTitle],
-              ["profile", current.profileCta],
-              ["bookings", current.myBookings],
-              ["favorites", current.favorites],
-              ["reviews", current.myReviews],
-              ["messages", current.messages],
-              ["support", current.support],
-              ["notifications", current.notificationsLabel],
-              ["security", current.settings],
-            ].map(([tabId, label]) => (
-              <TabsTrigger key={tabId} value={tabId} className="shrink-0 rounded-xl whitespace-nowrap">
-                <span>{label}</span>
-                {tabBadges[tabId as CabinetTab] ? (
-                  <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                    {tabBadges[tabId as CabinetTab]}
-                  </span>
-                ) : null}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="overview" className="mt-6">
-            <ClientDashboard
-              profileData={profileData}
-              bookings={bookings}
-              favorites={favorites}
-              onNavigateToTab={(tab) => setActiveTab(tab as CabinetTab)}
-            />
-          </TabsContent>
-
-          <TabsContent value="profile" className="mt-6">
-            <ClientProfile profileData={profileData} />
-          </TabsContent>
-
-          <TabsContent value="bookings" className="mt-6">
-            <ClientBookings
-              bookings={bookings}
-              isLoading={bookingsQuery.isLoading}
-              onCancelBooking={(bookingId) => cancelBookingMutation.mutate(bookingId)}
-              isCancelling={cancelBookingMutation.isPending}
-              onOpenWriteReview={openReviewDialog}
-              hasReviewForBooking={(bookingId) => reviews.some((review) => review.bookingId === bookingId)}
-            />
-          </TabsContent>
-
-          <TabsContent value="favorites" className="mt-6">
-            <ClientFavorites
-              favorites={favorites}
-              masterFavorites={masterFavorites}
-              isLoading={favoritesQuery.isLoading}
-              isMasterFavoritesLoading={masterFavoritesQuery.isLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-6">
-            <ClientReviews
-              reviews={reviews}
-              isLoading={reviewsQuery.isLoading}
-              pendingReviewBookings={stats.pendingReviewBookings}
-              onWriteReview={openReviewDialog}
-            />
-          </TabsContent>
-
-          <TabsContent value="messages" className="mt-6">
-            <CommunicationsTab
-              bookings={bookings}
-              language={language}
-              onOpenSupport={() => setActiveTab("support")}
-              onOpenBookings={() => setActiveTab("bookings")}
-            />
-          </TabsContent>
-
-          <TabsContent value="support" className="mt-6">
-            <ClientSupport />
-          </TabsContent>
-
-          <TabsContent value="notifications" className="mt-6">
-            <NotificationCenter
-              notifications={notifications}
-              unreadCount={stats.unreadNotifications}
-              language={language}
-              markRead={(id) => markNotificationReadMutation.mutate(id)}
-              markAllRead={() => markAllNotificationsReadMutation.mutate()}
-              isMarkingAll={markAllNotificationsReadMutation.isPending}
-            />
-          </TabsContent>
-
-          <TabsContent value="security" className="mt-6">
-            <SecurityTab
-              profile={profileQuery.data ?? null}
-              language={language}
-              unreadNotifications={stats.unreadNotifications}
-              openSupport={stats.openSupportCount}
-              onEditProfile={() => setActiveTab("profile")}
-              onOpenSupport={() => setActiveTab("support")}
-              onLogout={() => void logout()}
-              isLoggingOut={isLoggingOut}
-            />
-          </TabsContent>
+            <TabsContent value="security" className="mt-0">
+              <SecurityTab
+                profile={profileQuery.data ?? null}
+                language={language}
+                unreadNotifications={stats.unreadNotifications}
+                openSupport={stats.openSupportCount}
+                onEditProfile={() => setActiveTab("profile")}
+                onOpenSupport={() => setActiveTab("support")}
+                onLogout={() => void logout()}
+                isLoggingOut={isLoggingOut}
+              />
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
 

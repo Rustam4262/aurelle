@@ -1,3 +1,4 @@
+import { useAudience } from "@/components/audience-provider";
 import { useQuery } from "@tanstack/react-query";
 import type { Salon } from "@shared/schema";
 
@@ -21,8 +22,9 @@ export interface PublicReview {
 }
 
 export function useMarketplaceData() {
+  const { audience } = useAudience();
   const salonsQuery = useQuery<Salon[]>({
-    queryKey: ["/api/salons"],
+    queryKey: ["/api/salons", { audience }],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

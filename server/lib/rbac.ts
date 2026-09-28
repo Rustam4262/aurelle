@@ -141,7 +141,11 @@ export async function grantDefaultOwnerPermissions(ownerId: string): Promise<voi
  */
 export function requirePermission(permission: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const ownerId = (req.session as any).ownerId;
+    // Every call site chains this after isAuthenticated, which populates
+    // req.user from the Passport session — req.session.ownerId (the field
+    // this used to read) is never set anywhere in the app, so this check
+    // always failed with 401 regardless of the caller's actual permissions.
+    const ownerId = (req as any).user?.claims?.sub;
 
     if (!ownerId) {
       return res.status(401).json({

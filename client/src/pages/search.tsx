@@ -1,4 +1,7 @@
-import { useLocation } from "wouter";
+import { matchesCategory } from "@shared/service-audience";
+import { AudienceLabel, useAudience } from "@/components/audience-provider";
+import { SymbolIcon } from "@/components/ui/symbol-icon";
+import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { SearchSEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -20,7 +23,7 @@ import {
 import type { Salon } from "@shared/schema";
 import { SalonCard } from "@/components/home/HomeSalons";
 import { getLocalizedText } from "@/lib/i18n";
-import { getQueryFn } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useState, useMemo } from "react";
 import { useTranslation as useI18nTranslation } from "react-i18next";
 import {
@@ -33,26 +36,26 @@ import {
 
 // Service categories for filtering
 const SERVICE_CATEGORIES = [
-  { id: "hair", labelKey: "Hair Styling", icon: "✂️" },
-  { id: "nails", labelKey: "Nails & Manicure", icon: "💅" },
-  { id: "makeup", labelKey: "Makeup", icon: "💄" },
-  { id: "spa", labelKey: "Spa & Massage", icon: "🧖" },
-  { id: "skincare", labelKey: "Skincare", icon: "✨" },
-  { id: "barbershop", labelKey: "Barbershop", icon: "💈" },
+  { id: "hair", labelKey: "marketplace.categories.hair", icon: "hair" },
+  { id: "nails", labelKey: "marketplace.categories.nails", icon: "nails" },
+  { id: "makeup", labelKey: "marketplace.categories.makeup", icon: "makeup" },
+  { id: "spa", labelKey: "marketplace.categories.spa", icon: "spa" },
+  { id: "skincare", labelKey: "marketplace.categories.skincare", icon: "recommended" },
+  { id: "barbershop", labelKey: "marketplace.categories.barbershop", icon: "barbershop" },
 ];
 
 const RATING_OPTIONS = [
-  { value: "all", label: "All Ratings" },
-  { value: "4", label: "4+ Stars" },
-  { value: "3", label: "3+ Stars" },
-  { value: "2", label: "2+ Stars" },
+  { value: "all", labelKey: "search.ratingAll" },
+  { value: "4", labelKey: "search.rating4Plus" },
+  { value: "3", labelKey: "search.rating3Plus" },
+  { value: "2", labelKey: "search.rating2Plus" },
 ];
 
 const SORT_OPTIONS = [
-  { value: "relevance", label: "Most Relevant" },
-  { value: "rating", label: "Highest Rated" },
-  { value: "reviews", label: "Most Reviewed" },
-  { value: "newest", label: "Newest First" },
+  { value: "relevance", labelKey: "search.sortRelevance" },
+  { value: "rating", labelKey: "search.sortRatingHighest" },
+  { value: "reviews", labelKey: "search.sortMostReviewed" },
+  { value: "newest", labelKey: "search.sortNewest" },
 ];
 
 type SearchTab = "salons" | "masters";
@@ -75,7 +78,7 @@ interface PublicMaster {
 
 function MasterCard({ master }: { master: PublicMaster }) {
   const [, navigate] = useLocation();
-  const { i18n } = useI18nTranslation();
+  const { t, i18n } = useI18nTranslation();
   const lang = i18n.language as "en" | "ru" | "uz";
 
   const specialties = master.specialties?.[lang] ?? master.specialties?.ru ?? [];
@@ -83,10 +86,10 @@ function MasterCard({ master }: { master: PublicMaster }) {
 
   const serviceModeLabel =
     master.serviceMode === "mobile"
-      ? "Выезд"
+      ? t("master.serviceMode.mobile")
       : master.serviceMode === "both"
-        ? "Выезд / У мастера"
-        : "У мастера";
+        ? t("master.serviceMode.both")
+        : t("master.serviceMode.atMaster");
 
   return (
     <Card
@@ -131,15 +134,12 @@ function MasterCard({ master }: { master: PublicMaster }) {
 }
 
 export default function SearchPage() {
+  const { audience } = useAudience();
   const { t } = useTranslation();
   const { i18n } = useI18nTranslation();
   const [, navigate] = useLocation();
-  const [searchParams] = useState(() => {
-    if (typeof window !== "undefined") {
-      return new URLSearchParams(window.location.search);
-    }
-    return new URLSearchParams();
-  });
+  const urlSearch = useSearch();
+  const searchParams = new URLSearchParams(urlSearch);
 
   const initialQuery = searchParams.get("q") || "";
   const initialCity = searchParams.get("city") || "";
@@ -157,21 +157,36 @@ export default function SearchPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch all salons
-  const { data: salons = [], isLoading: salonsLoading } = useQuery<Salon[]>({
-    queryKey: ["/api/salons"],
+  const {
+    data: salons = [],
+    isLoading: salonsLoading,
+    isError: salonsError,
+    refetch: refetchSalons,
+  } = useQuery<(Salon & { serviceCategories: string[]; serviceNames: string })[]>({
+    queryKey: [
+      "/api/salons",
+      { audience: searchParams.get("audience") === "all" ? "all" : audience },
+    ],
     queryFn: getQueryFn({ on401: "throw" }),
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch solo masters (only when masters tab is active)
-  const { data: mastersList = [], isLoading: mastersLoading } = useQuery<PublicMaster[]>({
-    queryKey: ["/api/masters", searchQuery, selectedCity],
+  const {
+    data: mastersList = [],
+    isLoading: mastersLoading,
+    isError: mastersError,
+    refetch: refetchMasters,
+  } = useQuery<PublicMaster[]>({
+    queryKey: ["/api/masters", searchQuery, selectedCity, audience, searchParams.get("audience")],
     queryFn: () =>
-      fetch(
+      apiRequest(
+        "GET",
         `/api/masters?${new URLSearchParams({
           ...(searchQuery ? { q: searchQuery } : {}),
           ...(selectedCity ? { city: selectedCity } : {}),
           limit: "60",
+          audience: searchParams.get("audience") === "all" ? "all" : audience,
         })}`,
       ).then((r) => r.json()),
     staleTime: 2 * 60 * 1000,
@@ -185,7 +200,7 @@ export default function SearchPage() {
     const filtered = salons.filter((salon) => {
       type L10n = { en?: string; ru?: string; uz?: string };
       const salonName = getLocalizedText(salon.name as unknown as L10n, i18n.language);
-      const salonCity = getLocalizedText(salon.city as unknown as L10n, i18n.language);
+      const salonCity = salon.city ?? "";
       const salonDesc = getLocalizedText(salon.description as unknown as L10n, i18n.language);
       const queryLower = searchQuery.toLowerCase();
 
@@ -193,47 +208,47 @@ export default function SearchPage() {
       const textMatch =
         !searchQuery ||
         salonName.toLowerCase().includes(queryLower) ||
-        salonDesc.toLowerCase().includes(queryLower);
+        salonDesc.toLowerCase().includes(queryLower) ||
+        (salon.serviceNames || "").toLowerCase().includes(queryLower);
 
       // City filter
       const cityMatch =
         !selectedCity || salonCity.toLowerCase().includes(selectedCity.toLowerCase());
 
-      // Category filter (check if salon description mentions the category)
+      // Filter against the actual active services returned for this audience.
       const categoryMatch =
         !selectedCategory ||
-        salonDesc.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-        salonName.toLowerCase().includes(selectedCategory.toLowerCase());
-
-      // Rating filter
+        (salon.serviceCategories || []).some((category) =>
+          matchesCategory(category, selectedCategory),
+        );
       const rating = Number(salon.averageRating) || 0;
-      const ratingMatch = minRating === "all" || rating >= Number(minRating);
-
-      return textMatch && cityMatch && categoryMatch && ratingMatch;
+      return (
+        textMatch &&
+        cityMatch &&
+        categoryMatch &&
+        (minRating === "all" || rating >= Number(minRating))
+      );
     });
-
-    // Sort results
     if (sortBy === "rating") {
-      filtered.sort((a, b) => (Number(b.averageRating) || 0) - (Number(a.averageRating) || 0));
+      filtered.sort((a, b) => Number(b.averageRating || 0) - Number(a.averageRating || 0));
     } else if (sortBy === "reviews") {
       filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
     } else if (sortBy === "newest") {
-      filtered.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+      const time = (value: Salon["createdAt"]) => {
+        const n = value ? new Date(value).getTime() : 0;
+        return Number.isFinite(n) ? n : 0;
+      };
+      filtered.sort((a, b) => time(b.createdAt) - time(a.createdAt));
     }
-
     return filtered;
   }, [salons, searchQuery, selectedCity, selectedCategory, minRating, sortBy, i18n.language]);
 
-  // Filter masters client-side by rating
   const filteredMasters = useMemo(() => {
-    const filtered = mastersList.filter((m) => {
-      const rating = parseFloat(m.averageRating || "0");
-      return minRating === "all" || rating >= Number(minRating);
-    });
+    const filtered = mastersList.filter(
+      (master) => minRating === "all" || Number(master.averageRating || 0) >= Number(minRating),
+    );
     if (sortBy === "rating" || sortBy === "relevance") {
-      filtered.sort(
-        (a, b) => parseFloat(b.averageRating || "0") - parseFloat(a.averageRating || "0"),
-      );
+      filtered.sort((a, b) => Number(b.averageRating || 0) - Number(a.averageRating || 0));
     } else if (sortBy === "reviews") {
       filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
     }
@@ -242,6 +257,7 @@ export default function SearchPage() {
 
   const updateURL = () => {
     const params = new URLSearchParams();
+    if (searchParams.get("audience") === "all") params.set("audience", "all");
     if (activeTab !== "salons") params.set("tab", activeTab);
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCity) params.set("city", selectedCity);
@@ -259,12 +275,13 @@ export default function SearchPage() {
     setSelectedCategory("");
     setMinRating("all");
     setSortBy("relevance");
-    navigate("/search");
+    navigate(searchParams.get("audience") === "all" ? "/search?audience=all" : "/search");
   };
 
   const handleTabChange = (tab: SearchTab) => {
     setActiveTab(tab);
     const params = new URLSearchParams();
+    if (searchParams.get("audience") === "all") params.set("audience", "all");
     if (tab !== "salons") params.set("tab", tab);
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCity) params.set("city", selectedCity);
@@ -297,6 +314,20 @@ export default function SearchPage() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t("search.backToHome")}
             </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <AudienceLabel />
+              <a
+                className="mb-3 text-sm underline underline-offset-4"
+                href={searchParams.get("audience") === "all" ? "/search" : "/search?audience=all"}
+              >
+                {t(
+                  searchParams.get("audience") === "all" ? "audience.curated" : "audience.catalog",
+                )}
+              </a>
+            </div>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {t(searchParams.get("audience") === "all" ? "audience.catalog" : "audience.curated")}
+            </p>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="font-serif text-4xl text-foreground mb-2">
@@ -419,8 +450,10 @@ export default function SearchPage() {
                                 : "border-border"
                             }`}
                           >
-                            <div className="text-2xl mb-1">{category.icon}</div>
-                            <div className="text-xs font-medium truncate">{category.labelKey}</div>
+                            <SymbolIcon name={category.id} className="mb-2 h-5 w-5" />
+                            <div className="text-xs font-medium truncate">
+                              {t(category.labelKey)}
+                            </div>
                           </button>
                         ))}
                       </div>
@@ -440,7 +473,7 @@ export default function SearchPage() {
                       <SelectContent>
                         {RATING_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(option.labelKey)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -475,7 +508,7 @@ export default function SearchPage() {
                   </h2>
                   {activeFiltersCount > 0 && !isLoading && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      {t("search.filterApplied_one", { count: activeFiltersCount })}
+                      {t("search.filterApplied", { count: activeFiltersCount })}
                     </p>
                   )}
                 </div>
@@ -489,7 +522,7 @@ export default function SearchPage() {
                     <SelectContent>
                       {SORT_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.labelKey)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -515,7 +548,7 @@ export default function SearchPage() {
                   )}
                   {selectedCity && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      📍 {selectedCity}
+                      <SymbolIcon name="location" className="mr-1 h-4 w-4" /> {selectedCity}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -528,8 +561,13 @@ export default function SearchPage() {
                   )}
                   {selectedCategory && activeTab === "salons" && (
                     <Badge variant="secondary" className="pl-3 pr-1">
-                      {SERVICE_CATEGORIES.find((c) => c.id === selectedCategory)?.icon}{" "}
-                      {SERVICE_CATEGORIES.find((c) => c.id === selectedCategory)?.labelKey}
+                      <SymbolIcon name={selectedCategory} className="mr-1 h-4 w-4" />{" "}
+                      {(() => {
+                        const key = SERVICE_CATEGORIES.find(
+                          (c) => c.id === selectedCategory,
+                        )?.labelKey;
+                        return key ? t(key) : null;
+                      })()}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -558,7 +596,16 @@ export default function SearchPage() {
               )}
 
               {/* Results Grid */}
-              {isLoading ? (
+              {(activeTab === "salons" ? salonsError : mastersError) ? (
+                <div role="alert" className="rounded-xl border p-6">
+                  <p>{t("audience.loadError")}</p>
+                  <Button
+                    onClick={() => (activeTab === "salons" ? refetchSalons() : refetchMasters())}
+                  >
+                    {t("audience.retry")}
+                  </Button>
+                </div>
+              ) : isLoading ? (
                 <div className="flex items-center justify-center min-h-[400px]">
                   <div className="text-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
@@ -599,10 +646,10 @@ export default function SearchPage() {
                 <Card className="p-16 text-center border-dashed">
                   <User className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-30" />
                   <h3 className="font-serif text-2xl text-foreground mb-2">
-                    {t("search.noMastersFound") || "Мастера не найдены"}
+                    {t("search.noMastersFound")}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {t("search.noMastersDesc") || "Попробуйте изменить параметры поиска"}
+                    {t("search.noMastersDesc")}
                   </p>
                   <Button onClick={handleClearFilters} variant="outline">
                     <X className="h-4 w-4 mr-2" />

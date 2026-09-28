@@ -50,6 +50,8 @@
       "facial": "Yuz parvarishi",
       "massage": "Massaj",
       "waxing": "Depilatsiya",
+      "skincare": "Teri parvarishi",
+      "barbershop": "Sartaroshxona",
       "other": "Boshqa"
     },
     "salons": {
@@ -79,6 +81,7 @@
       "closed": "Yopiq",
       "open": "Ochiq",
       "experience": "yillik tajriba",
+      "experience_other": "{{count}} yillik tajriba",
       "verified": "Tasdiqlangan salon",
       "bookService": "Xizmatga yozilish",
       "withMaster": "Usta bilan",
@@ -87,6 +90,20 @@
       "notes": "Izohlar",
       "optional": "ixtiyoriy",
       "notesPlaceholder": "Maxsus istaklar yoki izohlar...",
+      "cancellationPolicy": "Yozilishni tashrifdan 24 soat oldin bepul bekor qilish yoki ko'chirish mumkin. Kechroq bekor qilish yoki kelmay qolish salonning qoidalariga muvofiq pullik bo'lishi mumkin.",
+      "closedOnThisDay": "Bu kuni salon ishlamaydi. Boshqa sanani tanlang.",
+      "workingHoursHint": "Bu kuni salon {{open}} dan {{close}} gacha ishlaydi",
+      "slotsLoadFailed": "Bo'sh vaqtlarni yuklab bo'lmadi",
+      "timeNoLongerAvailable": "Bu vaqt endi mavjud emas. Boshqasini tanlang",
+      "serviceNoLongerAvailable": "Bu xizmat endi mavjud emas. Ro'yxatdan boshqasini tanlang",
+      "masterNoLongerAvailable": "Bu usta hozircha mavjud emas. Boshqasini tanlashingiz yoki ustasiz davom etishingiz mumkin",
+      "errors": {
+        "BOOKING_TIME_UNAVAILABLE": "Bu vaqtni hozirgina band qilishdi — boshqasini tanlang",
+        "BOOKING_OUTSIDE_WORKING_HOURS": "Bu vaqt tanlangan xizmat uchun ish vaqtidan tashqarida",
+        "BOOKING_DATE_IN_PAST": "O'tib ketgan vaqtga yozilib bo'lmaydi",
+        "BOOKING_SCHEDULE_UNAVAILABLE": "Ish jadvali hali e'lon qilinmagan. Salon bilan to'g'ridan-to'g'ri bog'laning",
+        "BOOKING_SERVICE_UNAVAILABLE": "Bu xizmat hozircha mavjud emas"
+      },
       "cancel": "Bekor qilish",
       "confirm": "Yozilishni tasdiqlash",
       "booking": "Bron qilish...",
@@ -205,42 +222,18 @@
         "noSalonsDesc": "Koordinatalar qo'shilgandan keyin salonlar xaritada ko'rinadi",
         "beautySalon": "Go'zallik saloni",
         "salonCluster": "Salonlar klasteri",
-        "salonsOnMap": "Xaritadagi salonlar"
+        "salonsOnMap": "Xaritadagi salonlar",
+        "loadError": "Xarita mavjud emas",
+        "loadErrorDesc": "Internet aloqangizni tekshiring"
       },
       "testimonials": {
         "badge": "Mijozlarimiz fikrlari",
         "title": "Biz haqimizda nima deyishadi",
-        "subtitle": "Only real client reviews are shown on AURELLE",
-        "t1": {
-          "name": "Anna Ivanova",
-          "role": "Doimiy mijoz",
-          "text": "Ajoyib tajriba! AURELLE orqali ideal salonni topdim. Usta juda professional edi va natija barcha kutganlardan oshdi. Endi faqat shu platforma orqali yozilyapman!",
-          "service": "Manikyur va gel lak qoplama"
-        },
-        "t2": {
-          "name": "Dmitriy Petrov",
-          "role": "Barbershop egasi",
-          "text": "Bir oy oldin platformaga barbershopimni ro'yxatdan o'tkazdim - mijozlar oqimi 40% ga oshdi! Qulay yozilish tizimi, shaffof analitika. Barcha hamkasblarimga tavsiya qilaman.",
-          "service": "Barbershop 'Stylish Guys'"
-        },
-        "t3": {
-          "name": "Mariya Sidorova",
-          "role": "SPA ishqibozi",
-          "text": "O'z hududimda ko'plab yangi go'zallik salonlarini kashf qildim! Narxlarni solishtirish va haqiqiy sharhlarni o'qish juda qulay. Bonus tizimi - alohida plus!",
-          "service": "SPA va massaj"
-        },
-        "t4": {
-          "name": "Ekaterina Novikova",
-          "role": "Manikyur ustasi",
-          "text": "AURELLE bilan yarim yil ishlayapman. Mijozlar bazasi uch barobarga o'sdi! Platforma yozilishlarni samarali boshqarishga va mijozlardan halol fikr olishga yordam beradi.",
-          "service": "Nail Art Studio"
-        },
-        "t5": {
-          "name": "Aleksey Smirnov",
-          "role": "Stilist-sartarosh",
-          "text": "Xizmatlarni targ'ib qilish uchun ajoyib platforma! Intuitiv interfeys, sifatli qo'llab-quvvatlash. Xizmatlarim minglab potentsial mijozlarga ko'rinadigan bo'ldi.",
-          "service": "Salon 'Obraz'"
-        },
+        "subtitle": "AURELLE'da faqat haqiqiy mijoz sharhlari ko'rsatiladi",
+        "client": "AURELLE mijozi",
+        "booking": "AURELLE orqali yozilish",
+        "emptyTitle": "Haqiqiy sharhlar tez orada paydo bo'ladi",
+        "emptyDescription": "Bu bo'lim yakunlangan yozilishlardan so'ng mijoz sharhlari bilan to'ldiriladi. Biz o'ylab topilgan sharhlarni ko'rsatmaymiz.",
         "stats": {
           "happyClients": "Mijozlar",
           "beautySalons": "Go'zallik salonlari",
@@ -1203,6 +1196,7 @@
       "ownerResponse": "Salon javobi",
       "noFavorites": "Siz hali sevimlilar ro'yxatiga hech narsa qo'shmagansiz",
       "noMasterFavorites": "Siz hali masterlarni sevimlilarga qo'shmagansiz",
+      "favoriteAdded": "Sevimlilarga qo'shildi",
       "favoriteRemoved": "Sevimlilardan olib tashlandi",
       "favorites": {
         "salons": "Sevimli salonlar",
@@ -1215,7 +1209,11 @@
         "favorites": "Sevimlilar"
       },
       "status": {
-        "label": "Holat"
+        "label": "Holat",
+        "pending": "Kutmoqda",
+        "confirmed": "Tasdiqlangan",
+        "completed": "Bajarilgan",
+        "cancelled": "Bekor qilingan"
       },
       "tabs": {
         "dashboard": "Bosh sahifa",
@@ -1243,6 +1241,9 @@
       },
       "filter": {
         "all": "Barchasi",
+        "upcoming": "Kelgusi",
+        "completed": "Bajarilgan",
+        "cancelled": "Bekor qilingan",
         "allServices": "Barcha xizmatlar",
         "search": "Qidirish",
         "byDate": "Sana bo'yicha",
@@ -1260,6 +1261,7 @@
         "thisYear": "Shu yil",
         "allTime": "Barcha vaqt",
         "visits": "Tashriflar",
+        "visits_other": "{{count}} tashrif",
         "monthlyExpenses": "Oylik xarajatlar",
         "averageCheck": "O'rtacha chek",
         "mostExpensive": "Eng qimmat xizmat",
@@ -1313,6 +1315,7 @@
     },
     "owner": {
       "title": "Salon egasining paneli",
+      "quickActions": "Tezkor amallar",
       "mySalons": "Mening salonlarim",
       "addSalon": "Salon qo'shish",
       "editSalon": "Salonni tahrirlash",
@@ -1363,6 +1366,7 @@
       "experience": "Tajriba",
       "years": "yil",
       "yearsExp": "yillik tajriba",
+      "yearsExp_other": "{{count}} yillik tajriba",
       "staffList": "Xodimlar ro'yxati",
       "noStaff": "Hali xodimlar qo'shilmagan",
       "closed": "Yopiq",
@@ -1534,6 +1538,7 @@
     "previous": "Oldingi",
     "next": "Keyingi",
     "cancel": "Bekor qilish",
+    "resetAll": "Hammasini tiklash",
     "update": "Yangilash",
     "updating": "Yangilanmoqda...",
     "close": "Yopish",
@@ -1606,7 +1611,7 @@
     },
     "quickActions": "Tezkor harakatlar",
     "addService": "Xizmat qo'shish",
-    "viewCalendarDesc": "Kalendarni ochish",
+    "viewCalendar": "Kalendarni ochish",
     "addPortfolio": "Portfolioga qo'shish",
     "calendarDesc": "Jadval ko'rish va boshqarish",
     "comingSoon": "Tez kunda...",
@@ -1682,6 +1687,7 @@
       "step4Desc": "Noyob URL tanlang",
       "step5Title": "Ish soatlari",
       "step5Desc": "Qachon bo'shsiz?",
+      "stepProgress": "{{total}} tadan {{current}}-qadam: {{title}}",
       "completeDesc": "Usta profilingiz sozlangan va ishga tayyor!"
     },
     "preview": "Ko'rinish",
@@ -1709,6 +1715,9 @@
     "portfolio": "Portfolio",
     "reviews": "Sharhlar",
     "noServices": "Xizmatlar mavjud emas",
+    "noServicesYet": "Xizmatlar hali qo'shilmagan",
+    "noServicesContact": "Yozilish uchun usta bilan bevosita bog'laning",
+    "call": "Qo'ng'iroq qilish",
     "noPortfolio": "Portfolioda hali ishlar yo'q",
     "noReviews": "Hali sharhlar yo'q",
     "location": "Joylashuv",
@@ -1748,6 +1757,7 @@
       "activity": "Faollik",
       "complaints": "Shikoyatlar",
       "sanctions": "Sanksiyalar",
+      "support": "Murojaatlar",
       "chat": "Qo'llab-quvvatlash chati",
       "audit": "Audit jurnali"
     },
@@ -1922,6 +1932,15 @@
       "exportPdf": "PDF eksport",
       "refresh": "Yangilash",
       "clearSelection": "Tanlovni bekor qilish",
+      "bulk": {
+        "active": "Faol",
+        "blocked": "Bloklangan",
+        "deleted": "O'chirilgan",
+        "verified": "Tasdiqlangan",
+        "unblock": "Blokdan chiqarish",
+        "restore": "Tiklash",
+        "block": "Bloklash"
+      },
       "searchFilters": "Qidirish va filtrlar",
       "searchPlaceholder": "Qidirish...",
       "roles": {
@@ -1934,7 +1953,8 @@
       "statuses": {
         "allStatuses": "Barcha holatlar",
         "active": "Faol",
-        "blocked": "Bloklangan"
+        "blocked": "Bloklangan",
+        "deleted": "O'chirilgan"
       },
       "loadError": "Foydalanuvchilarni yuklab bo'lmadi",
       "loadErrorDesc": "Ro'yxatni yuklashda xato yuz berdi. Qaytadan urinib ko'ring.",
@@ -2333,10 +2353,61 @@
         "revokeFailed": "Sanksiyani bekor qilib bo'lmadi",
         "reasonRequired": "Bekor qilish sababini ko'rsating"
       }
+    },
+    "reviews": {
+      "title": "Sharhlarni moderatsiya qilish",
+      "subtitle": "Platforma qoidalarini buzadigan sharhlarni tarixini saqlagan holda yashirish",
+      "filterByVisibility": "Ko'rinish bo'yicha filtr",
+      "allVisibility": "Barcha sharhlar",
+      "visibility": {
+        "visible": "Ko'rinadigan",
+        "hidden": "Yashirilgan"
+      },
+      "allReviews": "Barcha sharhlar",
+      "loading": "Yuklanmoqda...",
+      "noReviews": "Sharhlar yo'q",
+      "table": {
+        "author": "Muallif",
+        "target": "Obyekt",
+        "rating": "Baho",
+        "comment": "Sharh",
+        "date": "Sana",
+        "status": "Holat",
+        "actions": "Amallar"
+      },
+      "statusBadge": {
+        "visible": "Ko'rinadi",
+        "hidden": "Yashirilgan"
+      },
+      "buttons": {
+        "hide": "Yashirish",
+        "unhide": "Qaytarish",
+        "hiding": "Yashirilmoqda...",
+        "unhiding": "Qaytarilmoqda...",
+        "close": "Yopish",
+        "cancel": "Bekor qilish",
+        "hideButton": "Sharhni yashirish"
+      },
+      "hideDialog": {
+        "title": "Sharhni yashirish",
+        "description": "Bu sharhni yashirish sababini ko'rsating. U o'chirilmaydi va tarixda saqlanadi.",
+        "reasonLabel": "Yashirish sababi *",
+        "reasonPlaceholder": "Sharh nima uchun yashirilayotganini tushuntiring..."
+      },
+      "hiddenReasonLabel": "Yashirish sababi",
+      "hiddenByLabel": "Yashirildi",
+      "toasts": {
+        "hiddenSuccess": "Sharh yashirildi",
+        "hiddenFailed": "Sharhni yashirib bo'lmadi",
+        "unhiddenSuccess": "Sharh yana ko'rinadi",
+        "unhiddenFailed": "Sharhni qaytarib bo'lmadi",
+        "reasonRequired": "Yashirish sababini ko'rsating"
+      }
     }
   },
   "owner": {
     "title": "Salon egasining paneli",
+    "quickActions": "Tezkor amallar",
     "mySalons": "Mening salonlarim",
     "addSalon": "Salon qo'shish",
     "editSalon": "Salonni tahrirlash",
@@ -2355,6 +2426,7 @@
     "bookings": "Bronlar",
     "reviews": "Sharhlar",
     "analytics": "Analitika",
+    "payments": "To'lovlar",
     "save": "Saqlash",
     "noSalons": "Sizda hali ro'yxatdan o'tgan salonlar yo'q",
     "registerFirst": "Birinchi saloningizni ro'yxatdan o'tkazing va mijozlarni jalb qilishni boshlang",
@@ -2920,6 +2992,7 @@
     "noMembers": "Jamoa a'zolari ko'rsatilmagan"
   },
   "auth": {
+    "checkingSession": "Sessiya tekshirilmoqda va kabinetingiz ochilmoqda...",
     "forgotPassword": "Parolni unutdingizmi?",
     "backToLogin": "Kirishga qaytish",
     "checkYourEmail": "Emailingizni tekshiring",
@@ -3009,7 +3082,10 @@
     "tryAgain": "Qayta urinish",
     "retry": "Qayta urinish",
     "goHome": "Bosh sahifaga",
-    "technicalDetails": "Texnik tafsilotlar"
+    "technicalDetails": "Texnik tafsilotlar",
+    "updateRequired": "Ilova yangilandi",
+    "chunkLoadDescription": "Yangi versiya topildi. Davom etish uchun sahifani qayta yuklang.",
+    "reloadPage": "Sahifani qayta yuklash"
   },
   "booking": {
     "pending": "Kutmoqda",
@@ -3223,7 +3299,15 @@
     "mastersTitle": "Frilanser masterlar",
     "masterNamePlaceholder": "Master ismi...",
     "noMastersFound": "Masterlar topilmadi",
-    "noMastersDesc": "Qidiruv parametrlarini o'zgartiring"
+    "noMastersDesc": "Qidiruv parametrlarini o'zgartiring",
+    "ratingAll": "Barcha reytinglar",
+    "rating4Plus": "4+ yulduz",
+    "rating3Plus": "3+ yulduz",
+    "rating2Plus": "2+ yulduz",
+    "sortRelevance": "Eng mos",
+    "sortRatingHighest": "Yuqori reyting bo'yicha",
+    "sortMostReviewed": "Ko'p sharhlanganlar",
+    "sortNewest": "Avval yangilari"
   },
   "notFound": {
     "title": "404 — Sahifa topilmadi",
@@ -3331,5 +3415,255 @@
       "spam": "Spam",
       "other": "Boshqa"
     }
+  },
+  "adminSupport": {
+    "title": "Mijozlar murojaatlari",
+    "subtitle": "Foydalanuvchi murojaatlarini ko'rish va javob berish",
+    "tickets": "Tiketlar",
+    "allStatuses": "Barcha holatlar",
+    "noTickets": "Murojaatlar yo'q",
+    "noMessages": "Xabarlar yo'q",
+    "open": "Ochish",
+    "markResolved": "Hal qilingan deb belgilash",
+    "replyPlaceholder": "Javobingiz... (Yuborish uchun Ctrl+Enter)",
+    "replySent": "Javob yuborildi",
+    "replyRequiredToResolve": "Tiketni yopishdan oldin mijozga javob yozing",
+    "replyFailed": "Javobni yuborib bo'lmadi",
+    "statusUpdated": "Holat yangilandi",
+    "statusFailed": "Holatni yangilab bo'lmadi",
+    "status": {
+      "open": "Ochiq",
+      "in_progress": "Jarayonda",
+      "resolved": "Hal qilindi",
+      "closed": "Yopilgan"
+    },
+    "category": {
+      "bug": "Xatolik",
+      "payment": "To'lov muammosi",
+      "question": "Savol",
+      "suggestion": "Taklif"
+    },
+    "table": {
+      "subject": "Mavzu",
+      "user": "Foydalanuvchi",
+      "category": "Kategoriya",
+      "status": "Holat",
+      "created": "Sana",
+      "actions": "Amallar"
+    }
+  },
+  "privacy": {
+    "pageTitle": "Maxfiylik siyosati",
+    "lastUpdated": "Yangilangan sana: 2026-yil fevral",
+    "backToHome": "Bosh sahifaga",
+    "s1": {
+      "title": "1. Kirish",
+      "body": "AURELLE («biz», «bizning») sizning maxfiyligingizni hurmat qiladi va shaxsiy ma'lumotlaringizni himoya qilishga sodiqdir. Ushbu Maxfiylik siyosati platformamizdan foydalanganingizda ma'lumotlaringizni qanday to'plashimiz, ishlatishimiz, oshkor qilishimiz va himoya qilishimizni tushuntiradi."
+    },
+    "s2": {
+      "title": "2. Biz to'playdigan ma'lumotlar",
+      "s1Title": "2.1 Siz taqdim etadigan ma'lumotlar",
+      "s1Items": [
+        "Ism, elektron pochta manzili va telefon raqami",
+        "Profil ma'lumotlari va rasmlar",
+        "To'lov ma'lumotlari (to'lov provayderlari orqali xavfsiz qayta ishlanadi)",
+        "Bron tafsilotlari va afzalliklar",
+        "Siz qoldirgan sharh va baholar",
+        "Biz yoki xizmat ko'rsatuvchilar bilan yozishmalar"
+      ],
+      "s2Title": "2.2 Avtomatik to'planadigan ma'lumotlar",
+      "s2Items": [
+        "Qurilma haqida ma'lumot (turi, operatsion tizim, brauzer)",
+        "IP-manzil va taxminiy joylashuv",
+        "Foydalanish ma'lumotlari (ko'rilgan sahifalar, sarflangan vaqt, ishlatilgan funksiyalar)",
+        "Cookie va shunga o'xshash kuzatuv texnologiyalari"
+      ]
+    },
+    "s3": {
+      "title": "3. Ma'lumotlaringizdan qanday foydalanamiz",
+      "intro": "Biz sizning ma'lumotlaringizdan quyidagi maqsadlarda foydalanamiz:",
+      "items": [
+        "Xizmatimizni taqdim etish va qo'llab-quvvatlash",
+        "Bron va to'lovlarni qayta ishlash",
+        "Bron tasdiqlari va eslatmalarini yuborish",
+        "Tajribangizni yaxshilash va shaxsiylashtirish",
+        "Xizmat haqidagi muhim yangilanishlar haqida xabar berish",
+        "Firibgarlikning oldini olish va platforma xavfsizligini ta'minlash",
+        "Qonuniy talablarga rioya qilish",
+        "Marketing xabarlarini yuborish (roziligingiz bilan)"
+      ]
+    },
+    "s4": {
+      "title": "4. Ma'lumotlarni almashish va oshkor qilish",
+      "intro": "Biz ma'lumotlaringizni quyidagilar bilan almashishimiz mumkin:",
+      "s1Title": "4.1 Xizmat ko'rsatuvchilar",
+      "s1Body": "Bron qilganingizda, xizmatni bajarish uchun zarur ma'lumotlarni (ism, telefon, bron tafsilotlari) salon yoki usta bilan almashamiz.",
+      "s2Title": "4.2 Uchinchi tomon xizmat ko'rsatuvchilar",
+      "s2Body": "Biz to'lovlarni qayta ishlash, tahlil, email yetkazib berish va boshqa muhim xizmatlar uchun ishonchli hamkorlar bilan ishlaymiz. Ushbu hamkorlar maxfiylik shartnomalari bilan bog'langan.",
+      "s3Title": "4.3 Qonuniy talablar",
+      "s3Body": "Qonun, sud qarori yoki davlat idoralari talab qilganda, yoki huquq va xavfsizligimizni himoya qilish uchun ma'lumotlaringizni oshkor qilishimiz mumkin."
+    },
+    "s5": {
+      "title": "5. Ma'lumotlar xavfsizligi",
+      "intro": "Ma'lumotlaringizni himoya qilish uchun sanoat standartidagi xavfsizlik choralarini qo'llaymiz, jumladan:",
+      "items": [
+        "Ma'lumotlarni uzatish va saqlash paytida shifrlash",
+        "Xavfsiz to'lovlarni qayta ishlash (PCI DSS talablariga muvofiq)",
+        "Muntazam xavfsizlik auditlari va yangilanishlar",
+        "Kirishni nazorat qilish va xodimlarni o'qitish",
+        "Shubhali faoliyatni kuzatish"
+      ]
+    },
+    "s6": {
+      "title": "6. Sizning maxfiylik huquqlaringiz",
+      "intro": "Sizda quyidagi huquqlar mavjud:",
+      "items": [
+        "Shaxsiy ma'lumotlaringizga kirish",
+        "Noto'g'ri yoki to'liq bo'lmagan ma'lumotlarni tuzatish",
+        "Ma'lumotlaringizni o'chirishni so'rash (qonuniy talablar asosida)",
+        "Ayrim qayta ishlash turlariga qarshi chiqish yoki ularni cheklash",
+        "Ma'lumotlaringizni tizimlashtirilgan formatda olish (ma'lumotlar ko'chirilishi)",
+        "Marketing xabarlariga bergan roziligingizni bekor qilish",
+        "Ma'lumotlarni himoya qilish organiga shikoyat qilish"
+      ]
+    },
+    "s7": {
+      "title": "7. Cookie va kuzatuv",
+      "intro": "Biz cookie va shunga o'xshash texnologiyalardan quyidagi maqsadlarda foydalanamiz:",
+      "items": [
+        "Afzalliklaringiz va sozlamalaringizni eslab qolish",
+        "Sayt trafigi va foydalanish naqshlarini tahlil qilish",
+        "Platforma ishlashini yaxshilash",
+        "Shaxsiylashtirilgan kontent va reklamalarni taqdim etish"
+      ],
+      "outro": "Cookie-larni brauzer sozlamalari orqali boshqarishingiz mumkin, ammo cookie o'chirilgan holda ba'zi funksiyalar to'g'ri ishlamasligi mumkin."
+    },
+    "s8": {
+      "title": "8. Ma'lumotlarni saqlash",
+      "body": "Biz shaxsiy ma'lumotlaringizni Xizmatimizni taqdim etish va qonuniy talablarga rioya qilish uchun zarur bo'lgan muddat davomida saqlaymiz. Ma'lumotlar endi kerak bo'lmaganda, ularni xavfsiz o'chiramiz yoki anonimlashtiramiz."
+    },
+    "s9": {
+      "title": "9. Bolalar maxfiyligi",
+      "body": "AURELLE 16 yoshdan kichik foydalanuvchilar uchun mo'ljallanmagan. Biz bolalarning ma'lumotlarini bila turib to'plamaymiz. Agar biz bunday ma'lumotlarni bilmasdan to'plagan deb hisoblasangiz, iltimos, biz bilan darhol bog'laning."
+    },
+    "s10": {
+      "title": "10. Xalqaro ma'lumotlar uzatish",
+      "body": "Ma'lumotlaringiz O'zbekistondan boshqa mamlakatlarga uzatilishi va u yerda qayta ishlanishi mumkin. Biz bunday uzatishlar uchun tegishli himoya choralarini ta'minlaymiz."
+    },
+    "s11": {
+      "title": "11. Ushbu siyosatga o'zgartirishlar",
+      "body": "Biz vaqti-vaqti bilan ushbu Maxfiylik siyosatini yangilashimiz mumkin. Muhim o'zgarishlar haqida sizga email orqali yoki platformada ko'rinarli bildirishnoma orqali xabar beramiz."
+    },
+    "s12": {
+      "title": "12. Biz bilan bog'laning",
+      "intro": "Maxfiylik bilan bog'liq savollar yoki huquqlaringizni amalga oshirish uchun biz bilan bog'laning:",
+      "items": [
+        "Email: privacy@aurelle.uz",
+        "Telefon: +998 (93) 261-18-04",
+        "Manzil: Toshkent, O'zbekiston"
+      ]
+    }
+  },
+  "terms": {
+    "pageTitle": "Foydalanish shartlari",
+    "lastUpdated": "Yangilangan sana: 2026-yil fevral",
+    "backToHome": "Bosh sahifaga",
+    "s1": {
+      "title": "1. Shartlarni qabul qilish",
+      "body": "AURELLE platformasidan («Xizmat») foydalanish orqali siz ushbu Foydalanish shartlariga rioya qilishga rozilik bildirasiz. Agar ushbu shartlarga rozi bo'lmasangiz, iltimos, Xizmatimizdan foydalanmang."
+    },
+    "s2": {
+      "title": "2. Xizmat tavsifi",
+      "body": "AURELLE — O'zbekiston bo'ylab go'zallik xizmatlari mijozlarini salonlar va mustaqil ustalar bilan bog'laydigan raqamli platforma. Biz onlayn bron qilish, rejalashtirish va to'lovlarni qayta ishlash xizmatlarini taqdim etamiz."
+    },
+    "s3": {
+      "title": "3. Foydalanuvchi akkauntlari",
+      "items": [
+        "Akkaunt yaratishda aniq va to'liq ma'lumot berishingiz shart",
+        "Akkaunt ma'lumotlaringiz maxfiyligini saqlash sizning javobgarligingizdir",
+        "Akkauntingizga ruxsatsiz kirish haqida darhol bizga xabar berishingiz shart",
+        "Bitta shaxs yoki tashkilot bir nechta akkauntga ega bo'la olmaydi"
+      ]
+    },
+    "s4": {
+      "title": "4. Bronlar va bekor qilishlar",
+      "items": [
+        "Bronlar bo'sh vaqt mavjudligi va salon yoki usta tomonidan tasdiqlanishiga bog'liq",
+        "Bekor qilish qoidalari alohida salonlar tomonidan belgilanadi va bron paytida ko'rsatiladi",
+        "Kech bekor qilish (24 soatdan kam) xizmat ko'rsatuvchi belgilagan jarimalarga sabab bo'lishi mumkin",
+        "Kelmay qolish akkauntingizda bron cheklovlariga olib kelishi mumkin"
+      ]
+    },
+    "s5": {
+      "title": "5. To'lovlar va komissiyalar",
+      "items": [
+        "Barcha narxlar O'zbekiston so'mida (UZS) ko'rsatiladi",
+        "AURELLE platformadan foydalanganlik uchun xizmat haqi oladi (tafsilotlar bron paytida ko'rsatiladi)",
+        "Kartalar va mahalliy to'lov tizimlari orqali to'lov qabul qilinadi",
+        "Pul qaytarish xizmat ko'rsatuvchining bekor qilish siyosatiga muvofiq amalga oshiriladi"
+      ]
+    },
+    "s6": {
+      "title": "6. Foydalanuvchi xatti-harakati",
+      "intro": "Siz quyidagilarni QILMASLIKKA rozilik bildirasiz:",
+      "items": [
+        "Xizmatdan har qanday noqonuniy maqsadda foydalanish",
+        "Boshqa foydalanuvchilar yoki xizmat ko'rsatuvchilarni bezovta qilish, haqorat qilish yoki zarar yetkazish",
+        "Yolg'on, chalg'ituvchi yoki firibgarlik ma'lumotlarini joylashtirish",
+        "Platformaga ruxsatsiz kirishga urinish",
+        "Xizmatga kirish uchun avtomatlashtirilgan tizimlardan (botlar) foydalanish"
+      ]
+    },
+    "s7": {
+      "title": "7. Intellektual mulk",
+      "body": "AURELLE platformasidagi barcha kontent, jumladan matn, grafika, logotiplar va dasturiy ta'minot AURELLE yoki uning kontent yetkazib beruvchilariga tegishli bo'lib, intellektual mulk qonunlari bilan himoyalangan."
+    },
+    "s8": {
+      "title": "8. Javobgarlikni cheklash",
+      "body": "AURELLE vositachi platforma sifatida ishlaydi. Biz salonlar va ustalar tomonidan taqdim etiladigan xizmatlarning sifati, xavfsizligi yoki qonuniyligi uchun javobgar emasmiz. Foydalanuvchilar xizmat ko'rsatuvchilar bilan o'z tavakkalchiligiga ko'ra munosabatda bo'ladi."
+    },
+    "s9": {
+      "title": "9. Nizolarni hal qilish",
+      "body": "Ushbu Shartlardan kelib chiqadigan har qanday nizolar O'zbekiston qonunchiligiga muvofiq murosaga kelish yoki arbitraj orqali hal qilinadi."
+    },
+    "s10": {
+      "title": "10. Shartlarga o'zgartirishlar",
+      "body": "Biz istalgan vaqtda ushbu Shartlarni o'zgartirish huquqini o'zimizda saqlaymiz. O'zgarishlardan keyin Xizmatdan foydalanishni davom ettirish yangi Shartlarni qabul qilishni anglatadi."
+    },
+    "s11": {
+      "title": "11. Aloqa ma'lumotlari",
+      "intro": "Ushbu Shartlar bo'yicha savollaringiz bo'lsa, biz bilan bog'laning:",
+      "items": [
+        "Email: legal@aurelle.uz",
+        "Telefon: +998 (93) 261-18-04",
+        "Manzil: Toshkent, O'zbekiston"
+      ]
+    }
+  },
+  "audience": {
+    "choose": "Yo‘nalishni tanlang",
+    "women": "Ayollar uchun",
+    "men": "Erkaklar uchun",
+    "unisex": "Hamma uchun",
+    "change": "O‘zgartirish",
+    "serviceFor": "Xizmat kim uchun",
+    "unclassified": "Belgilanmagan",
+    "saved": "Xizmat yo‘nalishi saqlandi",
+    "saveError": "Saqlanmadi. Qayta urinib ko‘ring.",
+    "all": "Bu yerdagi barcha xizmatlar",
+    "matching": "Siz uchun xizmatlar",
+    "empty": "Bu yo‘nalishda hozircha xizmat yo‘q. Barcha xizmatlarni ko‘ring.",
+    "catalog": "To‘liq katalog",
+    "curated": "Tanlangan yo‘nalish bo‘yicha",
+    "catalogHint": "Yo‘nalishi belgilanmagan xizmatlar to‘liq katalogda mavjud.",
+    "menTitle": "Soch turmagi, parvarish va hordiq — yaqiningizda",
+    "menSubtitle": "Barbershop, salon yoki ustani toping. Xizmat va qulay vaqtni tanlang.",
+    "menBadge": "Sizga qulay parvarish",
+    "menCard": "Sizning uslubingiz. Sizning vaqtingiz.",
+    "menImage": "Soch turmagi · Parvarish · Massaj",
+    "heroAlt": "Salon interyeri",
+    "loadError": "Takliflarni yuklab bo‘lmadi",
+    "retry": "Qayta urinish",
+    "menPhotoAlt": "Barbershopda ishlayotgan usta"
   }
 }

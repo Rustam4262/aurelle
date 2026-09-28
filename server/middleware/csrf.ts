@@ -50,7 +50,7 @@ function generateToken(res: Response): string {
   const isProduction = process.env.NODE_ENV === "production";
 
   res.cookie(COOKIE_NAME, token, {
-    httpOnly: false,          // JS must read it — intentionally NOT httpOnly
+    httpOnly: false, // JS must read it — intentionally NOT httpOnly
     sameSite: "strict",
     secure: isProduction,
     path: "/",

@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { logger } from "@/lib/logger";
 import { MapPin, Search } from "lucide-react";
 
-const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || "99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0";
+const YANDEX_MAPS_API_KEY =
+  import.meta.env.VITE_YANDEX_MAPS_API_KEY || "99a4c9a9-dfb0-4d51-88c1-90b6e3f4c9d0";
 
 interface LocationPickerProps {
   latitude?: number;
@@ -93,13 +94,15 @@ export function LocationPicker({
                 });
               }
             } catch (error) {
-              logger.error("Reverse geocoding error", error as Error, { source: "location-picker" });
+              logger.error("Reverse geocoding error", error as Error, {
+                source: "location-picker",
+              });
             }
           }
         },
         (error) => {
           logger.error("Geolocation error", error as unknown, { source: "location-picker" });
-        }
+        },
       );
     }
   };
@@ -174,12 +177,7 @@ export function LocationPicker({
               }
             }}
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSearch}
-            disabled={isSearching}
-          >
+          <Button type="button" variant="outline" onClick={handleSearch} disabled={isSearching}>
             <Search className="h-4 w-4" />
           </Button>
           <Button

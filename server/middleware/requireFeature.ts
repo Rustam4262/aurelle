@@ -102,8 +102,7 @@ export function requireFeature(featureKey: string) {
         error: "Upgrade required",
         feature: featureKey,
         upgradeUrl: "/pricing",
-        message:
-          "Your current plan does not include this feature. Upgrade to unlock it.",
+        message: "Your current plan does not include this feature. Upgrade to unlock it.",
       });
     } catch (err) {
       logger.error(

@@ -1,3 +1,4 @@
+import { AudienceLabel, useAudience } from "@/components/audience-provider";
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -70,6 +71,7 @@ interface MasterData {
 }
 
 interface ServiceData {
+  audience?: string | null;
   id: string;
   name: { en: string; ru: string; uz: string };
   description: { en: string; ru: string; uz: string } | null;
@@ -99,6 +101,8 @@ const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function PublicMasterPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { audience } = useAudience();
+  const [showAllServices, setShowAllServices] = useState(false);
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language as "en" | "ru" | "uz";
   const { user } = useAuth();
@@ -142,6 +146,9 @@ export default function PublicMasterPage() {
     },
     enabled: !!slug && !!master,
   });
+  const primaryService = services?.find(
+    (service) => showAllServices || service.audience === audience || service.audience === "unisex",
+  );
 
   // Fetch reviews
   const { data: reviews } = useQuery<ReviewData[]>({
@@ -276,6 +283,14 @@ export default function PublicMasterPage() {
 
   const handleBookService = (service: ServiceData) => {
     if (!user) {
+      // Full service/master/date-time restoration is only wired up for the
+      // salon booking flow (client/src/pages/salon.tsx); this at least
+      // returns the guest to this master's own page instead of a bare /auth.
+      try {
+        sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+      } catch {
+        // sessionStorage unavailable — fall back to the default post-login route.
+      }
       navigate("/auth");
       return;
     }
@@ -396,7 +411,8 @@ export default function PublicMasterPage() {
                   <Button
                     size="lg"
                     className="gap-2 shadow-lg shadow-primary/20"
-                    onClick={() => handleBookService(services[0])}
+                    onClick={() => primaryService && handleBookService(primaryService)}
+                    disabled={!primaryService}
                   >
                     <CalendarIcon className="h-5 w-5" />
                     {t("publicMaster.bookNow", "Book Now")}
@@ -417,11 +433,7 @@ export default function PublicMasterPage() {
                 )}
                 {telegramUrl && (
                   <Button size="lg" variant="outline" className="gap-2" asChild>
-                    <a
-                      href={telegramUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
                       <Send className="h-5 w-5" />
                       Telegram
                     </a>
@@ -463,55 +475,73 @@ export default function PublicMasterPage() {
               </TabsList>
 
               <TabsContent value="services">
+                <AudienceLabel />
+                <div className="mb-4">
+                  <Button variant="outline" onClick={() => setShowAllServices(!showAllServices)}>
+                    {t(showAllServices ? "audience.matching" : "audience.all")}
+                  </Button>
+                </div>
+                {!showAllServices &&
+                  services &&
+                  !services.some((s) => s.audience === audience || s.audience === "unisex") && (
+                    <p className="mb-4 text-muted-foreground">{t("audience.empty")}</p>
+                  )}
                 {services && services.length > 0 ? (
                   <div className="space-y-4">
-                    {services.map((service) => (
-                      <Card key={service.id} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg">
-                                {getLocalizedText(service.name, currentLang)}
-                              </h3>
-                              {service.description && (
-                                <p className="text-muted-foreground text-sm mt-1">
-                                  {getLocalizedText(service.description, currentLang)}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  {service.duration} {t("common.min", "min")}
-                                </span>
-                                <Badge variant="secondary">{service.category}</Badge>
-                                {service.serviceMode === "mobile" && (
-                                  <Badge variant="outline" className="gap-1">
-                                    <Car className="h-3 w-3" />
-                                    {t("publicMaster.mobile", "Mobile")}
-                                  </Badge>
+                    {services
+                      .filter(
+                        (service) =>
+                          showAllServices ||
+                          service.audience === audience ||
+                          service.audience === "unisex",
+                      )
+                      .map((service) => (
+                        <Card key={service.id} className="overflow-hidden">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">
+                                  {getLocalizedText(service.name, currentLang)}
+                                </h3>
+                                {service.description && (
+                                  <p className="text-muted-foreground text-sm mt-1">
+                                    {getLocalizedText(service.description, currentLang)}
+                                  </p>
                                 )}
+                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-4 w-4" />
+                                    {service.duration} {t("common.min", "min")}
+                                  </span>
+                                  <Badge variant="secondary">{service.category}</Badge>
+                                  {service.serviceMode === "mobile" && (
+                                    <Badge variant="outline" className="gap-1">
+                                      <Car className="h-3 w-3" />
+                                      {t("publicMaster.mobile", "Mobile")}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-lg">
+                                  {formatCurrency(service.priceMin)}
+                                  {service.priceMax && service.priceMax !== service.priceMin && (
+                                    <span> - {formatCurrency(service.priceMax)}</span>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => handleBookService(service)}
+                                >
+                                  <CalendarIcon className="h-4 w-4 mr-1" />
+                                  {t("publicMaster.book", "Book")}
+                                </Button>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-bold text-lg">
-                                {formatCurrency(service.priceMin)}
-                                {service.priceMax && service.priceMax !== service.priceMin && (
-                                  <span> - {formatCurrency(service.priceMax)}</span>
-                                )}
-                              </div>
-                              <Button
-                                size="sm"
-                                className="mt-2"
-                                onClick={() => handleBookService(service)}
-                              >
-                                <CalendarIcon className="h-4 w-4 mr-1" />
-                                {t("publicMaster.book", "Book")}
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
@@ -536,11 +566,7 @@ export default function PublicMasterPage() {
                       )}
                       {telegramUrl && (
                         <Button variant="outline" className="gap-2" asChild>
-                          <a
-                            href={telegramUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
                             <Send className="h-4 w-4" />
                             {telegramLabel || "Telegram"}
                           </a>
@@ -629,7 +655,8 @@ export default function PublicMasterPage() {
                 <Button
                   className="w-full mb-6 font-medium shadow-lg shadow-primary/20"
                   size="lg"
-                  onClick={() => handleBookService(services[0])}
+                  onClick={() => primaryService && handleBookService(primaryService)}
+                  disabled={!primaryService}
                 >
                   <CalendarIcon className="h-5 w-5 mr-2" />
                   {t("publicMaster.bookNow", "Book Now")}
@@ -646,11 +673,7 @@ export default function PublicMasterPage() {
                   )}
                   {telegramUrl && (
                     <Button variant="outline" className="w-full gap-2" asChild>
-                      <a
-                        href={telegramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
                         <Send className="h-5 w-5" />
                         Telegram
                       </a>
@@ -950,6 +973,9 @@ export default function PublicMasterPage() {
                 </CardContent>
               </Card>
             )}
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t("marketplace.salon.cancellationPolicy")}
+            </p>
           </div>
 
           <div className="sticky bottom-0 flex justify-end gap-2 border-t bg-background px-4 py-4 sm:px-6">

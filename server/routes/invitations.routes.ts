@@ -75,9 +75,13 @@ router.post("/accept", isAuthenticated, async (req: any, res) => {
       permissions: updated.permissions,
     });
   } catch (error) {
-    logger.error("Accept invitation error", error instanceof Error ? error : new Error(String(error)), {
-      source: "invitations",
-    });
+    logger.error(
+      "Accept invitation error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        source: "invitations",
+      },
+    );
     return res.status(500).json({ error: "Failed to accept invitation" });
   }
 });
@@ -121,9 +125,13 @@ router.get("/check", async (req, res) => {
       expiresAt: invitation.invitationExpiresAt,
     });
   } catch (error) {
-    logger.error("Check invitation error", error instanceof Error ? error : new Error(String(error)), {
-      source: "invitations",
-    });
+    logger.error(
+      "Check invitation error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        source: "invitations",
+      },
+    );
     return res.status(500).json({ error: "Failed to check invitation" });
   }
 });

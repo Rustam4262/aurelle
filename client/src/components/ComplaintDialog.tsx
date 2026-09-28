@@ -86,7 +86,11 @@ export function ComplaintDialog({ targetType, targetId, targetName }: ComplaintD
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive gap-1.5"
+        >
           <Flag className="h-4 w-4" />
           {t("complaint.report")}
         </Button>
@@ -103,10 +107,7 @@ export function ComplaintDialog({ targetType, targetId, targetName }: ComplaintD
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
             <FormField
               control={form.control}
               name="category"
@@ -155,11 +156,7 @@ export function ComplaintDialog({ targetType, targetId, targetName }: ComplaintD
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 {t("common.cancel")}
               </Button>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={mutation.isPending}
-              >
+              <Button type="submit" variant="destructive" disabled={mutation.isPending}>
                 {mutation.isPending ? t("common.sending") : t("complaint.submit")}
               </Button>
             </div>

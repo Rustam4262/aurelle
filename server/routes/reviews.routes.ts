@@ -35,7 +35,13 @@ router.get("/public/latest", async (req, res) => {
       .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
       .leftJoin(salons, eq(reviews.salonId, salons.id))
       .leftJoin(masters, eq(reviews.masterId, masters.id))
-      .where(and(sql`${reviews.comment} IS NOT NULL`, sql`btrim(${reviews.comment}) <> ''`))
+      .where(
+        and(
+          sql`${reviews.comment} IS NOT NULL`,
+          sql`btrim(${reviews.comment}) <> ''`,
+          sql`(${reviews.isHidden} IS NOT TRUE)`,
+        ),
+      )
       .orderBy(desc(reviews.createdAt))
       .limit(limit);
 
@@ -142,7 +148,7 @@ router.get("/salon/:salonId", async (req, res) => {
       .from(reviews)
       .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
       .leftJoin(masters, eq(reviews.masterId, masters.id))
-      .where(eq(reviews.salonId, salonId))
+      .where(and(eq(reviews.salonId, salonId), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt))
       .limit(limit)
       .offset(offset);
@@ -176,7 +182,7 @@ router.get("/master/:masterId", async (req, res) => {
       })
       .from(reviews)
       .leftJoin(userProfiles, eq(reviews.clientId, userProfiles.id))
-      .where(eq(reviews.masterId, masterId))
+      .where(and(eq(reviews.masterId, masterId), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt))
       .limit(limit)
       .offset(offset);
@@ -247,15 +253,24 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    if (!review.salonId) {
-      return res.status(400).json({ error: "Cannot respond to review without salon" });
+    // Either the owning salon's owner, or the solo master the review is about,
+    // may respond — a review always has a salonId, a masterId, or both.
+    let authorized = false;
+
+    if (review.salonId) {
+      const [salon] = await db.select().from(salons).where(eq(salons.id, review.salonId));
+      authorized = Boolean(salon && salon.ownerId === userId);
     }
 
-    // Verify user is owner of the salon
-    const [salon] = await db.select().from(salons).where(eq(salons.id, review.salonId));
+    if (!authorized && review.masterId) {
+      const [master] = await db.select().from(masters).where(eq(masters.id, review.masterId));
+      authorized = Boolean(master && master.isSoloMaster && master.userId === userId);
+    }
 
-    if (!salon || salon.ownerId !== userId) {
-      return res.status(403).json({ error: "You can only respond to reviews for your own salon" });
+    if (!authorized) {
+      return res
+        .status(403)
+        .json({ error: "You can only respond to reviews about your own business" });
     }
 
     // Update review with owner response

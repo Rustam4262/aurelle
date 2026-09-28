@@ -19,7 +19,14 @@ import {
 } from "@/components/ui/select";
 import { Activity, Users, Clock, TrendingUp } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { ru, uz, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
+
+function dateFnsLocale(language: string) {
+  if (language === "ru") return ru;
+  if (language === "uz") return uz;
+  return enUS;
+}
 
 interface OnlineUser {
   userId: string;
@@ -62,7 +69,8 @@ function formatDuration(seconds: number): string {
 }
 
 export default function AdminActivity() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = dateFnsLocale(i18n.language);
   const [activeOnlyFilter, setActiveOnlyFilter] = useState<string>("false");
 
   // Get online users
@@ -135,12 +143,18 @@ export default function AdminActivity() {
                     <Clock className="h-3 w-3" />
                     <span>
                       {t("admin.activity.activePrefix")}{" "}
-                      {formatDistanceToNow(new Date(user.lastActivityAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(user.lastActivityAt), {
+                        addSuffix: true,
+                        locale: dateLocale,
+                      })}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {t("admin.activity.loggedInPrefix")}{" "}
-                    {formatDistanceToNow(new Date(user.loginAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(user.loginAt), {
+                      addSuffix: true,
+                      locale: dateLocale,
+                    })}
                   </div>
                 </div>
               ))}
@@ -221,11 +235,14 @@ export default function AdminActivity() {
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                          {format(new Date(session.loginAt), "MMM d, HH:mm")}
+                          {format(new Date(session.loginAt), "MMM d, HH:mm", {
+                            locale: dateLocale,
+                          })}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(session.lastActivityAt), {
                             addSuffix: true,
+                            locale: dateLocale,
                           })}
                         </TableCell>
                         <TableCell className="text-sm">

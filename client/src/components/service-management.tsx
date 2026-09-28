@@ -1,3 +1,4 @@
+import { ServiceAudienceField, AudienceSelect } from "@/components/service-audience-field";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -19,7 +20,17 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Copy, Eye, EyeOff, TrendingUp, Calendar, Plus, X } from "lucide-react";
+import {
+  GripVertical,
+  Pencil,
+  Copy,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  Calendar,
+  Plus,
+  X,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +57,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface Service {
+  audience?: string | null;
   id: string;
   salonId: string;
   salonName: string;
@@ -70,6 +82,7 @@ interface Service {
 }
 
 interface EditFormData {
+  audience?: string;
   name: {
     en: string;
     ru: string;
@@ -234,6 +247,7 @@ export function ServiceManagement() {
     name: { en: "", ru: "", uz: "" },
     description: { en: "", ru: "", uz: "" },
     category: "hair",
+    audience: "",
     priceMin: 0,
     priceMax: 0,
     duration: 60,
@@ -344,6 +358,7 @@ export function ServiceManagement() {
         name: { en: "", ru: "", uz: "" },
         description: { en: "", ru: "", uz: "" },
         category: "hair",
+        audience: "",
         priceMin: 0,
         priceMax: 0,
         duration: 60,
@@ -545,11 +560,13 @@ export function ServiceManagement() {
 
   const handleDuplicate = (service: Service) => {
     setDuplicatingService(service);
-  }; const handleDelete = (service: Service) => {
+  };
+  const handleDelete = (service: Service) => {
     setDeletingService(service);
   };
 
   const handleCreate = () => {
+    if (!createFormData.audience) return;
     if (salons.length === 0) return;
 
     createServiceMutation.mutate({
@@ -621,10 +638,7 @@ export function ServiceManagement() {
             </p>
           </div>
           {salons.length > 0 && (
-            <Button
-              onClick={() => setCreatingService(true)}
-              className="gap-2"
-            >
+            <Button onClick={() => setCreatingService(true)} className="gap-2">
               <Plus className="h-4 w-4" />
               {t("marketplace.owner.addService", "Add Service")}
             </Button>
@@ -696,6 +710,11 @@ export function ServiceManagement() {
               >
                 {services.map((service) => (
                   <div key={service.id} className="relative group">
+                    <ServiceAudienceField
+                      serviceId={service.id}
+                      salonId={service.salonId}
+                      audience={service.audience}
+                    />
                     <SortableServiceItem
                       service={service}
                       onEdit={handleEdit}
@@ -1032,6 +1051,10 @@ export function ServiceManagement() {
             </div>
 
             <div className="space-y-2">
+              <AudienceSelect
+                value={createFormData.audience || ""}
+                onChange={(audience) => setCreateFormData({ ...createFormData, audience })}
+              />
               <Label>{t("services.category", "Category")}</Label>
               <Select
                 value={createFormData.category}
@@ -1099,7 +1122,10 @@ export function ServiceManagement() {
             <Button variant="outline" onClick={() => setCreatingService(false)}>
               {t("common.cancel", "Cancel")}
             </Button>
-            <Button onClick={handleCreate} disabled={createServiceMutation.isPending}>
+            <Button
+              onClick={handleCreate}
+              disabled={createServiceMutation.isPending || !createFormData.audience}
+            >
               {createServiceMutation.isPending
                 ? t("common.creating", "Creating...")
                 : t("common.create", "Create")}
@@ -1114,10 +1140,16 @@ export function ServiceManagement() {
           <DialogHeader>
             <DialogTitle>{t("services.deleteTitle", "Delete Service")}</DialogTitle>
             <DialogDescription>
-              {t("services.deleteConfirm", "Are you sure you want to delete this service? This action cannot be undone.")}
+              {t(
+                "services.deleteConfirm",
+                "Are you sure you want to delete this service? This action cannot be undone.",
+              )}
               {deletingService?.bookingCount && deletingService.bookingCount > 0 && (
                 <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 rounded text-sm">
-                  {t("services.hasBookingsWarning", "Warning: This service has existing bookings. It will be deactivated instead of deleted.")}
+                  {t(
+                    "services.hasBookingsWarning",
+                    "Warning: This service has existing bookings. It will be deactivated instead of deleted.",
+                  )}
                 </div>
               )}
             </DialogDescription>
@@ -1126,12 +1158,18 @@ export function ServiceManagement() {
             <Button variant="outline" onClick={() => setDeletingService(null)}>
               {t("common.cancel", "Cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteServiceMutation.isPending}>
-              {deleteServiceMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteServiceMutation.isPending}
+            >
+              {deleteServiceMutation.isPending
+                ? t("common.deleting", "Deleting...")
+                : t("common.delete", "Delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 }

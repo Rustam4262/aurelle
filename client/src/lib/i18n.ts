@@ -52,12 +52,21 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// Keep <html lang="..."> in sync with the active language for screen readers
+// and search engines — it stayed hardcoded to "en" in index.html otherwise.
+if (typeof document !== "undefined") {
+  document.documentElement.lang = i18n.language;
+  i18n.on("languageChanged", (lang) => {
+    document.documentElement.lang = lang;
+  });
+}
+
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("uz-UZ", {
-    style: "currency",
-    currency: "UZS",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  // Plain number formatting + manual "UZS" suffix: Intl's currency-style
+  // formatting for UZS renders inconsistently across JS engines (e.g. "so'm"
+  // in Node's ICU data vs "UZS" in Chromium's), so we keep the format
+  // explicit and consistent with the rest of the app.
+  return `${new Intl.NumberFormat("uz-UZ", { maximumFractionDigits: 0 }).format(amount)} UZS`;
 };
 
 export function getLocalizedText(

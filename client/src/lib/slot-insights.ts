@@ -24,10 +24,10 @@ export interface DayInsights {
 
 // Time period definitions
 const TIME_PERIODS = {
-  morning: { start: 9, end: 12, label: "morning", icon: "🌅" },
-  midday: { start: 12, end: 14, label: "midday", icon: "☀️" },
-  afternoon: { start: 14, end: 17, label: "afternoon", icon: "🌤️" },
-  evening: { start: 17, end: 21, label: "evening", icon: "🌙" },
+  morning: { start: 9, end: 12, label: "morning", icon: "morning" },
+  midday: { start: 12, end: 14, label: "midday", icon: "midday" },
+  afternoon: { start: 14, end: 17, label: "afternoon", icon: "afternoon" },
+  evening: { start: 17, end: 21, label: "evening", icon: "evening" },
 } as const;
 
 // Prime time hours (highest demand)
@@ -277,14 +277,14 @@ export function getDayQualityVariant(
 export function getDayQualityIcon(quality: DayInsights["dayQuality"]): string {
   switch (quality) {
     case "excellent":
-      return "🔥";
+      return "popular";
     case "good":
-      return "✨";
+      return "recommended";
     case "limited":
-      return "⚡";
+      return "quick";
     case "full":
-      return "🚫";
+      return "unavailable";
     default:
-      return "📅";
+      return "calendar";
   }
 }

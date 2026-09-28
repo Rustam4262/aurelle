@@ -57,9 +57,23 @@ app.use(
           "https://www.googletagmanager.com",
           "https://www.google-analytics.com",
         ],
-        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://yastatic.net", "https://*.yastatic.net"],
+        "style-src": [
+          "'self'",
+          "'unsafe-inline'",
+          "https://fonts.googleapis.com",
+          "https://yastatic.net",
+          "https://*.yastatic.net",
+        ],
         "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
-        "img-src": ["'self'", "data:", "blob:", "https:", "https://*.maps.yandex.net", "https://yastatic.net", "https://*.yastatic.net"],
+        "img-src": [
+          "'self'",
+          "data:",
+          "blob:",
+          "https:",
+          "https://*.maps.yandex.net",
+          "https://yastatic.net",
+          "https://*.yastatic.net",
+        ],
         "connect-src": [
           "'self'",
           "https://api-maps.yandex.ru",
@@ -74,8 +88,8 @@ app.use(
           "wss:",
         ],
         "frame-src": ["https://www.googletagmanager.com"],
-        // Yandex Maps v3 loads tile workers as blob: URLs
-        "worker-src": ["blob:"],
+        // 'self' for our own /sw.js; blob: for Yandex Maps v3 tile workers
+        "worker-src": ["'self'", "blob:"],
       },
     },
     // frame-ancestors 'none' в CSP перекрывает X-Frame-Options, но оставляем для legacy
@@ -179,8 +193,7 @@ app.use(slowRequestLogger);
 
   // In PM2 cluster mode each worker gets a NODE_APP_INSTANCE env var (0, 1, 2…).
   // Run cron jobs only on instance 0 to avoid N duplicate executions per interval.
-  const isMainInstance =
-    !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === "0";
+  const isMainInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === "0";
 
   httpServer.listen(
     {

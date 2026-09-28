@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Clock, Search, Scissors, Store, UserRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface LocalizedText {
   en?: string;
@@ -83,6 +84,7 @@ function modeLabel(mode?: string | null): string {
 }
 
 export default function AdminServices() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [source, setSource] = useState<SourceFilter>("all");
 
@@ -126,15 +128,18 @@ export default function AdminServices() {
         <div>
           <h1 className="text-3xl font-serif font-semibold">Услуги</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
-            Все услуги платформы: салонные позиции владельцев и услуги фриланс-мастеров в одном контрольном списке.
+            Все услуги платформы: салонные позиции владельцев и услуги фриланс-мастеров в одном
+            контрольном списке.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {([
-            ["all", "Все"],
-            ["salon", "Салоны"],
-            ["solo", "Фриланс-мастера"],
-          ] as const).map(([value, label]) => (
+          {(
+            [
+              ["all", "Все"],
+              ["salon", "Салоны"],
+              ["solo", "Фриланс-мастера"],
+            ] as const
+          ).map(([value, label]) => (
             <Button
               key={value}
               variant={source === value ? "default" : "outline"}
@@ -227,8 +232,17 @@ export default function AdminServices() {
                               <Scissors className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="min-w-0">
-                              <p className="break-words font-medium">{serviceName || "Без названия"}</p>
-                              <p className="mt-1 text-sm text-muted-foreground">{service.category}</p>
+                              <p className="break-words font-medium">
+                                {serviceName || "Без названия"}
+                              </p>
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                {isSalon
+                                  ? t(
+                                      `marketplace.categories.${service.category}`,
+                                      service.category,
+                                    )
+                                  : service.category}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -240,7 +254,9 @@ export default function AdminServices() {
                               <UserRound className="mt-0.5 h-4 w-4 text-muted-foreground" />
                             )}
                             <div className="min-w-0">
-                              <p className="break-words font-medium">{providerName || "Не указан"}</p>
+                              <p className="break-words font-medium">
+                                {providerName || "Не указан"}
+                              </p>
                               <p className="break-words text-sm text-muted-foreground">
                                 {service.providerType}
                                 {service.ownerEmail ? ` · ${service.ownerEmail}` : ""}

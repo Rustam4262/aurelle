@@ -248,6 +248,7 @@ export const services = pgTable(
     name: jsonb("name").notNull().$type<{ en: string; ru: string; uz: string }>(),
     description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
     category: varchar("category", { length: 100 }).notNull(),
+    audience: varchar("audience", { length: 10 }).$type<"women" | "men" | "unisex">(),
     priceMin: integer("price_min").notNull(), // in UZS
     priceMax: integer("price_max"), // in UZS, optional for fixed price
     duration: integer("duration").notNull(), // in minutes
@@ -265,7 +266,9 @@ export const services = pgTable(
   ],
 );
 
-export const insertServiceSchema = createInsertSchema(services).omit({
+export const insertServiceSchema = createInsertSchema(services, {
+  audience: z.enum(["women", "men", "unisex"]).nullable().optional(),
+}).omit({
   id: true,
   createdAt: true,
 });
@@ -293,6 +296,7 @@ export const soloMasterServices = pgTable(
     name: jsonb("name").notNull().$type<{ en: string; ru: string; uz: string }>(),
     description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
     category: varchar("category", { length: 100 }).notNull(),
+    audience: varchar("audience", { length: 10 }).$type<"women" | "men" | "unisex">(),
     priceMin: integer("price_min").notNull(), // in UZS
     priceMax: integer("price_max"), // in UZS, optional for fixed price
     duration: integer("duration").notNull(), // in minutes
@@ -309,7 +313,9 @@ export const soloMasterServices = pgTable(
   ],
 );
 
-export const insertSoloMasterServiceSchema = createInsertSchema(soloMasterServices).omit({
+export const insertSoloMasterServiceSchema = createInsertSchema(soloMasterServices, {
+  audience: z.enum(["women", "men", "unisex"]).nullable().optional(),
+}).omit({
   id: true,
   createdAt: true,
 });
@@ -375,6 +381,9 @@ export const bookings = pgTable(
     estimatedTravelTime: integer("estimated_travel_time"), // in minutes
     mobileExtraCharge: integer("mobile_extra_charge").default(0), // extra charge for mobile service
     paymentStatus: varchar("payment_status", { length: 20 }).default("not_required"), // not_required | pending | paid | refunded
+    // Bumped on every reschedule so scheduled_notifications rows for the old
+    // time can never collide with (or be confused for) rows for the new time.
+    notificationVersion: integer("notification_version").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -416,6 +425,12 @@ export const reviews = pgTable(
     comment: text("comment"),
     ownerResponse: text("owner_response"),
     createdAt: timestamp("created_at").defaultNow(),
+    // Admin moderation (hidden reviews are excluded from public display and
+    // rating averages, but kept for audit purposes rather than deleted).
+    isHidden: boolean("is_hidden").default(false),
+    hiddenReason: text("hidden_reason"),
+    hiddenBy: varchar("hidden_by"),
+    hiddenAt: timestamp("hidden_at"),
   },
   (table) => [
     index("idx_reviews_salon").on(table.salonId),
@@ -428,6 +443,10 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   id: true,
   ownerResponse: true,
   createdAt: true,
+  isHidden: true,
+  hiddenReason: true,
+  hiddenBy: true,
+  hiddenAt: true,
 });
 
 export type InsertReview = z.infer<typeof insertReviewSchema>;
@@ -1045,10 +1064,10 @@ export const payments = pgTable(
     masterId: varchar("master_id"),
     clientId: varchar("client_id"),
     // Fee snapshot (calculated at payment creation from platformFeeConfig)
-    grossAmountUzs: integer("gross_amount_uzs"),  // = amountUzs (explicit alias for reporting)
-    feePercent: decimal("fee_percent", { precision: 5, scale: 2 }),  // rate applied (snapshot)
-    platformFeeUzs: integer("platform_fee_uzs"),  // platform's cut
-    netAmountUzs: integer("net_amount_uzs"),       // salon receives: gross - fee
+    grossAmountUzs: integer("gross_amount_uzs"), // = amountUzs (explicit alias for reporting)
+    feePercent: decimal("fee_percent", { precision: 5, scale: 2 }), // rate applied (snapshot)
+    platformFeeUzs: integer("platform_fee_uzs"), // platform's cut
+    netAmountUzs: integer("net_amount_uzs"), // salon receives: gross - fee
     // Error tracking
     errorCode: varchar("error_code", { length: 100 }),
     errorMessage: text("error_message"),
@@ -1129,13 +1148,19 @@ export const scheduledNotifications = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     bookingId: varchar("booking_id", { length: 255 }).notNull(),
-    type: varchar("type", { length: 50 }).notNull(),       // 'REMINDER_24H' | 'REMINDER_2H'
+    type: varchar("type", { length: 50 }).notNull(), // 'REMINDER_24H' | 'REMINDER_2H'
     channel: varchar("channel", { length: 20 }).notNull(), // 'email' | 'sms' | 'push'
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
     sentAt: timestamp("sent_at", { withTimezone: true }),
     status: varchar("status", { length: 20 }).notNull().default("pending"), // pending|sent|failed|cancelled
     error: text("error"),
-    dedupeKey: varchar("dedupe_key", { length: 255 }).notNull().unique(),  // '{bookingId}:{type}:{channel}'
+    // Snapshot of bookings.notificationVersion at schedule time, so the worker
+    // can detect a job that was superseded by a later reschedule without a
+    // second round-trip to the bookings table.
+    version: integer("version").notNull().default(0),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    dedupeKey: varchar("dedupe_key", { length: 255 }).notNull().unique(), // '{bookingId}:v{version}:{type}:{channel}'
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [
@@ -1212,7 +1237,7 @@ export const platformFeeConfig = pgTable(
     id: varchar("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    salonId: varchar("salon_id"),    // null = global default rate
+    salonId: varchar("salon_id"), // null = global default rate
     feePercent: decimal("fee_percent", { precision: 5, scale: 2 }).notNull().default("0"),
     description: text("description"),
     createdBy: varchar("created_by").notNull(),
@@ -1240,8 +1265,8 @@ export const bookingDrafts = pgTable(
     salonId: varchar("salon_id"),
     serviceId: varchar("service_id"),
     masterId: varchar("master_id"),
-    scheduledDate: varchar("scheduled_date", { length: 10 }),  // YYYY-MM-DD
-    scheduledTime: varchar("scheduled_time", { length: 10 }),  // HH:MM
+    scheduledDate: varchar("scheduled_date", { length: 10 }), // YYYY-MM-DD
+    scheduledTime: varchar("scheduled_time", { length: 10 }), // HH:MM
     // Arbitrary extra state the client wants to persist (selected extras, notes, etc.)
     properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
     expiresAt: timestamp("expires_at").notNull(),
@@ -1266,7 +1291,9 @@ export type BookingDraft = typeof bookingDrafts.$inferSelect;
 export const subscriptionPlans = pgTable(
   "subscription_plans",
   {
-    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     slug: varchar("slug", { length: 50 }).notNull().unique(), // e.g. "starter", "pro", "enterprise"
     name: jsonb("name").notNull().$type<{ en: string; ru: string; uz: string }>(),
     description: jsonb("description").$type<{ en: string; ru: string; uz: string }>(),
@@ -1281,9 +1308,7 @@ export const subscriptionPlans = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [
-    index("idx_plans_active").on(table.isActive),
-  ],
+  (table) => [index("idx_plans_active").on(table.isActive)],
 );
 
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
@@ -1295,9 +1320,11 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export const salonSubscriptions = pgTable(
   "salon_subscriptions",
   {
-    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: varchar("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     salonId: varchar("salon_id").notNull().unique(), // FK salons.id (enforced at app layer)
-    planId: varchar("plan_id").notNull(),            // FK subscription_plans.id
+    planId: varchar("plan_id").notNull(), // FK subscription_plans.id
     // "trialing" → auto-expires at trialEndsAt
     // "active"   → paid, renewsAt set
     // "past_due" → payment failed, grace period

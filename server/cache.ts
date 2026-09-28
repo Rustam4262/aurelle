@@ -119,7 +119,9 @@ export function cacheMiddleware(keyPrefix: string, ttl: number = 300) {
 
       // Override json function to cache response
       res.json = function (body: any) {
-        setCache(cacheKey, body, ttl).catch((err) => logger.error("Redis cache set error", err, { source: "redis" }));
+        setCache(cacheKey, body, ttl).catch((err) =>
+          logger.error("Redis cache set error", err, { source: "redis" }),
+        );
         return originalSend(body);
       };
 

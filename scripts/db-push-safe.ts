@@ -26,9 +26,7 @@ if (process.env.NODE_ENV === "production") {
   console.error(
     "  Pushing the Drizzle schema directly to a production database can cause data loss",
   );
-  console.error(
-    "  or downtime. Apply schema changes via manual SQL migrations instead.",
-  );
+  console.error("  or downtime. Apply schema changes via manual SQL migrations instead.");
   console.error("");
   console.error("  Safe procedure:");
   console.error("    1. Write SQL in migrations/NNNN_<description>.sql");

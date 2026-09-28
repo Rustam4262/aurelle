@@ -152,9 +152,7 @@ export async function logAuditAction(data: {
 
     // Merge old/new data and meta into the `details` jsonb column
     const details =
-      oldData != null || newData != null || meta != null
-        ? { oldData, newData, meta }
-        : undefined;
+      oldData != null || newData != null || meta != null ? { oldData, newData, meta } : undefined;
 
     await db.insert(auditLogs).values({
       ...rest,

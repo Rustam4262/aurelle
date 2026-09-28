@@ -14,8 +14,8 @@ export function OwnerSalonTeam({ salonId }: OwnerSalonTeamProps) {
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-foreground">Команда и доступы салона</h3>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Здесь владелец управляет менеджерами, распределяет права и держит под контролем,
-              кто может работать с бронированиями, услугами, мастерами и календарём.
+              Здесь владелец управляет менеджерами, распределяет права и держит под контролем, кто
+              может работать с бронированиями, услугами, мастерами и календарём.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:w-[520px]">

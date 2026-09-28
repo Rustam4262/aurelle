@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth, useLogout } from "../../hooks/useAuth";
@@ -31,27 +24,15 @@ function MenuItem({ icon, label, subtitle, onPress, destructive }: MenuItemProps
           destructive ? "bg-red-50" : "bg-gray-100"
         }`}
       >
-        <Ionicons
-          name={icon}
-          size={18}
-          color={destructive ? "#ef4444" : "#6b7280"}
-        />
+        <Ionicons name={icon} size={18} color={destructive ? "#ef4444" : "#6b7280"} />
       </View>
       <View className="flex-1">
-        <Text
-          className={`text-base font-medium ${
-            destructive ? "text-red-500" : "text-gray-800"
-          }`}
-        >
+        <Text className={`text-base font-medium ${destructive ? "text-red-500" : "text-gray-800"}`}>
           {label}
         </Text>
-        {subtitle && (
-          <Text className="text-xs text-gray-400 mt-0.5">{subtitle}</Text>
-        )}
+        {subtitle && <Text className="text-xs text-gray-400 mt-0.5">{subtitle}</Text>}
       </View>
-      {!destructive && (
-        <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
-      )}
+      {!destructive && <Ionicons name="chevron-forward" size={16} color="#d1d5db" />}
     </TouchableOpacity>
   );
 }
@@ -111,9 +92,7 @@ export function ProfileScreen() {
           {!user.emailVerified && (
             <View className="mt-4 flex-row items-center p-3 bg-amber-50 rounded-xl">
               <Ionicons name="warning-outline" size={16} color="#d97706" />
-              <Text className="text-sm text-amber-700 ml-2">
-                Email не подтверждён
-              </Text>
+              <Text className="text-sm text-amber-700 ml-2">Email не подтверждён</Text>
             </View>
           )}
         </View>
@@ -126,17 +105,8 @@ export function ProfileScreen() {
             subtitle="Имя, телефон, город"
             onPress={() => {}}
           />
-          <MenuItem
-            icon="notifications-outline"
-            label="Уведомления"
-            onPress={() => {}}
-          />
-          <MenuItem
-            icon="language-outline"
-            label="Язык"
-            subtitle="Русский"
-            onPress={() => {}}
-          />
+          <MenuItem icon="notifications-outline" label="Уведомления" onPress={() => {}} />
+          <MenuItem icon="language-outline" label="Язык" subtitle="Русский" onPress={() => {}} />
           <MenuItem
             icon="shield-checkmark-outline"
             label="Безопасность"
@@ -146,16 +116,8 @@ export function ProfileScreen() {
         </View>
 
         <View className="mt-4 rounded-2xl overflow-hidden mx-4">
-          <MenuItem
-            icon="help-circle-outline"
-            label="Поддержка"
-            onPress={() => {}}
-          />
-          <MenuItem
-            icon="document-text-outline"
-            label="Условия использования"
-            onPress={() => {}}
-          />
+          <MenuItem icon="help-circle-outline" label="Поддержка" onPress={() => {}} />
+          <MenuItem icon="document-text-outline" label="Условия использования" onPress={() => {}} />
           <MenuItem
             icon="information-circle-outline"
             label="О приложении"
@@ -165,12 +127,7 @@ export function ProfileScreen() {
         </View>
 
         <View className="mt-4 rounded-2xl overflow-hidden mx-4 mb-8">
-          <MenuItem
-            icon="log-out-outline"
-            label="Выйти"
-            onPress={handleLogout}
-            destructive
-          />
+          <MenuItem icon="log-out-outline" label="Выйти" onPress={handleLogout} destructive />
         </View>
 
         {logoutMutation.isPending && (

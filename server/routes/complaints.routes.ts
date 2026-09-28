@@ -18,7 +18,9 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     const parsed = insertComplaintSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid complaint data", details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: "Invalid complaint data", details: parsed.error.flatten() });
     }
 
     const { targetType, targetId, category, description, attachments } = parsed.data;
@@ -41,7 +43,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       })
       .returning({ id: complaints.id });
 
-    logger.info("Complaint submitted", { source: "complaints-routes", meta: { id: complaint.id, category, targetType } });
+    logger.info("Complaint submitted", {
+      source: "complaints-routes",
+      meta: { id: complaint.id, category, targetType },
+    });
 
     res.status(201).json({ id: complaint.id, message: "Complaint submitted successfully" });
   } catch (error: any) {

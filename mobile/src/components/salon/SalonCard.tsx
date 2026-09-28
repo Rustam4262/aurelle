@@ -24,9 +24,7 @@ export function SalonCard({ salon, onPress }: SalonCardProps) {
       {/* Cover Image */}
       <Image
         source={
-          salon.coverImageUrl
-            ? { uri: salon.coverImageUrl }
-            : require("../../../assets/icon.png")
+          salon.coverImageUrl ? { uri: salon.coverImageUrl } : require("../../../assets/icon.png")
         }
         className="w-full h-44"
         contentFit="cover"
@@ -37,9 +35,7 @@ export function SalonCard({ salon, onPress }: SalonCardProps) {
       {salon.isVerified && (
         <View className="absolute top-3 right-3 bg-white/90 rounded-full px-2 py-1 flex-row items-center">
           <Ionicons name="checkmark-circle" size={12} color="#22c55e" />
-          <Text className="text-xs text-green-600 font-medium ml-1">
-            Проверен
-          </Text>
+          <Text className="text-xs text-green-600 font-medium ml-1">Проверен</Text>
         </View>
       )}
 
@@ -62,9 +58,7 @@ export function SalonCard({ salon, onPress }: SalonCardProps) {
               {salon.rating.toFixed(1)}
             </Text>
             {salon.reviewCount != null && (
-              <Text className="text-sm text-gray-400 ml-1">
-                ({salon.reviewCount})
-              </Text>
+              <Text className="text-sm text-gray-400 ml-1">({salon.reviewCount})</Text>
             )}
           </View>
         )}

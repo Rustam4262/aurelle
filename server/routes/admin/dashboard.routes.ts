@@ -40,29 +40,64 @@ router.get("/", requirePermission("analytics.read"), async (req, res) => {
         curSalonsRow,
         curMastersRow,
       ] = await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(users).where(notSoftDeleted(users.blockReason)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(notSoftDeleted(users.blockReason)),
         db.select({ count: sql<number>`count(*)` }).from(salons),
         db.select({ count: sql<number>`count(*)` }).from(masters),
         db.select({ count: sql<number>`count(*)` }).from(bookings),
-        db.select({ count: sql<number>`count(*)` }).from(complaints).where(eq(complaints.status, "open")),
-        db.select({ count: sql<number>`count(*)` }).from(sanctions).where(eq(sanctions.status, "active")),
-        db.select({ count: sql<number>`count(*)` }).from(users).where(
-          and(
-            gte(users.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
-            notSoftDeleted(users.blockReason),
-          )
-        ),
-        db.select({ count: sql<number>`count(*)` }).from(salons).where(eq(salons.isVerified, true)),
-        db.select({ count: sql<number>`count(*)` }).from(users).where(and(gte(users.createdAt, periodStart), notSoftDeleted(users.blockReason))),
-        db.select({ count: sql<number>`count(*)` }).from(users).where(
-          and(gte(users.createdAt, prevStart), lt(users.createdAt, periodStart), notSoftDeleted(users.blockReason))
-        ),
-        db.select({ count: sql<number>`count(*)` }).from(bookings).where(gte(bookings.createdAt, periodStart)),
-        db.select({ count: sql<number>`count(*)` }).from(bookings).where(
-          and(gte(bookings.createdAt, prevStart), lt(bookings.createdAt, periodStart))
-        ),
-        db.select({ count: sql<number>`count(*)` }).from(salons).where(gte(salons.createdAt, periodStart)),
-        db.select({ count: sql<number>`count(*)` }).from(masters).where(gte(masters.createdAt, periodStart)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(complaints)
+          .where(eq(complaints.status, "open")),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(sanctions)
+          .where(eq(sanctions.status, "active")),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+              notSoftDeleted(users.blockReason),
+            ),
+          ),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(salons)
+          .where(eq(salons.isVerified, true)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(and(gte(users.createdAt, periodStart), notSoftDeleted(users.blockReason))),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, prevStart),
+              lt(users.createdAt, periodStart),
+              notSoftDeleted(users.blockReason),
+            ),
+          ),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(bookings)
+          .where(gte(bookings.createdAt, periodStart)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(bookings)
+          .where(and(gte(bookings.createdAt, prevStart), lt(bookings.createdAt, periodStart))),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(salons)
+          .where(gte(salons.createdAt, periodStart)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(masters)
+          .where(gte(masters.createdAt, periodStart)),
       ]);
 
       return {
@@ -114,27 +149,32 @@ router.get("/action-center", requirePermission("analytics.read"), async (_req, r
       todayEnd.setHours(23, 59, 59, 999);
       const oneDayAgo = new Date(Date.now() - 86400000);
 
-      const [unverifiedSalons, pendingComplaints, paymentErrors, expiringToday] = await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(salons).where(eq(salons.isVerified, false)),
-        db
-          .select({ count: sql<number>`count(*)` })
-          .from(complaints)
-          .where(sql`${complaints.status} IN ('open', 'in_review')`),
-        db
-          .select({ count: sql<number>`count(*)` })
-          .from(payments)
-          .where(and(eq(payments.status, "failed"), gte(payments.createdAt, oneDayAgo))),
-        db
-          .select({ count: sql<number>`count(*)` })
-          .from(sanctions)
-          .where(
-            and(
-              eq(sanctions.status, "active"),
-              gte(sanctions.endsAt, todayStart),
-              lte(sanctions.endsAt, todayEnd),
+      const [unverifiedSalons, pendingComplaints, paymentErrors, expiringToday] = await Promise.all(
+        [
+          db
+            .select({ count: sql<number>`count(*)` })
+            .from(salons)
+            .where(eq(salons.isVerified, false)),
+          db
+            .select({ count: sql<number>`count(*)` })
+            .from(complaints)
+            .where(sql`${complaints.status} IN ('open', 'in_review')`),
+          db
+            .select({ count: sql<number>`count(*)` })
+            .from(payments)
+            .where(and(eq(payments.status, "failed"), gte(payments.createdAt, oneDayAgo))),
+          db
+            .select({ count: sql<number>`count(*)` })
+            .from(sanctions)
+            .where(
+              and(
+                eq(sanctions.status, "active"),
+                gte(sanctions.endsAt, todayStart),
+                lte(sanctions.endsAt, todayEnd),
+              ),
             ),
-          ),
-      ]);
+        ],
+      );
 
       return {
         unverifiedSalons: Number(unverifiedSalons[0].count),
@@ -256,7 +296,9 @@ router.get("/user-growth", requirePermission("analytics.read"), async (req, res)
             count: sql<number>`count(*)`,
           })
           .from(users)
-          .where(and(gte(users.createdAt, sql`${sql.raw(interval)}`), notSoftDeleted(users.blockReason)))
+          .where(
+            and(gte(users.createdAt, sql`${sql.raw(interval)}`), notSoftDeleted(users.blockReason)),
+          )
           .groupBy(sql`DATE(${users.createdAt})`)
           .orderBy(sql`DATE(${users.createdAt}) ASC`);
       }
@@ -283,8 +325,14 @@ router.get("/funnel", requirePermission("analytics.read"), async (req, res) => {
       const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
       const [signups, bookingsCreated, bookingsCompleted] = await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(users).where(gte(users.createdAt, start)),
-        db.select({ count: sql<number>`count(*)` }).from(bookings).where(gte(bookings.createdAt, start)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(gte(users.createdAt, start)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(bookings)
+          .where(gte(bookings.createdAt, start)),
         db
           .select({ count: sql<number>`count(*)` })
           .from(bookings)
@@ -358,27 +406,43 @@ router.get("/platform-health", requirePermission("analytics.read"), async (_req,
     const result = await withCache("dash:platform-health", 60, async () => {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      const [blockedStats, activeSessions, avgSessionDuration, pendingComplaints, verificationStats] =
-        await Promise.all([
-          db.select({
+      const [
+        blockedStats,
+        activeSessions,
+        avgSessionDuration,
+        pendingComplaints,
+        verificationStats,
+      ] = await Promise.all([
+        db
+          .select({
             total: sql<number>`count(*)`,
             blocked: sql<number>`count(*) FILTER (WHERE ${users.isBlocked} = true)`,
-          }).from(users).where(notSoftDeleted(users.blockReason)),
-          db.select({ count: sql<number>`count(*)` }).from(userActivitySessions).where(
-            gte(userActivitySessions.loginAt, oneDayAgo)
-          ),
-          db.select({
+          })
+          .from(users)
+          .where(notSoftDeleted(users.blockReason)),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(userActivitySessions)
+          .where(gte(userActivitySessions.loginAt, oneDayAgo)),
+        db
+          .select({
             avgMinutes: sql<number>`COALESCE(AVG(${userActivitySessions.durationSeconds}) / 60, 0)`,
-          }).from(userActivitySessions).where(not(isNull(userActivitySessions.logoutAt))),
-          db.select({ count: sql<number>`count(*)` }).from(complaints).where(
-            eq(complaints.status, "open")
-          ),
-          db.select({
+          })
+          .from(userActivitySessions)
+          .where(not(isNull(userActivitySessions.logoutAt))),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(complaints)
+          .where(eq(complaints.status, "open")),
+        db
+          .select({
             total: sql<number>`count(*)`,
             emailVerified: sql<number>`count(*) FILTER (WHERE ${users.emailVerified} = true)`,
             phoneVerified: sql<number>`count(*) FILTER (WHERE ${users.phoneVerified} = true)`,
-          }).from(users).where(notSoftDeleted(users.blockReason)),
-        ]);
+          })
+          .from(users)
+          .where(notSoftDeleted(users.blockReason)),
+      ]);
 
       const total = Number(blockedStats[0].total) || 1;
       const totalV = Number(verificationStats[0].total) || 1;

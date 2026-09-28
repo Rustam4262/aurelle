@@ -31,9 +31,10 @@ async function lookupClientEmail(
   return { email: user.email, fullName: profile.fullName || "Клиент" };
 }
 
-async function resolveBookingMeta(
-  booking: { masterId: string | null; soloMasterServiceId: string | null },
-): Promise<{ salonName: string; serviceName: string; masterName: string | null }> {
+async function resolveBookingMeta(booking: {
+  masterId: string | null;
+  soloMasterServiceId: string | null;
+}): Promise<{ salonName: string; serviceName: string; masterName: string | null }> {
   let salonName = "AURELLE";
   let serviceName = "Услуга";
   let masterName: string | null = null;
@@ -69,11 +70,7 @@ async function resolveBookingMeta(
 export function fireConfirmationEmail(bookingId: string): void {
   void (async () => {
     try {
-      const [booking] = await db
-        .select()
-        .from(bookings)
-        .where(eq(bookings.id, bookingId))
-        .limit(1);
+      const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
 
       if (!booking) return;
 
@@ -117,11 +114,7 @@ export function fireConfirmationEmail(bookingId: string): void {
 export function fireCancellationEmail(bookingId: string): void {
   void (async () => {
     try {
-      const [booking] = await db
-        .select()
-        .from(bookings)
-        .where(eq(bookings.id, bookingId))
-        .limit(1);
+      const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
 
       if (!booking) return;
 

@@ -15,7 +15,7 @@ const FETCH_TIMEOUT_MS = 15_000;
 let _adminRedirectInProgress = false;
 
 /** Read the CSRF token from the csrf-token cookie (set by the server on every response). */
-function getCsrfToken(): string {
+export function getCsrfToken(): string {
   if (typeof document === "undefined") return "";
   const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : "";
@@ -58,6 +58,16 @@ async function throwIfResNotOk(res: Response) {
 
     const error = new Error(`${res.status}: ${text}`);
     (error as Error & { status: number }).status = res.status;
+    // Stable error codes (e.g. BOOKING_TIME_UNAVAILABLE) let callers show a
+    // localized, actionable message instead of this raw "status: body" text.
+    try {
+      const parsed = JSON.parse(text) as { code?: string };
+      if (parsed.code) {
+        (error as Error & { code?: string }).code = parsed.code;
+      }
+    } catch {
+      // Not JSON, or no code field — callers fall back to error.message.
+    }
     throw error;
   }
 }

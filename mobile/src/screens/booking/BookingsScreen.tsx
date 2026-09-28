@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -42,12 +35,11 @@ function BookingCard({
   onCancel: () => void;
 }) {
   const canCancel = booking.status === "pending" || booking.status === "confirmed";
-  const salonName =
-    booking.salon
-      ? typeof booking.salon.name === "string"
-        ? booking.salon.name
-        : booking.salon.name.ru
-      : "Салон";
+  const salonName = booking.salon
+    ? typeof booking.salon.name === "string"
+      ? booking.salon.name
+      : booking.salon.name.ru
+    : "Салон";
 
   return (
     <TouchableOpacity
@@ -55,9 +47,7 @@ function BookingCard({
       className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm"
     >
       <View className="flex-row items-start justify-between mb-2">
-        <Text className="text-base font-semibold text-gray-800 flex-1 mr-2">
-          {salonName}
-        </Text>
+        <Text className="text-base font-semibold text-gray-800 flex-1 mr-2">{salonName}</Text>
         <View className={`px-2 py-1 rounded-full ${STATUS_COLORS[booking.status]}`}>
           <Text className={`text-xs font-medium ${STATUS_COLORS[booking.status]}`}>
             {STATUS_LABELS[booking.status]}
@@ -104,9 +94,7 @@ export function BookingsScreen({ navigation }: Props) {
   const PAST_STATUSES: Booking["status"][] = ["completed", "cancelled", "no_show"];
 
   const filtered = bookings.filter((b) =>
-    tab === "upcoming"
-      ? UPCOMING_STATUSES.includes(b.status)
-      : PAST_STATUSES.includes(b.status),
+    tab === "upcoming" ? UPCOMING_STATUSES.includes(b.status) : PAST_STATUSES.includes(b.status),
   );
 
   const handleCancel = (bookingId: string) => {
@@ -137,9 +125,7 @@ export function BookingsScreen({ navigation }: Props) {
               }`}
             >
               <Text
-                className={`text-sm font-medium ${
-                  tab === t ? "text-primary" : "text-gray-400"
-                }`}
+                className={`text-sm font-medium ${tab === t ? "text-primary" : "text-gray-400"}`}
               >
                 {t === "upcoming" ? "Предстоящие" : "История"}
               </Text>

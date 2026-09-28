@@ -1,3 +1,5 @@
+import { useAudience } from "@/components/audience-provider";
+import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -88,11 +90,13 @@ function MasterPreviewCard({ master }: { master: PublicMaster }) {
 }
 
 export function HomeMasters() {
+  const { audience } = useAudience();
   const { t } = useTranslation();
 
   const { data: masters = [], isLoading } = useQuery<PublicMaster[]>({
-    queryKey: ["/api/masters", "home"],
-    queryFn: () => fetch("/api/masters?limit=4").then((r) => r.json()),
+    queryKey: ["/api/masters", "home", audience],
+    queryFn: () =>
+      apiRequest("GET", `/api/masters?limit=4&audience=${audience}`).then((r) => r.json()),
     staleTime: 5 * 60 * 1000,
   });
 

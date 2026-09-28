@@ -23,6 +23,12 @@ interface LocalizedText {
   uz?: string;
 }
 
+function localize(value: LocalizedText | string | undefined, lang: string): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value[lang as keyof LocalizedText] || value.ru || value.en || value.uz || "";
+}
+
 interface Salon {
   id: string;
   name: LocalizedText | string;
@@ -35,7 +41,7 @@ interface Salon {
 export default function AdminSalons() {
   const [search, setSearch] = useState("");
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data, isLoading } = useQuery<{ salons: Salon[] }>({
     queryKey: ["/api/admin/salons", { limit: 50 }],
@@ -72,8 +78,8 @@ export default function AdminSalons() {
   });
 
   const filtered = data?.salons.filter((salon) => {
-    const name = typeof salon.name === "object" ? salon.name.en || salon.name.ru : salon.name;
-    return name?.toLowerCase().includes(search.toLowerCase());
+    const name = localize(salon.name, i18n.language);
+    return name.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
@@ -117,12 +123,8 @@ export default function AdminSalons() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((salon) => {
-                    const name =
-                      typeof salon.name === "object" ? salon.name.en || salon.name.ru : salon.name;
-                    const address =
-                      typeof salon.address === "object"
-                        ? salon.address.en || salon.address.ru
-                        : salon.address;
+                    const name = localize(salon.name, i18n.language);
+                    const address = localize(salon.address, i18n.language);
 
                     return (
                       <TableRow key={salon.id}>

@@ -61,7 +61,10 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
         .where(eq(pushSubscriptions.id, existingSubscription.id))
         .returning();
 
-      logger.info("[PUSH] Subscription updated: " + JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }));
+      logger.info(
+        "[PUSH] Subscription updated: " +
+          JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }),
+      );
       return res.json(updated);
     }
 
@@ -85,10 +88,13 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
       .values([parsed.data as any])
       .returning();
 
-    logger.info("[PUSH] New subscription created: " + JSON.stringify({
-      userId,
-      endpoint: endpoint.substring(0, 50),
-    }));
+    logger.info(
+      "[PUSH] New subscription created: " +
+        JSON.stringify({
+          userId,
+          endpoint: endpoint.substring(0, 50),
+        }),
+    );
     return res.status(201).json(subscription);
   } catch (error) {
     logger.error("Subscribe to push error:", error);
@@ -115,7 +121,10 @@ router.post("/unsubscribe", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Subscription not found" });
     }
 
-    logger.info("[PUSH] Subscription deleted: " + JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }));
+    logger.info(
+      "[PUSH] Subscription deleted: " +
+        JSON.stringify({ userId, endpoint: endpoint.substring(0, 50) }),
+    );
     return res.json({ success: true });
   } catch (error) {
     logger.error("Unsubscribe from push error:", error);
@@ -194,7 +203,9 @@ router.post("/test", isAuthenticated, async (req: any, res) => {
     const successful = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
 
-    logger.info("[PUSH] Test notifications sent: " + JSON.stringify({ userId, successful, failed }));
+    logger.info(
+      "[PUSH] Test notifications sent: " + JSON.stringify({ userId, successful, failed }),
+    );
     return res.json({ successful, failed, total: userSubscriptions.length });
   } catch (error) {
     logger.error("Test push notification error:", error);

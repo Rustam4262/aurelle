@@ -1,3 +1,4 @@
+import { ServiceAudienceField, AudienceSelect } from "@/components/service-audience-field";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -46,6 +47,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
     nameRu: "",
     nameUz: "",
     category: "haircut",
+    audience: "",
     priceMin: "",
     priceMax: "",
     duration: "60",
@@ -59,6 +61,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
     mutationFn: async (data: {
       name: { en: string; ru: string; uz: string };
       category: string;
+      audience: string;
       priceMin: number;
       priceMax: number | null;
       duration: number;
@@ -73,6 +76,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
         nameRu: "",
         nameUz: "",
         category: "haircut",
+        audience: "",
         priceMin: "",
         priceMax: "",
         duration: "60",
@@ -113,6 +117,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
         uz: newService.nameUz || newService.nameEn,
       },
       category: newService.category,
+      audience: newService.audience,
       priceMin: parseInt(newService.priceMin),
       priceMax: newService.priceMax ? parseInt(newService.priceMax) : null,
       duration: parseInt(newService.duration),
@@ -124,6 +129,10 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
       <Card className="p-6">
         <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.addService")}</h3>
         <form onSubmit={handleAddService} className="space-y-4">
+          <AudienceSelect
+            value={newService.audience}
+            onChange={(audience) => setNewService({ ...newService, audience })}
+          />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>{t("marketplace.owner.serviceNameEn")}</Label>
@@ -237,6 +246,11 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
                 data-testid={`service-item-${service.id}`}
               >
                 <div className="min-w-0">
+                  <ServiceAudienceField
+                    serviceId={service.id}
+                    salonId={salonId}
+                    audience={service.audience}
+                  />
                   <p className="font-medium text-foreground">
                     {getLocalizedText(
                       service.name as { en: string; ru: string; uz: string },

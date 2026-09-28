@@ -24,7 +24,9 @@ export function buildSoftDeleteReason(metadata: SoftDeleteMetadata): string {
   return `${SOFT_DELETE_PREFIX}${JSON.stringify(metadata)}`;
 }
 
-export function parseSoftDeleteReason(reason: string | null | undefined): SoftDeleteMetadata | null {
+export function parseSoftDeleteReason(
+  reason: string | null | undefined,
+): SoftDeleteMetadata | null {
   if (!reason || !reason.startsWith(SOFT_DELETE_PREFIX)) {
     return null;
   }
@@ -40,7 +42,10 @@ export function isSoftDeletedReason(reason: string | null | undefined): boolean 
   return parseSoftDeleteReason(reason) !== null;
 }
 
-export function isSoftDeletedUser(user: { blockReason?: string | null; isBlocked?: boolean | null }): boolean {
+export function isSoftDeletedUser(user: {
+  blockReason?: string | null;
+  isBlocked?: boolean | null;
+}): boolean {
   return !!user.isBlocked && isSoftDeletedReason(user.blockReason);
 }
 

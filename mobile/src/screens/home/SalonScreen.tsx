@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,9 +50,7 @@ export function SalonScreen({ navigation, route }: Props) {
         {/* Hero */}
         <Image
           source={
-            salon.coverImageUrl
-              ? { uri: salon.coverImageUrl }
-              : require("../../../assets/icon.png")
+            salon.coverImageUrl ? { uri: salon.coverImageUrl } : require("../../../assets/icon.png")
           }
           className="w-full h-56"
           contentFit="cover"
@@ -86,9 +78,7 @@ export function SalonScreen({ navigation, route }: Props) {
           {salon.rating != null && (
             <View className="flex-row items-center mt-1">
               <Ionicons name="star" size={14} color="#f59e0b" />
-              <Text className="font-semibold text-gray-700 ml-1">
-                {salon.rating.toFixed(1)}
-              </Text>
+              <Text className="font-semibold text-gray-700 ml-1">{salon.rating.toFixed(1)}</Text>
               {salon.reviewCount != null && (
                 <Text className="text-gray-400 ml-1">({salon.reviewCount} отзывов)</Text>
               )}
@@ -111,8 +101,8 @@ export function SalonScreen({ navigation, route }: Props) {
               <TouchableOpacity
                 key={service.id}
                 className="flex-row items-center justify-between py-3 border-b border-gray-100"
-                onPress={() =>
-                  navigation.navigate("Salon", { salonId }) // placeholder — goes to BookingFlow
+                onPress={
+                  () => navigation.navigate("Salon", { salonId }) // placeholder — goes to BookingFlow
                 }
               >
                 <View className="flex-1 mr-4">

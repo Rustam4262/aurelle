@@ -38,11 +38,17 @@ export async function setupYandexAuth(app: Express) {
     if (!clientID || clientID.trim() === "") {
       logger.warn("[OAuth] Yandex not configured — YANDEX_CLIENT_ID is missing or empty in .env");
     } else if (clientID.length < 10) {
-      logger.warn("[OAuth] Yandex not configured — YANDEX_CLIENT_ID looks like a placeholder (too short)");
+      logger.warn(
+        "[OAuth] Yandex not configured — YANDEX_CLIENT_ID looks like a placeholder (too short)",
+      );
     } else if (!clientSecret || clientSecret.trim() === "") {
-      logger.warn("[OAuth] Yandex not configured — YANDEX_CLIENT_SECRET is missing or empty in .env");
+      logger.warn(
+        "[OAuth] Yandex not configured — YANDEX_CLIENT_SECRET is missing or empty in .env",
+      );
     } else {
-      logger.warn("[OAuth] Yandex not configured — YANDEX_CLIENT_SECRET looks like a placeholder (too short)");
+      logger.warn(
+        "[OAuth] Yandex not configured — YANDEX_CLIENT_SECRET looks like a placeholder (too short)",
+      );
     }
 
     // Fallback routes so unconfigured provider returns a clear error instead of 404

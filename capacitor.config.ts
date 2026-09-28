@@ -1,12 +1,12 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'uz.aurelle.app',
-  appName: 'Aurelle',
-  webDir: 'dist/public',
+  appId: "uz.aurelle.app",
+  appName: "Aurelle",
+  webDir: "dist/public",
   server: {
     // For production: load from your deployed server
-    url: 'https://aurelle.uz',
+    url: "https://aurelle.uz",
     cleartext: false,
   },
   android: {
@@ -21,9 +21,9 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#C81D60',
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      backgroundColor: "#C81D60",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,

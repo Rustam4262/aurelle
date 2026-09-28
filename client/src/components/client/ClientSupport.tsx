@@ -423,7 +423,11 @@ export function ClientSupport() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setNewTicketDialogOpen(false)}>
+            <Button
+              className="w-full sm:w-auto"
+              variant="outline"
+              onClick={() => setNewTicketDialogOpen(false)}
+            >
               {t("common.cancel")}
             </Button>
             <Button

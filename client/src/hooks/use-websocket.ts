@@ -9,7 +9,7 @@ interface WsMessage {
 }
 
 let globalWs: WebSocket | null = null;
-let globalHandlers: Map<string, Set<EventHandler>> = new Map();
+const globalHandlers: Map<string, Set<EventHandler>> = new Map();
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectDelay = 1000;
 let activeUserId: string | null = null;

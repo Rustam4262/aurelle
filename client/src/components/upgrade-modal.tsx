@@ -84,14 +84,12 @@ export function UpgradeModal() {
 
         <div className="py-3">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            {(t("upgrade.benefits", { returnObjects: true }) as string[]).map(
-              (benefit, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  {benefit}
-                </li>
-              ),
-            )}
+            {(t("upgrade.benefits", { returnObjects: true }) as string[]).map((benefit, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-green-500 mt-0.5">✓</span>
+                {benefit}
+              </li>
+            ))}
           </ul>
         </div>
 

@@ -24,11 +24,13 @@ const router = Router();
 router.get("/funnel", requirePermission("analytics.read"), async (req, res) => {
   try {
     // Date range: default last 30 days
-    const toDate   = (req.query.to   as string) || new Date().toISOString().slice(0, 10);
-    const fromDate = (req.query.from as string) || new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const toDate = (req.query.to as string) || new Date().toISOString().slice(0, 10);
+    const fromDate =
+      (req.query.from as string) ||
+      new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
 
     const from = new Date(fromDate);
-    const to   = new Date(toDate + "T23:59:59.999Z");
+    const to = new Date(toDate + "T23:59:59.999Z");
 
     if (isNaN(from.getTime()) || isNaN(to.getTime())) {
       return res.status(400).json({ error: "Invalid from/to date (use YYYY-MM-DD)" });
@@ -69,19 +71,16 @@ router.get("/funnel", requirePermission("analytics.read"), async (req, res) => {
       counts[row.eventName] = Number(row.count);
     }
 
-    const registrations     = counts["registration_complete"] ?? 0;
-    const bookingsStarted   = counts["booking_started"]       ?? 0;
-    const bookingsCompleted = counts["booking_completed"]      ?? 0;
+    const registrations = counts["registration_complete"] ?? 0;
+    const bookingsStarted = counts["booking_started"] ?? 0;
+    const bookingsCompleted = counts["booking_completed"] ?? 0;
 
-    const startConversionPct = registrations > 0
-      ? Number(((bookingsStarted / registrations) * 100).toFixed(1))
-      : 0;
-    const completeConversionPct = bookingsStarted > 0
-      ? Number(((bookingsCompleted / bookingsStarted) * 100).toFixed(1))
-      : 0;
-    const overallConversionPct = registrations > 0
-      ? Number(((bookingsCompleted / registrations) * 100).toFixed(1))
-      : 0;
+    const startConversionPct =
+      registrations > 0 ? Number(((bookingsStarted / registrations) * 100).toFixed(1)) : 0;
+    const completeConversionPct =
+      bookingsStarted > 0 ? Number(((bookingsCompleted / bookingsStarted) * 100).toFixed(1)) : 0;
+    const overallConversionPct =
+      registrations > 0 ? Number(((bookingsCompleted / registrations) * 100).toFixed(1)) : 0;
 
     const result = {
       from: fromDate,
@@ -90,9 +89,9 @@ router.get("/funnel", requirePermission("analytics.read"), async (req, res) => {
       bookingsStarted,
       bookingsCompleted,
       conversionPct: {
-        regToStart:    startConversionPct,
+        regToStart: startConversionPct,
         startToComplete: completeConversionPct,
-        overall:       overallConversionPct,
+        overall: overallConversionPct,
       },
       cached: false,
     };

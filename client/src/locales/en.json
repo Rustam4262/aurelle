@@ -50,6 +50,8 @@
       "facial": "Facial",
       "massage": "Massage",
       "waxing": "Waxing",
+      "skincare": "Skincare",
+      "barbershop": "Barbershop",
       "other": "Other"
     },
     "salons": {
@@ -79,6 +81,8 @@
       "closed": "Closed",
       "open": "Open Now",
       "experience": "years experience",
+      "experience_one": "{{count}} year of experience",
+      "experience_other": "{{count}} years of experience",
       "verified": "Verified Salon",
       "bookService": "Book Service",
       "withMaster": "With master",
@@ -87,6 +91,20 @@
       "notes": "Notes",
       "optional": "optional",
       "notesPlaceholder": "Any special requests or comments...",
+      "cancellationPolicy": "You can cancel or reschedule free of charge up to 24 hours before the appointment. Later cancellations or no-shows may be charged according to the salon's policy.",
+      "closedOnThisDay": "The salon is closed on this day. Please pick another date.",
+      "workingHoursHint": "The salon is open from {{open}} to {{close}} on this day",
+      "slotsLoadFailed": "Failed to load available times",
+      "timeNoLongerAvailable": "This time is no longer available. Please pick another",
+      "serviceNoLongerAvailable": "This service is no longer available. Please pick another from the list",
+      "masterNoLongerAvailable": "This master isn't available right now. You can pick another or continue without a specific master",
+      "errors": {
+        "BOOKING_TIME_UNAVAILABLE": "This time was just taken — please pick another",
+        "BOOKING_OUTSIDE_WORKING_HOURS": "This time is outside working hours for the selected service",
+        "BOOKING_DATE_IN_PAST": "You can't book a time that has already passed",
+        "BOOKING_SCHEDULE_UNAVAILABLE": "Working hours haven't been published yet. Please contact the salon directly",
+        "BOOKING_SERVICE_UNAVAILABLE": "This service is currently unavailable"
+      },
       "cancel": "Cancel",
       "confirm": "Confirm Booking",
       "booking": "Booking...",
@@ -205,42 +223,18 @@
         "noSalonsDesc": "Salons will appear on the map after adding coordinates",
         "beautySalon": "Beauty Salon",
         "salonCluster": "Salon Cluster",
-        "salonsOnMap": "Salons on map"
+        "salonsOnMap": "Salons on map",
+        "loadError": "Map unavailable",
+        "loadErrorDesc": "Check your internet connection"
       },
       "testimonials": {
         "badge": "Customer Testimonials",
         "title": "What People Say About Us",
         "subtitle": "Only real client reviews are shown on AURELLE",
-        "t1": {
-          "name": "Anna Ivanova",
-          "role": "Regular Client",
-          "text": "Wonderful experience! Found the perfect salon through AURELLE. The master was very professional, and the result exceeded all expectations. Now I only book through this platform!",
-          "service": "Manicure and Gel Polish"
-        },
-        "t2": {
-          "name": "Dmitry Petrov",
-          "role": "Barbershop Owner",
-          "text": "Registered my barbershop on the platform a month ago - client flow increased by 40%! Convenient booking system, transparent analytics. I recommend it to all colleagues.",
-          "service": "Barbershop 'Stylish Guys'"
-        },
-        "t3": {
-          "name": "Maria Sidorova",
-          "role": "SPA Enthusiast",
-          "text": "Discovered many new beauty salons in my area! Very convenient to compare prices and read real reviews. The bonus system is an additional plus!",
-          "service": "SPA and Massage"
-        },
-        "t4": {
-          "name": "Ekaterina Novikova",
-          "role": "Nail Master",
-          "text": "I've been working with AURELLE for six months. My client base has tripled! The platform helps effectively manage bookings and receive honest feedback from clients.",
-          "service": "Nail Art Studio"
-        },
-        "t5": {
-          "name": "Alexey Smirnov",
-          "role": "Stylist-Hairdresser",
-          "text": "Excellent platform for promoting services! Intuitive interface, quality support. My services became visible to thousands of potential clients.",
-          "service": "Salon 'Image'"
-        },
+        "client": "AURELLE Client",
+        "booking": "Booking via AURELLE",
+        "emptyTitle": "Real reviews coming soon",
+        "emptyDescription": "This section will fill with client reviews after completed bookings. We never show fabricated reviews.",
         "stats": {
           "happyClients": "Clients",
           "beautySalons": "Beauty Salons",
@@ -1203,6 +1197,7 @@
       "ownerResponse": "Salon Response",
       "noFavorites": "You haven't added any favorites yet",
       "noMasterFavorites": "You haven't added any masters to favorites yet",
+      "favoriteAdded": "Added to favorites",
       "favoriteRemoved": "Removed from favorites",
       "favorites": {
         "salons": "Favorite Salons",
@@ -1215,7 +1210,11 @@
         "favorites": "Favorites"
       },
       "status": {
-        "label": "Status"
+        "label": "Status",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
       },
       "tabs": {
         "dashboard": "Dashboard",
@@ -1243,6 +1242,9 @@
       },
       "filter": {
         "all": "All",
+        "upcoming": "Upcoming",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
         "allServices": "All Services",
         "search": "Search",
         "byDate": "By Date",
@@ -1260,6 +1262,8 @@
         "thisYear": "This Year",
         "allTime": "All Time",
         "visits": "Visits",
+        "visits_one": "{{count}} visit",
+        "visits_other": "{{count}} visits",
         "monthlyExpenses": "Monthly Expenses",
         "averageCheck": "Average Check",
         "mostExpensive": "Most Expensive Service",
@@ -1364,6 +1368,8 @@
       "experience": "Experience",
       "years": "years",
       "yearsExp": "years experience",
+      "yearsExp_one": "{{count}} year of experience",
+      "yearsExp_other": "{{count}} years of experience",
       "staffList": "Staff List",
       "noStaff": "No staff members added yet",
       "closed": "Closed",
@@ -1535,6 +1541,7 @@
     "previous": "Previous",
     "next": "Next",
     "cancel": "Cancel",
+    "resetAll": "Reset all",
     "update": "Update",
     "updating": "Updating...",
     "close": "Close",
@@ -1683,6 +1690,7 @@
       "step4Desc": "Choose your unique URL",
       "step5Title": "Working Hours",
       "step5Desc": "When are you available?",
+      "stepProgress": "Step {{current}} of {{total}}: {{title}}",
       "completeDesc": "Your master profile is set up and ready to go!"
     },
     "preview": "Preview",
@@ -1710,6 +1718,9 @@
     "portfolio": "Portfolio",
     "reviews": "Reviews",
     "noServices": "No services available",
+    "noServicesYet": "No services added yet",
+    "noServicesContact": "Contact the master directly to book",
+    "call": "Call",
     "noPortfolio": "No portfolio items yet",
     "noReviews": "No reviews yet",
     "location": "Location",
@@ -1749,6 +1760,7 @@
       "activity": "Activity",
       "complaints": "Complaints",
       "sanctions": "Sanctions",
+      "support": "Tickets",
       "chat": "Support Chat",
       "audit": "Audit Logs"
     },
@@ -1923,6 +1935,15 @@
       "exportPdf": "Export PDF",
       "refresh": "Refresh",
       "clearSelection": "Clear Selection",
+      "bulk": {
+        "active": "Active",
+        "blocked": "Blocked",
+        "deleted": "Deleted",
+        "verified": "Verified",
+        "unblock": "Unblock",
+        "restore": "Restore",
+        "block": "Block"
+      },
       "searchFilters": "Search & Filters",
       "searchPlaceholder": "Search...",
       "roles": {
@@ -1935,7 +1956,8 @@
       "statuses": {
         "allStatuses": "All Status",
         "active": "Active",
-        "blocked": "Blocked"
+        "blocked": "Blocked",
+        "deleted": "Deleted"
       },
       "loadError": "Failed to load users",
       "loadErrorDesc": "There was an error loading the user list. Please try again.",
@@ -2334,6 +2356,56 @@
         "revokeFailed": "Failed to revoke sanction",
         "reasonRequired": "Please provide a revoke reason"
       }
+    },
+    "reviews": {
+      "title": "Review Moderation",
+      "subtitle": "Hide reviews that violate platform rules while keeping a full history",
+      "filterByVisibility": "Filter by visibility",
+      "allVisibility": "All reviews",
+      "visibility": {
+        "visible": "Visible",
+        "hidden": "Hidden"
+      },
+      "allReviews": "All reviews",
+      "loading": "Loading...",
+      "noReviews": "No reviews",
+      "table": {
+        "author": "Author",
+        "target": "Target",
+        "rating": "Rating",
+        "comment": "Comment",
+        "date": "Date",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statusBadge": {
+        "visible": "Visible",
+        "hidden": "Hidden"
+      },
+      "buttons": {
+        "hide": "Hide",
+        "unhide": "Restore",
+        "hiding": "Hiding...",
+        "unhiding": "Restoring...",
+        "close": "Close",
+        "cancel": "Cancel",
+        "hideButton": "Hide review"
+      },
+      "hideDialog": {
+        "title": "Hide review",
+        "description": "Provide a reason for hiding this review. It will not be deleted and stays in the history.",
+        "reasonLabel": "Reason for hiding *",
+        "reasonPlaceholder": "Explain why this review is being hidden..."
+      },
+      "hiddenReasonLabel": "Hide reason",
+      "hiddenByLabel": "Hidden",
+      "toasts": {
+        "hiddenSuccess": "Review hidden",
+        "hiddenFailed": "Failed to hide review",
+        "unhiddenSuccess": "Review is visible again",
+        "unhiddenFailed": "Failed to restore review",
+        "reasonRequired": "Please provide a reason for hiding"
+      }
     }
   },
   "owner": {
@@ -2357,6 +2429,7 @@
     "bookings": "Bookings",
     "reviews": "Reviews",
     "analytics": "Analytics",
+    "payments": "Payments",
     "save": "Save Changes",
     "noSalons": "You haven't registered any salons yet",
     "registerFirst": "Register your first salon to start attracting clients",
@@ -2534,6 +2607,7 @@
       "title": "Support",
       "newTicket": "Create New Ticket",
       "myTickets": "My Tickets",
+      "comingSoon": "The ticketing system will be available soon",
       "noTickets": "No tickets yet",
       "noTicketsDesc": "Need help? Create a support ticket.",
       "createTicket": "Create Ticket",
@@ -2921,6 +2995,7 @@
     "noMembers": "No team members listed"
   },
   "auth": {
+    "checkingSession": "Checking session and opening your dashboard...",
     "forgotPassword": "Forgot Password?",
     "backToLogin": "Back to Login",
     "checkYourEmail": "Check Your Email",
@@ -3010,7 +3085,10 @@
     "tryAgain": "Try again",
     "retry": "Retry",
     "goHome": "Go Home",
-    "technicalDetails": "Technical details"
+    "technicalDetails": "Technical details",
+    "updateRequired": "App updated",
+    "chunkLoadDescription": "A new version is available. Reload the page to continue.",
+    "reloadPage": "Reload page"
   },
   "booking": {
     "pending": "Pending",
@@ -3224,7 +3302,15 @@
     "mastersTitle": "Freelance Masters",
     "masterNamePlaceholder": "Master name...",
     "noMastersFound": "No masters found",
-    "noMastersDesc": "Try adjusting your search parameters"
+    "noMastersDesc": "Try adjusting your search parameters",
+    "ratingAll": "All Ratings",
+    "rating4Plus": "4+ Stars",
+    "rating3Plus": "3+ Stars",
+    "rating2Plus": "2+ Stars",
+    "sortRelevance": "Most Relevant",
+    "sortRatingHighest": "Highest Rated",
+    "sortMostReviewed": "Most Reviewed",
+    "sortNewest": "Newest First"
   },
   "notFound": {
     "title": "404 Page Not Found",
@@ -3332,5 +3418,255 @@
       "spam": "Spam",
       "other": "Other"
     }
+  },
+  "adminSupport": {
+    "title": "Customer requests",
+    "subtitle": "View and reply to user support tickets",
+    "tickets": "Tickets",
+    "allStatuses": "All statuses",
+    "noTickets": "No tickets",
+    "noMessages": "No messages",
+    "open": "Open",
+    "markResolved": "Mark as resolved",
+    "replyPlaceholder": "Your reply... (Ctrl+Enter to send)",
+    "replySent": "Reply sent",
+    "replyRequiredToResolve": "Write a reply to the client before closing the ticket",
+    "replyFailed": "Failed to send reply",
+    "statusUpdated": "Status updated",
+    "statusFailed": "Failed to update status",
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "category": {
+      "bug": "Bug",
+      "payment": "Payment issue",
+      "question": "Question",
+      "suggestion": "Suggestion"
+    },
+    "table": {
+      "subject": "Subject",
+      "user": "User",
+      "category": "Category",
+      "status": "Status",
+      "created": "Date",
+      "actions": "Actions"
+    }
+  },
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "lastUpdated": "Last updated: February 2026",
+    "backToHome": "Back to Home",
+    "s1": {
+      "title": "1. Introduction",
+      "body": "AURELLE (\"we\", \"us\", or \"our\") respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform."
+    },
+    "s2": {
+      "title": "2. Information We Collect",
+      "s1Title": "2.1 Information You Provide",
+      "s1Items": [
+        "Name, email address, and phone number",
+        "Profile information and photos",
+        "Payment information (processed securely through payment providers)",
+        "Booking details and preferences",
+        "Reviews and ratings you submit",
+        "Communications with us or service providers"
+      ],
+      "s2Title": "2.2 Automatically Collected Information",
+      "s2Items": [
+        "Device information (type, operating system, browser)",
+        "IP address and approximate location",
+        "Usage data (pages visited, time spent, features used)",
+        "Cookies and similar tracking technologies"
+      ]
+    },
+    "s3": {
+      "title": "3. How We Use Your Information",
+      "intro": "We use your information to:",
+      "items": [
+        "Provide and maintain our Service",
+        "Process bookings and payments",
+        "Send booking confirmations and reminders",
+        "Improve and personalize your experience",
+        "Communicate important updates about the Service",
+        "Prevent fraud and ensure platform security",
+        "Comply with legal obligations",
+        "Send marketing communications (with your consent)"
+      ]
+    },
+    "s4": {
+      "title": "4. Information Sharing and Disclosure",
+      "intro": "We may share your information with:",
+      "s1Title": "4.1 Service Providers",
+      "s1Body": "When you make a booking, we share necessary information (name, phone, booking details) with the salon or master to fulfill the service.",
+      "s2Title": "4.2 Third-Party Service Providers",
+      "s2Body": "We work with trusted partners for payment processing, analytics, email delivery, and other essential services. These partners are bound by confidentiality agreements.",
+      "s3Title": "4.3 Legal Requirements",
+      "s3Body": "We may disclose your information if required by law, court order, or government regulations, or to protect our rights and safety."
+    },
+    "s5": {
+      "title": "5. Data Security",
+      "intro": "We implement industry-standard security measures to protect your data, including:",
+      "items": [
+        "Encryption of data in transit and at rest",
+        "Secure payment processing (PCI DSS compliant)",
+        "Regular security audits and updates",
+        "Access controls and employee training",
+        "Monitoring for suspicious activity"
+      ]
+    },
+    "s6": {
+      "title": "6. Your Privacy Rights",
+      "intro": "You have the right to:",
+      "items": [
+        "Access your personal data",
+        "Correct inaccurate or incomplete data",
+        "Request deletion of your data (subject to legal requirements)",
+        "Object to or restrict certain processing activities",
+        "Data portability (receive your data in a structured format)",
+        "Withdraw consent for marketing communications",
+        "Lodge a complaint with a data protection authority"
+      ]
+    },
+    "s7": {
+      "title": "7. Cookies and Tracking",
+      "intro": "We use cookies and similar technologies to:",
+      "items": [
+        "Remember your preferences and settings",
+        "Analyze website traffic and usage patterns",
+        "Improve platform performance",
+        "Deliver personalized content and advertisements"
+      ],
+      "outro": "You can control cookies through your browser settings, but some features may not function properly if cookies are disabled."
+    },
+    "s8": {
+      "title": "8. Data Retention",
+      "body": "We retain your personal data for as long as necessary to provide our Service and comply with legal obligations. When data is no longer needed, we securely delete or anonymize it."
+    },
+    "s9": {
+      "title": "9. Children's Privacy",
+      "body": "AURELLE is not intended for users under 16 years of age. We do not knowingly collect data from children. If you believe we have inadvertently collected such data, please contact us immediately."
+    },
+    "s10": {
+      "title": "10. International Data Transfers",
+      "body": "Your data may be transferred to and processed in countries other than Uzbekistan. We ensure appropriate safeguards are in place for such transfers."
+    },
+    "s11": {
+      "title": "11. Changes to This Policy",
+      "body": "We may update this Privacy Policy from time to time. We will notify you of significant changes by email or through a prominent notice on our platform."
+    },
+    "s12": {
+      "title": "12. Contact Us",
+      "intro": "For privacy-related questions or to exercise your rights, contact us:",
+      "items": [
+        "Email: privacy@aurelle.uz",
+        "Phone: +998 (93) 261-18-04",
+        "Address: Tashkent, Uzbekistan"
+      ]
+    }
+  },
+  "terms": {
+    "pageTitle": "Terms of Service",
+    "lastUpdated": "Last updated: February 2026",
+    "backToHome": "Back to Home",
+    "s1": {
+      "title": "1. Acceptance of Terms",
+      "body": "By accessing and using the AURELLE platform (\"Service\"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service."
+    },
+    "s2": {
+      "title": "2. Description of Service",
+      "body": "AURELLE is a digital platform connecting beauty service clients with salons and independent masters across Uzbekistan. We provide online booking, scheduling, and payment processing services."
+    },
+    "s3": {
+      "title": "3. User Accounts",
+      "items": [
+        "You must provide accurate and complete information when creating an account",
+        "You are responsible for maintaining the confidentiality of your account credentials",
+        "You must notify us immediately of any unauthorized access to your account",
+        "One person or entity may not maintain multiple accounts"
+      ]
+    },
+    "s4": {
+      "title": "4. Bookings and Cancellations",
+      "items": [
+        "Bookings are subject to availability and confirmation by the salon or master",
+        "Cancellation policies are set by individual salons and displayed at the time of booking",
+        "Late cancellations (less than 24 hours) may incur fees as determined by the service provider",
+        "No-shows may result in booking restrictions on your account"
+      ]
+    },
+    "s5": {
+      "title": "5. Payments and Fees",
+      "items": [
+        "All prices are displayed in Uzbek Som (UZS)",
+        "AURELLE charges a service fee for platform usage (details provided at booking)",
+        "Payment methods accepted include cards and local payment systems",
+        "Refunds are handled according to the service provider's cancellation policy"
+      ]
+    },
+    "s6": {
+      "title": "6. User Conduct",
+      "intro": "You agree NOT to:",
+      "items": [
+        "Use the Service for any illegal purpose",
+        "Harass, abuse, or harm other users or service providers",
+        "Post false, misleading, or fraudulent information",
+        "Attempt to gain unauthorized access to the platform",
+        "Use automated systems (bots) to access the Service"
+      ]
+    },
+    "s7": {
+      "title": "7. Intellectual Property",
+      "body": "All content on the AURELLE platform, including text, graphics, logos, and software, is the property of AURELLE or its content suppliers and is protected by intellectual property laws."
+    },
+    "s8": {
+      "title": "8. Limitation of Liability",
+      "body": "AURELLE acts as an intermediary platform. We are not responsible for the quality, safety, or legality of services provided by salons and masters. Users engage with service providers at their own risk."
+    },
+    "s9": {
+      "title": "9. Dispute Resolution",
+      "body": "Any disputes arising from these Terms will be resolved through mediation or arbitration in accordance with the laws of Uzbekistan."
+    },
+    "s10": {
+      "title": "10. Changes to Terms",
+      "body": "We reserve the right to modify these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms."
+    },
+    "s11": {
+      "title": "11. Contact Information",
+      "intro": "For questions about these Terms, please contact us:",
+      "items": [
+        "Email: legal@aurelle.uz",
+        "Phone: +998 (93) 261-18-04",
+        "Address: Tashkent, Uzbekistan"
+      ]
+    }
+  },
+  "audience": {
+    "choose": "Choose your experience",
+    "women": "For women",
+    "men": "For men",
+    "unisex": "Unisex",
+    "change": "Change",
+    "serviceFor": "Service audience",
+    "unclassified": "Not specified",
+    "saved": "Service audience saved",
+    "saveError": "Could not save. Please try again.",
+    "all": "All services here",
+    "matching": "Services for you",
+    "empty": "No matching services yet. View all services here.",
+    "catalog": "Full catalogue",
+    "curated": "Selected for your audience",
+    "catalogHint": "Unclassified services are available in the full catalogue.",
+    "menTitle": "Haircuts, care and recovery — near you",
+    "menSubtitle": "Find a barbershop, salon or specialist. Choose a service and a convenient time.",
+    "menBadge": "Care at your pace",
+    "menCard": "Your style. Your time.",
+    "menImage": "Haircuts · Care · Massage",
+    "heroAlt": "Salon interior",
+    "loadError": "Could not load offers",
+    "retry": "Try again",
+    "menPhotoAlt": "Barber cutting hair"
   }
 }

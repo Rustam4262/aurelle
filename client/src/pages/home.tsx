@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { useNavigationScroll } from "@/hooks/use-navigation-scroll";
 import { useMarketplaceData } from "@/hooks/use-marketplace-data";
 import { HomeSEO } from "@/components/SEO";
@@ -9,15 +11,13 @@ import { HomeCategories } from "@/components/home/HomeCategories";
 import { HomeSalons } from "@/components/home/HomeSalons";
 import { HomeMasters } from "@/components/home/HomeMasters";
 import { HomeMap } from "@/components/home/HomeMap";
-import { HomeStats } from "@/components/home/HomeStats";
-import { HomeTestimonials } from "@/components/home/HomeTestimonials";
 import { HomeFAQ } from "@/components/home/HomeFAQ";
-import { HomeCTA } from "@/components/home/HomeCTA";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
 export default function Home() {
   const scrolled = useNavigationScroll(50);
-  const { salons, isLoading, stats, reviews } = useMarketplaceData();
+  const { salons, isLoading, salonsQuery } = useMarketplaceData();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -26,15 +26,19 @@ export default function Home() {
         <HomeNavigation scrolled={scrolled} />
 
         <main>
-          <HomeHero stats={stats} />
+          <HomeHero />
           <HomeCategories />
-          <HomeSalons salons={salons} isLoading={isLoading} />
+          {salonsQuery.isError ? (
+            <div role="alert" className="mx-auto max-w-7xl p-8">
+              <p>{t("audience.loadError")}</p>
+              <Button onClick={() => salonsQuery.refetch()}>{t("audience.retry")}</Button>
+            </div>
+          ) : (
+            <HomeSalons salons={salons} isLoading={isLoading} />
+          )}
           <HomeMasters />
           <HomeMap salons={salons} />
-          <HomeStats stats={stats} />
-          <HomeTestimonials stats={stats} reviews={reviews} />
           <HomeFAQ />
-          <HomeCTA />
         </main>
 
         <HomeFooter />

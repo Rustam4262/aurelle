@@ -124,7 +124,9 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
       return res.status(403).json({ error: "Not your booking" });
     }
 
-    const salon = await db.query.salons?.findFirst?.({ where: (s: any, { eq }: any) => eq(s.id, booking.salonId) });
+    const salon = await db.query.salons?.findFirst?.({
+      where: (s: any, { eq }: any) => eq(s.id, booking.salonId),
+    });
     const paymentEnabled = (salon as any)?.paymentEnabled ?? false;
     if (!paymentEnabled) {
       return res.status(422).json({ error: "Payments not enabled for this salon" });
@@ -209,7 +211,10 @@ router.get("/health", isAuthenticated, async (req: any, res) => {
   try {
     const windowHours = parseWindowHours(req.query.window as string | undefined);
     const cutoff = cutoffFromHours(windowHours);
-    const { whereClause, salonIds, enabled } = await getPaymentScope(req, req.query.salonId as string | undefined);
+    const { whereClause, salonIds, enabled } = await getPaymentScope(
+      req,
+      req.query.salonId as string | undefined,
+    );
 
     // Base time filter
     const timeFilter = gte(payments.createdAt, cutoff);
@@ -255,7 +260,10 @@ router.get("/health", isAuthenticated, async (req: any, res) => {
       .where(scopeFilter)
       .groupBy(payments.provider, payments.status);
 
-    const byProvider: Record<string, { succeeded: number; failed: number; pending: number; gross: number }> = {};
+    const byProvider: Record<
+      string,
+      { succeeded: number; failed: number; pending: number; gross: number }
+    > = {};
     for (const row of providerRows) {
       const p = row.provider ?? "unknown";
       if (!byProvider[p]) byProvider[p] = { succeeded: 0, failed: 0, pending: 0, gross: 0 };
@@ -271,13 +279,7 @@ router.get("/health", isAuthenticated, async (req: any, res) => {
         cnt: count(),
       })
       .from(payments)
-      .where(
-        and(
-          scopeFilter,
-          eq(payments.status, "failed"),
-          isNotNull(payments.errorMessage),
-        ),
-      )
+      .where(and(scopeFilter, eq(payments.status, "failed"), isNotNull(payments.errorMessage)))
       .groupBy(payments.errorMessage)
       .orderBy(desc(count()))
       .limit(5);
@@ -317,9 +319,8 @@ router.get("/health/timeseries", isAuthenticated, async (req: any, res) => {
     const cutoff = cutoffFromHours(windowHours);
     const rawBucket = req.query.bucket as string | undefined;
     // auto-select bucket if not specified
-    const bucket = rawBucket === "hour" || rawBucket === "day"
-      ? rawBucket
-      : windowHours <= 24 ? "hour" : "day";
+    const bucket =
+      rawBucket === "hour" || rawBucket === "day" ? rawBucket : windowHours <= 24 ? "hour" : "day";
 
     const { whereClause } = await getPaymentScope(req, req.query.salonId as string | undefined);
     const timeFilter = gte(payments.createdAt, cutoff);
@@ -338,10 +339,14 @@ router.get("/health/timeseries", isAuthenticated, async (req: any, res) => {
       .orderBy(sql`DATE_TRUNC(${bucket}, ${payments.createdAt})`);
 
     // Pivot: bucket → { succeeded, failed, pending, gross }
-    const bucketMap: Record<string, { bucket: string; succeeded: number; failed: number; pending: number; gross: number }> = {};
+    const bucketMap: Record<
+      string,
+      { bucket: string; succeeded: number; failed: number; pending: number; gross: number }
+    > = {};
     for (const row of rows) {
       const b = String(row.bucket);
-      if (!bucketMap[b]) bucketMap[b] = { bucket: b, succeeded: 0, failed: 0, pending: 0, gross: 0 };
+      if (!bucketMap[b])
+        bucketMap[b] = { bucket: b, succeeded: 0, failed: 0, pending: 0, gross: 0 };
       const s = (row.status ?? "pending") as "succeeded" | "failed" | "pending";
       if (s in bucketMap[b]) bucketMap[b][s] = Number(row.cnt);
       if (s === "succeeded") bucketMap[b].gross = Number(row.gross);

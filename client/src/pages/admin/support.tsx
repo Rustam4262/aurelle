@@ -1,3 +1,4 @@
+import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -7,13 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Headphones, Send, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -48,10 +62,10 @@ interface TicketDetail extends Ticket {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  bug: "🐛",
-  payment: "💳",
-  question: "❓",
-  suggestion: "💡",
+  bug: "bug",
+  payment: "payment",
+  question: "help",
+  suggestion: "suggestion",
 };
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -92,7 +106,11 @@ export default function AdminSupport() {
       toast({ title: t("common.success"), description: t("adminSupport.replySent") });
     },
     onError: () =>
-      toast({ title: t("common.error"), description: t("adminSupport.replyFailed"), variant: "destructive" }),
+      toast({
+        title: t("common.error"),
+        description: t("adminSupport.replyFailed"),
+        variant: "destructive",
+      }),
   });
 
   const statusMutation = useMutation({
@@ -106,7 +124,11 @@ export default function AdminSupport() {
       toast({ title: t("common.success"), description: t("adminSupport.statusUpdated") });
     },
     onError: () =>
-      toast({ title: t("common.error"), description: t("adminSupport.statusFailed"), variant: "destructive" }),
+      toast({
+        title: t("common.error"),
+        description: t("adminSupport.statusFailed"),
+        variant: "destructive",
+      }),
   });
 
   const handleResolve = async () => {
@@ -125,7 +147,11 @@ export default function AdminSupport() {
       setReplyText("");
       statusMutation.mutate("resolved");
     } catch {
-      toast({ title: t("common.error"), description: t("adminSupport.replyFailed"), variant: "destructive" });
+      toast({
+        title: t("common.error"),
+        description: t("adminSupport.replyFailed"),
+        variant: "destructive",
+      });
     }
   };
 
@@ -198,7 +224,7 @@ export default function AdminSupport() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {CATEGORY_ICONS[row.ticket.category] ?? "📋"}{" "}
+                        <SymbolIcon name={CATEGORY_ICONS[row.ticket.category] ?? "clipboard"} />{" "}
                         {t(`adminSupport.category.${row.ticket.category}`, row.ticket.category)}
                       </span>
                     </TableCell>
@@ -211,11 +237,7 @@ export default function AdminSupport() {
                       {format(new Date(row.ticket.createdAt), "d MMM, HH:mm")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedTicket(row)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedTicket(row)}>
                         {t("adminSupport.open")}
                       </Button>
                     </TableCell>
@@ -237,11 +259,18 @@ export default function AdminSupport() {
             </DialogTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
               <span>
-                {selectedTicket?.userFirstName} {selectedTicket?.userLastName} &lt;{selectedTicket?.userEmail}&gt;
+                {selectedTicket?.userFirstName} {selectedTicket?.userLastName} &lt;
+                {selectedTicket?.userEmail}&gt;
               </span>
               {selectedTicket && (
-                <Badge variant={STATUS_VARIANT[selectedTicket.ticket.status] ?? "outline"} className="ml-2">
-                  {t(`adminSupport.status.${selectedTicket.ticket.status}`, selectedTicket.ticket.status)}
+                <Badge
+                  variant={STATUS_VARIANT[selectedTicket.ticket.status] ?? "outline"}
+                  className="ml-2"
+                >
+                  {t(
+                    `adminSupport.status.${selectedTicket.ticket.status}`,
+                    selectedTicket.ticket.status,
+                  )}
                 </Badge>
               )}
             </div>
@@ -250,9 +279,13 @@ export default function AdminSupport() {
           {/* Messages */}
           <ScrollArea className="flex-1 min-h-0 max-h-[400px] border rounded-md p-3 bg-muted/30">
             {detailLoading ? (
-              <p className="text-center text-muted-foreground text-sm py-4">{t("common.loading")}</p>
+              <p className="text-center text-muted-foreground text-sm py-4">
+                {t("common.loading")}
+              </p>
             ) : !detail?.messages?.length ? (
-              <p className="text-center text-muted-foreground text-sm py-4">{t("adminSupport.noMessages")}</p>
+              <p className="text-center text-muted-foreground text-sm py-4">
+                {t("adminSupport.noMessages")}
+              </p>
             ) : (
               <div className="space-y-3">
                 {detail.messages.map((msg) => (
@@ -268,7 +301,9 @@ export default function AdminSupport() {
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{msg.message}</p>
-                      <p className={`text-xs mt-1 ${msg.senderType === "admin" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      <p
+                        className={`text-xs mt-1 ${msg.senderType === "admin" ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                      >
                         {format(new Date(msg.createdAt), "d MMM, HH:mm")}
                       </p>
                     </div>

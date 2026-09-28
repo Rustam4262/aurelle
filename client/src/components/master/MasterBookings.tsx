@@ -78,13 +78,14 @@ export function MasterBookings({
                       <AvatarFallback className="text-xs">
                         {booking.client
                           ? booking.client.firstName[0]
-                          : booking.clientName?.[0] ?? "?"}
+                          : (booking.clientName?.[0] ?? "?")}
                       </AvatarFallback>
                     </Avatar>
                     <p className="font-medium text-foreground">
                       {booking.client
                         ? `${booking.client.firstName} ${booking.client.lastName}`
-                        : booking.clientName ?? `${t("marketplace.master.client")} #${booking.clientId.slice(-6)}`}
+                        : (booking.clientName ??
+                          `${t("marketplace.master.client")} #${booking.clientId.slice(-6)}`)}
                     </p>
                     <Badge
                       className={STATUS_COLORS[booking.status || "pending"] || ""}

@@ -47,10 +47,9 @@ export function initializeEmail(): void {
       requireTLS: cfg.requireTLS,
       auth: { user: cfg.user, pass: cfg.password },
     }) as unknown as MailTransporter;
-    logger.info(
-      `Email service initialized (${cfg.host}:${cfg.port}, secure=${cfg.secure})`,
-      { source: "email-service" },
-    );
+    logger.info(`Email service initialized (${cfg.host}:${cfg.port}, secure=${cfg.secure})`, {
+      source: "email-service",
+    });
   } catch (err) {
     logger.error("Failed to create email transporter", err as Error, {
       source: "email-service",
@@ -196,7 +195,10 @@ export async function sendBookingConfirmation(
   language = "ru",
 ): Promise<boolean> {
   const T = bookingT(language);
-  const html = bookingHtml("667eea", "764ba2", `
+  const html = bookingHtml(
+    "667eea",
+    "764ba2",
+    `
     <div class="greeting">${T.greeting}, ${data.clientName}!</div>
     <div class="title">✨ ${T.confirmTitle}</div>
     ${detailsTable([
@@ -209,7 +211,8 @@ export async function sendBookingConfirmation(
     ])}
     <div class="info-box">ℹ️ ${T.arriveNote}</div>
     <div style="text-align:center"><a href="${APP_URL()}/profile" class="btn">${T.viewBooking}</a></div>
-  `);
+  `,
+  );
   return sendEmail(email, T.confirmSubject, html);
 }
 
@@ -227,7 +230,10 @@ export async function sendBookingCancellation(
   language = "ru",
 ): Promise<boolean> {
   const T = bookingT(language);
-  const html = bookingHtml("f093fb", "f5576c", `
+  const html = bookingHtml(
+    "f093fb",
+    "f5576c",
+    `
     <div class="greeting">${T.greeting}, ${data.clientName}!</div>
     <div class="title" style="color:#f5576c">❌ ${T.cancelTitle}</div>
     ${detailsTable([
@@ -238,7 +244,8 @@ export async function sendBookingCancellation(
     ])}
     <div class="info-box" style="background:#fff3cd;border-color:#ffc107;color:#856404">ℹ️ ${T.cancelNote}</div>
     <div style="text-align:center"><a href="${APP_URL()}" class="btn">${T.bookAgain}</a></div>
-  `);
+  `,
+  );
   return sendEmail(email, T.cancelSubject, html);
 }
 
@@ -258,7 +265,10 @@ export async function sendBookingReminder(
   language = "ru",
 ): Promise<boolean> {
   const T = bookingT(language);
-  const html = bookingHtml("fa709a", "fee140", `
+  const html = bookingHtml(
+    "fa709a",
+    "fee140",
+    `
     <div class="greeting">${T.greeting}, ${data.clientName}!</div>
     <div class="title" style="color:#fa709a">⏰ ${T.reminderTitle}</div>
     <div style="background:linear-gradient(135deg,#fa709a,#fee140);color:white;padding:15px;border-radius:6px;text-align:center;font-size:20px;font-weight:600;margin:20px 0">
@@ -273,7 +283,8 @@ export async function sendBookingReminder(
     ])}
     <div class="info-box" style="background:#d4edda;border-color:#28a745;color:#155724">ℹ️ ${T.arriveNote}</div>
     <div style="text-align:center"><a href="${APP_URL()}/profile" class="btn">${T.viewBooking}</a></div>
-  `);
+  `,
+  );
   return sendEmail(email, T.reminderSubject, html);
 }
 
@@ -363,13 +374,17 @@ export async function sendUserBlockedEmail(
   reason: string,
   adminName: string,
 ): Promise<boolean> {
-  const html = adminEmailHtml("⚠️ Account Suspended", "#dc3545", `
+  const html = adminEmailHtml(
+    "⚠️ Account Suspended",
+    "#dc3545",
+    `
     <p>Dear ${userName},</p>
     <p>Your AURELLE account has been temporarily suspended.</p>
     <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:15px;margin:20px 0"><strong>Reason:</strong> ${reason}</div>
     <p>To appeal, contact <a href="mailto:support@aurelle.uz">support@aurelle.uz</a></p>
     <p style="color:#6c757d;font-size:13px">Suspended by: ${adminName} · ${new Date().toLocaleDateString()}</p>
-  `);
+  `,
+  );
   return sendEmail(userEmail, "Your AURELLE Account Has Been Suspended", html);
 }
 
@@ -378,14 +393,18 @@ export async function sendUserUnblockedEmail(
   userName: string,
   adminName: string,
 ): Promise<boolean> {
-  const html = adminEmailHtml("✅ Account Reinstated", "#28a745", `
+  const html = adminEmailHtml(
+    "✅ Account Reinstated",
+    "#28a745",
+    `
     <p>Dear ${userName},</p>
     <div style="background:#d4edda;border-left:4px solid #28a745;padding:15px;margin:20px 0">
       Your AURELLE account suspension has been lifted. You now have full access.
     </div>
     <a href="${APP_URL()}" style="display:inline-block;background:#28a745;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;margin:20px 0">Log In to AURELLE</a>
     <p style="color:#6c757d;font-size:13px">Reinstated by: ${adminName} · ${new Date().toLocaleDateString()}</p>
-  `);
+  `,
+  );
   return sendEmail(userEmail, "Your AURELLE Account Has Been Reinstated", html);
 }
 
@@ -396,7 +415,10 @@ export async function sendManagerInvitationEmail(
 ): Promise<boolean> {
   const salonName = salon.name.ru || salon.name.en || "салон";
   const inviteUrl = `${APP_URL()}/accept-invitation?token=${token}`;
-  const html = adminEmailHtml(`Приглашение в команду`, "#667eea", `
+  const html = adminEmailHtml(
+    `Приглашение в команду`,
+    "#667eea",
+    `
     <p>Вас приглашают стать менеджером салона <strong>${salonName}</strong> на платформе AURELLE.</p>
     <div style="background:#e8f0fe;border-left:4px solid #667eea;padding:15px;margin:20px 0;color:#3d4db7">
       Нажмите кнопку ниже, чтобы принять приглашение. Ссылка действительна <strong>24 часа</strong>.
@@ -407,56 +429,98 @@ export async function sendManagerInvitationEmail(
     <p style="color:#6c757d;font-size:13px;margin-top:24px">
       Если вы не ожидали это приглашение — просто проигнорируйте это письмо.
     </p>
-  `);
+  `,
+  );
   return sendEmail(toEmail, `Приглашение в команду ${salonName} — AURELLE`, html);
 }
 
 // ─── Template helpers ─────────────────────────────────────────────────────────
 
 interface BookingTranslations {
-  greeting: string; confirmSubject: string; cancelSubject: string; reminderSubject: string;
-  confirmTitle: string; cancelTitle: string; reminderTitle: string;
-  salon: string; service: string; master: string; date: string; time: string; price: string;
-  anyMaster: string; arriveNote: string; cancelNote: string; viewBooking: string; bookAgain: string;
+  greeting: string;
+  confirmSubject: string;
+  cancelSubject: string;
+  reminderSubject: string;
+  confirmTitle: string;
+  cancelTitle: string;
+  reminderTitle: string;
+  salon: string;
+  service: string;
+  master: string;
+  date: string;
+  time: string;
+  price: string;
+  anyMaster: string;
+  arriveNote: string;
+  cancelNote: string;
+  viewBooking: string;
+  bookAgain: string;
   inHours: (h: number) => string;
 }
 
 function bookingT(lang: string): BookingTranslations {
   const map: Record<string, BookingTranslations> = {
     ru: {
-      greeting: "Здравствуйте", confirmSubject: "Подтверждение записи — AURELLE",
-      cancelSubject: "Запись отменена — AURELLE", reminderSubject: "Напоминание о записи — AURELLE",
-      confirmTitle: "Ваша запись подтверждена!", cancelTitle: "Ваша запись отменена",
-      reminderTitle: "Скоро ваш визит!", salon: "Салон", service: "Услуга",
-      master: "Мастер", date: "Дата", time: "Время", price: "Цена",
+      greeting: "Здравствуйте",
+      confirmSubject: "Подтверждение записи — AURELLE",
+      cancelSubject: "Запись отменена — AURELLE",
+      reminderSubject: "Напоминание о записи — AURELLE",
+      confirmTitle: "Ваша запись подтверждена!",
+      cancelTitle: "Ваша запись отменена",
+      reminderTitle: "Скоро ваш визит!",
+      salon: "Салон",
+      service: "Услуга",
+      master: "Мастер",
+      date: "Дата",
+      time: "Время",
+      price: "Цена",
       anyMaster: "Любой свободный мастер",
       arriveNote: "Пожалуйста, приходите за 5 минут до начала. Отмена — минимум за 24 часа.",
       cancelNote: "Ваша запись успешно отменена. Надеемся увидеть вас снова!",
-      viewBooking: "Посмотреть запись", bookAgain: "Записаться снова",
+      viewBooking: "Посмотреть запись",
+      bookAgain: "Записаться снова",
       inHours: (h) => `через ${h} ч`,
     },
     uz: {
-      greeting: "Assalomu alaykum", confirmSubject: "Yozilish tasdiqlandi — AURELLE",
-      cancelSubject: "Yozilish bekor qilindi — AURELLE", reminderSubject: "Yozilish eslatmasi — AURELLE",
-      confirmTitle: "Yozilishingiz tasdiqlandi!", cancelTitle: "Yozilishingiz bekor qilindi",
-      reminderTitle: "Tez orada uchrashuvingiz!", salon: "Salon", service: "Xizmat",
-      master: "Usta", date: "Sana", time: "Vaqt", price: "Narx",
+      greeting: "Assalomu alaykum",
+      confirmSubject: "Yozilish tasdiqlandi — AURELLE",
+      cancelSubject: "Yozilish bekor qilindi — AURELLE",
+      reminderSubject: "Yozilish eslatmasi — AURELLE",
+      confirmTitle: "Yozilishingiz tasdiqlandi!",
+      cancelTitle: "Yozilishingiz bekor qilindi",
+      reminderTitle: "Tez orada uchrashuvingiz!",
+      salon: "Salon",
+      service: "Xizmat",
+      master: "Usta",
+      date: "Sana",
+      time: "Vaqt",
+      price: "Narx",
       anyMaster: "Har qanday bo'sh usta",
       arriveNote: "Iltimos, 5 daqiqa oldin keling. Bekor qilish — kamida 24 soat oldin.",
       cancelNote: "Yozilishingiz muvaffaqiyatli bekor qilindi!",
-      viewBooking: "Yozilishni ko'rish", bookAgain: "Qayta yozilish",
+      viewBooking: "Yozilishni ko'rish",
+      bookAgain: "Qayta yozilish",
       inHours: (h) => `${h} soatdan keyin`,
     },
     en: {
-      greeting: "Hello", confirmSubject: "Booking Confirmation — AURELLE",
-      cancelSubject: "Booking Cancelled — AURELLE", reminderSubject: "Booking Reminder — AURELLE",
-      confirmTitle: "Your booking is confirmed!", cancelTitle: "Your booking has been cancelled",
-      reminderTitle: "Your appointment is coming up!", salon: "Salon", service: "Service",
-      master: "Master", date: "Date", time: "Time", price: "Price",
+      greeting: "Hello",
+      confirmSubject: "Booking Confirmation — AURELLE",
+      cancelSubject: "Booking Cancelled — AURELLE",
+      reminderSubject: "Booking Reminder — AURELLE",
+      confirmTitle: "Your booking is confirmed!",
+      cancelTitle: "Your booking has been cancelled",
+      reminderTitle: "Your appointment is coming up!",
+      salon: "Salon",
+      service: "Service",
+      master: "Master",
+      date: "Date",
+      time: "Time",
+      price: "Price",
       anyMaster: "Any available master",
       arriveNote: "Please arrive 5 minutes early. Cancellations must be made 24h in advance.",
       cancelNote: "Your booking has been successfully cancelled. Hope to see you soon!",
-      viewBooking: "View Booking", bookAgain: "Book Again",
+      viewBooking: "View Booking",
+      bookAgain: "Book Again",
       inHours: (h) => `in ${h} hours`,
     },
   };
@@ -464,11 +528,15 @@ function bookingT(lang: string): BookingTranslations {
 }
 
 function detailsTable(rows: [string, string][]): string {
-  const cells = rows.map(([label, value]) => `
+  const cells = rows
+    .map(
+      ([label, value]) => `
     <tr>
       <td style="padding:10px;color:#6c757d;font-weight:500;border-bottom:1px solid #e9ecef">${label}</td>
       <td style="padding:10px;color:#212529;font-weight:600;border-bottom:1px solid #e9ecef;text-align:right">${value}</td>
-    </tr>`).join("");
+    </tr>`,
+    )
+    .join("");
   return `<table style="width:100%;border-collapse:collapse;background:#f8f9fa;border-radius:6px;margin:20px 0">${cells}</table>`;
 }
 

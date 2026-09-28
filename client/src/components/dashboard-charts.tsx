@@ -159,7 +159,13 @@ export function DashboardCharts({ trends, topServices, topMasters }: DashboardCh
               <BarChart data={servicesChartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis type="number" className="text-xs" />
-                <YAxis type="category" dataKey="name" width={100} className="text-xs" tick={{ fontSize: 11 }} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={100}
+                  className="text-xs"
+                  tick={{ fontSize: 11 }}
+                />
                 <Tooltip
                   formatter={(value: number) => [value, t("dashboard.bookings", "Bookings")]}
                   contentStyle={{
@@ -190,7 +196,13 @@ export function DashboardCharts({ trends, topServices, topMasters }: DashboardCh
                   tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                   className="text-xs"
                 />
-                <YAxis type="category" dataKey="name" width={100} className="text-xs" tick={{ fontSize: 11 }} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={100}
+                  className="text-xs"
+                  tick={{ fontSize: 11 }}
+                />
                 <Tooltip
                   formatter={(value: number) => [
                     formatCurrency(value),

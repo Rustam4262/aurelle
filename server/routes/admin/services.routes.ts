@@ -136,7 +136,9 @@ router.get("/", requirePermission("salons.read"), async (req, res) => {
       return right - left;
     });
 
-    const categories = Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort();
+    const categories = Array.from(
+      new Set(items.map((item) => item.category).filter(Boolean)),
+    ).sort();
     const stats = {
       total: items.length,
       salonServices: normalizedSalonServices.length,

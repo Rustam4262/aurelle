@@ -115,6 +115,20 @@ const STATUS_COLORS = {
   deleted: "bg-slate-200 text-slate-800",
 };
 
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  client: "admin.users.roles.client",
+  owner: "admin.users.roles.owner",
+  salon_owner: "admin.users.roles.owner",
+  master: "admin.users.roles.master",
+  admin: "admin.users.roles.admin",
+};
+
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  active: "admin.users.statuses.active",
+  blocked: "admin.users.statuses.blocked",
+  deleted: "admin.users.statuses.deleted",
+};
+
 export default function AdminUsers() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -257,7 +271,6 @@ export default function AdminUsers() {
             const lastLogin = new Date(u.lastLoginAt).getTime();
             return Date.now() - lastLogin <= 7 * 24 * 60 * 60 * 1000;
           }).length,
-
         }
       : null;
 
@@ -604,7 +617,9 @@ export default function AdminUsers() {
         <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary" className="rounded-full px-3 py-1">Users desk</Badge>
+              <Badge variant="secondary" className="rounded-full px-3 py-1">
+                Users desk
+              </Badge>
               {selectedUsers.size > 0 && (
                 <Badge variant="outline" className="rounded-full px-3 py-1">
                   {selectedUsers.size} {t("admin.users.selectedCount")}
@@ -623,11 +638,21 @@ export default function AdminUsers() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <Button variant="outline" size="sm" onClick={exportToExcelFile} disabled={!data?.users || data.users.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcelFile}
+              disabled={!data?.users || data.users.length === 0}
+            >
               <Download className="mr-2 h-4 w-4" />
               {t("admin.users.exportExcel")}
             </Button>
-            <Button variant="outline" size="sm" onClick={exportToPDFFile} disabled={!data?.users || data.users.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToPDFFile}
+              disabled={!data?.users || data.users.length === 0}
+            >
               <FileText className="mr-2 h-4 w-4" />
               {t("admin.users.exportPdf")}
             </Button>
@@ -651,10 +676,18 @@ export default function AdminUsers() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <Badge variant="outline">Active: {selectedActiveCount}</Badge>
-                  <Badge variant="outline">Blocked: {selectedBlockedCount}</Badge>
-                  <Badge variant="outline">Deleted: {selectedDeletedCount}</Badge>
-                  <Badge variant="outline">Verified: {selectedVerifiedCount}</Badge>
+                  <Badge variant="outline">
+                    {t("admin.users.bulk.active")}: {selectedActiveCount}
+                  </Badge>
+                  <Badge variant="outline">
+                    {t("admin.users.bulk.blocked")}: {selectedBlockedCount}
+                  </Badge>
+                  <Badge variant="outline">
+                    {t("admin.users.bulk.deleted")}: {selectedDeletedCount}
+                  </Badge>
+                  <Badge variant="outline">
+                    {t("admin.users.bulk.verified")}: {selectedVerifiedCount}
+                  </Badge>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -668,7 +701,7 @@ export default function AdminUsers() {
                   disabled={selectedBlockedCount === 0 || bulkUnblockMutation.isPending}
                 >
                   <Unlock className="mr-2 h-4 w-4" />
-                  Unblock
+                  {t("admin.users.bulk.unblock")}
                 </Button>
                 <Button
                   variant="outline"
@@ -682,7 +715,7 @@ export default function AdminUsers() {
                   disabled={selectedDeletedCount === 0 || restoreUserMutation.isPending}
                 >
                   <Unlock className="mr-2 h-4 w-4" />
-                  Restore
+                  {t("admin.users.bulk.restore")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -691,7 +724,7 @@ export default function AdminUsers() {
                   disabled={selectedActiveCount === 0}
                 >
                   <Ban className="mr-2 h-4 w-4" />
-                  Block
+                  {t("admin.users.bulk.block")}
                 </Button>
               </div>
             </div>
@@ -903,7 +936,9 @@ export default function AdminUsers() {
                 <TableBody>
                   {[...Array(10)].map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8 rounded" />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Skeleton className="h-9 w-9 rounded-full shrink-0" />
@@ -919,15 +954,21 @@ export default function AdminUsers() {
                           <Skeleton className="h-3 w-24" />
                         </div>
                       </TableCell>
-                      <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-14 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-14 rounded-full" />
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1.5">
                           <Skeleton className="h-6 w-6 rounded-full" />
                           <Skeleton className="h-6 w-6 rounded-full" />
                         </div>
                       </TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
                       <TableCell className="text-right">
                         <Skeleton className="h-8 w-8 rounded ml-auto" />
                       </TableCell>
@@ -941,12 +982,18 @@ export default function AdminUsers() {
               <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">{t("admin.users.noUsersFound")}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {search || roleFilter !== "all" || statusFilter !== "all" || verificationFilter !== "all"
+                {search ||
+                roleFilter !== "all" ||
+                statusFilter !== "all" ||
+                verificationFilter !== "all"
                   ? t("admin.users.noUsersFiltered")
                   : t("admin.users.noUsersEmpty")}
               </p>
               <div className="flex items-center gap-3 justify-center">
-                {(search || roleFilter !== "all" || statusFilter !== "all" || verificationFilter !== "all") && (
+                {(search ||
+                  roleFilter !== "all" ||
+                  statusFilter !== "all" ||
+                  verificationFilter !== "all") && (
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -960,12 +1007,15 @@ export default function AdminUsers() {
                     {t("admin.users.clearFilters")}
                   </Button>
                 )}
-                {!search && roleFilter === "all" && statusFilter === "all" && verificationFilter === "all" && (
-                  <Button variant="default" onClick={() => setShowSeedDialog(true)}>
-                    <UsersIcon className="h-4 w-4 mr-2" />
-                    {t("admin.users.createTestUsers")}
-                  </Button>
-                )}
+                {!search &&
+                  roleFilter === "all" &&
+                  statusFilter === "all" &&
+                  verificationFilter === "all" && (
+                    <Button variant="default" onClick={() => setShowSeedDialog(true)}>
+                      <UsersIcon className="h-4 w-4 mr-2" />
+                      {t("admin.users.createTestUsers")}
+                    </Button>
+                  )}
               </div>
             </div>
           ) : (
@@ -1082,15 +1132,22 @@ export default function AdminUsers() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={ROLE_COLORS[user.role]}>{user.role === "salon_owner" ? t("admin.users.roles.owner") : user.role}</Badge>
+                          <Badge className={ROLE_COLORS[user.role]}>
+                            {ROLE_LABEL_KEYS[user.role] ? t(ROLE_LABEL_KEYS[user.role]) : user.role}
+                          </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[user.status]}>{user.status}</Badge>
-                          {(user.status === "blocked" || user.status === "deleted") && user.blockReason && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                              {user.blockReason}
-                            </p>
-                          )}
+                          <Badge className={STATUS_COLORS[user.status]}>
+                            {STATUS_LABEL_KEYS[user.status]
+                              ? t(STATUS_LABEL_KEYS[user.status])
+                              : user.status}
+                          </Badge>
+                          {(user.status === "blocked" || user.status === "deleted") &&
+                            user.blockReason && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                {user.blockReason}
+                              </p>
+                            )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
@@ -1314,7 +1371,8 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Заблокировать выбранных пользователей</DialogTitle>
             <DialogDescription>
-              Выберите причину блокировки. Это действие применится к выбранным пользователям и попадёт в аудит.
+              Выберите причину блокировки. Это действие применится к выбранным пользователям и
+              попадёт в аудит.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1354,9 +1412,9 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Удалить пользователя с платформы</DialogTitle>
             <DialogDescription>
-              Пользователь {deleteDialog.user?.fullName || deleteDialog.user?.email} исчезнет из платформы,
-              не сможет войти и не будет показываться в списках клиентов, мастеров и салонов.
-              Администратор сможет восстановить его позже.
+              Пользователь {deleteDialog.user?.fullName || deleteDialog.user?.email} исчезнет из
+              платформы, не сможет войти и не будет показываться в списках клиентов, мастеров и
+              салонов. Администратор сможет восстановить его позже.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1399,7 +1457,9 @@ export default function AdminUsers() {
                     {t("admin.users.viewDialog.labels.role")}
                   </Label>
                   <Badge className={ROLE_COLORS[quickViewDialog.user.role]} variant="outline">
-                    {quickViewDialog.user.role === "salon_owner" ? t("admin.users.roles.owner") : quickViewDialog.user.role}
+                    {ROLE_LABEL_KEYS[quickViewDialog.user.role]
+                      ? t(ROLE_LABEL_KEYS[quickViewDialog.user.role])
+                      : quickViewDialog.user.role}
                   </Badge>
                 </div>
                 <div>
@@ -1430,7 +1490,9 @@ export default function AdminUsers() {
                       {t("admin.users.viewDialog.labels.accountStatus")}
                     </Label>
                     <Badge className={STATUS_COLORS[quickViewDialog.user.status]} variant="outline">
-                      {quickViewDialog.user.status}
+                      {STATUS_LABEL_KEYS[quickViewDialog.user.status]
+                        ? t(STATUS_LABEL_KEYS[quickViewDialog.user.status])
+                        : quickViewDialog.user.status}
                     </Badge>
                     {quickViewDialog.user.status === "blocked" &&
                       quickViewDialog.user.blockReason && (
@@ -1566,19 +1628,3 @@ export default function AdminUsers() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

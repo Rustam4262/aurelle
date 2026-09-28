@@ -7,14 +7,18 @@ async function runMigration() {
   try {
     console.log("Running migration: 0017_create_user_activity_tracking.sql");
 
-    const migrationPath = join(process.cwd(), "migrations", "0017_create_user_activity_tracking.sql");
+    const migrationPath = join(
+      process.cwd(),
+      "migrations",
+      "0017_create_user_activity_tracking.sql",
+    );
     const migrationSQL = readFileSync(migrationPath, "utf-8");
 
     // Split by semicolons and execute each statement
     const statements = migrationSQL
       .split(";")
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith("--"));
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith("--"));
 
     for (const statement of statements) {
       if (statement.toLowerCase().includes("commit")) {

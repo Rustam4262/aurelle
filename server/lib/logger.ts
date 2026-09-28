@@ -31,11 +31,7 @@ function getTimestamp(): string {
 /**
  * Format log message with timestamp and source
  */
-function formatMessage(
-  level: LogLevel,
-  message: string,
-  source?: string,
-): string {
+function formatMessage(level: LogLevel, message: string, source?: string): string {
   const timestamp = getTimestamp();
   const sourceTag = source ? `[${source}]` : "[server]";
   const levelTag = level.toUpperCase().padEnd(5);
@@ -78,11 +74,7 @@ export function warn(message: string, options: LogOptions = {}): void {
 /**
  * Log error message and optionally capture to Sentry
  */
-export function error(
-  message: string,
-  err?: Error | unknown,
-  options: LogOptions = {},
-): void {
+export function error(message: string, err?: Error | unknown, options: LogOptions = {}): void {
   const formatted = formatMessage("error", message, options.source);
   console.error(formatted);
 

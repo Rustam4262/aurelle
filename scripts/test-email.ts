@@ -27,7 +27,9 @@ async function main() {
   console.log("Config:", JSON.stringify(cfg, null, 2));
 
   if (!cfg.enabled) {
-    console.error("\nEmail is disabled or misconfigured. Set EMAIL_HOST, EMAIL_USER, EMAIL_PASSWORD.");
+    console.error(
+      "\nEmail is disabled or misconfigured. Set EMAIL_HOST, EMAIL_USER, EMAIL_PASSWORD.",
+    );
     process.exit(1);
   }
 

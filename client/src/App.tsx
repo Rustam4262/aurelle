@@ -1,3 +1,4 @@
+import { AudienceProvider } from "@/components/audience-provider";
 import { lazy, Suspense } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -94,12 +95,14 @@ function App() {
       <HelmetProvider>
         <ThemeProvider defaultTheme="system" storageKey="aurelle-ui-theme">
           <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <SkipToContent />
-              <Toaster />
-              <UpgradeModal />
-              <Router />
-            </TooltipProvider>
+            <AudienceProvider>
+              <TooltipProvider>
+                <SkipToContent />
+                <Toaster />
+                <UpgradeModal />
+                <Router />
+              </TooltipProvider>
+            </AudienceProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </HelmetProvider>
@@ -108,4 +111,3 @@ function App() {
 }
 
 export default App;
-

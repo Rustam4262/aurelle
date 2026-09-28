@@ -73,10 +73,9 @@ test("invalid redirect param //evil.com is not forwarded in Location", async ({ 
 });
 
 test("invalid redirect with protocol is rejected", async ({ request }) => {
-  const r = await request.get(
-    `${BASE}/api/auth/google?redirect=https://evil.com`,
-    { maxRedirects: 0 },
-  );
+  const r = await request.get(`${BASE}/api/auth/google?redirect=https://evil.com`, {
+    maxRedirects: 0,
+  });
   const loc = r.headers()["location"] ?? "";
   expect(loc).not.toContain("evil.com");
 });

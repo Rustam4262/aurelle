@@ -30,11 +30,11 @@ export interface TransitionExtra {
 // ── Transition table ───────────────────────────────────────────────────────────
 
 const TRANSITIONS: Readonly<Record<PaymentStatus, readonly PaymentStatus[]>> = {
-  pending:   ["succeeded", "failed", "cancelled"],
+  pending: ["succeeded", "failed", "cancelled"],
   succeeded: ["refunded"],
-  failed:    [],   // terminal
-  cancelled: [],   // terminal
-  refunded:  [],   // terminal
+  failed: [], // terminal
+  cancelled: [], // terminal
+  refunded: [], // terminal
 };
 
 // ── Guard ──────────────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export async function transitionPayment(
     .update(payments)
     .set({
       status: newStatus,
-      ...(extra?.externalId != null     && { externalId: extra.externalId }),
+      ...(extra?.externalId != null && { externalId: extra.externalId }),
       ...(extra?.errorCode !== undefined && { errorCode: extra.errorCode }),
       ...(extra?.errorMessage !== undefined && { errorMessage: extra.errorMessage }),
       updatedAt: new Date(),

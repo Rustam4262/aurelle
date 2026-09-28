@@ -1,3 +1,4 @@
+import { verifyCsrf } from "../middleware/csrf";
 import express from "express";
 import { z } from "zod";
 import { db } from "../db";
@@ -31,7 +32,11 @@ function buildSoloMasterSlug(name: string, userId: string): string {
     .replace(/\s+/g, "-")
     .slice(0, 50);
 
-  const suffix = userId.replace(/[^a-z0-9]/gi, "").slice(-8).toLowerCase() || "solo";
+  const suffix =
+    userId
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(-8)
+      .toLowerCase() || "solo";
   return `${base || "solo-master"}-${suffix}`;
 }
 
@@ -78,10 +83,7 @@ async function getSoloMaster(userId: string) {
     })
     .returning();
 
-  await db
-    .insert(soloMasterSettings)
-    .values({ masterId: createdMaster.id })
-    .onConflictDoNothing();
+  await db.insert(soloMasterSettings).values({ masterId: createdMaster.id }).onConflictDoNothing();
 
   logger.info("Recreated missing solo master profile from user profile", {
     source: "solo-master-routes",
@@ -553,6 +555,7 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
         })
         .optional(),
       category: z.string().min(1),
+      audience: z.enum(["women", "men", "unisex"]).nullable().optional(),
       priceMin: z.number().min(0),
       priceMax: z.number().optional(),
       duration: z.number().min(5).max(480),
@@ -786,7 +789,9 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     }
 
     // Enrich with client profiles (avatar + name)
-    const clientIds = Array.from(new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id)));
+    const clientIds = Array.from(
+      new Set(filtered.map((b) => b.clientId).filter((id): id is string => !!id)),
+    );
     const serviceIds = Array.from(
       new Set(filtered.map((b) => b.soloMasterServiceId).filter((id): id is string => !!id)),
     );
@@ -805,10 +810,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
             .where(inArray(userProfiles.userId, clientIds))
         : Promise.resolve([]),
       serviceIds.length > 0
-        ? db
-            .select()
-            .from(soloMasterServices)
-            .where(inArray(soloMasterServices.id, serviceIds))
+        ? db.select().from(soloMasterServices).where(inArray(soloMasterServices.id, serviceIds))
         : Promise.resolve([]),
     ]);
     const clientMap = new Map(clientProfilesData.map((p) => [p.id, p]));
@@ -826,7 +828,9 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
         clientName,
         clientAvatar: profile?.avatarUrl ?? null,
         clientEmail: profile?.email ?? null,
-        service: booking.soloMasterServiceId ? serviceMap.get(booking.soloMasterServiceId) || null : null,
+        service: booking.soloMasterServiceId
+          ? serviceMap.get(booking.soloMasterServiceId) || null
+          : null,
       };
     });
 
@@ -1023,7 +1027,10 @@ router.get("/clients", isAuthenticated, async (req: any, res) => {
     ]);
 
     const serviceMap = new Map(
-      servicesData.map((service) => [service.id, service.name?.ru || service.name?.en || service.name?.uz || ""]),
+      servicesData.map((service) => [
+        service.id,
+        service.name?.ru || service.name?.en || service.name?.uz || "",
+      ]),
     );
 
     const clientMap = new Map(clientProfilesData.map((profile) => [profile.id, profile]));
@@ -1260,5 +1267,36 @@ router.patch("/support/tickets/:id/close", isAuthenticated, async (req: any, res
     return res.status(500).json({ error: "Failed to close ticket" });
   }
 });
+
+router.patch(
+  "/services/:serviceId/audience",
+  verifyCsrf,
+  isAuthenticated,
+  async (req: any, res) => {
+    try {
+      const parsed = z
+        .object({ audience: z.enum(["women", "men", "unisex"]).nullable() })
+        .safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: "Invalid audience" });
+      const master = await getSoloMaster(req.user.claims.sub);
+      if (!master) return res.status(404).json({ error: "Master not found" });
+      const [service] = await db
+        .update(soloMasterServices)
+        .set(parsed.data)
+        .where(
+          and(
+            eq(soloMasterServices.id, req.params.serviceId),
+            eq(soloMasterServices.masterId, master.id),
+          ),
+        )
+        .returning();
+      if (!service) return res.status(404).json({ error: "Service not found" });
+      return res.json(service);
+    } catch (error) {
+      logger.error("Solo service audience update failed", error);
+      return res.status(500).json({ error: "Failed to update service" });
+    }
+  },
+);
 
 export default router;

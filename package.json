@@ -21,6 +21,8 @@
     "verify:csp:prod": "bash scripts/verify-csp.sh https://aurelle.uz",
     "hooks:install": "bash scripts/install-hooks.sh",
     "test:fsm": "tsx server/lib/payment-fsm.test.ts",
+    "test:booking-availability": "tsx server/lib/booking-availability.test.ts",
+    "test:reminders": "tsx server/lib/reminders.test.ts",
     "smoke": "bash scripts/smoke.sh",
     "smoke:prod": "bash scripts/smoke.sh https://aurelle.uz"
   },

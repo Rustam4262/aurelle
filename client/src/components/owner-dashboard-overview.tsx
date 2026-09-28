@@ -416,7 +416,9 @@ export function OwnerDashboardOverview() {
       {/* Financial Metrics */}
       {overview.month.bookings > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3">{t("dashboard.financialMetrics", "Key Metrics")}</h3>
+          <h3 className="text-lg font-semibold mb-3">
+            {t("dashboard.financialMetrics", "Key Metrics")}
+          </h3>
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -446,8 +448,7 @@ export function OwnerDashboardOverview() {
                 <div className="text-2xl font-bold">
                   {overview.today.completionRate > 0
                     ? `${(100 - overview.today.completionRate).toFixed(1)}%`
-                    : "0%"
-                  }
+                    : "0%"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("dashboard.thisMonth", "this month")}
@@ -466,8 +467,7 @@ export function OwnerDashboardOverview() {
                 <div className="text-2xl font-bold">
                   {overview.today.newClients > 0
                     ? `${Math.max(0, overview.today.bookings - overview.today.newClients)}`
-                    : "0"
-                  }
+                    : "0"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("dashboard.returningToday", "returning today")}

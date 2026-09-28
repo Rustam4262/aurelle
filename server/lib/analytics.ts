@@ -150,12 +150,8 @@ export function trackEvent(options: TrackEventOptions): void {
 
       // Extract metadata from req upfront — never keep Request objects in memory
       const sessionId: string | null = req ? ((req.session as any)?.id ?? null) : null;
-      const ipAddress: string | null = req
-        ? (req.ip ?? req.socket?.remoteAddress ?? null)
-        : null;
-      const userAgent: string | null = req
-        ? (String(req.headers["user-agent"] ?? "") || null)
-        : null;
+      const ipAddress: string | null = req ? (req.ip ?? req.socket?.remoteAddress ?? null) : null;
+      const userAgent: string | null = req ? String(req.headers["user-agent"] ?? "") || null : null;
 
       if (queue.length >= QUEUE_MAX) {
         queue.shift(); // drop oldest to make room for new event

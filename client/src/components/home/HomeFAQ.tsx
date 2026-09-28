@@ -1,3 +1,4 @@
+import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
@@ -76,10 +77,10 @@ export function HomeFAQ() {
     activeCategory === "all" ? faqData : faqData.filter((item) => item.category === activeCategory);
 
   const categories = [
-    { id: "all", label: t("marketplace.home.faq.categories.all"), icon: "❓" },
-    { id: "client", label: t("marketplace.home.faq.categories.client"), icon: "👤" },
-    { id: "salon", label: t("marketplace.home.faq.categories.salon"), icon: "💅" },
-    { id: "master", label: t("marketplace.home.faq.categories.master"), icon: "✂️" },
+    { id: "all", label: t("marketplace.home.faq.categories.all"), icon: "help" },
+    { id: "client", label: t("marketplace.home.faq.categories.client"), icon: "user" },
+    { id: "salon", label: t("marketplace.home.faq.categories.salon"), icon: "nails" },
+    { id: "master", label: t("marketplace.home.faq.categories.master"), icon: "hair" },
   ] as const;
 
   return (
@@ -111,7 +112,10 @@ export function HomeFAQ() {
                   : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span className="mr-2">{category.icon}</span>
+              <SymbolIcon
+                name={category.id === "salon" ? "salon" : category.icon}
+                className="mr-2 h-4 w-4"
+              />
               {category.label}
             </button>
           ))}
@@ -176,13 +180,13 @@ export function HomeFAQ() {
               href="mailto:support@aurelle.uz"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all hover:scale-105 shadow-lg shadow-primary/25"
             >
-              📧 support@aurelle.uz
+              <SymbolIcon name="mail" className="mr-2 h-4 w-4" /> support@aurelle.uz
             </a>
             <a
               href="tel:+998932611804"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-background border-2 border-primary/30 text-foreground font-semibold hover:bg-primary/5 transition-all hover:scale-105"
             >
-              📞 +998 (93) 261-18-04
+              <SymbolIcon name="phone" className="mr-2 h-4 w-4" /> +998 (93) 261-18-04
             </a>
           </div>
         </Card>

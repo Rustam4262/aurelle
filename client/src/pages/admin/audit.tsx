@@ -172,7 +172,9 @@ export default function AdminAudit() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
-                          {log.actorRole}
+                          {log.actorRole
+                            ? t(`admin.users.roles.${log.actorRole}`, log.actorRole)
+                            : "—"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -185,7 +187,9 @@ export default function AdminAudit() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="text-sm font-medium capitalize">{log.entityType}</p>
+                          <p className="text-sm font-medium capitalize">
+                            {t(`admin.audit.entities.${log.entityType}`, log.entityType)}
+                          </p>
                           {log.entityId && (
                             <p className="text-xs text-muted-foreground font-mono">
                               {log.entityId.slice(0, 12)}...
@@ -263,14 +267,24 @@ export default function AdminAudit() {
                     {t("admin.audit.dialog.labels.role")}
                   </Label>
                   <Badge variant="secondary" className="mt-1">
-                    {selectedLog.log.actorRole}
+                    {selectedLog.log.actorRole
+                      ? t(
+                          `admin.users.roles.${selectedLog.log.actorRole}`,
+                          selectedLog.log.actorRole,
+                        )
+                      : "—"}
                   </Badge>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
                     {t("admin.audit.dialog.labels.entityType")}
                   </Label>
-                  <p className="text-sm mt-1 capitalize">{selectedLog.log.entityType}</p>
+                  <p className="text-sm mt-1 capitalize">
+                    {t(
+                      `admin.audit.entities.${selectedLog.log.entityType}`,
+                      selectedLog.log.entityType,
+                    )}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">

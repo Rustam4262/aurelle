@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TimeSlotPicker } from "@/components/time-slot-picker";
 import { WaitlistButton } from "@/components/waitlist-button";
 import { getLocalizedText, formatCurrency } from "@/lib/i18n";
-import type { Service, Master } from "@shared/schema";
+import type { Service, Master, WorkingHours } from "@shared/schema";
 
 interface SalonBookingDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface SalonBookingDialogProps {
   salonId: string | undefined;
   selectedService: Service | null;
   selectedMaster: Master | null;
+  workingHours?: WorkingHours[];
   bookingDate: string;
   setBookingDate: (date: string) => void;
   bookingTime: string;
@@ -37,6 +39,7 @@ export function SalonBookingDialog({
   salonId,
   selectedService,
   selectedMaster,
+  workingHours,
   bookingDate,
   setBookingDate,
   bookingTime,
@@ -48,6 +51,20 @@ export function SalonBookingDialog({
 }: SalonBookingDialogProps) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const [slotStatus, setSlotStatus] = useState({ isFetching: false, isError: false });
+
+  // Working hours for the selected date's weekday, used to constrain the
+  // plain time input shown when no specific master (with real slot data) is picked.
+  const dayHours = bookingDate
+    ? workingHours?.find((h) => h.dayOfWeek === new Date(`${bookingDate}T00:00:00`).getDay())
+    : undefined;
+  const isClosedOnSelectedDay = Boolean(dayHours?.isClosed);
+  const isTimeOutsideHours =
+    !selectedMaster &&
+    !!bookingTime &&
+    !!dayHours?.openTime &&
+    !!dayHours?.closeTime &&
+    (bookingTime < dayHours.openTime || bookingTime > dayHours.closeTime);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,16 +129,35 @@ export function SalonBookingDialog({
                     date={bookingDate}
                     selectedTime={bookingTime}
                     onTimeSelect={setBookingTime}
+                    onStatusChange={setSlotStatus}
                   />
                 </div>
+              ) : isClosedOnSelectedDay ? (
+                <p className="text-sm text-destructive py-2">
+                  {t("marketplace.salon.closedOnThisDay")}
+                </p>
               ) : (
-                <Input
-                  type="time"
-                  className="rounded-lg"
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                  placeholder="09:00"
-                />
+                <>
+                  <Input
+                    type="time"
+                    className="rounded-lg"
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                    min={dayHours?.openTime || undefined}
+                    max={dayHours?.closeTime || undefined}
+                    placeholder="09:00"
+                  />
+                  {dayHours?.openTime && dayHours?.closeTime && (
+                    <p
+                      className={`text-xs ${isTimeOutsideHours ? "text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {t("marketplace.salon.workingHoursHint", {
+                        open: dayHours.openTime,
+                        close: dayHours.closeTime,
+                      })}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -137,6 +173,9 @@ export function SalonBookingDialog({
               rows={3}
             />
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {t("marketplace.salon.cancellationPolicy")}
+          </p>
         </div>
         <DialogFooter className="sticky bottom-0 flex-col gap-3 border-t bg-background px-4 py-4 sm:flex-row sm:px-6">
           <div className="flex-1 w-full">
@@ -159,7 +198,14 @@ export function SalonBookingDialog({
             <Button
               className="flex-1 sm:flex-none min-w-[100px]"
               onClick={onSubmit}
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                isClosedOnSelectedDay ||
+                isTimeOutsideHours ||
+                !bookingTime ||
+                slotStatus.isFetching ||
+                slotStatus.isError
+              }
             >
               {isSubmitting ? t("marketplace.salon.booking") : t("marketplace.salon.confirm")}
             </Button>

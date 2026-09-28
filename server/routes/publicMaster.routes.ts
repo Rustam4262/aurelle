@@ -22,6 +22,9 @@ router.get("/", async (req, res) => {
     const { q, city, limit = "20", offset = "0" } = req.query;
     const limitNum = Math.min(parseInt(String(limit), 10) || 20, 100);
     const offsetNum = parseInt(String(offset), 10) || 0;
+    const audience = req.query.audience;
+    if (audience !== undefined && !["women", "men", "all"].includes(String(audience)))
+      return res.status(400).json({ error: "Invalid audience" });
 
     const conditions = [
       eq(masters.isSoloMaster, true),
@@ -35,6 +38,11 @@ router.get("/", async (req, res) => {
       )`,
     ];
 
+    if (audience && audience !== "all") {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM solo_master_services s WHERE s.master_id = ${masters.id} AND s.is_active = true AND (s.audience = ${String(audience)} OR s.audience = 'unisex'))`,
+      );
+    }
     if (city && typeof city === "string" && city.trim()) {
       conditions.push(ilike(masters.city, `%${city.trim()}%`));
     }
@@ -110,7 +118,7 @@ router.get("/:slug", async (req, res) => {
         reviewCount: sql<number>`COUNT(*)`,
       })
       .from(reviews)
-      .where(eq(reviews.masterId, master.id));
+      .where(and(eq(reviews.masterId, master.id), sql`(${reviews.isHidden} IS NOT TRUE)`));
 
     // Get working hours
     const hours = await db
@@ -230,7 +238,7 @@ router.get("/:slug/reviews", async (req, res) => {
         clientId: reviews.clientId,
       })
       .from(reviews)
-      .where(eq(reviews.masterId, master.id))
+      .where(and(eq(reviews.masterId, master.id), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt))
       .limit(50);
 

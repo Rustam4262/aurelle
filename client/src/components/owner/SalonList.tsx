@@ -86,10 +86,7 @@ export function SalonList() {
             salon.name as { en?: string; ru?: string; uz?: string },
             currentLang,
           );
-          const city = getLocalizedText(
-            salon.city as { en?: string; ru?: string; uz?: string },
-            currentLang,
-          );
+          const city = salon.city ?? "";
           const status = salon.status || "draft";
 
           const getStatusBadge = () => {

@@ -1,6 +1,11 @@
 import crypto from "crypto";
 import type { Request } from "express";
-import type { PaymentProvider, CreatePaymentParams, CreatePaymentResult, WebhookEvent } from "./types";
+import type {
+  PaymentProvider,
+  CreatePaymentParams,
+  CreatePaymentResult,
+  WebhookEvent,
+} from "./types";
 import { logger } from "../lib/logger";
 
 /** Payme (paycom.uz) — amount in tiyin (UZS × 100), JSONRPC 2.0 webhook */
@@ -66,9 +71,13 @@ export class PaymeProvider implements PaymentProvider {
 
       return { orderId, status, externalId };
     } catch (err) {
-      logger.error("Payme webhook parse error", err instanceof Error ? err : new Error(String(err)), {
-        source: "payments-payme",
-      });
+      logger.error(
+        "Payme webhook parse error",
+        err instanceof Error ? err : new Error(String(err)),
+        {
+          source: "payments-payme",
+        },
+      );
       return null;
     }
   }

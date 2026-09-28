@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,10 +37,7 @@ export function MasterScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       {/* Back */}
-      <TouchableOpacity
-        className="px-4 py-3"
-        onPress={() => navigation.goBack()}
-      >
+      <TouchableOpacity className="px-4 py-3" onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={22} color="#374151" />
       </TouchableOpacity>
 
@@ -55,9 +46,7 @@ export function MasterScreen({ navigation, route }: Props) {
         <View className="items-center py-6">
           <Image
             source={
-              master.avatarUrl
-                ? { uri: master.avatarUrl }
-                : require("../../../assets/icon.png")
+              master.avatarUrl ? { uri: master.avatarUrl } : require("../../../assets/icon.png")
             }
             className="w-28 h-28 rounded-full"
             contentFit="cover"
@@ -69,9 +58,7 @@ export function MasterScreen({ navigation, route }: Props) {
           {master.rating != null && (
             <View className="flex-row items-center mt-2">
               <Ionicons name="star" size={14} color="#f59e0b" />
-              <Text className="ml-1 font-semibold text-gray-700">
-                {master.rating.toFixed(1)}
-              </Text>
+              <Text className="ml-1 font-semibold text-gray-700">{master.rating.toFixed(1)}</Text>
               {master.reviewCount != null && (
                 <Text className="text-gray-400 ml-1">({master.reviewCount})</Text>
               )}

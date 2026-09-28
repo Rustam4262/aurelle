@@ -76,9 +76,13 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
 
         // Controls
         mapInstance.controls.add(
-          new ymaps.control.ZoomControl({ options: { position: { right: 10, top: 10 }, size: "small" } }),
+          new ymaps.control.ZoomControl({
+            options: { position: { right: 10, top: 10 }, size: "small" },
+          }),
         );
-        mapInstance.controls.add(new ymaps.control.GeolocationControl({ options: { float: "left" } }));
+        mapInstance.controls.add(
+          new ymaps.control.GeolocationControl({ options: { float: "left" } }),
+        );
 
         // Placemarks / clusterer
         if (salonsWithCoords.length > 0) {
@@ -100,10 +104,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                 salon.name as { en?: string; ru?: string; uz?: string },
                 i18n.language,
               ) || "Salon";
-            const city = getLocalizedText(
-              salon.city as { en?: string; ru?: string; uz?: string },
-              i18n.language,
-            );
+            const city = salon.city ?? "";
             const hasRating = salon.averageRating && Number(salon.averageRating) > 0;
 
             return new ymaps.Placemark(
@@ -112,7 +113,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
                 balloonContentHeader: `
                   <div style="font-family:system-ui;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
                     <h3 style="font-size:18px;font-weight:600;margin:0;color:#111827;">${name}</h3>
-                    ${city ? `<p style="font-size:13px;color:#6b7280;margin:4px 0 0 0;">📍 ${city}</p>` : ""}
+                    ${city ? `<p style="font-size:13px;color:#6b7280;margin:4px 0 0 0;">${city}</p>` : ""}
                   </div>`,
                 balloonContentBody: `
                   <div style="font-family:system-ui;padding:16px;">

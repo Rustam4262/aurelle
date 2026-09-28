@@ -153,7 +153,6 @@ router.post("/logout", (req: any, res) => {
   }
 });
 
-
 // Logout endpoint (GET) - no state changes to avoid CSRF logout
 router.get("/logout", (_req: any, res) => {
   return res.redirect("/auth?logout=post_only");
@@ -178,9 +177,12 @@ router.get("/auth/providers", (_req, res) => {
     github: isGitHubConfigured(),
     phone: isPhoneAuthConfigured(),
   };
-  logger.debug(`[OAuth] Providers status: ${JSON.stringify({ google: status.google, yandex: status.yandex, github: status.github })}`, {
-    source: "auth-routes",
-  });
+  logger.debug(
+    `[OAuth] Providers status: ${JSON.stringify({ google: status.google, yandex: status.yandex, github: status.github })}`,
+    {
+      source: "auth-routes",
+    },
+  );
   res.json(status);
 });
 

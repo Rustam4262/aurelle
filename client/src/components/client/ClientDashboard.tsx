@@ -6,8 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
-  CheckCircle,
-  Wallet,
   Heart,
   Star,
   Search,
@@ -17,7 +15,6 @@ import {
   Sparkles,
   RotateCcw,
 } from "lucide-react";
-import type { UserProfile } from "@shared/schema";
 import type { EnrichedBooking, EnrichedFavorite } from "./types";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { ru, uz, enUS } from "date-fns/locale";
@@ -31,22 +28,12 @@ function getLocalizedName(name: LocalizedName | undefined, lang: string): string
 }
 
 interface ClientDashboardProps {
-  profileData: UserProfile;
   bookings?: EnrichedBooking[];
   favorites?: EnrichedFavorite[];
   onNavigateToTab: (tab: string) => void;
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("uz-UZ").format(amount) + " UZS";
-}
-
-export function ClientDashboard({
-  profileData,
-  bookings,
-  favorites,
-  onNavigateToTab,
-}: ClientDashboardProps) {
+export function ClientDashboard({ bookings, favorites, onNavigateToTab }: ClientDashboardProps) {
   const { t, i18n } = useTranslation();
 
   const getLocale = () => {
@@ -58,17 +45,6 @@ export function ClientDashboard({
       default:
         return enUS;
     }
-  };
-
-  // Calculate stats
-  const stats = {
-    totalBookings: bookings?.length || 0,
-    completedBookings: bookings?.filter((b) => b.status === "completed").length || 0,
-    totalSpent:
-      bookings
-        ?.filter((b) => b.status === "completed")
-        .reduce((sum, b) => sum + (b.priceSnapshot || 0), 0) || 0,
-    favoritesCount: favorites?.length || 0,
   };
 
   // Get upcoming bookings (confirmed, pending) sorted by date
@@ -104,69 +80,6 @@ export function ClientDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section with Quick Stats */}
-      <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <Avatar className="h-16 w-16 ring-2 ring-primary/20">
-            <AvatarImage src={profileData.avatarUrl || undefined} />
-            <AvatarFallback className="text-xl bg-primary/10">
-              {profileData.fullName?.[0] || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h2 className="font-serif text-2xl text-foreground">
-              {t("marketplace.client.dashboard.welcome")},{" "}
-              {profileData.fullName?.split(" ")[0] || t("marketplace.client.unnamed")}!
-            </h2>
-            <p className="text-muted-foreground mt-1">
-              {t("marketplace.client.dashboard.subtitle")}
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-2 text-2xl font-bold text-foreground">
-              <Calendar className="h-5 w-5 text-primary" />
-              {stats.totalBookings}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("marketplace.client.stats.totalBookings")}
-            </p>
-          </div>
-          <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-2 text-2xl font-bold text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              {stats.completedBookings}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("marketplace.client.stats.completed")}
-            </p>
-          </div>
-          <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
-            <div className="flex flex-col items-center justify-center gap-2 text-xl font-bold text-foreground sm:flex-row">
-              <Wallet className="h-5 w-5 text-primary" />
-              <span className="max-w-full break-words text-center text-lg leading-tight sm:text-xl">
-                {formatCurrency(stats.totalSpent)}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("marketplace.client.stats.totalSpent")}
-            </p>
-          </div>
-          <div className="bg-background/50 rounded-lg p-4 text-center backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-2 text-2xl font-bold text-foreground">
-              <Heart className="h-5 w-5 text-pink-500" />
-              {stats.favoritesCount}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("marketplace.client.stats.favorites")}
-            </p>
-          </div>
-        </div>
-      </Card>
-
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link href="/">
@@ -176,7 +89,9 @@ export function ClientDashboard({
                 <Search className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="break-words font-medium">{t("marketplace.client.dashboard.findSalon")}</p>
+                <p className="break-words font-medium">
+                  {t("marketplace.client.dashboard.findSalon")}
+                </p>
                 <p className="break-words text-sm text-muted-foreground">
                   {t("marketplace.client.dashboard.findSalonDesc")}
                 </p>
@@ -193,7 +108,9 @@ export function ClientDashboard({
               <CalendarPlus className="h-5 w-5 text-green-600" />
             </div>
             <div className="min-w-0">
-              <p className="break-words font-medium">{t("marketplace.client.dashboard.myBookings")}</p>
+              <p className="break-words font-medium">
+                {t("marketplace.client.dashboard.myBookings")}
+              </p>
               <p className="break-words text-sm text-muted-foreground">
                 {t("marketplace.client.dashboard.myBookingsDesc")}
               </p>

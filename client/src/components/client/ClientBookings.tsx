@@ -159,18 +159,18 @@ export function ClientBookings({
 ${t("marketplace.client.bookingDetails")}
 ━━━━━━━━━━━━━━━━━━━━━━
 
-📍 ${salonName}
+${salonName}
 ${booking.salon?.address || ""}
 
-💇 ${serviceName}
-⏱ ${booking.service?.duration} ${t("marketplace.client.minutes")}
+${serviceName}
+${booking.service?.duration} ${t("marketplace.client.minutes")}
 
-${booking.master ? `👤 ${booking.master.name}` : ""}
+${booking.master ? `${booking.master.name}` : ""}
 
-📅 ${bookingDate}
-🕐 ${booking.startTime} - ${booking.endTime}
+${bookingDate}
+${booking.startTime} - ${booking.endTime}
 
-💰 ${formatCurrency(booking.priceSnapshot || 0)}
+${formatCurrency(booking.priceSnapshot || 0)}
 
 ━━━━━━━━━━━━━━━━━━━━━━
 ID: ${booking.id.slice(0, 8)}
@@ -368,7 +368,7 @@ ID: ${booking.id.slice(0, 8)}
       {/* Results count */}
       {!isLoading && (
         <div className="text-sm text-muted-foreground">
-          {filteredBookings.length} {t("marketplace.client.analytics.visits")}
+          {t("marketplace.client.analytics.visits", { count: filteredBookings.length })}
         </div>
       )}
 

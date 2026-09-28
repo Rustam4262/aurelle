@@ -1,11 +1,23 @@
-import { useEffect, useMemo } from "react";
+import { SymbolIcon } from "@/components/ui/symbol-icon";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, CheckCircle2, XCircle, AlertCircle, Star, Flame, Sparkles } from "lucide-react";
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Star,
+  Flame,
+  Sparkles,
+  RotateCw,
+  CalendarOff,
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   analyzeTimeSlot,
   groupSlotsByPeriod,
@@ -32,6 +44,8 @@ interface AvailabilityResponse {
   slots: TimeSlot[];
   totalSlots: number;
   availableSlots: number;
+  closed?: boolean;
+  reason?: string;
 }
 
 interface TimeSlotPickerProps {
@@ -40,6 +54,8 @@ interface TimeSlotPickerProps {
   date: string;
   selectedTime: string;
   onTimeSelect: (time: string) => void;
+  /** Reports fetch state up so the booking dialog can gate its confirm button. */
+  onStatusChange?: (status: { isFetching: boolean; isError: boolean }) => void;
 }
 
 export function TimeSlotPicker({
@@ -48,14 +64,21 @@ export function TimeSlotPicker({
   date,
   selectedTime,
   onTimeSelect,
+  onStatusChange,
 }: TimeSlotPickerProps) {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const currentLang = i18n.language;
 
-  // Fetch availability data
+  // Fetch availability data. queryKey already encodes (masterId, serviceId, date),
+  // so React Query keeps each combination's loading/data state separate — no
+  // manual refetch-on-change effect is needed, and none is used here, so a fast
+  // A -> B -> C change never flashes B's stale data once C's key is current.
   const {
     data: availability,
     isLoading,
+    isFetching,
+    isError,
     refetch,
   } = useQuery<AvailabilityResponse>({
     queryKey: ["/api/salons/masters", masterId, "availability", { date, serviceId }],
@@ -72,14 +95,33 @@ export function TimeSlotPicker({
     },
     enabled: !!masterId && !!date,
     staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Refetch when masterId, serviceId, or date changes
   useEffect(() => {
-    if (masterId && date) {
-      refetch();
+    onStatusChange?.({ isFetching, isError });
+  }, [isFetching, isError, onStatusChange]);
+
+  // If a background refresh reveals the previously selected time is no longer
+  // available, clear it and say so — this is a slot-taken update, not a fetch
+  // error, so it must not be conflated with the isError branch below.
+  const prevSlotsRef = useRef<TimeSlot[] | null>(null);
+  useEffect(() => {
+    if (!availability?.slots || !selectedTime) {
+      prevSlotsRef.current = availability?.slots ?? null;
+      return;
     }
-  }, [masterId, serviceId, date, refetch]);
+    const hadPreviousData = prevSlotsRef.current !== null;
+    const slot = availability.slots.find((s) => s.startTime === selectedTime);
+    if (hadPreviousData && slot && !slot.isAvailable) {
+      onTimeSelect("");
+      toast({
+        title: t("marketplace.salon.timeNoLongerAvailable"),
+        variant: "destructive",
+      });
+    }
+    prevSlotsRef.current = availability.slots;
+  }, [availability?.slots, selectedTime, onTimeSelect, toast, t]);
 
   // Calculate insights and recommendations
   const { insights, recommendedTimes, groupedSlots } = useMemo(() => {
@@ -124,6 +166,30 @@ export function TimeSlotPicker({
             <Skeleton key={i} className="h-12" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // A fetch failure must never be shown as "no available time" — the user needs
+  // to know it's a loading problem they can retry, not that the salon is fully booked.
+  if (isError) {
+    return (
+      <div className="py-8 text-center text-muted-foreground">
+        <AlertCircle className="h-12 w-12 mx-auto mb-3 text-destructive" />
+        <p className="mb-3">{t("marketplace.salon.slotsLoadFailed")}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+          <RotateCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+          {t("common.retry")}
+        </Button>
+      </div>
+    );
+  }
+
+  if (availability?.closed) {
+    return (
+      <div className="py-8 text-center text-muted-foreground">
+        <CalendarOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
+        <p>{t("marketplace.salon.closedOnThisDay")}</p>
       </div>
     );
   }
@@ -186,7 +252,7 @@ export function TimeSlotPicker({
       <div key={period} className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
-            <span>{icon}</span>
+            <SymbolIcon name={icon} />
             <span className="font-medium text-muted-foreground">
               {getPeriodLabel(period, currentLang)}
             </span>
@@ -240,7 +306,7 @@ export function TimeSlotPicker({
         <div className="p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{getDayQualityIcon(insights.dayQuality)}</span>
+              <SymbolIcon name={getDayQualityIcon(insights.dayQuality)} className="h-5 w-5" />
               <span className="font-medium text-sm">{insights.recommendation}</span>
             </div>
             <Badge variant={getDayQualityVariant(insights.dayQuality)}>
@@ -318,10 +384,10 @@ export function TimeSlotPicker({
       {/* Grouped Time Slots */}
       {groupedSlots && (
         <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-          {renderSlotGroup("morning", groupedSlots.morning, "🌅")}
-          {renderSlotGroup("midday", groupedSlots.midday, "☀️")}
-          {renderSlotGroup("afternoon", groupedSlots.afternoon, "🌤️")}
-          {renderSlotGroup("evening", groupedSlots.evening, "🌙")}
+          {renderSlotGroup("morning", groupedSlots.morning, "morning")}
+          {renderSlotGroup("midday", groupedSlots.midday, "midday")}
+          {renderSlotGroup("afternoon", groupedSlots.afternoon, "afternoon")}
+          {renderSlotGroup("evening", groupedSlots.evening, "evening")}
         </div>
       )}
 

@@ -5,7 +5,11 @@ import { eq, and } from "drizzle-orm";
 import type { PaymentProvider } from "../../payments/types";
 import { logger } from "../../lib/logger";
 import { broadcast, broadcastToUser } from "../../lib/websocket";
-import { transitionPayment, PaymentTransitionError, type PaymentStatus } from "../../lib/payment-fsm";
+import {
+  transitionPayment,
+  PaymentTransitionError,
+  type PaymentStatus,
+} from "../../lib/payment-fsm";
 
 /**
  * Shared webhook handler:
@@ -74,12 +78,7 @@ export async function handlePaymentWebhook(
     const [existing] = await db
       .select({ id: webhookEvents.id })
       .from(webhookEvents)
-      .where(
-        and(
-          eq(webhookEvents.externalEventId, event.externalId),
-          eq(webhookEvents.ok, true),
-        ),
-      )
+      .where(and(eq(webhookEvents.externalEventId, event.externalId), eq(webhookEvents.ok, true)))
       .limit(1);
 
     if (existing) {
@@ -166,7 +165,7 @@ export async function handlePaymentWebhook(
       bookingId: payment.bookingId,
     };
     broadcast("admin", "payment_status_changed", wsPayload);
-    if (payment.salonId)  broadcast(`salon_${payment.salonId}`, "payment_status_changed", wsPayload);
+    if (payment.salonId) broadcast(`salon_${payment.salonId}`, "payment_status_changed", wsPayload);
     if (payment.clientId) broadcastToUser(payment.clientId, "payment_status_changed", wsPayload);
     if (payment.masterId) broadcastToUser(payment.masterId, "payment_status_changed", wsPayload);
 

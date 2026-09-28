@@ -83,19 +83,19 @@ async function getBatchedUserRoles(userIds: string[]): Promise<Map<string, strin
 router.get("/", requirePermission("users.read"), async (req, res) => {
   try {
     const {
-      search    = "",
-      role      = "",
-      status    = "",
-      verified  = "",
-      sortBy    = "createdAt",
+      search = "",
+      role = "",
+      status = "",
+      verified = "",
+      sortBy = "createdAt",
       sortOrder = "desc",
-      page      = "1",
-      pageSize  = "20",
+      page = "1",
+      pageSize = "20",
     } = req.query as Record<string, string>;
 
-    const pageNum     = Math.max(1, parseInt(page) || 1);
+    const pageNum = Math.max(1, parseInt(page) || 1);
     const pageSizeNum = Math.max(1, Math.min(100, parseInt(pageSize) || 20));
-    const offsetVal   = (pageNum - 1) * pageSizeNum;
+    const offsetVal = (pageNum - 1) * pageSizeNum;
 
     // ── Build WHERE conditions ──────────────────────────────────────────────
     const conditions = [];
@@ -166,19 +166,31 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // ── Sort column map ─────────────────────────────────────────────────────
-    const SORT_COLS: Record<string, typeof users.createdAt | typeof users.lastLoginAt | typeof users.email | typeof users.firstName> = {
-      createdAt:   users.createdAt,
+    const SORT_COLS: Record<
+      string,
+      | typeof users.createdAt
+      | typeof users.lastLoginAt
+      | typeof users.email
+      | typeof users.firstName
+    > = {
+      createdAt: users.createdAt,
       lastLoginAt: users.lastLoginAt,
-      email:       users.email,
-      firstName:   users.firstName,
+      email: users.email,
+      firstName: users.firstName,
     };
     const sortCol = SORT_COLS[sortBy] ?? users.createdAt;
-    const order   = sortOrder === "asc" ? asc(sortCol) : desc(sortCol);
+    const order = sortOrder === "asc" ? asc(sortCol) : desc(sortCol);
 
     // ── COUNT + paginated SELECT in parallel ────────────────────────────────
     const [countResult, pageUsers] = await Promise.all([
       db.select({ count: count() }).from(users).where(whereClause),
-      db.select().from(users).where(whereClause).orderBy(order).limit(pageSizeNum).offset(offsetVal),
+      db
+        .select()
+        .from(users)
+        .where(whereClause)
+        .orderBy(order)
+        .limit(pageSizeNum)
+        .offset(offsetVal),
     ]);
 
     const total = Number(countResult[0].count);
@@ -191,34 +203,37 @@ router.get("/", requirePermission("users.read"), async (req, res) => {
       const softDeleteMeta = parseSoftDeleteReason(user.blockReason);
       const isDeleted = !!softDeleteMeta;
       return {
-        id:              user.id,
-        email:           user.email,
-        firstName:       user.firstName,
-        lastName:        user.lastName,
-        fullName:        `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
-        phone:           user.phoneNumber,
-        role:            userRoles[0] || "client",
-        roles:           userRoles,
-        status:          isDeleted ? "deleted" : user.isBlocked ? "blocked" : "active",
-        isBlocked:       user.isBlocked || false,
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName:
+          `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown",
+        phone: user.phoneNumber,
+        role: userRoles[0] || "client",
+        roles: userRoles,
+        status: isDeleted ? "deleted" : user.isBlocked ? "blocked" : "active",
+        isBlocked: user.isBlocked || false,
         isDeleted,
-        blockReason:     isDeleted ? (softDeleteMeta?.reason || "Удалён администратором") : user.blockReason,
-        deletedAt:       softDeleteMeta?.deletedAt ?? null,
-        lastLoginAt:     user.lastLoginAt,
-        lastActivityAt:  user.lastActivityAt,
-        loginCount:      user.loginCount || 0,
+        blockReason: isDeleted
+          ? softDeleteMeta?.reason || "Удалён администратором"
+          : user.blockReason,
+        deletedAt: softDeleteMeta?.deletedAt ?? null,
+        lastLoginAt: user.lastLoginAt,
+        lastActivityAt: user.lastActivityAt,
+        loginCount: user.loginCount || 0,
         isEmailVerified: user.emailVerified || false,
         isPhoneVerified: user.phoneVerified || false,
-        createdAt:       user.createdAt,
-        updatedAt:       user.updatedAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       };
     });
 
     res.json({
       users: transformedUsers,
       total,
-      page:       pageNum,
-      pageSize:   pageSizeNum,
+      page: pageNum,
+      pageSize: pageSizeNum,
       totalPages: Math.ceil(total / pageSizeNum),
     });
   } catch (error: any) {
@@ -241,7 +256,11 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
     }
 
     // Enrich with profile, platform roles, related business entities, and recent bookings.
-    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, id)).limit(1);
+    const [profile] = await db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, id))
+      .limit(1);
     const [rolesMap, ownedSalons, masterProfiles, recentBookings] = await Promise.all([
       getBatchedUserRoles([id]),
       db
@@ -281,7 +300,9 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
         status: softDeleteMeta ? "deleted" : user.isBlocked ? "blocked" : "active",
         isDeleted: !!softDeleteMeta,
         deletedAt: softDeleteMeta?.deletedAt ?? null,
-        blockReason: softDeleteMeta ? (softDeleteMeta.reason || "Удалён администратором") : user.blockReason,
+        blockReason: softDeleteMeta
+          ? softDeleteMeta.reason || "Удалён администратором"
+          : user.blockReason,
       },
       profile: profile ?? null,
       roles: rolesMap.get(id) ?? ["client"],
@@ -409,8 +430,16 @@ router.post("/:id/block", requirePermission("users.write"), async (req, res) => 
     if (updated.email) {
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
-      sendUserBlockedEmail(updated.email, userName, reason || "Violation of platform rules", adminName).catch((err) => {
-        logger.error("Failed to send block email", err, { source: "users-routes", meta: { userId: updated.id } });
+      sendUserBlockedEmail(
+        updated.email,
+        userName,
+        reason || "Violation of platform rules",
+        adminName,
+      ).catch((err) => {
+        logger.error("Failed to send block email", err, {
+          source: "users-routes",
+          meta: { userId: updated.id },
+        });
       });
     }
 
@@ -466,7 +495,10 @@ router.post("/:id/unblock", requirePermission("users.write"), async (req, res) =
       const userName = `${updated.firstName || ""} ${updated.lastName || ""}`.trim() || "User";
       const adminName = req.admin?.roleName || "Administrator";
       sendUserUnblockedEmail(updated.email, userName, adminName).catch((err) => {
-        logger.error("Failed to send unblock email", err, { source: "users-routes", meta: { userId: updated.id } });
+        logger.error("Failed to send unblock email", err, {
+          source: "users-routes",
+          meta: { userId: updated.id },
+        });
       });
     }
 
@@ -578,8 +610,14 @@ router.delete("/:id", requirePermission("users.delete"), async (req, res) => {
     }
 
     const [ownedSalons, ownedMasters] = await Promise.all([
-      db.select({ id: salons.id, status: salons.status, isActive: salons.isActive }).from(salons).where(eq(salons.ownerId, id)),
-      db.select({ id: masters.id, status: masters.status, isActive: masters.isActive }).from(masters).where(eq(masters.userId, id)),
+      db
+        .select({ id: salons.id, status: salons.status, isActive: salons.isActive })
+        .from(salons)
+        .where(eq(salons.ownerId, id)),
+      db
+        .select({ id: masters.id, status: masters.status, isActive: masters.isActive })
+        .from(masters)
+        .where(eq(masters.userId, id)),
     ]);
 
     const [deletedUser] = await db.transaction(async (tx) => {
@@ -720,7 +758,9 @@ router.post("/bulk/unblock", requirePermission("users.write"), async (req, res) 
     const deletedUsers = await db
       .select({ id: users.id })
       .from(users)
-      .where(and(inArray(users.id, userIds), sql`${users.blockReason} LIKE ${"__SOFT_DELETED__:%"}`));
+      .where(
+        and(inArray(users.id, userIds), sql`${users.blockReason} LIKE ${"__SOFT_DELETED__:%"}`),
+      );
 
     // Update all non-deleted users
     const updated = await db
@@ -811,7 +851,9 @@ router.get("/stats/overview", requirePermission("users.read"), async (_req, res)
     const [activeWeekResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(and(sql`${users.lastActivityAt} >= ${sevenDaysAgo}`, notSoftDeleted(users.blockReason)));
+      .where(
+        and(sql`${users.lastActivityAt} >= ${sevenDaysAgo}`, notSoftDeleted(users.blockReason)),
+      );
 
     const [roleCountsResult] = await db
       .select({

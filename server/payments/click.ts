@@ -1,6 +1,11 @@
 import crypto from "crypto";
 import type { Request } from "express";
-import type { PaymentProvider, CreatePaymentParams, CreatePaymentResult, WebhookEvent } from "./types";
+import type {
+  PaymentProvider,
+  CreatePaymentParams,
+  CreatePaymentResult,
+  WebhookEvent,
+} from "./types";
 import { logger } from "../lib/logger";
 
 /** Click (click.uz) — amount in UZS, MD5 signature verification */
@@ -46,16 +51,16 @@ export class ClickProvider implements PaymentProvider {
         error?: string;
       };
 
-      const {
-        click_trans_id,
-        merchant_trans_id,
-        amount,
-        action,
-        sign_time,
-        sign_string,
-      } = body;
+      const { click_trans_id, merchant_trans_id, amount, action, sign_time, sign_string } = body;
 
-      if (!click_trans_id || !merchant_trans_id || !amount || !action || !sign_time || !sign_string) {
+      if (
+        !click_trans_id ||
+        !merchant_trans_id ||
+        !amount ||
+        !action ||
+        !sign_time ||
+        !sign_string
+      ) {
         return null;
       }
 
@@ -85,9 +90,13 @@ export class ClickProvider implements PaymentProvider {
         externalId: click_trans_id,
       };
     } catch (err) {
-      logger.error("Click webhook parse error", err instanceof Error ? err : new Error(String(err)), {
-        source: "payments-click",
-      });
+      logger.error(
+        "Click webhook parse error",
+        err instanceof Error ? err : new Error(String(err)),
+        {
+          source: "payments-click",
+        },
+      );
       return null;
     }
   }

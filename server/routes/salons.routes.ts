@@ -1,3 +1,4 @@
+import { matchesAudience, type CatalogueAudience } from "@shared/service-audience";
 import { Router } from "express";
 import { db } from "../db";
 import {
@@ -36,7 +37,34 @@ router.get("/", async (req, res) => {
 
     const query = db.select().from(salons).where(publicSalonWhere);
 
-    const result = await query.orderBy(desc(salons.averageRating));
+    const allSalons = await query.orderBy(desc(salons.averageRating));
+    const audience = req.query.audience;
+    if (audience !== undefined && !["women", "men", "all"].includes(String(audience))) {
+      return res.status(400).json({ error: "Invalid audience" });
+    }
+    const activeServices = await db
+      .select({
+        salonId: services.salonId,
+        category: services.category,
+        name: services.name,
+        audience: services.audience,
+      })
+      .from(services)
+      .where(eq(services.isActive, true));
+    const matching = activeServices.filter((service) =>
+      matchesAudience(service.audience, (audience || "all") as CatalogueAudience),
+    );
+    const result = allSalons.flatMap((salon) => {
+      const offers = matching.filter((service) => service.salonId === salon.id);
+      if (audience && audience !== "all" && offers.length === 0) return [];
+      return [
+        {
+          ...salon,
+          serviceCategories: Array.from(new Set(offers.map((service) => service.category))),
+          serviceNames: offers.map((service) => Object.values(service.name).join(" ")).join(" "),
+        },
+      ];
+    });
 
     trackEvent({
       eventName: "search_performed",
@@ -68,7 +96,8 @@ router.get("/stats/public", async (_req, res) => {
         reviewsCount: sql<number>`COUNT(*)`,
         averageRating: sql<string>`COALESCE(ROUND(AVG(${reviews.rating})::numeric, 1), 0)::text`,
       })
-      .from(reviews);
+      .from(reviews)
+      .where(sql`(${reviews.isHidden} IS NOT TRUE)`);
 
     const [bookingStats] = await db
       .select({
@@ -145,7 +174,7 @@ router.get("/:id", async (req, res) => {
     const salonReviews = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.salonId, id))
+      .where(and(eq(reviews.salonId, id), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt))
       .limit(10);
 
@@ -225,7 +254,7 @@ router.get("/:id/reviews", async (req, res) => {
     const result = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.salonId, id))
+      .where(and(eq(reviews.salonId, id), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt));
     return res.json(result);
   } catch (error) {
@@ -246,7 +275,7 @@ router.get("/masters/:id", async (req, res) => {
     const masterReviews = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.masterId, id))
+      .where(and(eq(reviews.masterId, id), sql`(${reviews.isHidden} IS NOT TRUE)`))
       .orderBy(desc(reviews.createdAt))
       .limit(10);
 
@@ -552,10 +581,7 @@ router.get("/list/all-services", async (req, res) => {
 // Get all unique cities
 router.get("/list/all-cities", async (req, res) => {
   try {
-    const salonsList = await db
-      .select()
-      .from(salons)
-      .where(eq(salons.isActive, true));
+    const salonsList = await db.select().from(salons).where(eq(salons.isActive, true));
 
     // Extract unique cities from salon data
     const cities = Array.from(
@@ -564,12 +590,15 @@ router.get("/list/all-cities", async (req, res) => {
           .map((salon: any) => {
             const cityData = salon.city;
             if (typeof cityData === "object" && cityData !== null) {
-              return Object.values(cityData as Record<string, any>).find((v) => typeof v === "string") || "Unknown";
+              return (
+                Object.values(cityData as Record<string, any>).find((v) => typeof v === "string") ||
+                "Unknown"
+              );
             }
             return String(cityData) || "Unknown";
           })
-          .filter((city) => city && city !== "Unknown")
-      )
+          .filter((city) => city && city !== "Unknown"),
+      ),
     ).sort();
 
     return res.json(cities);

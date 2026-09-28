@@ -63,10 +63,12 @@ export function HomeTestimonials({
   };
 
   const currentReview = visibleReviews[currentIndex];
-  const clientName = currentReview?.clientName || t("marketplace.home.testimonials.client", "Клиент AURELLE");
+  const clientName =
+    currentReview?.clientName || t("marketplace.home.testimonials.client", "Клиент AURELLE");
   const salonName = currentReview?.salonName
     ? getLocalizedText(currentReview.salonName, i18n.language)
-    : currentReview?.masterName || t("marketplace.home.testimonials.booking", "Запись через AURELLE");
+    : currentReview?.masterName ||
+      t("marketplace.home.testimonials.booking", "Запись через AURELLE");
   const title = t("marketplace.home.testimonials.title", "Отзывы клиентов");
   const subtitle = t(
     "marketplace.home.testimonials.subtitle",
@@ -86,9 +88,7 @@ export function HomeTestimonials({
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 font-light">
             {title}
           </h2>
-          <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto">{subtitle}</p>
         </div>
 
         {/* Testimonial Card */}
@@ -135,7 +135,10 @@ export function HomeTestimonials({
                 <div className="py-10 text-center">
                   <Quote className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
                   <h3 className="text-xl font-semibold text-foreground">
-                    {t("marketplace.home.testimonials.emptyTitle", "Реальные отзывы скоро появятся")}
+                    {t(
+                      "marketplace.home.testimonials.emptyTitle",
+                      "Реальные отзывы скоро появятся",
+                    )}
                   </h3>
                   <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
                     {t(
@@ -151,41 +154,41 @@ export function HomeTestimonials({
           {/* Navigation */}
           {visibleReviews.length > 1 ? (
             <div className="flex items-center justify-between mt-8">
-            {/* Previous Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToPrevious}
-              className="rounded-full h-12 w-12 border-2 hover:border-primary/50 hover:bg-primary/5"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
+              {/* Previous Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPrevious}
+                className="rounded-full h-12 w-12 border-2 hover:border-primary/50 hover:bg-primary/5"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
 
-            {/* Dots Indicator */}
-            <div className="flex items-center gap-2">
-              {visibleReviews.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`transition-all duration-300 rounded-full ${
-                    index === currentIndex
-                      ? "bg-primary w-8 h-2"
-                      : "bg-muted-foreground/30 w-2 h-2 hover:bg-muted-foreground/50"
-                  }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
-                />
-              ))}
-            </div>
+              {/* Dots Indicator */}
+              <div className="flex items-center gap-2">
+                {visibleReviews.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      index === currentIndex
+                        ? "bg-primary w-8 h-2"
+                        : "bg-muted-foreground/30 w-2 h-2 hover:bg-muted-foreground/50"
+                    }`}
+                    aria-label={`Go to testimonial ${index + 1}`}
+                  />
+                ))}
+              </div>
 
-            {/* Next Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToNext}
-              className="rounded-full h-12 w-12 border-2 hover:border-primary/50 hover:bg-primary/5"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+              {/* Next Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNext}
+                className="rounded-full h-12 w-12 border-2 hover:border-primary/50 hover:bg-primary/5"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           ) : null}
 
@@ -200,25 +203,33 @@ export function HomeTestimonials({
         {/* Trust Badges */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.clientsCount)}</div>
+            <div className="text-3xl font-bold text-primary mb-1">
+              {formatCount(stats?.clientsCount)}
+            </div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.happyClients", "Happy clients")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.salonsCount)}</div>
+            <div className="text-3xl font-bold text-primary mb-1">
+              {formatCount(stats?.salonsCount)}
+            </div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.beautySalons", "Beauty salons")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">{formatRating(stats?.averageRating)}</div>
+            <div className="text-3xl font-bold text-primary mb-1">
+              {formatRating(stats?.averageRating)}
+            </div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.avgRating", "Average rating")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
-            <div className="text-3xl font-bold text-primary mb-1">{formatCount(stats?.bookingsCount)}</div>
+            <div className="text-3xl font-bold text-primary mb-1">
+              {formatCount(stats?.bookingsCount)}
+            </div>
             <div className="text-sm text-muted-foreground">
               {t("marketplace.home.testimonials.stats.bookingsCompleted", "Bookings completed")}
             </div>

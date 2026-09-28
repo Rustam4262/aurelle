@@ -199,7 +199,7 @@ export function OwnerSalonStaff({ salonId }: OwnerSalonStaffProps) {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground">{master.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {master.experience} {t("marketplace.owner.yearsExp")}
+                    {t("marketplace.owner.yearsExp", { count: master.experience ?? 0 })}
                   </p>
                   {master.email && (
                     <p className="mt-1 break-all text-xs text-muted-foreground">

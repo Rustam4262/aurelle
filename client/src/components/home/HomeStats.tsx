@@ -14,9 +14,7 @@ function StatItem({ end, suffix = "", labelKey }: StatItemProps) {
 
   return (
     <div className="text-center group">
-      <p
-        className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter"
-      >
+      <p className="font-serif text-5xl md:text-6xl font-light mb-4 transition-transform duration-500 group-hover:scale-110 tracking-tighter">
         {value}
       </p>
       <div className="w-10 h-0.5 bg-primary-foreground/30 mx-auto mb-4 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
@@ -47,13 +45,7 @@ export function HomeStats({ stats }: { stats?: MarketplaceStats }) {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
           {statItems.map((stat, index) => (
-            <StatItem
-              key={index}
-              end={stat.end}
-              suffix={stat.suffix}
-              labelKey={stat.labelKey}
-              delay={stat.delay}
-            />
+            <StatItem key={index} end={stat.end} labelKey={stat.labelKey} delay={stat.delay} />
           ))}
         </div>
       </div>

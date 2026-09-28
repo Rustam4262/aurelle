@@ -95,8 +95,8 @@ router.get("/online", requirePermission("analytics.read"), async (req, res) => {
           gte(userActivitySessions.lastActivityAt, tenMinutesAgo),
           process.env.NODE_ENV === "production"
             ? sql`(${userActivitySessions.ipAddress} IS NULL OR ${userActivitySessions.ipAddress} NOT IN ('127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost'))`
-            : sql`true`
-        )
+            : sql`true`,
+        ),
       )
       .orderBy(desc(userActivitySessions.lastActivityAt));
 

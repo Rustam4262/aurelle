@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
+import { getCsrfToken } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,10 +8,6 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OwnerWorkspaceSections } from "@/components/owner/OwnerWorkspaceSections";
 import {
   AlertTriangle,
@@ -62,12 +59,6 @@ type DashboardAlert = {
   count?: number;
   salonId?: string;
   message: string;
-};
-
-type RecentActivityItem = {
-  type: string;
-  message: string;
-  timestamp?: string | null;
 };
 
 type SupportTicket = {
@@ -177,7 +168,9 @@ const ownerSectionValues = [
 function readOwnerSection() {
   if (typeof window === "undefined") return "overview";
   const requested = new URLSearchParams(window.location.search).get("tab") || "overview";
-  return ownerSectionValues.includes(requested as (typeof ownerSectionValues)[number]) ? requested : "overview";
+  return ownerSectionValues.includes(requested as (typeof ownerSectionValues)[number])
+    ? requested
+    : "overview";
 }
 
 function localize(value: LocalizedRecord | string | null | undefined, language: string) {
@@ -288,14 +281,8 @@ async function createSalonRequest(data: SalonDraft) {
       { dayOfWeek: 0, openTime: "10:00", closeTime: "18:00", isOpen: false },
     ]),
   );
-  formData.append(
-    "city",
-    JSON.stringify({
-      ru: data.cityRu.trim(),
-      en: data.cityEn.trim() || data.cityRu.trim(),
-      uz: data.cityUz.trim() || data.cityRu.trim(),
-    }),
-  );
+  // city is a plain string column in the DB (unlike name/description), so send it as-is
+  formData.append("city", data.cityRu.trim());
   formData.append("address", data.address.trim());
   formData.append("phone", data.phone.trim());
   formData.append("email", data.email.trim());
@@ -306,6 +293,9 @@ async function createSalonRequest(data: SalonDraft) {
   const response = await fetch("/api/owner/salons", {
     method: "POST",
     credentials: "include",
+    // /api/owner/* is behind verifyCsrf — a plain fetch() never sends this
+    // header on its own, so the request was rejected with 403.
+    headers: { "X-CSRF-Token": getCsrfToken() },
     body: formData,
   });
   if (response.status === 401) throw new Error("unauthorized");
@@ -323,7 +313,6 @@ export default function OwnerPage() {
   const [salons, setSalons] = useState<OwnerSalon[]>([]);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
-  const [activity, setActivity] = useState<RecentActivityItem[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [salonDraft, setSalonDraft] = useState<SalonDraft>(initialSalonDraft);
@@ -357,19 +346,17 @@ export default function OwnerPage() {
   const loadOwnerWorkspace = async () => {
     setError(null);
     try {
-      const [salonsData, overviewData, alertsData, activityData, ticketsData, notificationsData] =
+      const [salonsData, overviewData, alertsData, ticketsData, notificationsData] =
         await Promise.all([
           fetchJson<OwnerSalon[]>("/api/owner/salons"),
           fetchJson<DashboardOverview>("/api/owner/dashboard/overview"),
           fetchJson<DashboardAlert[]>("/api/owner/dashboard/alerts"),
-          fetchJson<RecentActivityItem[]>("/api/owner/dashboard/recent-activity"),
           fetchJson<SupportTicket[]>("/api/owner/support/tickets"),
           fetchJson<NotificationItem[]>("/api/notifications"),
         ]);
       setSalons(salonsData);
       setOverview(overviewData);
       setAlerts(alertsData);
-      setActivity(activityData);
       setTickets(ticketsData);
       setNotifications(notificationsData);
     } catch (loadErr) {
@@ -409,9 +396,9 @@ export default function OwnerPage() {
           const clientGroups = await Promise.all(
             salons.map(async (salon) => {
               const salonName = localize(salon.name, language) || "Салон";
-              const clients = await fetchJson<
-                Omit<OwnerClientSummary, "salonId" | "salonName">[]
-              >(`/api/owner/salons/${salon.id}/clients`);
+              const clients = await fetchJson<Omit<OwnerClientSummary, "salonId" | "salonName">[]>(
+                `/api/owner/salons/${salon.id}/clients`,
+              );
               return clients.map((client) => ({
                 ...client,
                 salonId: salon.id,
@@ -430,7 +417,9 @@ export default function OwnerPage() {
               }
             });
             setOwnerClients(
-              [...deduped.values()].sort((left, right) => right.totalSpent - left.totalSpent),
+              Array.from(deduped.values()).sort(
+                (left, right) => right.totalSpent - left.totalSpent,
+              ),
             );
           }
         }
@@ -439,9 +428,9 @@ export default function OwnerPage() {
           const reviewGroups = await Promise.all(
             salons.map(async (salon) => {
               const salonName = localize(salon.name, language) || "Салон";
-              const reviews = await fetchJson<
-                Omit<OwnerReviewSummary, "salonId" | "salonName">[]
-              >(`/api/owner/salons/${salon.id}/reviews`);
+              const reviews = await fetchJson<Omit<OwnerReviewSummary, "salonId" | "salonName">[]>(
+                `/api/owner/salons/${salon.id}/reviews`,
+              );
               return reviews.map((review) => ({
                 ...review,
                 salonId: salon.id,
@@ -456,7 +445,8 @@ export default function OwnerPage() {
                 .flat()
                 .sort(
                   (left, right) =>
-                    new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime(),
+                    new Date(right.createdAt || 0).getTime() -
+                    new Date(left.createdAt || 0).getTime(),
                 ),
             );
           }
@@ -509,33 +499,6 @@ export default function OwnerPage() {
       averageRating,
     };
   }, [notifications, salons, tickets]);
-
-  const bestSalon = useMemo(() => {
-    return [...salons].sort(
-      (left, right) => Number(right.averageRating || 0) - Number(left.averageRating || 0),
-    )[0];
-  }, [salons]);
-
-  const problemSalon = useMemo(() => {
-    if (!salons.length) return null;
-    const unpublished = salons.find((salon) => (salon.status || "draft") !== "active");
-    return unpublished || salons.find((salon) => Number(salon.reviewCount || 0) === 0) || salons[0];
-  }, [salons]);
-
-  const attentionItems = useMemo(() => {
-    const items: string[] = [];
-    if (salons.length === 0) items.push("Добавить первый салон и подготовить его к публикации.");
-    if (stats.drafts > 0) items.push(`${stats.drafts} салон(ов) ещё в черновике.`);
-    if (stats.paused > 0) items.push(`${stats.paused} салон(ов) сейчас на паузе.`);
-    if (alerts.length > 0) items.push(`${alerts.length} сигнал(ов) требуют внимания в owner-центре.`);
-    if (stats.unreadNotifications > 0) {
-      items.push(`${stats.unreadNotifications} уведомление(й) ещё не просмотрено.`);
-    }
-    if (stats.unresolvedTickets > 0) {
-      items.push(`${stats.unresolvedTickets} обращение(й) в поддержку остаются открытыми.`);
-    }
-    return items.slice(0, 5);
-  }, [alerts.length, salons.length, stats]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -706,7 +669,7 @@ export default function OwnerPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.05),transparent_36%)] bg-background">
+    <div className="min-h-screen dark:bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.05),transparent_36%)] bg-background">
       <div className="border-b border-border/70 bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
@@ -716,17 +679,33 @@ export default function OwnerPage() {
               </Button>
             </Link>
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Owner workspace</p>
-              <h1 className="truncate font-serif text-2xl text-foreground">Кабинет владельца салона</h1>
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">AURELLE</p>
+              <h1 className="truncate font-serif text-2xl text-foreground">
+                Кабинет владельца салона
+              </h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <LanguageSwitcher />
-            <Button variant="outline" size="sm" onClick={() => void handleRefresh()} disabled={refreshing}>
-              {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Clock3 className="mr-2 h-4 w-4" />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Clock3 className="mr-2 h-4 w-4" />
+              )}
               Обновить
             </Button>
-            <Button variant="outline" size="sm" onClick={() => void logout()} disabled={isLoggingOut}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void logout()}
+              disabled={isLoggingOut}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               {isLoggingOut ? t("common.loading") : "Выйти"}
             </Button>
@@ -746,502 +725,216 @@ export default function OwnerPage() {
           </Card>
         )}
 
-        <section className="overflow-x-auto pb-2">
-          <Tabs value={activeSection} onValueChange={openOwnerSection}>
-            <TabsList className="inline-flex min-w-max gap-2">
-              {sectionTabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </Tabs>
-        </section>
-
-        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.35fr_0.65fr]" : "hidden"}>
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <div className="bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Контроль сети салонов в одном окне
-                  </div>
-                  <h2 className="mt-4 break-words font-serif text-3xl text-foreground">{ownerName}</h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    Здесь собраны салонные KPI, проблемные точки, быстрые переходы в управление объектами и канал связи с платформой. Это уже не “витрина намерений”, а реальный control center владельца.
+        <div className="grid items-start gap-6 lg:grid-cols-[224px_minmax(0,1fr)]">
+          <aside className="rounded-2xl border border-border/70 bg-card p-3 lg:sticky lg:top-6">
+            <nav aria-label="Разделы кабинета владельца" className="space-y-4">
+              {[
+                {
+                  label: "Управление",
+                  ids: ["overview", "bookings", "salons", "services", "staff", "clients"],
+                },
+                { label: "Обратная связь", ids: ["messages", "reviews", "notifications"] },
+                { label: "Дополнительно", ids: ["analytics", "support"] },
+                { label: "Настройки", ids: ["settings"] },
+              ].map((group) => (
+                <div key={group.label}>
+                  <p className="px-3 pb-2 text-xs font-medium text-muted-foreground">
+                    {group.label}
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    <span className="inline-flex max-w-full items-center gap-2 break-all rounded-full border border-border/60 bg-background/70 px-3 py-1">
-                      <UserCircle2 className="h-4 w-4" />
-                      {user.email || "email не указан"}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1">
-                      <Shield className="h-4 w-4" />
-                      Безопасный owner-доступ активен
-                    </span>
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <Button asChild>
-                      <Link href="/search">Открыть клиентскую витрину</Link>
-                    </Button>
-                    <Button variant="outline" onClick={() => window.location.assign("/owner")}>
-                      Перезагрузить owner-flow
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:w-[320px]">
-                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Салонов</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{salons.length}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">объектов в кабинете</p>
-                  </div>
-                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Непрочитанные</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{stats.unreadNotifications}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">уведомления и сигналы</p>
-                  </div>
-                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Открытые обращения</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{stats.unresolvedTickets}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">в support-канале</p>
-                  </div>
-                  <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Средний рейтинг</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">
-                      {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "—"}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">по сети владельца</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-border/70 p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">Фокус дня</p>
-                <p className="text-xs text-muted-foreground">Что лучше открыть первым</p>
-              </div>
-              <AlertTriangle className="h-5 w-5 text-primary" />
-            </div>
-            <Separator className="my-4" />
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Лучший салон</p>
-                <p className="mt-2 break-words text-lg font-semibold text-foreground">
-                  {bestSalon ? localize(bestSalon.name, language) : "Пока нет данных"}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {bestSalon
-                    ? `Рейтинг ${Number(bestSalon.averageRating || 0).toFixed(1)} • отзывов ${Number(bestSalon.reviewCount || 0)}`
-                    : "После первых салонов и отзывов здесь появится лучший объект сети."}
-                </p>
-                {bestSalon && (
-                  <Button className="mt-4 w-full" variant="outline" asChild>
-                    <Link href={`/owner/salon/${bestSalon.id}`}>
-                      Открыть управление
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Проблемная зона</p>
-                <p className="mt-2 break-words text-lg font-semibold text-foreground">
-                  {problemSalon ? localize(problemSalon.name, language) : "Пока нет проблемных объектов"}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {problemSalon
-                    ? `Статус: ${ownerStatusLabel(problemSalon.status)}. Проверьте публикацию, услуги и контент карточки.`
-                    : "Когда появится салон с недоработками, он будет поднят сюда автоматически."}
-                </p>
-                {problemSalon && (
-                  <Button className="mt-4 w-full" asChild>
-                    <Link href={`/owner/salon/${problemSalon.id}`}>Исправить сейчас</Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <section className={activeSection === "overview" ? "grid gap-4 md:grid-cols-2 xl:grid-cols-4" : "hidden"}>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Салоны</p>
-              <Store className="h-5 w-5 text-primary" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{salons.length}</p>
-            <p className="mt-2 text-sm text-muted-foreground">активные, черновики и паузы в одном месте</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Брони сегодня</p>
-              <CalendarClock className="h-5 w-5 text-sky-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{overview?.today.bookings ?? 0}</p>
-            <p className="mt-2 text-sm text-muted-foreground">новые визиты и подтверждения на сегодня</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Выручка недели</p>
-              <Wallet className="h-5 w-5 text-emerald-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{formatMoney(overview?.week.revenue)}</p>
-            <p className="mt-2 text-sm text-muted-foreground">UZS • динамика {Math.round(overview?.week.revenueChange || 0)}%</p>
-          </Card>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Отзывы</p>
-              <Star className="h-5 w-5 text-pink-500" />
-            </div>
-            <p className="mt-4 text-3xl font-semibold text-foreground">{stats.totalReviews}</p>
-            <p className="mt-2 text-sm text-muted-foreground">накопленный social proof по сети</p>
-          </Card>
-        </section>
-
-        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.1fr_0.9fr]" : "hidden"}>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Нужно сделать сейчас</h3>
-                <p className="text-sm text-muted-foreground">Приоритетные owner-задачи без лишнего шума</p>
-              </div>
-              <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary">
-                {attentionItems.length} в фокусе
-              </Badge>
-            </div>
-            <div className="mt-5 space-y-3">
-              {attentionItems.length > 0 ? (
-                attentionItems.map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <p className="text-sm leading-6 text-foreground">{item}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                  Критичных задач сейчас нет. Можно спокойно дорабатывать витрину, услуги и команду.
-                </div>
-              )}
-            </div>
-          </Card>
-
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Быстрые действия</h3>
-                <p className="text-sm text-muted-foreground">Владелец должен действовать, а не искать кнопку</p>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Button asChild className="justify-start">
-                <Link href="/owner">
-                  <Store className="mr-2 h-4 w-4" />
-                  Мои салоны
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => document.getElementById("owner-create-salon")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Добавить салон
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => document.getElementById("owner-support")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Написать платформе
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => document.getElementById("owner-notifications")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                <Bell className="mr-2 h-4 w-4" />
-                Уведомления
-              </Button>
-              <Button variant="outline" className="justify-start" asChild>
-                <Link href="/search">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Проверить витрину
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start">
-                <Settings className="mr-2 h-4 w-4" />
-                Настройки owner-доступа
-              </Button>
-            </div>
-          </Card>
-        </section>
-
-        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[1.15fr_0.85fr]" : "hidden"}>
-          <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Alerts и активность</h3>
-                <p className="text-sm text-muted-foreground">Сигналы по сети и последние изменения</p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">Что требует внимания</p>
-                {alerts.length > 0 ? (
-                  alerts.slice(0, 6).map((alert, index) => (
-                    <div key={`${alert.type}-${index}`} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <Badge
-                          variant="outline"
-                          className={
-                            alert.severity === "error"
-                              ? "border-destructive/40 bg-destructive/10 text-destructive"
-                              : alert.severity === "warning"
-                                ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                                : "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
-                          }
-                        >
-                          {alert.severity === "error" ? "Критично" : alert.severity === "warning" ? "Внимание" : "Инфо"}
-                        </Badge>
-                        {alert.salonId && (
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/owner/salon/${alert.salonId}`}>Открыть</Link>
-                          </Button>
+                  {group.ids.map((id) => {
+                    const item = sectionTabs.find((tab) => tab.value === id)!;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => openOwnerSection(id)}
+                        aria-current={activeSection === id ? "page" : undefined}
+                        className={
+                          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors " +
+                          (activeSection === id
+                            ? "bg-primary/10 font-semibold text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                        }
+                      >
+                        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        {item.label}
+                        {id === "notifications" && stats.unreadNotifications > 0 && (
+                          <Badge className="ml-auto">{stats.unreadNotifications}</Badge>
                         )}
-                      </div>
-                      <p className="mt-3 break-words text-sm leading-6 text-foreground">{alert.message}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                    Явных owner-alerts сейчас нет.
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">Последняя активность</p>
-                {activity.length > 0 ? (
-                  activity.slice(0, 6).map((item, index) => (
-                    <div key={`${item.type}-${index}`} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <p className="text-sm font-medium text-foreground">{item.message}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.type}</p>
-                      <p className="mt-3 text-sm text-muted-foreground">{formatDate(item.timestamp)}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                    Активность появится после новых записей, подтверждений и событий в owner-сети.
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          <Card id="owner-create-salon" className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Добавить салон</h3>
-                <p className="text-sm text-muted-foreground">Минимальный wizard для быстрого старта</p>
-              </div>
-              <Plus className="h-5 w-5 text-primary" />
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <Input
-                placeholder="Название салона (RU)"
-                value={salonDraft.nameRu}
-                onChange={(event) => setSalonDraft((current) => ({ ...current, nameRu: event.target.value }))}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  placeholder="Название (EN)"
-                  value={salonDraft.nameEn}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, nameEn: event.target.value }))}
-                />
-                <Input
-                  placeholder="Название (UZ)"
-                  value={salonDraft.nameUz}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, nameUz: event.target.value }))}
-                />
-              </div>
-              <Input
-                placeholder="Адрес салона"
-                value={salonDraft.address}
-                onChange={(event) => setSalonDraft((current) => ({ ...current, address: event.target.value }))}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  placeholder="Телефон"
-                  value={salonDraft.phone}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, phone: event.target.value }))}
-                />
-                <Input
-                  placeholder="Email салона"
-                  value={salonDraft.email}
-                  onChange={(event) => setSalonDraft((current) => ({ ...current, email: event.target.value }))}
-                />
-              </div>
-              <Textarea
-                placeholder="Краткое описание салона (RU)"
-                rows={4}
-                value={salonDraft.descriptionRu}
-                onChange={(event) => setSalonDraft((current) => ({ ...current, descriptionRu: event.target.value }))}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-2 text-sm text-muted-foreground">
-                  <span>Статус на старте</span>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                    value={salonDraft.status}
-                    onChange={(event) =>
-                      setSalonDraft((current) => ({ ...current, status: event.target.value as SalonDraft["status"] }))
-                    }
-                  >
-                    <option value="draft">Черновик</option>
-                    <option value="paused">На паузе</option>
-                    <option value="active">Сразу публиковать</option>
-                  </select>
-                </label>
-                <label className="space-y-2 text-sm text-muted-foreground">
-                  <span>Город</span>
-                  <Input
-                    placeholder="Ташкент"
-                    value={salonDraft.cityRu}
-                    onChange={(event) =>
-                      setSalonDraft((current) => ({
-                        ...current,
-                        cityRu: event.target.value,
-                        cityEn: current.cityEn || event.target.value,
-                        cityUz: current.cityUz || event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              </div>
-
-              <Button className="w-full" onClick={() => void handleCreateSalon()} disabled={creatingSalon}>
-                {creatingSalon ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FolderPlus className="mr-2 h-4 w-4" />}
-                Создать салон
-              </Button>
-            </div>
-          </Card>
-        </section>
-
-        <section className={activeSection === "overview" ? "grid gap-4 xl:grid-cols-[0.9fr_1.1fr]" : "hidden"}>
-          <Card id="owner-support" className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Поддержка платформы</h3>
-                <p className="text-sm text-muted-foreground">Owner ↔ AURELLE без внешних мессенджеров</p>
-              </div>
-              <MessageSquare className="h-5 w-5 text-primary" />
-            </div>
-            <div className="mt-5 space-y-3">
-              <Input
-                placeholder="Тема обращения"
-                value={supportDraft.subject}
-                onChange={(event) => setSupportDraft((current) => ({ ...current, subject: event.target.value }))}
-              />
-              <label className="space-y-2 text-sm text-muted-foreground">
-                <span>Категория</span>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                  value={supportDraft.category}
-                  onChange={(event) => setSupportDraft((current) => ({ ...current, category: event.target.value }))}
-                >
-                  <option value="account">Аккаунт и доступ</option>
-                  <option value="moderation">Модерация</option>
-                  <option value="booking">Записи и клиенты</option>
-                  <option value="payment">Платежи и финансы</option>
-                  <option value="bug">Техническая проблема</option>
-                  <option value="suggestion">Предложение по улучшению</option>
-                </select>
-              </label>
-              <Textarea
-                placeholder="Опишите проблему, вопрос или запрос"
-                rows={5}
-                value={supportDraft.message}
-                onChange={(event) => setSupportDraft((current) => ({ ...current, message: event.target.value }))}
-              />
-              <Button className="w-full" onClick={() => void handleSupportTicket()} disabled={sendingSupport}>
-                {sendingSupport ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
-                Отправить обращение
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="border-border/70 p-5 shadow-sm">
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </nav>
+          </aside>
+          <main id="main-content" className="min-w-0 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">История обращений</h3>
-                <p className="text-sm text-muted-foreground">Что уже открыто, решено или ждёт ответа</p>
+                <h2 className="text-2xl font-semibold">
+                  {sectionTabs.find((tab) => tab.value === activeSection)?.label || "Обзор"}
+                </h2>
+                {activeSection === "overview" && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Здравствуйте, {ownerName}. Здесь главное о работе ваших салонов.
+                  </p>
+                )}
               </div>
-              <Badge variant="outline" className="border-border/70">{tickets.length} всего</Badge>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {tickets.length > 0 ? (
-                tickets.slice(0, 8).map((ticket) => (
-                  <div key={ticket.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
-                      </div>
-                      <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <span>Создано: {formatDate(ticket.createdAt)}</span>
-                      <span>Обновлено: {formatDate(ticket.updatedAt)}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                  Пока нет обращений. Когда owner напишет платформе, история появится здесь.
-                </div>
+              {activeSection !== "add-salon" && (
+                <Button onClick={() => openOwnerSection("add-salon")} className="rounded-xl">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Добавить салон
+                </Button>
               )}
             </div>
-          </Card>
-        </section>
-
-        <OwnerWorkspaceSections
-          activeSection={activeSection}
-          salons={salons}
-          language={language}
-          wizardOpen={wizardOpen}
-          setWizardOpen={setWizardOpen}
-          salonDraft={salonDraft}
-          setSalonDraft={setSalonDraft}
-          supportDraft={supportDraft}
-          setSupportDraft={setSupportDraft}
-          creatingSalon={creatingSalon}
-          sendingSupport={sendingSupport}
-          sectionLoading={sectionLoading}
-          ownerClients={ownerClients}
-          ownerReviews={ownerReviews}
-          analyticsSalons={analyticsSalons}
-          tickets={tickets}
-          notifications={notifications}
-          stats={{
-            unreadNotifications: stats.unreadNotifications,
-            unresolvedTickets: stats.unresolvedTickets,
-          }}
-          onCreateSalon={handleCreateSalon}
-          onSupportTicket={handleSupportTicket}
-          onCloseSupportTicket={closeSupportTicket}
-          onStatusChange={handleStatusChange}
-          onMarkNotificationRead={markNotificationRead}
-          onMarkAllNotificationsRead={markAllNotificationsRead}
-          onRefresh={handleRefresh}
-          openOwnerSection={openOwnerSection}
-          localize={localize}
-          formatMoney={formatMoney}
-          formatDate={formatDate}
-          ownerStatusLabel={ownerStatusLabel}
-          ownerStatusBadgeClass={ownerStatusBadgeClass}
-        />
+            {activeSection === "overview" && (
+              <>
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                  {[
+                    {
+                      label: "Записи сегодня",
+                      value: overview?.today.bookings ?? 0,
+                      tab: "bookings",
+                      Icon: CalendarClock,
+                    },
+                    {
+                      label: "Выручка за неделю",
+                      value: formatMoney(overview?.week.revenue) + " UZS",
+                      tab: "analytics",
+                      Icon: Wallet,
+                    },
+                    { label: "Мои салоны", value: salons.length, tab: "salons", Icon: Store },
+                    { label: "Отзывы", value: stats.totalReviews, tab: "reviews", Icon: Star },
+                  ].map(({ label, value, tab, Icon }) => (
+                    <button
+                      key={tab}
+                      onClick={() => openOwnerSection(tab)}
+                      className="rounded-2xl border border-border/70 bg-card p-4 text-left transition-colors hover:border-primary/40"
+                    >
+                      <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                        {label}
+                        <Icon className="h-4 w-4 shrink-0" />
+                      </div>
+                      <p className="mt-3 break-words text-2xl font-semibold">{value}</p>
+                    </button>
+                  ))}
+                </div>
+                <Card className="rounded-2xl p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="font-semibold">Мои салоны</h3>
+                    <Button variant="ghost" size="sm" onClick={() => openOwnerSection("salons")}>
+                      Все салоны
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                  {salons.length ? (
+                    <div className="divide-y divide-border/70">
+                      {salons.slice(0, 4).map((salon) => (
+                        <div
+                          key={salon.id}
+                          className="flex flex-wrap items-center justify-between gap-4 py-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium">{localize(salon.name, language)}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {salon.address || localize(salon.city, language)}
+                            </p>
+                            <Badge variant="outline" className="mt-2">
+                              {ownerStatusLabel(salon.status)}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button asChild size="sm">
+                              <Link href={"/owner/salon/" + salon.id + "?tab=bookings"}>
+                                Записи
+                              </Link>
+                            </Button>
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={"/owner/salon/" + salon.id}>Управление</Link>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center">
+                      <Store className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                      <p className="font-medium">Добавьте первый салон</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Укажите услуги и команду, чтобы начать принимать записи.
+                      </p>
+                      <Button className="mt-4" onClick={() => openOwnerSection("add-salon")}>
+                        Добавить салон
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+                <Card className="rounded-2xl p-5">
+                  <h3 className="mb-4 font-semibold">Требует внимания</h3>
+                  {alerts.length ? (
+                    <div className="space-y-3">
+                      {alerts.slice(0, 4).map((alert, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-3 rounded-xl bg-muted/40 p-3"
+                        >
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <div className="flex-1 text-sm">{alert.message}</div>
+                          {alert.salonId && (
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={"/owner/salon/" + alert.salonId}>Открыть</Link>
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Сейчас нет важных уведомлений.
+                    </p>
+                  )}
+                </Card>
+              </>
+            )}
+            <OwnerWorkspaceSections
+              activeSection={activeSection}
+              salons={salons}
+              language={language}
+              wizardOpen={wizardOpen}
+              setWizardOpen={setWizardOpen}
+              salonDraft={salonDraft}
+              setSalonDraft={setSalonDraft}
+              supportDraft={supportDraft}
+              setSupportDraft={setSupportDraft}
+              creatingSalon={creatingSalon}
+              sendingSupport={sendingSupport}
+              sectionLoading={sectionLoading}
+              ownerClients={ownerClients}
+              ownerReviews={ownerReviews}
+              analyticsSalons={analyticsSalons}
+              tickets={tickets}
+              notifications={notifications}
+              stats={{
+                unreadNotifications: stats.unreadNotifications,
+                unresolvedTickets: stats.unresolvedTickets,
+              }}
+              onCreateSalon={handleCreateSalon}
+              onSupportTicket={handleSupportTicket}
+              onCloseSupportTicket={closeSupportTicket}
+              onStatusChange={handleStatusChange}
+              onMarkNotificationRead={markNotificationRead}
+              onMarkAllNotificationsRead={markAllNotificationsRead}
+              onRefresh={handleRefresh}
+              openOwnerSection={openOwnerSection}
+              localize={localize}
+              formatMoney={formatMoney}
+              formatDate={formatDate}
+              ownerStatusLabel={ownerStatusLabel}
+              ownerStatusBadgeClass={ownerStatusBadgeClass}
+            />
+          </main>
+        </div>
       </div>
     </div>
   );

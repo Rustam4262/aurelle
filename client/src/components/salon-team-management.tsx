@@ -329,12 +329,18 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
         <Card className="border-border/70 p-4 shadow-sm">
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отозваны</p>
           <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.revoked}</p>
-          <p className="mt-2 text-sm text-muted-foreground">История доступов без потери контроля.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            История доступов без потери контроля.
+          </p>
         </Card>
         <Card className="border-border/70 p-4 shadow-sm">
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Права</p>
-          <p className="mt-3 text-2xl font-semibold text-foreground">{managerSummary.permissionCoverage}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Суммарно выданных разрешений по команде.</p>
+          <p className="mt-3 text-2xl font-semibold text-foreground">
+            {managerSummary.permissionCoverage}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Суммарно выданных разрешений по команде.
+          </p>
         </Card>
       </div>
 
@@ -383,11 +389,11 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
                   <div className="mt-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                      <Shield className="h-3 w-3" />
-                      <span>
-                        {t("marketplace.team.permissions")} ({manager.permissions.length})
-                      </span>
-                    </div>
+                        <Shield className="h-3 w-3" />
+                        <span>
+                          {t("marketplace.team.permissions")} ({manager.permissions.length})
+                        </span>
+                      </div>
                       <span className="text-xs uppercase tracking-[0.16em]">
                         {manager.status === "active"
                           ? "Рабочий доступ"
@@ -482,13 +488,28 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
             <div>
               <Label>{t("marketplace.team.selectPermissions")}</Label>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("operations")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPermissionPreset("operations")}
+                >
                   Операции
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("catalog")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPermissionPreset("catalog")}
+                >
                   Контент
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("full")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPermissionPreset("full")}
+                >
                   Полный доступ
                 </Button>
               </div>
@@ -559,13 +580,28 @@ export function SalonTeamManagement({ salonId }: SalonTeamManagementProps) {
               <div>
                 <Label>{t("marketplace.team.permissions")}</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("operations")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyPermissionPreset("operations")}
+                  >
                     Операции
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("catalog")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyPermissionPreset("catalog")}
+                  >
                     Контент
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPermissionPreset("full")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyPermissionPreset("full")}
+                  >
                     Полный доступ
                   </Button>
                 </div>

@@ -56,13 +56,20 @@ export function HomeCTA() {
 
             <div className="grid gap-4 self-stretch sm:grid-cols-2 lg:grid-cols-1">
               <div className="rounded-[1.75rem] border border-border/60 bg-background/75 p-5">
-                <p className="text-sm font-medium text-muted-foreground">{t("marketplace.cta.forClients")}</p>
-                <p className="mt-3 text-2xl font-semibold text-foreground">{t("marketplace.cta.clientTitle")}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("marketplace.cta.forClients")}
+                </p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">
+                  {t("marketplace.cta.clientTitle")}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {t("marketplace.cta.clientDescription")}
                 </p>
                 <Link href="/search">
-                  <Button variant="ghost" className="mt-4 rounded-full px-0 text-primary hover:bg-transparent">
+                  <Button
+                    variant="ghost"
+                    className="mt-4 rounded-full px-0 text-primary hover:bg-transparent"
+                  >
                     {t("marketplace.nav.explore")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -70,12 +77,17 @@ export function HomeCTA() {
               </div>
               <div className="rounded-[1.75rem] border border-primary/15 bg-primary/5 p-5">
                 <p className="text-sm font-medium text-primary">{t("marketplace.cta.forOwners")}</p>
-                <p className="mt-3 text-2xl font-semibold text-foreground">{t("marketplace.cta.ownerTitle")}</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">
+                  {t("marketplace.cta.ownerTitle")}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {t("marketplace.cta.ownerDescription")}
                 </p>
                 <Link href="/owner">
-                  <Button variant="ghost" className="mt-4 rounded-full px-0 text-primary hover:bg-transparent">
+                  <Button
+                    variant="ghost"
+                    className="mt-4 rounded-full px-0 text-primary hover:bg-transparent"
+                  >
                     {t("marketplace.nav.forOwners")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

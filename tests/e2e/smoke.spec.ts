@@ -34,11 +34,7 @@ async function assertPageHealthy(page: Page, errors: string[], pageName: string)
   await expect(errorBoundary, `${pageName}: ErrorBoundary не должен рендериться`).toHaveCount(0);
 
   // Нет текстов ошибок
-  const errorTexts = [
-    "Что-то пошло не так",
-    "Something went wrong",
-    "Nimadirdir noto'g'ri ketdi",
-  ];
+  const errorTexts = ["Что-то пошло не так", "Something went wrong", "Nimadirdir noto'g'ri ketdi"];
   for (const text of errorTexts) {
     const loc = page.getByText(text, { exact: false });
     const count = await loc.count();
@@ -57,7 +53,9 @@ async function assertPageHealthy(page: Page, errors: string[], pageName: string)
   );
 
   if (visibleRawKeys.length > 0) {
-    console.warn(`${pageName}: Possible raw i18n keys found: ${[...new Set(visibleRawKeys)].slice(0, 5).join(", ")}`);
+    console.warn(
+      `${pageName}: Possible raw i18n keys found: ${[...new Set(visibleRawKeys)].slice(0, 5).join(", ")}`,
+    );
   }
 
   // Console errors
@@ -170,10 +168,7 @@ test.describe("Smoke — CSP & Resources", () => {
 
     // Ловим CSP violations
     page.on("console", (msg: ConsoleMessage) => {
-      if (
-        msg.type() === "error" &&
-        msg.text().toLowerCase().includes("content security policy")
-      ) {
+      if (msg.type() === "error" && msg.text().toLowerCase().includes("content security policy")) {
         cspViolations.push(msg.text());
       }
     });

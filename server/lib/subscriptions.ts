@@ -15,12 +15,7 @@ import { logger } from "./logger";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type SubscriptionStatus =
-  | "trialing"
-  | "active"
-  | "past_due"
-  | "cancelled"
-  | "expired";
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "cancelled" | "expired";
 
 export interface SubscriptionInfo {
   salonId: string;
@@ -54,12 +49,7 @@ export async function startTrial(salonId: string): Promise<void> {
   const [plan] = await db
     .select({ id: subscriptionPlans.id, trialDays: subscriptionPlans.trialDays })
     .from(subscriptionPlans)
-    .where(
-      and(
-        eq(subscriptionPlans.slug, "starter"),
-        eq(subscriptionPlans.isActive, true),
-      ),
-    )
+    .where(and(eq(subscriptionPlans.slug, "starter"), eq(subscriptionPlans.isActive, true)))
     .limit(1);
 
   if (!plan) {
@@ -146,12 +136,7 @@ async function expireTrials(): Promise<number> {
   const result = await db
     .update(salonSubscriptions)
     .set({ status: "expired", updatedAt: now })
-    .where(
-      and(
-        eq(salonSubscriptions.status, "trialing"),
-        lte(salonSubscriptions.trialEndsAt, now),
-      ),
-    )
+    .where(and(eq(salonSubscriptions.status, "trialing"), lte(salonSubscriptions.trialEndsAt, now)))
     .returning({ salonId: salonSubscriptions.salonId });
 
   return result.length;
@@ -183,10 +168,7 @@ async function expirePeriods(): Promise<number> {
  * Called by startLifecycleCron() every hour.
  */
 export async function runLifecycleTick(): Promise<void> {
-  const [expiredTrials, expiredPeriods] = await Promise.all([
-    expireTrials(),
-    expirePeriods(),
-  ]);
+  const [expiredTrials, expiredPeriods] = await Promise.all([expireTrials(), expirePeriods()]);
 
   if (expiredTrials > 0 || expiredPeriods > 0) {
     logger.info("[Cron] Subscription lifecycle tick", {
@@ -211,15 +193,18 @@ export function startLifecycleCron(): void {
   });
 
   // Then every hour
-  setInterval(() => {
-    runLifecycleTick().catch((err: unknown) => {
-      logger.error(
-        "Subscription lifecycle tick failed",
-        err instanceof Error ? err : new Error(String(err)),
-        { source: "subscriptions" },
-      );
-    });
-  }, 60 * 60 * 1000);
+  setInterval(
+    () => {
+      runLifecycleTick().catch((err: unknown) => {
+        logger.error(
+          "Subscription lifecycle tick failed",
+          err instanceof Error ? err : new Error(String(err)),
+          { source: "subscriptions" },
+        );
+      });
+    },
+    60 * 60 * 1000,
+  );
 
   logger.info("[Cron] Subscription lifecycle cron started (1h interval)", {
     source: "subscriptions",

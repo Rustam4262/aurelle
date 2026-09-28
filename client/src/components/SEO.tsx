@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from "react-helmet-async";
 
 export interface SEOProps {
   title?: string;
@@ -6,13 +6,13 @@ export interface SEOProps {
   keywords?: string;
   image?: string;
   url?: string;
-  type?: 'website' | 'article' | 'profile' | 'business.business';
+  type?: "website" | "article" | "profile" | "business.business";
   locale?: string;
   siteName?: string;
   author?: string;
   publishedTime?: string;
   modifiedTime?: string;
-  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player';
+  twitterCard?: "summary" | "summary_large_image" | "app" | "player";
   twitterSite?: string;
   structuredData?: any; // Schema.org JSON-LD
   noIndex?: boolean;
@@ -20,13 +20,14 @@ export interface SEOProps {
 }
 
 const defaultProps: Partial<SEOProps> = {
-  siteName: 'AURELLE',
-  type: 'website',
-  locale: 'ru_RU',
-  twitterCard: 'summary_large_image',
-  twitterSite: '@aurelle_uz',
-  image: 'https://aurelle.uz/og-image.jpg', // Default OG image
-  description: 'AURELLE - современная платформа для поиска салонов красоты и записи к мастерам в Узбекистане. Маникюр, педикюр, стрижки, макияж и другие услуги онлайн.',
+  siteName: "AURELLE",
+  type: "website",
+  locale: "ru_RU",
+  twitterCard: "summary_large_image",
+  twitterSite: "@aurelle_uz",
+  image: "https://aurelle.uz/og-image.jpg", // Default OG image
+  description:
+    "AURELLE - современная платформа для поиска салонов красоты и записи к мастерам в Узбекистане. Маникюр, педикюр, стрижки, макияж и другие услуги онлайн.",
 };
 
 export function SEO(props: SEOProps) {
@@ -50,7 +51,8 @@ export function SEO(props: SEOProps) {
   } = props;
 
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
-  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://aurelle.uz');
+  const currentUrl =
+    url || (typeof window !== "undefined" ? window.location.href : "https://aurelle.uz");
   const canonicalUrl = canonical || currentUrl;
 
   return (
@@ -85,9 +87,7 @@ export function SEO(props: SEOProps) {
 
       {/* Structured Data (Schema.org) */}
       {structuredData && (
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       )}
     </Helmet>
   );
@@ -103,14 +103,14 @@ export const HomeSEO = () => (
     structuredData={{
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "AURELLE",
-      "url": "https://aurelle.uz",
-      "description": "Платформа для поиска салонов красоты и записи к мастерам",
-      "potentialAction": {
+      name: "AURELLE",
+      url: "https://aurelle.uz",
+      description: "Платформа для поиска салонов красоты и записи к мастерам",
+      potentialAction: {
         "@type": "SearchAction",
-        "target": "https://aurelle.uz/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+        target: "https://aurelle.uz/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
     }}
   />
 );
@@ -130,7 +130,7 @@ export const SalonSEO = ({
   rating,
   address,
   phone,
-  services
+  services,
 }: {
   salonName: string;
   description?: string;
@@ -142,36 +142,44 @@ export const SalonSEO = ({
 }) => (
   <SEO
     title={`${salonName} - салон красоты`}
-    description={description || `Запись в салон ${salonName}. Профессиональные услуги красоты в Узбекистане.`}
+    description={
+      description || `Запись в салон ${salonName}. Профессиональные услуги красоты в Узбекистане.`
+    }
     image={image}
     type="business.business"
     structuredData={{
       "@context": "https://schema.org",
       "@type": "BeautySalon",
-      "name": salonName,
-      "description": description,
-      "image": image,
-      "address": address ? {
-        "@type": "PostalAddress",
-        "streetAddress": address
-      } : undefined,
-      "telephone": phone,
-      "aggregateRating": rating ? {
-        "@type": "AggregateRating",
-        "ratingValue": rating,
-        "bestRating": "5"
-      } : undefined,
-      "hasOfferCatalog": services ? {
-        "@type": "OfferCatalog",
-        "name": "Beauty Services",
-        "itemListElement": services.map((service, index) => ({
-          "@type": "Offer",
-          "itemOffered": {
-            "@type": "Service",
-            "name": service
+      name: salonName,
+      description: description,
+      image: image,
+      address: address
+        ? {
+            "@type": "PostalAddress",
+            streetAddress: address,
           }
-        }))
-      } : undefined
+        : undefined,
+      telephone: phone,
+      aggregateRating: rating
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: rating,
+            bestRating: "5",
+          }
+        : undefined,
+      hasOfferCatalog: services
+        ? {
+            "@type": "OfferCatalog",
+            name: "Beauty Services",
+            itemListElement: services.map((service, index) => ({
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: service,
+              },
+            })),
+          }
+        : undefined,
     }}
   />
 );
@@ -181,7 +189,7 @@ export const MasterSEO = ({
   specialty,
   bio,
   image,
-  rating
+  rating,
 }: {
   masterName: string;
   specialty?: string;
@@ -190,22 +198,24 @@ export const MasterSEO = ({
   rating?: number;
 }) => (
   <SEO
-    title={`${masterName}${specialty ? ` - ${specialty}` : ''}`}
+    title={`${masterName}${specialty ? ` - ${specialty}` : ""}`}
     description={bio || `Запись к мастеру ${masterName}. Профессиональные услуги красоты.`}
     image={image}
     type="profile"
     structuredData={{
       "@context": "https://schema.org",
       "@type": "Person",
-      "name": masterName,
-      "description": bio,
-      "image": image,
-      "jobTitle": specialty,
-      "aggregateRating": rating ? {
-        "@type": "AggregateRating",
-        "ratingValue": rating,
-        "bestRating": "5"
-      } : undefined
+      name: masterName,
+      description: bio,
+      image: image,
+      jobTitle: specialty,
+      aggregateRating: rating
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: rating,
+            bestRating: "5",
+          }
+        : undefined,
     }}
   />
 );
@@ -217,7 +227,7 @@ export const BlogPostSEO = ({
   author,
   publishedTime,
   modifiedTime,
-  tags
+  tags,
 }: {
   title: string;
   description: string;
@@ -235,20 +245,20 @@ export const BlogPostSEO = ({
     author={author}
     publishedTime={publishedTime}
     modifiedTime={modifiedTime}
-    keywords={tags?.join(', ')}
+    keywords={tags?.join(", ")}
     structuredData={{
       "@context": "https://schema.org",
       "@type": "BlogPosting",
-      "headline": title,
-      "description": description,
-      "image": image,
-      "author": {
+      headline: title,
+      description: description,
+      image: image,
+      author: {
         "@type": "Person",
-        "name": author
+        name: author,
       },
-      "datePublished": publishedTime,
-      "dateModified": modifiedTime || publishedTime,
-      "keywords": tags?.join(', ')
+      datePublished: publishedTime,
+      dateModified: modifiedTime || publishedTime,
+      keywords: tags?.join(", "),
     }}
   />
 );

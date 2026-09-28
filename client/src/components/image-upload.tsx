@@ -228,9 +228,7 @@ export function ImageUpload({
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        {t("upload.accepts", { size: maxSize })}
-      </p>
+      <p className="text-sm text-muted-foreground">{t("upload.accepts", { size: maxSize })}</p>
     </div>
   );
 }
@@ -338,9 +336,7 @@ export function MultiImageUpload({
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <Label>
-          {t("upload.imagesCount", { count: values.length, max: maxImages })}
-        </Label>
+        <Label>{t("upload.imagesCount", { count: values.length, max: maxImages })}</Label>
 
         <Input
           ref={fileInputRef}

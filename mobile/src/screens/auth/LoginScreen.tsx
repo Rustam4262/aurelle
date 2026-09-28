@@ -41,12 +41,8 @@ export function LoginScreen({ navigation }: Props) {
     <ScreenWrapper scroll padded>
       {/* Logo / Header */}
       <View className="items-center mt-12 mb-10">
-        <Text className="text-4xl font-bold text-primary tracking-widest">
-          AURELLE
-        </Text>
-        <Text className="text-gray-500 mt-2 text-base">
-          Красота у вас под рукой
-        </Text>
+        <Text className="text-4xl font-bold text-primary tracking-widest">AURELLE</Text>
+        <Text className="text-gray-500 mt-2 text-base">Красота у вас под рукой</Text>
       </View>
 
       {/* Form */}
@@ -95,11 +91,7 @@ export function LoginScreen({ navigation }: Props) {
           <Text className="text-primary text-sm">Забыли пароль?</Text>
         </TouchableOpacity>
 
-        <Button
-          title="Войти"
-          onPress={onSubmit}
-          loading={loginMutation.isPending}
-        />
+        <Button title="Войти" onPress={onSubmit} loading={loginMutation.isPending} />
       </View>
 
       {/* Footer */}

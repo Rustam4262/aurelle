@@ -195,7 +195,9 @@ export default function AdminSanctions() {
                   <TableRow key={sanction.id}>
                     <TableCell>
                       <div>
-                        <p className="text-sm font-medium capitalize">{sanction.targetType}</p>
+                        <p className="text-sm font-medium capitalize">
+                          {t(`admin.sanctions.targets.${sanction.targetType}`, sanction.targetType)}
+                        </p>
                         <p className="text-xs text-muted-foreground font-mono">
                           {sanction.targetId.slice(0, 12)}...
                         </p>
@@ -269,7 +271,12 @@ export default function AdminSanctions() {
                   <Label className="text-sm font-medium text-muted-foreground">
                     {t("admin.sanctions.detailsDialog.labels.targetType")}
                   </Label>
-                  <p className="text-sm mt-1 capitalize">{selectedSanction.targetType}</p>
+                  <p className="text-sm mt-1 capitalize">
+                    {t(
+                      `admin.sanctions.targets.${selectedSanction.targetType}`,
+                      selectedSanction.targetType,
+                    )}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">

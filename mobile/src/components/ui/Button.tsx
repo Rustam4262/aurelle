@@ -59,14 +59,9 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === "primary" ? "#fff" : "#C81D60"}
-        />
+        <ActivityIndicator size="small" color={variant === "primary" ? "#fff" : "#C81D60"} />
       ) : (
-        <Text className={`${textVariants[variant]} ${textSizes[size]}`}>
-          {title}
-        </Text>
+        <Text className={`${textVariants[variant]} ${textSizes[size]}`}>{title}</Text>
       )}
     </TouchableOpacity>
   );

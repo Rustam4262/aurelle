@@ -98,9 +98,7 @@ async function main(): Promise<void> {
     }
 
     // Informational: tables in DB not in our checklist
-    const extra = [...existing].filter(
-      (t) => !(REQUIRED_TABLES as readonly string[]).includes(t),
-    );
+    const extra = [...existing].filter((t) => !(REQUIRED_TABLES as readonly string[]).includes(t));
     if (extra.length > 0) {
       console.log(`\n  ℹ️   Extra tables in DB (not in checklist): ${extra.join(", ")}`);
     }
@@ -121,9 +119,7 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    console.log(
-      `\n✅  DB schema OK — ${ok}/${REQUIRED_TABLES.length} required tables verified.`,
-    );
+    console.log(`\n✅  DB schema OK — ${ok}/${REQUIRED_TABLES.length} required tables verified.`);
   } finally {
     await pool.end();
   }

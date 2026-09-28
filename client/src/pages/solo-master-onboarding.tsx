@@ -265,20 +265,47 @@ export default function SoloMasterOnboarding() {
     return null;
   }
 
+  const stepTitles: Record<OnboardingStep, string> = {
+    basic: t("soloMaster.onboarding.step1Title", "Basic Information"),
+    location: t("soloMaster.onboarding.step2Title", "Your Location"),
+    "service-mode": t("soloMaster.onboarding.step3Title", "Service Mode"),
+    slug: t("soloMaster.onboarding.step4Title", "Your Public Page"),
+    schedule: t("soloMaster.onboarding.step5Title", "Working Hours"),
+  };
+
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {steps.map((s, i) => (
-        <div
-          key={s}
-          className={`w-3 h-3 rounded-full transition-colors ${
-            i === currentStepIndex
-              ? "bg-primary"
-              : i < currentStepIndex
-                ? "bg-primary/50"
-                : "bg-muted"
-          }`}
-        />
-      ))}
+    <div className="mb-8">
+      <div className="flex items-center justify-center gap-2">
+        {steps.map((s, i) => (
+          <div key={s} className="flex items-center">
+            <div
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                i === currentStepIndex
+                  ? "bg-primary text-primary-foreground"
+                  : i < currentStepIndex
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {i < currentStepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
+            </div>
+            {i < steps.length - 1 && (
+              <div
+                className={`h-0.5 w-6 sm:w-10 transition-colors ${
+                  i < currentStepIndex ? "bg-primary/40" : "bg-muted"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-center text-sm text-muted-foreground">
+        {t("soloMaster.onboarding.stepProgress", {
+          current: currentStepIndex + 1,
+          total: steps.length,
+          title: stepTitles[step],
+        })}
+      </p>
     </div>
   );
 

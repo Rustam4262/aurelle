@@ -274,7 +274,7 @@ export default function AdminBilling() {
       {
         title: "Комиссия платформы",
         value: formatUzs(data.platformFeeUzs),
-        subtitle: `Take rate ${data.takeRate}%`,
+        subtitle: `Комиссия ${data.takeRate}%`,
         icon: Coins,
         tone: "text-orange-600 bg-orange-500/10",
       },
@@ -288,7 +288,7 @@ export default function AdminBilling() {
       {
         title: "Риск-очередь",
         value: `${revenueQuery.data?.pending.count ?? 0} / ${revenueQuery.data?.failed.count ?? 0}`,
-        subtitle: "Pending / Failed",
+        subtitle: "Ожидают / Неуспешных",
         icon: CreditCard,
         tone: "text-rose-600 bg-rose-500/10",
       },
@@ -301,7 +301,7 @@ export default function AdminBilling() {
   const financeSignals = [
     {
       id: "take-rate",
-      label: "Take rate",
+      label: "Комиссия платформы",
       value: revenueQuery.data ? `${revenueQuery.data.succeeded.takeRate}%` : "0%",
       helper: "Средняя доля платформы в успешных платежах",
     },
@@ -313,7 +313,7 @@ export default function AdminBilling() {
     },
     {
       id: "reconciliation",
-      label: "Reconciliation",
+      label: "Сверка платежей",
       value: reconciliation?.summary.hasIssues ? "Есть риски" : "Стабильно",
       helper: reconciliation?.summary.hasIssues
         ? "Есть сигналы, требующие разбора"
@@ -328,13 +328,18 @@ export default function AdminBilling() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="rounded-full px-3 py-1">Финансовый контур</Badge>
-                <Badge variant="outline" className="rounded-full px-3 py-1">Период: {RANGE_LABELS[range]}</Badge>
+                <Badge variant="secondary" className="rounded-full px-3 py-1">
+                  Финансовый контур
+                </Badge>
+                <Badge variant="outline" className="rounded-full px-3 py-1">
+                  Период: {RANGE_LABELS[range]}
+                </Badge>
               </div>
               <div>
                 <h1 className="text-3xl font-serif font-semibold">Финансы и биллинг</h1>
                 <p className="mt-2 text-muted-foreground">
-                  Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых несоответствий.
+                  Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых
+                  несоответствий.
                 </p>
               </div>
             </div>
@@ -359,7 +364,10 @@ export default function AdminBilling() {
 
           <div className="grid gap-3 md:grid-cols-3">
             {financeSignals.map((signal) => (
-              <div key={signal.id} className="rounded-2xl border border-border bg-background/80 p-4">
+              <div
+                key={signal.id}
+                className="rounded-2xl border border-border bg-background/80 p-4"
+              >
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                   {signal.label}
                 </p>
@@ -375,8 +383,7 @@ export default function AdminBilling() {
         <div>
           <h1 className="text-3xl font-serif font-semibold">Финансы и биллинг</h1>
           <p className="mt-2 text-muted-foreground">
-            Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых
-            несоответствий.
+            Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых несоответствий.
           </p>
         </div>
 
@@ -430,8 +437,7 @@ export default function AdminBilling() {
               GMV по дням
             </CardTitle>
             <CardDescription>
-              Ежедневная динамика успешных, ожидающих и неуспешных платежей за выбранный
-              период.
+              Ежедневная динамика успешных, ожидающих и неуспешных платежей за выбранный период.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -453,28 +459,31 @@ export default function AdminBilling() {
                       <TableHead>День</TableHead>
                       <TableHead>GMV</TableHead>
                       <TableHead>Комиссия</TableHead>
-                      <TableHead>Net</TableHead>
-                      <TableHead>Take rate</TableHead>
+                      <TableHead>Нетто</TableHead>
+                      <TableHead>Комиссия %</TableHead>
                       <TableHead>Платежи</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {gmvRows.slice(-10).reverse().map((row) => (
-                      <TableRow key={row.day}>
-                        <TableCell>{formatDate(row.day)}</TableCell>
-                        <TableCell className="font-medium">{formatUzs(row.gmvUzs)}</TableCell>
-                        <TableCell>{formatUzs(row.feeUzs)}</TableCell>
-                        <TableCell>{formatUzs(row.netUzs)}</TableCell>
-                        <TableCell>{row.takeRatePct}%</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            <Badge variant="secondary">OK {row.succeededCount}</Badge>
-                            <Badge variant="outline">Pending {row.pendingCount}</Badge>
-                            <Badge variant="destructive">Fail {row.failedCount}</Badge>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {gmvRows
+                      .slice(-10)
+                      .reverse()
+                      .map((row) => (
+                        <TableRow key={row.day}>
+                          <TableCell>{formatDate(row.day)}</TableCell>
+                          <TableCell className="font-medium">{formatUzs(row.gmvUzs)}</TableCell>
+                          <TableCell>{formatUzs(row.feeUzs)}</TableCell>
+                          <TableCell>{formatUzs(row.netUzs)}</TableCell>
+                          <TableCell>{row.takeRatePct}%</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="secondary">Успешно {row.succeededCount}</Badge>
+                              <Badge variant="outline">Ожидает {row.pendingCount}</Badge>
+                              <Badge variant="destructive">Ошибка {row.failedCount}</Badge>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </div>
@@ -642,11 +651,11 @@ export default function AdminBilling() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-            Reconciliation и финансовые риски
+            Сверка платежей и финансовые риски
           </CardTitle>
           <CardDescription>
-            Быстрый контроль отсутствующих snapshots комиссии, математических расхождений
-            и orphan webhook events.
+            Быстрый контроль отсутствующих снапшотов комиссии, математических расхождений и
+            webhook-событий без платежа.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -659,22 +668,40 @@ export default function AdminBilling() {
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-3">
-                <Card className={reconciliation.summary.missingFeeCount > 0 ? "border-orange-500/40" : ""}>
+                <Card
+                  className={
+                    reconciliation.summary.missingFeeCount > 0 ? "border-orange-500/40" : ""
+                  }
+                >
                   <CardHeader className="pb-2">
                     <CardDescription>Без snapshot комиссии</CardDescription>
-                    <CardTitle className="text-3xl">{reconciliation.summary.missingFeeCount}</CardTitle>
+                    <CardTitle className="text-3xl">
+                      {reconciliation.summary.missingFeeCount}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
-                <Card className={reconciliation.summary.mathMismatchCount > 0 ? "border-rose-500/40" : ""}>
+                <Card
+                  className={
+                    reconciliation.summary.mathMismatchCount > 0 ? "border-rose-500/40" : ""
+                  }
+                >
                   <CardHeader className="pb-2">
                     <CardDescription>Расхождения в расчётах</CardDescription>
-                    <CardTitle className="text-3xl">{reconciliation.summary.mathMismatchCount}</CardTitle>
+                    <CardTitle className="text-3xl">
+                      {reconciliation.summary.mathMismatchCount}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
-                <Card className={reconciliation.summary.orphanWebhookCount > 0 ? "border-red-500/40" : ""}>
+                <Card
+                  className={
+                    reconciliation.summary.orphanWebhookCount > 0 ? "border-red-500/40" : ""
+                  }
+                >
                   <CardHeader className="pb-2">
                     <CardDescription>Webhook без платежа</CardDescription>
-                    <CardTitle className="text-3xl">{reconciliation.summary.orphanWebhookCount}</CardTitle>
+                    <CardTitle className="text-3xl">
+                      {reconciliation.summary.orphanWebhookCount}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
               </div>
@@ -699,8 +726,8 @@ export default function AdminBilling() {
                         : "Критичных расхождений в биллинге сейчас не видно."}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Этот блок помогает быстро оценить, насколько платежные данные
-                      консистентны на уровне платформы.
+                      Этот блок помогает быстро оценить, насколько платежные данные консистентны на
+                      уровне платформы.
                     </p>
                   </div>
                 </div>

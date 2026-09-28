@@ -164,7 +164,11 @@ export async function sendBookingCreatedSms(
   time: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingCreatedText(clientName, serviceName, date, time, lang), "booking_created");
+  return sendSms(
+    phone,
+    bookingCreatedText(clientName, serviceName, date, time, lang),
+    "booking_created",
+  );
 }
 
 export async function sendBookingCancelledSms(
@@ -174,7 +178,11 @@ export async function sendBookingCancelledSms(
   date: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingCancelledText(clientName, serviceName, date, lang), "booking_cancelled");
+  return sendSms(
+    phone,
+    bookingCancelledText(clientName, serviceName, date, lang),
+    "booking_cancelled",
+  );
 }
 
 export async function sendBookingRescheduledSms(
@@ -185,7 +193,11 @@ export async function sendBookingRescheduledSms(
   newTime: string,
   lang = "ru",
 ): Promise<boolean> {
-  return sendSms(phone, bookingRescheduledText(clientName, serviceName, newDate, newTime, lang), "booking_rescheduled");
+  return sendSms(
+    phone,
+    bookingRescheduledText(clientName, serviceName, newDate, newTime, lang),
+    "booking_rescheduled",
+  );
 }
 
 export async function sendBookingReminderSms(

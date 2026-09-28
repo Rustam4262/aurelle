@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
-import { Link, useLocation, useParams } from "wouter";
+import { Link, useLocation, useParams, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -125,8 +125,11 @@ function isOwnerSalonTab(value: string): value is OwnerSalonTab {
   return ownerSalonTabValues.includes(value as OwnerSalonTab);
 }
 
-function readOwnerSalonTab(location: string): OwnerSalonTab {
-  const requested = new URLSearchParams(location.split("?")[1] || "").get("tab") || "overview";
+function readOwnerSalonTab(search: string): OwnerSalonTab {
+  // Accepts either a bare query string ("tab=x", as returned by wouter's
+  // useSearch()) or a full path with a query string ("/path?tab=x").
+  const queryString = search.includes("?") ? search.split("?").slice(1).join("?") : search;
+  const requested = new URLSearchParams(queryString).get("tab") || "overview";
   const normalized = requested === "staff" ? "masters" : requested;
   return isOwnerSalonTab(normalized) ? normalized : "overview";
 }
@@ -134,7 +137,9 @@ function readOwnerSalonTab(location: string): OwnerSalonTab {
 function normalizeCollection<T extends { id: string }>(input: T[] | null | undefined): T[] {
   if (!Array.isArray(input)) return [];
   return input.filter((item): item is T => {
-    return Boolean(item && typeof item === "object" && typeof item.id === "string" && item.id.trim());
+    return Boolean(
+      item && typeof item === "object" && typeof item.id === "string" && item.id.trim(),
+    );
   });
 }
 
@@ -208,12 +213,13 @@ async function patchJson<T>(url: string, body: unknown): Promise<T> {
 export default function OwnerSalonPage() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth({ requireAuth: true });
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
+  const search = useSearch();
   const language = i18n.language || "ru";
   const params = useParams<{ id: string }>();
   const salonId = params.id;
 
-  const [activeTab, setActiveTab] = useState<OwnerSalonTab>(() => readOwnerSalonTab(location));
+  const [activeTab, setActiveTab] = useState<OwnerSalonTab>(() => readOwnerSalonTab(search));
   const [salon, setSalon] = useState<Salon | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -239,23 +245,25 @@ export default function OwnerSalonPage() {
   const [reviewFilter, setReviewFilter] = useState<"all" | "unanswered" | "low" | "recent">("all");
 
   useEffect(() => {
-    const normalized = readOwnerSalonTab(location);
-    if (normalized !== activeTab) {
-      setActiveTab(normalized);
-    }
-  }, [activeTab, location]);
+    const normalized = readOwnerSalonTab(search);
+    setActiveTab((current) => (normalized !== current ? normalized : current));
+    // Only re-sync when the URL search string itself changes (e.g. browser
+    // back/forward) — depending on activeTab too would re-run this on every
+    // tab click and fight with the direct setActiveTab() call in openSalonTab.
+  }, [search]);
 
   const loadWorkspace = async () => {
     if (!salonId) return;
     setError(null);
     try {
-      const [salonData, reviewsData, clientsData, ticketsData, notificationsData] = await Promise.all([
-        fetchJson<Salon>(`/api/owner/salons/${salonId}`),
-        fetchJson<ReviewItem[]>(`/api/owner/salons/${salonId}/reviews`),
-        fetchJson<ClientItem[]>(`/api/owner/salons/${salonId}/clients`),
-        fetchJson<SupportTicket[]>("/api/owner/support/tickets"),
-        fetchJson<NotificationItem[]>("/api/notifications"),
-      ]);
+      const [salonData, reviewsData, clientsData, ticketsData, notificationsData] =
+        await Promise.all([
+          fetchJson<Salon>(`/api/owner/salons/${salonId}`),
+          fetchJson<ReviewItem[]>(`/api/owner/salons/${salonId}/reviews`),
+          fetchJson<ClientItem[]>(`/api/owner/salons/${salonId}/clients`),
+          fetchJson<SupportTicket[]>("/api/owner/support/tickets"),
+          fetchJson<NotificationItem[]>("/api/notifications"),
+        ]);
       setSalon(salonData);
       setReviews(normalizeCollection(reviewsData));
       setClients(normalizeCollection(clientsData));
@@ -358,7 +366,16 @@ export default function OwnerSalonPage() {
     ];
 
     return Math.round((checkpoints.filter(Boolean).length / checkpoints.length) * 100);
-  }, [photosCount, salon?.address, salon?.email, salon?.phone, salon?.reviewCount, salon?.status, salonDescription, salonName]);
+  }, [
+    photosCount,
+    salon?.address,
+    salon?.email,
+    salon?.phone,
+    salon?.reviewCount,
+    salon?.status,
+    salonDescription,
+    salonName,
+  ]);
 
   const attentionItems = useMemo(
     () => [
@@ -386,7 +403,10 @@ export default function OwnerSalonPage() {
       },
       {
         id: "reviews",
-        title: reviewSummary.unanswered > 0 ? `Отзывы без ответа: ${reviewSummary.unanswered}` : "Отзывы под контролем",
+        title:
+          reviewSummary.unanswered > 0
+            ? `Отзывы без ответа: ${reviewSummary.unanswered}`
+            : "Отзывы под контролем",
         description:
           reviewSummary.unanswered > 0
             ? "Есть отзывы, на которые салон ещё не ответил. Это влияет на доверие и повторные визиты."
@@ -473,7 +493,8 @@ export default function OwnerSalonPage() {
       {
         id: "reviews",
         title: "Отзывы и репутация",
-        value: reviewSummary.unanswered > 0 ? `${reviewSummary.unanswered} без ответа` : "Все закрыты",
+        value:
+          reviewSummary.unanswered > 0 ? `${reviewSummary.unanswered} без ответа` : "Все закрыты",
         description:
           reviewSummary.unanswered > 0
             ? "Ответы на отзывы стоит закрывать быстро, чтобы не терять доверие и повторные визиты."
@@ -523,7 +544,8 @@ export default function OwnerSalonPage() {
       {
         id: "bookings",
         title: "Проверить ближайшие записи",
-        description: "Бронирования, клиенты и история визитов остаются главным operational flow салона.",
+        description:
+          "Бронирования, клиенты и история визитов остаются главным operational flow салона.",
         tab: "bookings" as const,
         cta: "Открыть записи",
         active: false,
@@ -550,14 +572,19 @@ export default function OwnerSalonPage() {
 
   const openSalonTab = (tab: OwnerSalonTab) => {
     setActiveTab(tab);
-    setLocation(tab === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${tab}`);
+    setLocation(
+      tab === "overview" ? `/owner/salon/${salonId}` : `/owner/salon/${salonId}?tab=${tab}`,
+    );
   };
 
   const handleStatusChange = async (status: "draft" | "active" | "paused") => {
     if (!salonId) return;
     try {
       await patchJson(`/api/owner/salons/${salonId}/status`, { status });
-      toast({ title: "Статус обновлён", description: `Салон переведён в режим: ${ownerStatusLabel(status)}.` });
+      toast({
+        title: "Статус обновлён",
+        description: `Салон переведён в режим: ${ownerStatusLabel(status)}.`,
+      });
       await handleRefresh();
     } catch (statusErr) {
       toast({
@@ -694,7 +721,10 @@ export default function OwnerSalonPage() {
     setClosingTicketId(ticketId);
     try {
       await patchJson(`/api/owner/support/tickets/${ticketId}/close`, {});
-      toast({ title: "Обращение закрыто", description: "При необходимости его можно открыть новым сообщением." });
+      toast({
+        title: "Обращение закрыто",
+        description: "При необходимости его можно открыть новым сообщением.",
+      });
       await handleRefresh();
       if (selectedTicketId === ticketId) {
         await loadSupportTicket(ticketId);
@@ -760,7 +790,9 @@ export default function OwnerSalonPage() {
           <Card className="border-border/70 p-8 text-center shadow-sm">
             <Store className="mx-auto h-12 w-12 text-muted-foreground" />
             <h1 className="mt-4 font-serif text-3xl text-foreground">Салон не найден</h1>
-            <p className="mt-3 text-muted-foreground">Проверьте доступ или вернитесь к общему owner-списку.</p>
+            <p className="mt-3 text-muted-foreground">
+              Проверьте доступ или вернитесь к общему owner-списку.
+            </p>
             <div className="mt-6 flex justify-center gap-3">
               <Button asChild>
                 <Link href="/owner">К списку салонов</Link>
@@ -786,14 +818,25 @@ export default function OwnerSalonPage() {
               </Button>
             </Link>
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Salon workspace</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                Рабочее пространство салона
+              </p>
               <h1 className="truncate font-serif text-2xl text-foreground">{salonName}</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <Button variant="outline" size="sm" onClick={() => void handleRefresh()} disabled={refreshing}>
-              {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
               Обновить
             </Button>
           </div>
@@ -828,7 +871,8 @@ export default function OwnerSalonPage() {
                     </Badge>
                   </div>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    {salonDescription || "Здесь владелец управляет профилем салона, услугами, мастерами, отзывами, клиентами и операционной частью без переходов в разваленные страницы."}
+                    {salonDescription ||
+                      "Здесь владелец управляет профилем салона, услугами, мастерами, отзывами, клиентами и операционной частью без переходов в разваленные страницы."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
                     {salon.city && (
@@ -863,22 +907,34 @@ export default function OwnerSalonPage() {
 
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:w-[320px]">
                   <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Рейтинг</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{rating > 0 ? rating.toFixed(1) : "—"}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Рейтинг
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
+                      {rating > 0 ? rating.toFixed(1) : "—"}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">по отзывам клиентов</p>
                   </div>
                   <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{Number(salon.reviewCount || 0)}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Отзывы
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
+                      {Number(salon.reviewCount || 0)}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">получено по салону</p>
                   </div>
                   <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиенты</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Клиенты
+                    </p>
                     <p className="mt-2 text-3xl font-semibold text-foreground">{clients.length}</p>
                     <p className="mt-1 text-sm text-muted-foreground">в CRM салона</p>
                   </div>
                   <div className="rounded-2xl bg-background/85 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Фото</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Фото
+                    </p>
                     <p className="mt-2 text-3xl font-semibold text-foreground">{photosCount}</p>
                     <p className="mt-1 text-sm text-muted-foreground">в карточке салона</p>
                   </div>
@@ -898,17 +954,29 @@ export default function OwnerSalonPage() {
             <Separator className="my-4" />
             <div className="space-y-4">
               <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиент с самым большим чеком</p>
-                <p className="mt-2 break-words text-lg font-semibold text-foreground">{topClient ? topClient.name : "Пока нет данных"}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Клиент с самым большим чеком
+                </p>
+                <p className="mt-2 break-words text-lg font-semibold text-foreground">
+                  {topClient ? topClient.name : "Пока нет данных"}
+                </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {topClient ? `Потратил ${formatMoney(topClient.totalSpent)} UZS и сделал ${topClient.totalBookings} визитов.` : "Когда появится клиентская история, фокус появится здесь."}
+                  {topClient
+                    ? `Потратил ${formatMoney(topClient.totalSpent)} UZS и сделал ${topClient.totalBookings} визитов.`
+                    : "Когда появится клиентская история, фокус появится здесь."}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы без ответа</p>
-                <p className="mt-2 break-words text-lg font-semibold text-foreground">{reviewSummary.unanswered}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Отзывы без ответа
+                </p>
+                <p className="mt-2 break-words text-lg font-semibold text-foreground">
+                  {reviewSummary.unanswered}
+                </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {reviewWithoutResponse ? `Свежий отзыв от ${reviewWithoutResponse.clientName || "клиента"} ждёт owner-ответа.` : "Все отзывы сейчас закрыты owner-ответом или ещё не поступили."}
+                  {reviewWithoutResponse
+                    ? `Свежий отзыв от ${reviewWithoutResponse.clientName || "клиента"} ждёт owner-ответа.`
+                    : "Все отзывы сейчас закрыты owner-ответом или ещё не поступили."}
                 </p>
               </div>
             </div>
@@ -917,22 +985,34 @@ export default function OwnerSalonPage() {
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Клиенты</p><Users className="h-5 w-5 text-primary" /></div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Клиенты</p>
+              <Users className="h-5 w-5 text-primary" />
+            </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{clients.length}</p>
             <p className="mt-2 text-sm text-muted-foreground">в базе салона</p>
           </Card>
           <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Открытые обращения</p><MessageSquare className="h-5 w-5 text-sky-500" /></div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Открытые обращения</p>
+              <MessageSquare className="h-5 w-5 text-sky-500" />
+            </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{openTickets}</p>
             <p className="mt-2 text-sm text-muted-foreground">нужны ответы платформы</p>
           </Card>
           <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Непрочитанные</p><Clock3 className="h-5 w-5 text-amber-500" /></div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Непрочитанные</p>
+              <Clock3 className="h-5 w-5 text-amber-500" />
+            </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{unreadNotifications}</p>
             <p className="mt-2 text-sm text-muted-foreground">уведомления по owner-потоку</p>
           </Card>
           <Card className="border-border/70 p-5 shadow-sm">
-            <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">Отзывы</p><Star className="h-5 w-5 text-pink-500" /></div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Отзывы</p>
+              <Star className="h-5 w-5 text-pink-500" />
+            </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{reviewSummary.total}</p>
             <p className="mt-2 text-sm text-muted-foreground">по салону прямо сейчас</p>
           </Card>
@@ -940,7 +1020,9 @@ export default function OwnerSalonPage() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(value) => openSalonTab(readOwnerSalonTab(`/owner/salon/${salonId}?tab=${value}`))}
+          onValueChange={(value) =>
+            openSalonTab(readOwnerSalonTab(`/owner/salon/${salonId}?tab=${value}`))
+          }
           className="space-y-6"
         >
           <div className="overflow-x-auto pb-2">
@@ -967,7 +1049,8 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
                     <p className="text-sm text-muted-foreground">
-                      Приоритетные задачи, которые прямо сейчас влияют на видимость салона, доверие и новые записи.
+                      Приоритетные задачи, которые прямо сейчас влияют на видимость салона, доверие
+                      и новые записи.
                     </p>
                   </div>
                   <Badge variant="outline" className="border-border/70">
@@ -979,7 +1062,7 @@ export default function OwnerSalonPage() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => openSalonTab(item.tab)}
+                      onClick={() => openSalonTab(item.tab as OwnerSalonTab)}
                       className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -996,14 +1079,22 @@ export default function OwnerSalonPage() {
                                     : "border-border/70 text-muted-foreground"
                               }
                             >
-                              {item.tone === "good" ? "OK" : item.tone === "warning" ? "Внимание" : "Контроль"}
+                              {item.tone === "good"
+                                ? "OK"
+                                : item.tone === "warning"
+                                  ? "Внимание"
+                                  : "Контроль"}
                             </Badge>
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            {item.description}
+                          </p>
                         </div>
                         <ArrowLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-muted-foreground" />
                       </div>
-                      <div className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-primary">{item.action}</div>
+                      <div className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-primary">
+                        {item.action}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -1017,13 +1108,15 @@ export default function OwnerSalonPage() {
                       <button
                         key={action.tab}
                         type="button"
-                        onClick={() => openSalonTab(action.tab)}
+                        onClick={() => openSalonTab(action.tab as OwnerSalonTab)}
                         className="rounded-2xl border border-border/70 bg-background p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-medium text-foreground">{action.title}</p>
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{action.description}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                              {action.description}
+                            </p>
                           </div>
                           <ArrowLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-muted-foreground" />
                         </div>
@@ -1037,18 +1130,26 @@ export default function OwnerSalonPage() {
                   <div className="mt-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                     <div className="flex flex-wrap items-end justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Профиль и витрина</p>
-                        <p className="mt-2 text-3xl font-semibold text-foreground">{profileCompletion}%</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          Профиль и витрина
+                        </p>
+                        <p className="mt-2 text-3xl font-semibold text-foreground">
+                          {profileCompletion}%
+                        </p>
                       </div>
                       <Badge variant="outline" className="border-border/70">
                         {salon.status === "active" ? "Публикация включена" : "Пока не опубликован"}
                       </Badge>
                     </div>
                     <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/60">
-                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${profileCompletion}%` }} />
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${profileCompletion}%` }}
+                      />
                     </div>
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Чем ближе карточка к 100%, тем проще салону конвертировать просмотр в запись и удерживать доверие клиентов.
+                      Чем ближе карточка к 100%, тем проще салону конвертировать просмотр в запись и
+                      удерживать доверие клиентов.
                     </p>
                   </div>
                 </Card>
@@ -1064,18 +1165,17 @@ export default function OwnerSalonPage() {
                       Живой срез CRM салона: визиты, частота возвратов и наиболее активные гости.
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openSalonTab("clients")}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => openSalonTab("clients")}>
                     Открыть клиентов
                   </Button>
                 </div>
                 <div className="mt-4 grid gap-3">
                   {recentClients.length > 0 ? (
                     recentClients.map((client) => (
-                      <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div
+                        key={client.id}
+                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                      >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="truncate font-medium text-foreground">{client.name}</p>
@@ -1096,7 +1196,8 @@ export default function OwnerSalonPage() {
                     ))
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                      Как только начнутся реальные записи, здесь появятся последние клиенты, частота визитов и полезный CRM-контекст.
+                      Как только начнутся реальные записи, здесь появятся последние клиенты, частота
+                      визитов и полезный CRM-контекст.
                     </div>
                   )}
                 </div>
@@ -1123,7 +1224,10 @@ export default function OwnerSalonPage() {
                     { label: "Фотогалерея", ready: photosCount > 0 },
                     { label: "Отзывы и доверие", ready: Number(salon.reviewCount || 0) > 0 },
                   ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3"
+                    >
                       <span className="text-sm text-foreground">{item.label}</span>
                       <Badge
                         variant="outline"
@@ -1142,38 +1246,56 @@ export default function OwnerSalonPage() {
             </div>
 
             {false && (
-            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-              <Card className="border-border/70 p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
-                    {salon.status !== "active" ? "Салон ещё не опубликован и не принимает весь возможный входящий трафик." : "Салон опубликован и доступен клиентам на витрине."}
+              <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Что требует внимания</h3>
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                      {salon?.status !== "active"
+                        ? "Салон ещё не опубликован и не принимает весь возможный входящий трафик."
+                        : "Салон опубликован и доступен клиентам на витрине."}
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                      {photosCount === 0
+                        ? "В карточке салона нет фото. Это снижает доверие и конверсию в запись."
+                        : `В карточке уже ${photosCount} фото. Проверьте, достаточно ли они продают салон.`}
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
+                      {reviewSummary.unanswered > 0
+                        ? `${reviewSummary.unanswered} отзыв(ов) без owner-ответа.`
+                        : "Все отзывы сейчас закрыты ответом или новых пока нет."}
+                    </div>
                   </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
-                    {photosCount === 0 ? "В карточке салона нет фото. Это снижает доверие и конверсию в запись." : `В карточке уже ${photosCount} фото. Проверьте, достаточно ли они продают салон.`}
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
-                    {reviewSummary.unanswered > 0 ? `${reviewSummary.unanswered} отзыв(ов) без owner-ответа.` : "Все отзывы сейчас закрыты ответом или новых пока нет."}
-                  </div>
-                </div>
-              </Card>
+                </Card>
 
-              <Card className="border-border/70 p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-foreground">Финансовый контур</h3>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Платежи</p>
-                    <p className="mt-2 text-lg font-semibold text-foreground">Ещё не подключены</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Показываем owner-friendly сценарий вместо мёртвой пустоты.</p>
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Финансовый контур</h3>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Платежи
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        Ещё не подключены
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Показываем owner-friendly сценарий вместо мёртвой пустоты.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        Что дальше
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        Подключить оплату
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        После активации здесь появятся выручка, транзакции и выплаты.
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Что дальше</p>
-                    <p className="mt-2 text-lg font-semibold text-foreground">Подключить оплату</p>
-                    <p className="mt-2 text-sm text-muted-foreground">После активации здесь появятся выручка, транзакции и выплаты.</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
+                </Card>
+              </div>
             )}
           </TabsContent>
 
@@ -1209,8 +1331,13 @@ export default function OwnerSalonPage() {
                     { label: "Отзывы", value: `${reviewSummary.total} всего` },
                     { label: "Средний рейтинг", value: rating > 0 ? rating.toFixed(1) : "—" },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                    >
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                        {item.label}
+                      </p>
                       <p className="mt-2 text-sm font-semibold text-foreground">{item.value}</p>
                     </div>
                   ))}
@@ -1242,7 +1369,10 @@ export default function OwnerSalonPage() {
                       hint: "Без публикации карточка не приводит новый трафик.",
                     },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium text-foreground">{item.label}</p>
                         <Badge
@@ -1266,9 +1396,12 @@ export default function OwnerSalonPage() {
             <Card className="border-border/70 p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Публичная страница салона</h3>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Публичная страница салона
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    Управление витриной салона, публикацией и готовностью карточки к клиентскому трафику.
+                    Управление витриной салона, публикацией и готовностью карточки к клиентскому
+                    трафику.
                   </p>
                 </div>
                 <Button asChild>
@@ -1278,20 +1411,34 @@ export default function OwnerSalonPage() {
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Статус</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{ownerStatusLabel(salon.status)}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Статус
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {ownerStatusLabel(salon.status)}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Фото</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{photosCount} в карточке</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {photosCount} в карточке
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Описание</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{salonDescription ? "Заполнено" : "Нужно добавить"}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Описание
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {salonDescription ? "Заполнено" : "Нужно добавить"}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Контакты</p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{salon.phone ? "Готово" : "Не хватает телефона"}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Контакты
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {salon.phone ? "Готово" : "Не хватает телефона"}
+                  </p>
                 </div>
               </div>
 
@@ -1302,7 +1449,8 @@ export default function OwnerSalonPage() {
                     : "Салон опубликован и доступен для клиентских переходов и бронирований."}
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  Проверьте фото, описание, услуги и расписание — именно эти блоки сильнее всего влияют на конверсию карточки.
+                  Проверьте фото, описание, услуги и расписание — именно эти блоки сильнее всего
+                  влияют на конверсию карточки.
                 </div>
               </div>
             </Card>
@@ -1330,9 +1478,13 @@ export default function OwnerSalonPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Клиенты салона</h3>
-                    <p className="text-sm text-muted-foreground">Мини-CRM владельца по реальным бронированиям</p>
+                    <p className="text-sm text-muted-foreground">
+                      Мини-CRM владельца по реальным бронированиям
+                    </p>
                   </div>
-                  <Badge variant="outline" className="border-border/70">{clients.length} клиентов</Badge>
+                  <Badge variant="outline" className="border-border/70">
+                    {clients.length} клиентов
+                  </Badge>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
                   <div className="relative">
@@ -1345,17 +1497,25 @@ export default function OwnerSalonPage() {
                     />
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Повторные</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Повторные
+                    </p>
                     <p className="mt-1 text-lg font-semibold text-foreground">
                       {clients.filter((client) => client.completedBookings > 1).length}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Топ-клиент</p>
-                    <p className="mt-1 text-sm font-semibold text-foreground">{topClient?.name || "—"}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Топ-клиент
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {topClient?.name || "—"}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Выручка</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Выручка
+                    </p>
                     <p className="mt-1 text-sm font-semibold text-foreground">
                       {formatMoney(clients.reduce((sum, client) => sum + client.totalSpent, 0))} UZS
                     </p>
@@ -1367,10 +1527,15 @@ export default function OwnerSalonPage() {
                 <div className="space-y-3">
                   {filteredClients.length > 0 ? (
                     filteredClients.map((client) => (
-                      <div key={client.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div
+                        key={client.id}
+                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="break-words text-base font-semibold text-foreground">{client.name}</p>
+                            <p className="break-words text-base font-semibold text-foreground">
+                              {client.name}
+                            </p>
                             <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                               {client.email && <span className="break-all">{client.email}</span>}
                               {client.phone && <span>{client.phone}</span>}
@@ -1378,26 +1543,44 @@ export default function OwnerSalonPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium text-foreground">{formatMoney(client.totalSpent)} UZS</p>
+                            <p className="text-sm font-medium text-foreground">
+                              {formatMoney(client.totalSpent)} UZS
+                            </p>
                             <p className="mt-1 text-sm text-muted-foreground">суммарно</p>
                           </div>
                         </div>
                         <div className="mt-4 grid gap-3 sm:grid-cols-4">
                           <div className="rounded-2xl bg-background/80 p-3">
-                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Визиты</p>
-                            <p className="mt-2 text-lg font-semibold text-foreground">{client.totalBookings}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Визиты
+                            </p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">
+                              {client.totalBookings}
+                            </p>
                           </div>
                           <div className="rounded-2xl bg-background/80 p-3">
-                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Завершено</p>
-                            <p className="mt-2 text-lg font-semibold text-foreground">{client.completedBookings}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Завершено
+                            </p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">
+                              {client.completedBookings}
+                            </p>
                           </div>
                           <div className="rounded-2xl bg-background/80 p-3">
-                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Отмены</p>
-                            <p className="mt-2 text-lg font-semibold text-foreground">{client.cancelledBookings}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Отмены
+                            </p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">
+                              {client.cancelledBookings}
+                            </p>
                           </div>
                           <div className="rounded-2xl bg-background/80 p-3">
-                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Последний визит</p>
-                            <p className="mt-2 text-sm font-medium text-foreground">{formatDate(client.lastVisit)}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Последний визит
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-foreground">
+                              {formatDate(client.lastVisit)}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1420,27 +1603,47 @@ export default function OwnerSalonPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Отзывы и owner-ответы</h3>
-                    <p className="text-sm text-muted-foreground">Свежая репутация салона и реакции владельца</p>
+                    <p className="text-sm text-muted-foreground">
+                      Свежая репутация салона и реакции владельца
+                    </p>
                   </div>
-                  <Badge variant="outline" className="border-border/70">{reviewSummary.total} отзывов</Badge>
+                  <Badge variant="outline" className="border-border/70">
+                    {reviewSummary.total} отзывов
+                  </Badge>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-4">
                   <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Средний рейтинг</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.average.toFixed(1)}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Средний рейтинг
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.average.toFixed(1)}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Без ответа</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.unanswered}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Без ответа
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.unanswered}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">5 звёзд</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.fiveStars}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      5 звёзд
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.fiveStars}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Нужно сейчас</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Нужно сейчас
+                    </p>
                     <p className="mt-2 text-sm font-semibold text-foreground">
-                      {reviewWithoutResponse ? `Ответить ${reviewWithoutResponse.clientName || "клиенту"}` : "Всё закрыто"}
+                      {reviewWithoutResponse
+                        ? `Ответить ${reviewWithoutResponse.clientName || "клиенту"}`
+                        : "Всё закрыто"}
                     </p>
                   </div>
                 </div>
@@ -1467,22 +1670,41 @@ export default function OwnerSalonPage() {
                 <div className="space-y-4">
                   {filteredReviews.length > 0 ? (
                     filteredReviews.map((review) => (
-                      <div key={review.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div
+                        key={review.id}
+                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="break-words text-base font-semibold text-foreground">{review.clientName || "Клиент"}</p>
-                            <p className="mt-2 text-sm text-muted-foreground">{review.masterName ? `Мастер: ${review.masterName}` : "Отзыв без привязки к мастеру"}</p>
+                            <p className="break-words text-base font-semibold text-foreground">
+                              {review.clientName || "Клиент"}
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {review.masterName
+                                ? `Мастер: ${review.masterName}`
+                                : "Отзыв без привязки к мастеру"}
+                            </p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium text-foreground">{review.rating}/5</p>
-                            <p className="mt-1 text-sm text-muted-foreground">{formatDate(review.createdAt)}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {formatDate(review.createdAt)}
+                            </p>
                           </div>
                         </div>
-                        {review.comment && <p className="mt-4 break-words text-sm leading-6 text-foreground">{review.comment}</p>}
+                        {review.comment && (
+                          <p className="mt-4 break-words text-sm leading-6 text-foreground">
+                            {review.comment}
+                          </p>
+                        )}
                         {review.ownerResponse ? (
                           <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                            <p className="text-xs uppercase tracking-[0.16em] text-primary">Ответ владельца</p>
-                            <p className="mt-2 break-words text-sm leading-6 text-foreground">{review.ownerResponse}</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-primary">
+                              Ответ владельца
+                            </p>
+                            <p className="mt-2 break-words text-sm leading-6 text-foreground">
+                              {review.ownerResponse}
+                            </p>
                           </div>
                         ) : (
                           <div className="mt-4 space-y-3">
@@ -1490,16 +1712,25 @@ export default function OwnerSalonPage() {
                               placeholder="Ответить на отзыв"
                               rows={3}
                               value={responseDrafts[review.id] || ""}
-                              onChange={(event) => setResponseDrafts((current) => ({ ...current, [review.id]: event.target.value }))}
+                              onChange={(event) =>
+                                setResponseDrafts((current) => ({
+                                  ...current,
+                                  [review.id]: event.target.value,
+                                }))
+                              }
                             />
-                            <Button onClick={() => void handleRespondToReview(review.id)}>Сохранить ответ</Button>
+                            <Button onClick={() => void handleRespondToReview(review.id)}>
+                              Сохранить ответ
+                            </Button>
                           </div>
                         )}
                       </div>
                     ))
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                      {reviews.length ? "По выбранному фильтру отзывов ничего нет." : "Пока нет отзывов. После завершённых записей они будут появляться здесь."}
+                      {reviews.length
+                        ? "По выбранному фильтру отзывов ничего нет."
+                        : "Пока нет отзывов. После завершённых записей они будут появляться здесь."}
                     </div>
                   )}
                 </div>
@@ -1514,7 +1745,8 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Аналитика салона</h3>
                     <p className="text-sm text-muted-foreground">
-                      Сводка по клиентам, отзывам и качеству карточки без тяжёлых отчётов и хрупких запросов.
+                      Сводка по клиентам, отзывам и качеству карточки без тяжёлых отчётов и хрупких
+                      запросов.
                     </p>
                   </div>
                   <Badge className="border-primary/25 bg-primary/10 text-primary">
@@ -1524,36 +1756,66 @@ export default function OwnerSalonPage() {
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Клиенты</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Клиенты
+                    </p>
                     <p className="mt-2 text-2xl font-semibold text-foreground">{clients.length}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">База гостей, которых уже удерживает салон.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      База гостей, которых уже удерживает салон.
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Отзывы</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.total}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Отзывы
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.total}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Средний рейтинг: {reviewSummary.average.toFixed(1)} / 5
                     </p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Без ответа</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.unanswered}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Отзывы, где нужно быстро ответить от имени салона.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Без ответа
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.unanswered}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Отзывы, где нужно быстро ответить от имени салона.
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">5 звёзд</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{reviewSummary.fiveStars}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Лучшие сигналы качества по сервису салона.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      5 звёзд
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {reviewSummary.fiveStars}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Лучшие сигналы качества по сервису салона.
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Обращения</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Обращения
+                    </p>
                     <p className="mt-2 text-2xl font-semibold text-foreground">{openTickets}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Открытые диалоги с платформой и поддержкой.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Открытые диалоги с платформой и поддержкой.
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Уведомления</p>
-                    <p className="mt-2 text-2xl font-semibold text-foreground">{unreadNotifications}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Новые сигналы, которые owner-команда ещё не разобрала.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Уведомления
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-foreground">
+                      {unreadNotifications}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Новые сигналы, которые owner-команда ещё не разобрала.
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -1573,11 +1835,16 @@ export default function OwnerSalonPage() {
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="font-medium text-foreground">{task.title}</p>
-                        <Badge variant="outline" className="border-border/70 text-xs text-muted-foreground">
+                        <Badge
+                          variant="outline"
+                          className="border-border/70 text-xs text-muted-foreground"
+                        >
                           {task.cta}
                         </Badge>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{task.description}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {task.description}
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -1590,17 +1857,27 @@ export default function OwnerSalonPage() {
               <h3 className="text-lg font-semibold text-foreground">Финансы салона</h3>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Статус платежей</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">Платёжный контур ещё не подключён</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Статус платежей
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    Платёжный контур ещё не подключён
+                  </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Вместо пустоты показываем понятный сценарий: когда провайдер будет подключён, здесь появятся выручка, оплаты и транзакции салона.
+                    Вместо пустоты показываем понятный сценарий: когда провайдер будет подключён,
+                    здесь появятся выручка, оплаты и транзакции салона.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Что готовить</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">Реквизиты и правила оплаты</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                    Что готовить
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    Реквизиты и правила оплаты
+                  </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Салонный workspace уже готов к будущему подключению финансового слоя без сломанных переходов.
+                    Салонный workspace уже готов к будущему подключению финансового слоя без
+                    сломанных переходов.
                   </p>
                 </div>
               </div>
@@ -1617,14 +1894,20 @@ export default function OwnerSalonPage() {
                 <Card className="border-border/70 p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Communication hub</p>
-                      <h3 className="mt-2 text-lg font-semibold text-foreground">Командный центр коммуникаций салона</h3>
+                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                        Центр коммуникаций
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">
+                        Командный центр коммуникаций салона
+                      </h3>
                       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                        Здесь собраны все живые сигналы owner-контура: поддержка платформы, отзывы, уведомления и клиентская база.
+                        Здесь собраны все живые сигналы owner-контура: поддержка платформы, отзывы,
+                        уведомления и клиентская база.
                       </p>
                     </div>
                     <Badge variant="outline" className="border-border/70">
-                      {communicationChannels.filter((channel) => channel.tone === "warning").length} требуют внимания
+                      {communicationChannels.filter((channel) => channel.tone === "warning").length}{" "}
+                      требуют внимания
                     </Badge>
                   </div>
 
@@ -1643,13 +1926,17 @@ export default function OwnerSalonPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-foreground">{channel.title}</p>
-                              <p className="mt-2 text-2xl font-semibold text-foreground">{channel.value}</p>
+                              <p className="mt-2 text-2xl font-semibold text-foreground">
+                                {channel.value}
+                              </p>
                             </div>
                             <div className="rounded-xl border border-border/60 bg-background/80 p-2">
                               <Icon className="h-4 w-4 text-primary" />
                             </div>
                           </div>
-                          <p className="mt-3 text-sm leading-6 text-muted-foreground">{channel.description}</p>
+                          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            {channel.description}
+                          </p>
                         </div>
                       );
                     })}
@@ -1659,10 +1946,15 @@ export default function OwnerSalonPage() {
                 <Card className="border-border/70 p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Next actions</p>
-                      <h3 className="mt-2 text-lg font-semibold text-foreground">Что сделать сейчас</h3>
+                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                        Следующие шаги
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">
+                        Что сделать сейчас
+                      </h3>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Вместо чтения пустых карточек владелец сразу видит, куда идти дальше и какой контур требует реакции.
+                        Вместо чтения пустых карточек владелец сразу видит, куда идти дальше и какой
+                        контур требует реакции.
                       </p>
                     </div>
                     <Sparkles className="h-5 w-5 text-primary" />
@@ -1670,11 +1962,16 @@ export default function OwnerSalonPage() {
 
                   <div className="mt-5 space-y-3">
                     {communicationTasks.map((task) => (
-                      <div key={task.id} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div
+                        key={task.id}
+                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground">{task.title}</p>
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{task.description}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                              {task.description}
+                            </p>
                           </div>
                           {task.active && (
                             <Badge className="border-transparent bg-primary/12 text-primary hover:bg-primary/12">
@@ -1696,212 +1993,283 @@ export default function OwnerSalonPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-              <Card className="border-border/70 p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-foreground">Коммуникации салона</h3>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <MessageSquare className="h-4 w-4 text-primary" />
-                      Канал с платформой
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">Открытых owner-обращений: {openTickets}. Этот блок уже живой и связан с support tickets.</p>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <CalendarClock className="h-4 w-4 text-primary" />
-                      Канал с клиентами
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">Прямой универсальный чат ещё не развёрнут на owner API, поэтому рабочим центром остаются брони, клиентская база и support-контур платформы.</p>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <Wallet className="h-4 w-4 text-primary" />
-                      Финансовые сигналы
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">Платёжный модуль ещё не активирован, но owner workspace уже готов для подключения этого контура.</p>
-                  </div>
-                </div>
-
-                <Separator className="my-5" />
-
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground">Новое обращение в платформу</h4>
-                    <p className="mt-1 text-sm text-muted-foreground">Создайте запрос по текущему салону и продолжайте диалог уже внутри тикета.</p>
-                  </div>
-                  <Input
-                    value={supportDraft.subject}
-                    onChange={(event) => setSupportDraft((current) => ({ ...current, subject: event.target.value }))}
-                    placeholder="Тема обращения"
-                  />
-                  <Input
-                    value={supportDraft.category}
-                    onChange={(event) => setSupportDraft((current) => ({ ...current, category: event.target.value }))}
-                    placeholder="Категория: moderation, payments, staff..."
-                  />
-                  <Textarea
-                    value={supportDraft.message}
-                    onChange={(event) => setSupportDraft((current) => ({ ...current, message: event.target.value }))}
-                    rows={4}
-                    placeholder="Опишите проблему или задачу по этому салону"
-                  />
-                  <Button className="w-full" onClick={() => void handleCreateSupportTicket()} disabled={supportCreating}>
-                    {supportCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
-                    Отправить обращение
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="border-border/70 p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-foreground">Owner-support и уведомления</h3>
-                <div className="mt-5 grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-                  <div className="space-y-3">
-                    {tickets.length > 0 ? (
-                      tickets.map((ticket) => (
-                        <button
-                          key={ticket.id}
-                          type="button"
-                          onClick={() => void loadSupportTicket(ticket.id)}
-                          className={`w-full rounded-2xl border p-4 text-left transition ${
-                            selectedTicketId === ticket.id
-                              ? "border-primary/40 bg-primary/5"
-                              : "border-border/70 bg-muted/20 hover:border-primary/20"
-                          }`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="break-words text-sm font-medium text-foreground">{ticket.subject}</p>
-                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{ticket.category}</p>
-                            </div>
-                            <Badge variant="outline" className="border-border/70">{ticket.status}</Badge>
-                          </div>
-                          <p className="mt-3 text-sm text-muted-foreground">Обновлено: {formatDate(ticket.updatedAt)}</p>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                        Пока нет сообщений к платформе. При первом owner-обращении история появится здесь.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">Коммуникации салона</h3>
+                  <div className="mt-4 space-y-3">
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-foreground">Уведомления по салону</p>
-                        {unreadNotifications > 0 && (
-                          <Button variant="outline" size="sm" onClick={() => void handleMarkAllNotificationsRead()}>
-                            Прочитать всё
-                          </Button>
-                        )}
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <MessageSquare className="h-4 w-4 text-primary" />
+                        Канал с платформой
                       </div>
-                      <div className="mt-3 space-y-2">
-                        {notifications.slice(0, 4).map((item) => (
-                          <div key={item.id} className="rounded-xl bg-background/80 p-3 text-sm text-muted-foreground">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="break-words text-foreground">{item.message || item.type}</p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.16em]">{formatDate(item.createdAt)}</p>
-                              </div>
-                              {!item.isRead && (
-                                <Button variant="ghost" size="sm" onClick={() => void handleMarkNotificationRead(item.id)}>
-                                  Новое
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        {!notifications.length && (
-                          <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
-                            Пока нет новых уведомлений.
-                          </div>
-                        )}
-                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Открытых owner-обращений: {openTickets}. Этот блок уже живой и связан с
+                        support tickets.
+                      </p>
                     </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <CalendarClock className="h-4 w-4 text-primary" />
+                        Канал с клиентами
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Прямой универсальный чат ещё не развёрнут на owner API, поэтому рабочим
+                        центром остаются брони, клиентская база и support-контур платформы.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Wallet className="h-4 w-4 text-primary" />
+                        Финансовые сигналы
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Платёжный модуль ещё не активирован, но owner workspace уже готов для
+                        подключения этого контура.
+                      </p>
+                    </div>
+                  </div>
 
-                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      {selectedTicket ? (
-                        <div className="space-y-4">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="text-base font-semibold text-foreground">{selectedTicket.subject}</p>
-                              <p className="mt-1 text-sm text-muted-foreground">
-                                {selectedTicket.category} · обновлено {formatDate(selectedTicket.updatedAt)}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline" className="border-border/70">{selectedTicket.status}</Badge>
-                              {selectedTicket.status !== "closed" && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => void handleCloseSupportTicket(selectedTicket.id)}
-                                  disabled={closingTicketId === selectedTicket.id}
-                                >
-                                  {closingTicketId === selectedTicket.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                  Закрыть
-                                </Button>
-                              )}
-                            </div>
-                          </div>
+                  <Separator className="my-5" />
 
-                          <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
-                            {supportLoading ? (
-                              <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
-                                <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
-                                Загружаем переписку
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">
+                        Новое обращение в платформу
+                      </h4>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Создайте запрос по текущему салону и продолжайте диалог уже внутри тикета.
+                      </p>
+                    </div>
+                    <Input
+                      value={supportDraft.subject}
+                      onChange={(event) =>
+                        setSupportDraft((current) => ({ ...current, subject: event.target.value }))
+                      }
+                      placeholder="Тема обращения"
+                    />
+                    <Input
+                      value={supportDraft.category}
+                      onChange={(event) =>
+                        setSupportDraft((current) => ({ ...current, category: event.target.value }))
+                      }
+                      placeholder="Категория: moderation, payments, staff..."
+                    />
+                    <Textarea
+                      value={supportDraft.message}
+                      onChange={(event) =>
+                        setSupportDraft((current) => ({ ...current, message: event.target.value }))
+                      }
+                      rows={4}
+                      placeholder="Опишите проблему или задачу по этому салону"
+                    />
+                    <Button
+                      className="w-full"
+                      onClick={() => void handleCreateSupportTicket()}
+                      disabled={supportCreating}
+                    >
+                      {supportCreating ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                      )}
+                      Отправить обращение
+                    </Button>
+                  </div>
+                </Card>
+
+                <Card className="border-border/70 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Owner-support и уведомления
+                  </h3>
+                  <div className="mt-5 grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                    <div className="space-y-3">
+                      {tickets.length > 0 ? (
+                        tickets.map((ticket) => (
+                          <button
+                            key={ticket.id}
+                            type="button"
+                            onClick={() => void loadSupportTicket(ticket.id)}
+                            className={`w-full rounded-2xl border p-4 text-left transition ${
+                              selectedTicketId === ticket.id
+                                ? "border-primary/40 bg-primary/5"
+                                : "border-border/70 bg-muted/20 hover:border-primary/20"
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="break-words text-sm font-medium text-foreground">
+                                  {ticket.subject}
+                                </p>
+                                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                  {ticket.category}
+                                </p>
                               </div>
-                            ) : selectedTicketMessages.length > 0 ? (
-                              selectedTicketMessages.map((message) => (
-                                <div
-                                  key={message.id}
-                                  className={`rounded-2xl border p-4 text-sm ${
-                                    message.senderType === "admin"
-                                      ? "border-border/70 bg-muted/20 text-foreground"
-                                      : "border-primary/15 bg-primary/8 text-foreground"
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between gap-3">
-                                    <p className="font-medium text-foreground">
-                                      {message.senderType === "admin" ? "Платформа" : "Вы"}
-                                    </p>
-                                    <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                      {formatDate(message.createdAt)}
-                                    </span>
-                                  </div>
-                                  <p className="mt-2 break-words leading-6">{message.message}</p>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
-                                У этого обращения пока нет истории сообщений.
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="space-y-3">
-                            <Textarea
-                              rows={4}
-                              value={supportReply}
-                              onChange={(event) => setSupportReply(event.target.value)}
-                              placeholder="Ответить платформе по этому обращению"
-                            />
-                            <Button className="w-full" onClick={() => void handleSendSupportReply()} disabled={supportSending}>
-                              {supportSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                              Отправить сообщение
-                            </Button>
-                          </div>
-                        </div>
+                              <Badge variant="outline" className="border-border/70">
+                                {ticket.status}
+                              </Badge>
+                            </div>
+                            <p className="mt-3 text-sm text-muted-foreground">
+                              Обновлено: {formatDate(ticket.updatedAt)}
+                            </p>
+                          </button>
+                        ))
                       ) : (
                         <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                          Выберите обращение слева, чтобы увидеть историю диалога и продолжить переписку.
+                          Пока нет сообщений к платформе. При первом owner-обращении история
+                          появится здесь.
                         </div>
                       )}
                     </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <p className="text-sm font-medium text-foreground">
+                            Уведомления по салону
+                          </p>
+                          {unreadNotifications > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void handleMarkAllNotificationsRead()}
+                            >
+                              Прочитать всё
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {notifications.slice(0, 4).map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-xl bg-background/80 p-3 text-sm text-muted-foreground"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="break-words text-foreground">
+                                    {item.message || item.type}
+                                  </p>
+                                  <p className="mt-1 text-xs uppercase tracking-[0.16em]">
+                                    {formatDate(item.createdAt)}
+                                  </p>
+                                </div>
+                                {!item.isRead && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => void handleMarkNotificationRead(item.id)}
+                                  >
+                                    Новое
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {!notifications.length && (
+                            <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                              Пока нет новых уведомлений.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                        {selectedTicket ? (
+                          <div className="space-y-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-base font-semibold text-foreground">
+                                  {selectedTicket.subject}
+                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                  {selectedTicket.category} · обновлено{" "}
+                                  {formatDate(selectedTicket.updatedAt)}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="outline" className="border-border/70">
+                                  {selectedTicket.status}
+                                </Badge>
+                                {selectedTicket.status !== "closed" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => void handleCloseSupportTicket(selectedTicket.id)}
+                                    disabled={closingTicketId === selectedTicket.id}
+                                  >
+                                    {closingTicketId === selectedTicket.id && (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    Закрыть
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
+                              {supportLoading ? (
+                                <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                                  <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
+                                  Загружаем переписку
+                                </div>
+                              ) : selectedTicketMessages.length > 0 ? (
+                                selectedTicketMessages.map((message) => (
+                                  <div
+                                    key={message.id}
+                                    className={`rounded-2xl border p-4 text-sm ${
+                                      message.senderType === "admin"
+                                        ? "border-border/70 bg-muted/20 text-foreground"
+                                        : "border-primary/15 bg-primary/8 text-foreground"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <p className="font-medium text-foreground">
+                                        {message.senderType === "admin" ? "Платформа" : "Вы"}
+                                      </p>
+                                      <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                        {formatDate(message.createdAt)}
+                                      </span>
+                                    </div>
+                                    <p className="mt-2 break-words leading-6">{message.message}</p>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
+                                  У этого обращения пока нет истории сообщений.
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-3">
+                              <Textarea
+                                rows={4}
+                                value={supportReply}
+                                onChange={(event) => setSupportReply(event.target.value)}
+                                placeholder="Ответить платформе по этому обращению"
+                              />
+                              <Button
+                                className="w-full"
+                                onClick={() => void handleSendSupportReply()}
+                                disabled={supportSending}
+                              >
+                                {supportSending ? (
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="mr-2 h-4 w-4" />
+                                )}
+                                Отправить сообщение
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                            Выберите обращение слева, чтобы увидеть историю диалога и продолжить
+                            переписку.
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </div>
+                </Card>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

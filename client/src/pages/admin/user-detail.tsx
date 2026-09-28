@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import type { ElementType } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -134,6 +135,7 @@ function duration(seconds?: number | null): string {
 }
 
 export default function AdminUserDetail() {
+  const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -160,40 +162,57 @@ export default function AdminUserDetail() {
 
   const blockMutation = useMutation({
     mutationFn: (reason: string) =>
-      apiRequest("POST", `/api/admin/users/${encodedUserId}/block`, { reason }).then((r) => r.json()),
+      apiRequest("POST", `/api/admin/users/${encodedUserId}/block`, { reason }).then((r) =>
+        r.json(),
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: detailKey });
       toast({ title: "Пользователь заблокирован" });
     },
-    onError: (err: Error) => toast({ title: "Не удалось заблокировать", description: err.message, variant: "destructive" }),
+    onError: (err: Error) =>
+      toast({
+        title: "Не удалось заблокировать",
+        description: err.message,
+        variant: "destructive",
+      }),
   });
 
   const unblockMutation = useMutation({
-    mutationFn: () => apiRequest("POST", `/api/admin/users/${encodedUserId}/unblock`).then((r) => r.json()),
+    mutationFn: () =>
+      apiRequest("POST", `/api/admin/users/${encodedUserId}/unblock`).then((r) => r.json()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: detailKey });
       toast({ title: "Пользователь разблокирован" });
     },
-    onError: (err: Error) => toast({ title: "Не удалось разблокировать", description: err.message, variant: "destructive" }),
+    onError: (err: Error) =>
+      toast({
+        title: "Не удалось разблокировать",
+        description: err.message,
+        variant: "destructive",
+      }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", `/api/admin/users/${encodedUserId}`).then((r) => r.json()),
+    mutationFn: () =>
+      apiRequest("DELETE", `/api/admin/users/${encodedUserId}`).then((r) => r.json()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: detailKey });
       qc.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Пользователь удалён" });
     },
-    onError: (err: Error) => toast({ title: "Не удалось удалить", description: err.message, variant: "destructive" }),
+    onError: (err: Error) =>
+      toast({ title: "Не удалось удалить", description: err.message, variant: "destructive" }),
   });
 
   const restoreMutation = useMutation({
-    mutationFn: () => apiRequest("POST", `/api/admin/users/${encodedUserId}/restore`).then((r) => r.json()),
+    mutationFn: () =>
+      apiRequest("POST", `/api/admin/users/${encodedUserId}/restore`).then((r) => r.json()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: detailKey });
       toast({ title: "Пользователь восстановлен" });
     },
-    onError: (err: Error) => toast({ title: "Не удалось восстановить", description: err.message, variant: "destructive" }),
+    onError: (err: Error) =>
+      toast({ title: "Не удалось восстановить", description: err.message, variant: "destructive" }),
   });
 
   if (isLoading) {
@@ -234,17 +253,29 @@ export default function AdminUserDetail() {
         </div>
         <div className="flex flex-wrap gap-2">
           {isDeleted ? (
-            <Button variant="outline" onClick={() => restoreMutation.mutate()} disabled={restoreMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => restoreMutation.mutate()}
+              disabled={restoreMutation.isPending}
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
               Восстановить
             </Button>
           ) : isBlocked ? (
-            <Button variant="outline" onClick={() => unblockMutation.mutate()} disabled={unblockMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => unblockMutation.mutate()}
+              disabled={unblockMutation.isPending}
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
               Разблокировать
             </Button>
           ) : (
-            <Button variant="destructive" onClick={() => blockMutation.mutate("Admin action")} disabled={blockMutation.isPending}>
+            <Button
+              variant="destructive"
+              onClick={() => blockMutation.mutate("Admin action")}
+              disabled={blockMutation.isPending}
+            >
               <Ban className="mr-2 h-4 w-4" />
               Заблокировать
             </Button>
@@ -253,7 +284,11 @@ export default function AdminUserDetail() {
             <Button
               variant="outline"
               onClick={() => {
-                if (window.confirm("Удалить пользователя? Это скроет связанные салоны/мастер-профили.")) {
+                if (
+                  window.confirm(
+                    "Удалить пользователя? Это скроет связанные салоны/мастер-профили.",
+                  )
+                ) {
                   deleteMutation.mutate();
                 }
               }}
@@ -278,9 +313,13 @@ export default function AdminUserDetail() {
               {profile?.city && <p className="text-sm text-muted-foreground">{profile.city}</p>}
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <Badge className={STATUS_COLORS[user.status] ?? ""}>{user.status}</Badge>
+              <Badge className={STATUS_COLORS[user.status] ?? ""}>
+                {t(`admin.users.statuses.${user.status}`, user.status)}
+              </Badge>
               {roles.map((role) => (
-                <Badge key={role} variant="outline">{role}</Badge>
+                <Badge key={role} variant="outline">
+                  {t(`admin.users.roles.${role}`, role)}
+                </Badge>
               ))}
             </div>
 
@@ -289,9 +328,21 @@ export default function AdminUserDetail() {
             <div className="w-full space-y-2 text-left text-sm">
               <InfoRow icon={Mail} label="Email" value={user.email} />
               <InfoRow icon={Phone} label="Телефон" value={profile?.phone || user.phoneNumber} />
-              <InfoRow icon={Calendar} label="Регистрация" value={user.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : null} />
-              <InfoRow icon={Shield} label="Email verified" value={user.emailVerified ? "Да" : "Нет"} />
-              <InfoRow icon={Shield} label="Phone verified" value={user.phoneVerified ? "Да" : "Нет"} />
+              <InfoRow
+                icon={Calendar}
+                label="Регистрация"
+                value={user.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : null}
+              />
+              <InfoRow
+                icon={Shield}
+                label="Email verified"
+                value={user.emailVerified ? "Да" : "Нет"}
+              />
+              <InfoRow
+                icon={Shield}
+                label="Phone verified"
+                value={user.phoneVerified ? "Да" : "Нет"}
+              />
               {user.blockReason && <InfoRow icon={Ban} label="Причина" value={user.blockReason} />}
             </div>
           </CardContent>
@@ -300,15 +351,30 @@ export default function AdminUserDetail() {
         <div className="space-y-6">
           <RelatedBusinessCard ownedSalons={ownedSalons} masterProfiles={masterProfiles} />
           <BookingsCard bookings={recentBookings} />
-          <SessionsCard sessions={sessionsQuery.data?.sessions ?? []} loading={sessionsQuery.isLoading} />
-          <AuditCard logs={auditQuery.data?.logs ?? []} loading={auditQuery.isLoading} onOpenAudit={() => setLocation(`/admin/audit?actorUserId=${encodedUserId}`)} />
+          <SessionsCard
+            sessions={sessionsQuery.data?.sessions ?? []}
+            loading={sessionsQuery.isLoading}
+          />
+          <AuditCard
+            logs={auditQuery.data?.logs ?? []}
+            loading={auditQuery.isLoading}
+            onOpenAudit={() => setLocation(`/admin/audit?actorUserId=${encodedUserId}`)}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: ElementType; label: string; value?: string | null }) {
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ElementType;
+  label: string;
+  value?: string | null;
+}) {
   return (
     <div className="flex items-start gap-2 text-muted-foreground">
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -320,7 +386,10 @@ function InfoRow({ icon: Icon, label, value }: { icon: ElementType; label: strin
   );
 }
 
-function RelatedBusinessCard({ ownedSalons, masterProfiles }: Pick<UserDetail, "ownedSalons" | "masterProfiles">) {
+function RelatedBusinessCard({
+  ownedSalons,
+  masterProfiles,
+}: Pick<UserDetail, "ownedSalons" | "masterProfiles">) {
   return (
     <Card>
       <CardHeader>
@@ -332,29 +401,53 @@ function RelatedBusinessCard({ ownedSalons, masterProfiles }: Pick<UserDetail, "
       <CardContent className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="mb-2 text-sm font-medium">Салоны владельца</p>
-          {ownedSalons.length ? ownedSalons.map((salon) => (
-            <div key={salon.id} className="mb-2 rounded-lg border p-3">
-              <p className="font-medium">{localized(salon.name)}</p>
-              <p className="text-sm text-muted-foreground">{[salon.city, salon.status].filter(Boolean).join(" · ") || "—"}</p>
-              <Link href="/admin/salons">
-                <Button variant="link" className="h-auto p-0 text-sm">Открыть список салонов</Button>
-              </Link>
-            </div>
-          )) : <p className="text-sm text-muted-foreground">Нет салонов</p>}
+          {ownedSalons.length ? (
+            ownedSalons.map((salon) => (
+              <div key={salon.id} className="mb-2 rounded-lg border p-3">
+                <p className="font-medium">{localized(salon.name)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {[salon.city, salon.status].filter(Boolean).join(" · ") || "—"}
+                </p>
+                <Link href="/admin/salons">
+                  <Button
+                    variant="ghost"
+                    className="h-auto p-0 text-sm text-primary underline-offset-4 hover:underline"
+                  >
+                    Открыть список салонов
+                  </Button>
+                </Link>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">Нет салонов</p>
+          )}
         </div>
         <div>
           <p className="mb-2 text-sm font-medium">Профили мастера</p>
-          {masterProfiles.length ? masterProfiles.map((master) => (
-            <div key={master.id} className="mb-2 rounded-lg border p-3">
-              <p className="font-medium">{master.name}</p>
-              <p className="text-sm text-muted-foreground">{[master.city, master.status, master.isSoloMaster ? "solo" : null].filter(Boolean).join(" · ") || "—"}</p>
-              {master.slug ? (
-                <Link href={`/master/${master.slug}`}>
-                  <Button variant="link" className="h-auto p-0 text-sm">Открыть публичный профиль</Button>
-                </Link>
-              ) : null}
-            </div>
-          )) : <p className="text-sm text-muted-foreground">Нет мастер-профилей</p>}
+          {masterProfiles.length ? (
+            masterProfiles.map((master) => (
+              <div key={master.id} className="mb-2 rounded-lg border p-3">
+                <p className="font-medium">{master.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {[master.city, master.status, master.isSoloMaster ? "solo" : null]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </p>
+                {master.slug ? (
+                  <Link href={`/master/${master.slug}`}>
+                    <Button
+                      variant="ghost"
+                      className="h-auto p-0 text-sm text-primary underline-offset-4 hover:underline"
+                    >
+                      Открыть публичный профиль
+                    </Button>
+                  </Link>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">Нет мастер-профилей</p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -362,6 +455,7 @@ function RelatedBusinessCard({ ownedSalons, masterProfiles }: Pick<UserDetail, "
 }
 
 function BookingsCard({ bookings }: { bookings: UserDetail["recentBookings"] }) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
@@ -391,8 +485,18 @@ function BookingsCard({ bookings }: { bookings: UserDetail["recentBookings"] }) 
                 {bookings.map((booking) => (
                   <TableRow key={booking.id}>
                     <TableCell className="font-mono text-xs">{booking.id.slice(0, 8)}</TableCell>
-                    <TableCell>{new Date(booking.bookingDate).toLocaleDateString("ru-RU")} · {booking.startTime}</TableCell>
-                    <TableCell><Badge className={BOOKING_STATUS_COLORS[booking.status] || ""} variant="secondary">{booking.status}</Badge></TableCell>
+                    <TableCell>
+                      {new Date(booking.bookingDate).toLocaleDateString("ru-RU")} ·{" "}
+                      {booking.startTime}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={BOOKING_STATUS_COLORS[booking.status] || ""}
+                        variant="secondary"
+                      >
+                        {t(`booking.${booking.status}`, booking.status)}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{booking.priceSnapshot?.toLocaleString("ru-RU") ?? 0} UZS</TableCell>
                   </TableRow>
                 ))}
@@ -408,23 +512,39 @@ function BookingsCard({ bookings }: { bookings: UserDetail["recentBookings"] }) 
 function SessionsCard({ sessions, loading }: { sessions: ActivitySession[]; loading: boolean }) {
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">История сессий</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">История сессий</CardTitle>
+      </CardHeader>
       <CardContent>
-        {loading ? <p className="text-sm text-muted-foreground">Загрузка...</p> : sessions.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Загрузка...</p>
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">Сессий нет</p>
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <Table>
-              <TableHeader><TableRow><TableHead>Вход</TableHead><TableHead>Выход</TableHead><TableHead>IP</TableHead><TableHead>Браузер</TableHead><TableHead>Длительность</TableHead></TableRow></TableHeader>
-              <TableBody>{sessions.map(({ session }) => (
-                <TableRow key={session.id}>
-                  <TableCell>{dateTime(session.loginAt)}</TableCell>
-                  <TableCell>{dateTime(session.logoutAt)}</TableCell>
-                  <TableCell>{session.ipAddress || "—"}</TableCell>
-                  <TableCell>{[session.browser, session.os].filter(Boolean).join(" · ") || "—"}</TableCell>
-                  <TableCell>{duration(session.durationSeconds)}</TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Вход</TableHead>
+                  <TableHead>Выход</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Браузер</TableHead>
+                  <TableHead>Длительность</TableHead>
                 </TableRow>
-              ))}</TableBody>
+              </TableHeader>
+              <TableBody>
+                {sessions.map(({ session }) => (
+                  <TableRow key={session.id}>
+                    <TableCell>{dateTime(session.loginAt)}</TableCell>
+                    <TableCell>{dateTime(session.logoutAt)}</TableCell>
+                    <TableCell>{session.ipAddress || "—"}</TableCell>
+                    <TableCell>
+                      {[session.browser, session.os].filter(Boolean).join(" · ") || "—"}
+                    </TableCell>
+                    <TableCell>{duration(session.durationSeconds)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </div>
         )}
@@ -433,28 +553,54 @@ function SessionsCard({ sessions, loading }: { sessions: ActivitySession[]; load
   );
 }
 
-function AuditCard({ logs, loading, onOpenAudit }: { logs: AuditItem[]; loading: boolean; onOpenAudit: () => void }) {
+function AuditCard({
+  logs,
+  loading,
+  onOpenAudit,
+}: {
+  logs: AuditItem[];
+  loading: boolean;
+  onOpenAudit: () => void;
+}) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle className="text-base">Действия в аудите</CardTitle>
-        <Button variant="outline" size="sm" onClick={onOpenAudit}>Открыть аудит</Button>
+        <Button variant="outline" size="sm" onClick={onOpenAudit}>
+          Открыть аудит
+        </Button>
       </CardHeader>
       <CardContent>
-        {loading ? <p className="text-sm text-muted-foreground">Загрузка...</p> : logs.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Загрузка...</p>
+        ) : logs.length === 0 ? (
           <p className="text-sm text-muted-foreground">Действий нет</p>
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <Table>
-              <TableHeader><TableRow><TableHead>Время</TableHead><TableHead>Действие</TableHead><TableHead>Объект</TableHead><TableHead>IP</TableHead></TableRow></TableHeader>
-              <TableBody>{logs.map(({ log }) => (
-                <TableRow key={log.id}>
-                  <TableCell>{dateTime(log.createdAt)}</TableCell>
-                  <TableCell><Badge variant="outline">{log.action}</Badge></TableCell>
-                  <TableCell>{log.entityType}{log.entityId ? ` · ${log.entityId.slice(0, 8)}` : ""}</TableCell>
-                  <TableCell>{log.ipAddress || "—"}</TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Время</TableHead>
+                  <TableHead>Действие</TableHead>
+                  <TableHead>Объект</TableHead>
+                  <TableHead>IP</TableHead>
                 </TableRow>
-              ))}</TableBody>
+              </TableHeader>
+              <TableBody>
+                {logs.map(({ log }) => (
+                  <TableRow key={log.id}>
+                    <TableCell>{dateTime(log.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{log.action}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {log.entityType}
+                      {log.entityId ? ` · ${log.entityId.slice(0, 8)}` : ""}
+                    </TableCell>
+                    <TableCell>{log.ipAddress || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </div>
         )}

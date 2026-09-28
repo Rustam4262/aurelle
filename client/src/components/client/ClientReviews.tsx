@@ -287,7 +287,11 @@ export function ClientReviews({
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setEditReviewDialogOpen(false)}>
+            <Button
+              className="w-full sm:w-auto"
+              variant="outline"
+              onClick={() => setEditReviewDialogOpen(false)}
+            >
               {t("marketplace.client.close")}
             </Button>
             <Button
@@ -310,7 +314,11 @@ export function ClientReviews({
             <DialogDescription>{t("marketplace.client.deleteReviewConfirm")}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setDeleteReviewDialogOpen(false)}>
+            <Button
+              className="w-full sm:w-auto"
+              variant="outline"
+              onClick={() => setDeleteReviewDialogOpen(false)}
+            >
               {t("marketplace.client.close")}
             </Button>
             <Button
