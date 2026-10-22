@@ -1,5 +1,6 @@
 import "dotenv/config";
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
+import { errorHandler } from "./middleware/requestErrorHandler";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -10,12 +11,7 @@ import { startBookingRemindersJob } from "./jobs/booking-reminders";
 import { startGmvRefreshJob } from "./lib/gmv-refresh";
 import { startDraftCleanupJob } from "./jobs/cleanup-drafts";
 import { startLifecycleCron } from "./lib/subscriptions";
-import {
-  initializeSentry,
-  setupSentryMiddleware,
-  setupSentryErrorHandler,
-  trackUserMiddleware,
-} from "./lib/sentry";
+import { initializeSentry, setupSentryMiddleware, setupSentryErrorHandler } from "./lib/sentry";
 import { trackActivityHeartbeat } from "./middleware/activity";
 import { setupWebSocket } from "./lib/websocket";
 import { setCsrfCookie } from "./middleware/csrf";
@@ -23,8 +19,33 @@ import { setCsrfCookie } from "./middleware/csrf";
 // Initialize Sentry as early as possible
 initializeSentry();
 
+// A rejection with no .catch() anywhere in the chain must never crash the
+// process silently (or inconsistently, depending on Node version defaults) —
+// log it so it's visible, the same way a thrown error already is.
+process.on("unhandledRejection", (reason) => {
+  logger.error(
+    "Unhandled promise rejection",
+    reason instanceof Error ? reason : new Error(String(reason)),
+    {
+      source: "process",
+    },
+  );
+});
+
+// An uncaught exception means some code ran past a point it assumed could
+// not fail — process state is no longer trustworthy. Log it and exit so PM2
+// restarts into a clean process, rather than keep serving from a corrupted one.
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught exception — exiting", err, { source: "process" });
+  process.exit(1);
+});
+
 const app = express();
 const httpServer = createServer(app);
+app.use("/api", (_req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex");
+  next();
+});
 
 import cors from "cors";
 import helmet from "helmet";
@@ -110,19 +131,7 @@ app.use(
   }),
 );
 
-declare module "http" {
-  interface IncomingMessage {
-    rawBody: unknown;
-  }
-}
-
-app.use(
-  express.json({
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
+app.use(express.json());
 
 app.use(express.urlencoded({ extended: false }));
 
@@ -136,6 +145,11 @@ import { requestId, slowRequestLogger } from "./middleware/requestId";
 app.use(requestId);
 app.use(slowRequestLogger);
 
+// Track activity heartbeat for authenticated requests. Registered before
+// routes, but hooks res.on("finish") internally so it still sees whatever
+// `req.user` the matched route's own isAuthenticated set.
+app.use(trackActivityHeartbeat());
+
 (async () => {
   // Initialize upload directories
   initializeUploadDirectories();
@@ -145,26 +159,8 @@ app.use(slowRequestLogger);
 
   await registerRoutes(httpServer, app);
 
-  // Track user context after authentication
-  app.use(trackUserMiddleware());
-
-  // Track user activity heartbeat for authenticated users
-  app.use(trackActivityHeartbeat());
-
   // Sentry error handler - must be before other error handlers
   setupSentryErrorHandler(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-
-    // Only throw server errors (5xx) - Sentry will capture them
-    if (status >= 500) {
-      throw err;
-    }
-  });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -180,6 +176,9 @@ app.use(slowRequestLogger);
     await setupVite(httpServer, app);
     logger.info("Vite initialized successfully");
   }
+
+  // Handle errors from API routes and static/Vite middleware alike.
+  app.use(errorHandler);
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
@@ -198,7 +197,10 @@ app.use(slowRequestLogger);
   httpServer.listen(
     {
       port,
-      host: process.platform === "win32" ? "127.0.0.1" : "0.0.0.0",
+      host:
+        process.env.NODE_ENV === "production" || process.platform === "win32"
+          ? "127.0.0.1"
+          : "0.0.0.0",
       reusePort: process.platform !== "win32",
     },
     () => {
@@ -222,4 +224,23 @@ app.use(slowRequestLogger);
       }
     },
   );
-})();
+
+  // Stop accepting new connections and let in-flight requests finish before
+  // the process exits — PM2 sends SIGTERM on reload/restart/stop.
+  const shutdown = (signal: string) => {
+    logger.info(`${signal} received — shutting down gracefully`, { source: "process" });
+    httpServer.close(() => {
+      logger.info("HTTP server closed", { source: "process" });
+      process.exit(0);
+    });
+    // Don't hang forever if a connection never drains.
+    setTimeout(() => process.exit(1), 10_000).unref();
+  };
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+})().catch((err) => {
+  logger.error("Fatal startup error", err instanceof Error ? err : new Error(String(err)), {
+    source: "process",
+  });
+  process.exit(1);
+});

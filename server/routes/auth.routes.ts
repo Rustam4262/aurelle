@@ -1,3 +1,5 @@
+import { verifyCsrf } from "../middleware/csrf";
+import { completeRoleSelection } from "../auth/role-selection";
 import { Router } from "express";
 import { isYandexConfigured } from "../yandexAuth";
 import { isGoogleConfigured } from "../googleAuth";
@@ -11,9 +13,11 @@ import { salons, userProfiles, users } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { trackUserLogout } from "../middleware/activity";
+import { SESSION_COOKIE_NAME } from "../lib/session-cookie";
 import { isSoftDeletedUser } from "../lib/user-deletion";
 
 const router = Router();
+router.post("/auth/choose-role", isAuthenticated, verifyCsrf, completeRoleSelection);
 
 // Helper to check if admin tables exist
 let adminTablesExist: boolean | null = null;
@@ -45,7 +49,7 @@ router.get("/auth/user", async (req: any, res) => {
     const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!dbUser || isSoftDeletedUser(dbUser)) {
       req.session.destroy(() => undefined);
-      res.clearCookie("connect.sid", {
+      res.clearCookie(SESSION_COOKIE_NAME, {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -101,7 +105,11 @@ router.get("/auth/user", async (req: any, res) => {
             .from(userProfiles)
             .where(eq(userProfiles.userId, userId))
             .limit(1);
-          if (profile?.role === "solo_master" || profile?.role === "master") {
+          if (
+            profile?.role === "owner" ||
+            profile?.role === "solo_master" ||
+            profile?.role === "master"
+          ) {
             derivedRole = profile.role;
           }
         }
@@ -119,6 +127,7 @@ router.get("/auth/user", async (req: any, res) => {
       isAdmin: !!adminRole,
       adminRole: adminRole,
       role: derivedRole,
+      roleSelectionRequired: dbUser.roleSelectionRequired,
     });
   }
 
@@ -140,7 +149,7 @@ router.post("/logout", (req: any, res) => {
         return res.status(500).json({ message: "Logout failed" });
       }
       // Clear cookie with all possible options to ensure it's removed
-      res.clearCookie("connect.sid", {
+      res.clearCookie(SESSION_COOKIE_NAME, {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

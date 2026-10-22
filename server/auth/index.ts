@@ -10,6 +10,9 @@ import { logger } from "../lib/logger";
 import { initializeRedis, getRedisClient } from "../lib/redis";
 import { getRedisConfigStatus } from "../config/redis";
 import { isSoftDeletedUser } from "../lib/user-deletion";
+import { enforceSessionVersion } from "../lib/session-version";
+import { setUserFromRequest } from "../lib/sentry";
+import { SESSION_COOKIE_NAME } from "../lib/session-cookie";
 
 const PgSession = connectPgSimple(session);
 
@@ -76,41 +79,47 @@ function getSessionSecrets(): string[] {
 
 // Simple authentication middleware
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Check if user is authenticated via session
-  if (req.session && req.session.passport?.user) {
-    const user = req.session.passport.user;
-    const userId = user?.claims?.sub as string | undefined;
+  try {
+    // Check if user is authenticated via session
+    if (req.session && req.session.passport?.user) {
+      const user = req.session.passport.user;
+      const userId = user?.claims?.sub as string | undefined;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+      if (!dbUser || dbUser.isBlocked || isSoftDeletedUser(dbUser)) {
+        req.session.destroy(() => {});
+        res.clearCookie(SESSION_COOKIE_NAME, {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+        });
+        return res.status(401).json({ message: "Account is not available" });
+      }
+
+      // Attach user to request
+      (req as any).user = user;
+      setUserFromRequest(req);
+
+      return next();
     }
 
-    const [dbUser] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-
-    if (!dbUser || isSoftDeletedUser(dbUser)) {
-      req.session.destroy(() => {});
-      res.clearCookie("connect.sid", {
-        path: "/",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-      });
-      return res.status(401).json({ message: "Account is not available" });
-    }
-
-    // Attach user to request
-    (req as any).user = user;
-
-    return next();
+    return res.status(401).json({ message: "Unauthorized" });
+  } catch (error) {
+    logger.error("Authentication lookup failed", error as Error, { source: "auth" });
+    return res.status(503).json({ message: "Authentication temporarily unavailable" });
   }
-
-  return res.status(401).json({ message: "Unauthorized" });
 };
 
 // Setup authentication with session support
 export async function setupAuth(app: Express) {
   // Trust proxy — important for operation behind Nginx
-  app.set("trust proxy", 1);
+  app.set("trust proxy", "loopback");
 
   const secrets = getSessionSecrets();
 
@@ -150,6 +159,7 @@ export async function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       rolling: true, // Reset cookie maxAge on every request
+      name: SESSION_COOKIE_NAME,
       cookie: {
         path: "/",
         secure: process.env.NODE_ENV === "production",
@@ -161,6 +171,7 @@ export async function setupAuth(app: Express) {
   );
 
   const rotationNote = secrets.length > 1 ? " (rotation: 2 secrets active)" : "";
+  app.use(enforceSessionVersion);
   logger.info(`Auth system initialized — session store: ${storeType}${rotationNote}`, {
     source: "auth",
   });

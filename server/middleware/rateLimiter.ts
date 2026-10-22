@@ -46,6 +46,25 @@ export const loginLimiter = rateLimit({
   store: makeStore("login"),
 });
 
+// Login, keyed by the targeted account instead of the caller's IP: 10 failed
+// attempts / 15 min against one email, regardless of how many source IPs the
+// attempts are spread across. Applied alongside loginLimiter, not instead of
+// it — the IP limiter alone never bounds a distributed attempt against a
+// single account.
+export const loginAccountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Too many login attempts for this account. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    return email || req.ip || "unknown";
+  },
+  store: makeStore("login-account"),
+});
+
 // Password reset / resend-verification: 5 requests/min per IP
 export const resetLimiter = rateLimit({
   windowMs: 60 * 1000,

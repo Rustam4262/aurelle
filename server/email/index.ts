@@ -14,6 +14,17 @@ import { getEmailConfig, getEmailConfigStatus } from "../config/email";
 
 export { getEmailConfigStatus } from "../config/email";
 
+// Same convention as sms/index.ts's maskPhone — logs stay useful for
+// debugging delivery without writing full addresses to disk.
+export function maskEmail(address: string): string {
+  const at = address.indexOf("@");
+  if (at <= 0) return "***";
+  const local = address.slice(0, at);
+  const domain = address.slice(at + 1);
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}***@${domain}`;
+}
+
 // ─── Transport singleton ──────────────────────────────────────────────────────
 
 // Use ReturnType to avoid nodemailer generic type incompatibilities
@@ -119,7 +130,7 @@ export async function sendEmailDetailed(
     const status = getEmailConfigStatus();
     logger.warn("email_disabled", {
       source: "email-service",
-      meta: { reason: status.reason, to, subject },
+      meta: { reason: status.reason, to: maskEmail(to), subject },
     });
     return { ok: false, disabled: true };
   }
@@ -136,7 +147,7 @@ export async function sendEmailDetailed(
       });
       logger.info("email_sent", {
         source: "email-service",
-        meta: { to, subject, messageId: info.messageId as string, attempt },
+        meta: { to: maskEmail(to), subject, messageId: info.messageId as string, attempt },
       });
       return { ok: true, messageId: info.messageId as string };
     } catch (err) {
@@ -150,7 +161,7 @@ export async function sendEmailDetailed(
   const errCode = (lastErr as NodeJS.ErrnoException)?.code;
   logger.error("email_failed", lastErr!, {
     source: "email-service",
-    meta: { to, subject, code: errCode },
+    meta: { to: maskEmail(to), subject, code: errCode },
   });
   return { ok: false, error: lastErr?.message };
 }

@@ -197,11 +197,12 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = "i
  */
 export function setUserFromRequest(req: Request) {
   const user = (req as any).user;
-  if (user) {
+  const claims = user?.claims;
+  if (claims?.sub) {
     Sentry.setUser({
-      id: user.id,
-      email: user.email,
-      username: user.username || user.name,
+      id: claims.sub,
+      email: claims.email,
+      username: [claims.first_name, claims.last_name].filter(Boolean).join(" ") || undefined,
       ip_address: req.ip,
     });
   }
@@ -241,18 +242,6 @@ export function startTransaction(name: string, op: string) {
     // Return undefined as the span is now auto-managed
     return undefined;
   });
-}
-
-/**
- * Custom middleware to track user context on each request
- */
-export function trackUserMiddleware() {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    if ((req as any).user) {
-      setUserFromRequest(req);
-    }
-    next();
-  };
 }
 
 /**

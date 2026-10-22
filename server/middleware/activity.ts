@@ -99,48 +99,42 @@ export async function trackUserLogout(sessionId: string) {
   }
 }
 
-// Middleware to track activity heartbeat
+// Middleware to track activity heartbeat.
+//
+// `req.user` is only populated once the route's own `isAuthenticated` runs,
+// which (this app does not mount passport.initialize/session) can be at any
+// point in that route's own chain — not before this middleware if it were
+// registered ahead of routes, and not at all if registered after them (the
+// request-response cycle already ended by the time a later app.use() would
+// run). Hooking the check into `res.on("finish")` sidesteps both: it always
+// fires after the route handler has finished, by which point `req.user` has
+// whatever the route itself set.
 export function trackActivityHeartbeat() {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    // Skip if not authenticated
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
-      return next();
-    }
+  return (req: Request, res: Response, next: NextFunction) => {
+    res.on("finish", () => {
+      const userId = (req as any).user?.claims?.sub as string | undefined;
+      if (!userId) return;
 
-    const user = (req as any).user;
-    if (!user || !user.id) {
-      return next();
-    }
+      const sessionId = req.sessionID;
 
-    const userId = user.id;
-    const sessionId = req.sessionID;
-
-    // Update in background (don't await)
-    (async () => {
-      try {
-        // Update last activity for active session
-        await db
-          .update(userActivitySessions)
-          .set({
-            lastActivityAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(userActivitySessions.userId, userId),
-              eq(userActivitySessions.sessionId, sessionId),
-              isNull(userActivitySessions.logoutAt),
-            ),
-          );
-
-        // Update user's last activity
-        await db.update(users).set({ lastActivityAt: new Date() }).where(eq(users.id, userId));
-      } catch (error: any) {
-        logger.error("Failed to update activity heartbeat", error as Error, {
-          source: "activity-middleware",
+      db.update(userActivitySessions)
+        .set({ lastActivityAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(userActivitySessions.userId, userId),
+            eq(userActivitySessions.sessionId, sessionId),
+            isNull(userActivitySessions.logoutAt),
+          ),
+        )
+        .then(() =>
+          db.update(users).set({ lastActivityAt: new Date() }).where(eq(users.id, userId)),
+        )
+        .catch((error: unknown) => {
+          logger.error("Failed to update activity heartbeat", error as Error, {
+            source: "activity-middleware",
+          });
         });
-      }
-    })();
+    });
 
     next();
   };

@@ -1,3 +1,4 @@
+import { issueRecoveryToken, resetPasswordWithToken } from "./lib/password-recovery";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import type { Express, Request, Response } from "express";
@@ -6,40 +7,64 @@ import { users, passwordResetTokens, emailVerificationTokens } from "@shared/sch
 import { userProfiles } from "@shared/schema";
 import { eq, and, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { loginLimiter, resetLimiter, registerLimiter } from "./middleware/rateLimiter";
+import {
+  loginLimiter,
+  loginAccountLimiter,
+  resetLimiter,
+  registerLimiter,
+} from "./middleware/rateLimiter";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
 import { trackEvent } from "./lib/analytics";
-import { getEmailConfigStatus, sendPasswordResetEmail, sendEmailVerificationEmail } from "./email";
+import {
+  getEmailConfigStatus,
+  sendPasswordResetEmail,
+  sendEmailVerificationEmail,
+  maskEmail,
+} from "./email";
 import { isSoftDeletedUser } from "./lib/user-deletion";
 import { isAuthenticated } from "./auth";
 import { logAudit } from "./lib/audit";
 
+const securePassword = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .refine(
+    (value) => Buffer.byteLength(value, "utf8") <= 72,
+    "Password must not exceed 72 UTF-8 bytes",
+  );
+
+// Case differences must never produce two accounts for the same mailbox.
+const normalizedEmail = z
+  .string()
+  .email()
+  .transform((v) => v.trim().toLowerCase());
+
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: normalizedEmail,
+  password: securePassword,
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   role: z.enum(["client", "owner", "solo_master"]),
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: normalizedEmail,
   password: z.string(),
 });
 
 const requestResetSchema = z.object({
-  email: z.string().email(),
+  email: normalizedEmail,
 });
 
 const confirmResetSchema = z.object({
   token: z.string().length(64),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  newPassword: securePassword,
 });
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password required"),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  newPassword: securePassword,
 });
 
 // Увеличенные rounds для bcrypt (безопаснее)
@@ -54,7 +79,6 @@ export function setupLocalAuth(app: Express) {
       }
 
       const { email, password, firstName, lastName, role } = parsed.data;
-      logger.info(`Registration attempt for email: ${email}`, { source: "localAuth" });
 
       const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
@@ -63,29 +87,36 @@ export function setupLocalAuth(app: Express) {
       }
 
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-      const userId = `local:${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const userId = `local:${crypto.randomUUID()}`;
 
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          id: userId,
-          email,
-          passwordHash,
-          firstName: firstName || null,
-          lastName: lastName || null,
-        })
-        .returning();
+      const newUser = await db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(users)
+          .values({
+            id: userId,
+            email,
+            passwordHash,
+            firstName: firstName || null,
+            lastName: lastName || null,
+          })
+          .returning();
 
-      await db.insert(userProfiles).values({
-        userId: newUser.id,
-        role,
-        fullName: [firstName, lastName].filter(Boolean).join(" ") || null,
+        await tx.insert(userProfiles).values({
+          userId: created.id,
+          role,
+          fullName: [firstName, lastName].filter(Boolean).join(" ") || null,
+        });
+        return created;
       });
 
       logger.info(`User created with ID: ${newUser.id}`, { source: "localAuth" });
 
+      await new Promise<void>((resolve, reject) =>
+        req.session.regenerate((err) => (err ? reject(err) : resolve())),
+      );
       (req.session as any).passport = {
         user: {
+          authVersion: newUser.authVersion,
           claims: {
             sub: newUser.id,
             email: newUser.email,
@@ -135,67 +166,75 @@ export function setupLocalAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", loginLimiter, async (req: Request, res: Response) => {
-    try {
-      const parsed = loginSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
-      }
-
-      const { email, password } = parsed.data;
-
-      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-      if (!user || !user.passwordHash) {
-        return res.status(401).json({ message: "Invalid email or password" });
-      }
-
-      if (isSoftDeletedUser(user)) {
-        return res.status(403).json({ message: "Account removed by administrator" });
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid email or password" });
-      }
-
-      (req.session as any).passport = {
-        user: {
-          claims: {
-            sub: user.id,
-            email: user.email,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            profile_image_url: user.profileImageUrl,
-          },
-          expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
-        },
-      };
-
-      req.session.save((err) => {
-        if (err) {
-          logger.error("Session save error", err as Error, { source: "localAuth" });
-          return res.status(500).json({ message: "Failed to create session" });
+  app.post(
+    "/api/auth/login",
+    loginLimiter,
+    loginAccountLimiter,
+    async (req: Request, res: Response) => {
+      try {
+        const parsed = loginSchema.safeParse(req.body);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
         }
 
-        // Track user login activity
-        trackUserLogin(user.id, req);
+        const { email, password } = parsed.data;
 
-        res.json({
-          success: true,
+        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+        if (!user || !user.passwordHash) {
+          return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        if (!isValidPassword) {
+          return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        if (user.isBlocked || isSoftDeletedUser(user)) {
+          return res.status(403).json({ message: "Account is not available" });
+        }
+        await new Promise<void>((resolve, reject) =>
+          req.session.regenerate((err) => (err ? reject(err) : resolve())),
+        );
+        (req.session as any).passport = {
           user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            authVersion: user.authVersion,
+            claims: {
+              sub: user.id,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+              profile_image_url: user.profileImageUrl,
+            },
+            expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
           },
+        };
+
+        req.session.save((err) => {
+          if (err) {
+            logger.error("Session save error", err as Error, { source: "localAuth" });
+            return res.status(500).json({ message: "Failed to create session" });
+          }
+
+          // Track user login activity
+          trackUserLogin(user.id, req);
+
+          res.json({
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            },
+          });
         });
-      });
-    } catch (error) {
-      logger.error("Login error", error as Error, { source: "localAuth" });
-      res.status(500).json({ message: "Login failed" });
-    }
-  });
+      } catch (error) {
+        logger.error("Login error", error as Error, { source: "localAuth" });
+        res.status(500).json({ message: "Login failed" });
+      }
+    },
+  );
 
   // Request password reset - generates token and sends email
   app.post(
@@ -226,7 +265,7 @@ export function setupLocalAuth(app: Express) {
         const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
         // Always return success to prevent email enumeration
-        if (!user || isSoftDeletedUser(user)) {
+        if (!user || user.isBlocked || isSoftDeletedUser(user)) {
           return res.json({
             success: true,
             message: "If this email exists, you will receive password reset instructions",
@@ -238,35 +277,27 @@ export function setupLocalAuth(app: Express) {
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
         // Save token to database
-        await db.insert(passwordResetTokens).values({
-          userId: user.id,
-          token,
-          expiresAt,
-        });
+        const issued = await issueRecoveryToken(user.id, token, expiresAt);
+        if (!issued)
+          return res.json({
+            success: true,
+            message: "If this email exists, you will receive password reset instructions",
+          });
 
-        const resetLink = `${process.env.APP_URL || "http://localhost:5000"}/auth/reset-password?token=${token}`;
+        const resetLink = `${process.env.APP_URL || "https://aurelle.uz"}/auth/reset-password?token=${token}`;
 
-        // Only report success after the reset email is actually accepted by SMTP.
+        // Keep the public response independent of account existence/delivery.
         const sent = await sendPasswordResetEmail(email, resetLink);
         if (!sent) {
           logger.error("Failed to send password reset email", undefined, {
             source: "localAuth",
             meta: { userId: user.id },
           });
-          return res.status(503).json({
-            success: false,
-            code: "RESET_EMAIL_DELIVERY_FAILED",
-            message: "Failed to send password reset email",
-          });
         }
-
-        // In development, include token in response for easy testing
-        const devResponse = process.env.NODE_ENV !== "production" ? { token, resetLink } : {};
 
         res.json({
           success: true,
           message: "If this email exists, you will receive password reset instructions",
-          ...devResponse,
         });
       } catch (error) {
         logger.error("Password reset request error", error as Error, { source: "localAuth" });
@@ -288,45 +319,8 @@ export function setupLocalAuth(app: Express) {
 
         const { token, newPassword } = parsed.data;
 
-        // Find valid token
-        const [resetToken] = await db
-          .select()
-          .from(passwordResetTokens)
-          .where(
-            and(
-              eq(passwordResetTokens.token, token),
-              gt(passwordResetTokens.expiresAt, new Date()),
-              isNull(passwordResetTokens.usedAt),
-            ),
-          )
-          .limit(1);
-
-        if (!resetToken) {
-          return res.status(400).json({
-            message: "Invalid or expired reset token",
-          });
-        }
-
-        const [resetUser] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, resetToken.userId))
-          .limit(1);
-        if (!resetUser || isSoftDeletedUser(resetUser)) {
-          return res.status(403).json({ message: "Account removed by administrator" });
-        }
-
-        // Hash new password
-        const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
-
-        // Update user password
-        await db.update(users).set({ passwordHash }).where(eq(users.id, resetToken.userId));
-
-        // Mark token as used
-        await db
-          .update(passwordResetTokens)
-          .set({ usedAt: new Date() })
-          .where(eq(passwordResetTokens.id, resetToken.id));
+        const changed = await resetPasswordWithToken(token, newPassword);
+        if (!changed) return res.status(400).json({ message: "Invalid or expired reset token" });
 
         res.json({
           success: true,
@@ -348,31 +342,35 @@ export function setupLocalAuth(app: Express) {
     }
 
     try {
-      const [record] = await db
-        .select()
-        .from(emailVerificationTokens)
-        .where(
-          and(
-            eq(emailVerificationTokens.token, token),
-            gt(emailVerificationTokens.expiresAt, new Date()),
-            isNull(emailVerificationTokens.usedAt),
-          ),
-        )
-        .limit(1);
+      const verified = await db.transaction(async (tx) => {
+        const [record] = await tx
+          .select()
+          .from(emailVerificationTokens)
+          .where(
+            and(
+              eq(emailVerificationTokens.token, token),
+              gt(emailVerificationTokens.expiresAt, new Date()),
+              isNull(emailVerificationTokens.usedAt),
+            ),
+          )
+          .for("update")
+          .limit(1);
 
-      if (!record) {
+        if (!record) return null;
+
+        await tx.update(users).set({ emailVerified: true }).where(eq(users.id, record.userId));
+        await tx
+          .update(emailVerificationTokens)
+          .set({ usedAt: new Date() })
+          .where(eq(emailVerificationTokens.id, record.id));
+        return record;
+      });
+
+      if (!verified) {
         return res.status(400).json({ message: "Invalid or expired verification link" });
       }
 
-      await Promise.all([
-        db.update(users).set({ emailVerified: true }).where(eq(users.id, record.userId)),
-        db
-          .update(emailVerificationTokens)
-          .set({ usedAt: new Date() })
-          .where(eq(emailVerificationTokens.id, record.id)),
-      ]);
-
-      logger.info("Email verified", { source: "localAuth", meta: { userId: record.userId } });
+      logger.info("Email verified", { source: "localAuth", meta: { userId: verified.userId } });
 
       // Redirect to profile with success indicator
       return res.redirect("/?emailVerified=1");
@@ -384,10 +382,11 @@ export function setupLocalAuth(app: Express) {
 
   // Resend verification email (rate-limited)
   app.post("/api/auth/resend-verification", resetLimiter, async (req: Request, res: Response) => {
-    const { email } = req.body;
-    if (!email || typeof email !== "string") {
+    const rawEmail = req.body?.email;
+    if (!rawEmail || typeof rawEmail !== "string") {
       return res.status(400).json({ message: "Email required" });
     }
+    const email = rawEmail.trim().toLowerCase();
 
     try {
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -420,11 +419,11 @@ async function sendVerificationEmail(userId: string, email: string): Promise<voi
 
   await db.insert(emailVerificationTokens).values({ userId, token, expiresAt });
 
-  const verifyLink = `${process.env.APP_URL || "http://localhost:5000"}/api/auth/verify-email?token=${token}`;
+  const verifyLink = `${process.env.APP_URL || "https://aurelle.uz"}/api/auth/verify-email?token=${token}`;
 
   const ok = await sendEmailVerificationEmail(email, verifyLink);
   logger.info("Verification email dispatched", {
     source: "localAuth",
-    meta: { userId, email, sent: ok },
+    meta: { userId, email: maskEmail(email), sent: ok },
   });
 }
