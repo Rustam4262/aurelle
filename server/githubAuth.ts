@@ -7,6 +7,7 @@ import type { Express } from "express";
 import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
+import { isSoftDeletedUser } from "./lib/user-deletion";
 
 function getGitHubCredentials() {
   const clientID = process.env.GITHUB_CLIENT_ID;
@@ -72,10 +73,19 @@ export async function setupGitHubAuth(app: Express) {
             });
 
             const [account] = await db
-              .select({ authVersion: users.authVersion })
+              .select({
+                authVersion: users.authVersion,
+                isBlocked: users.isBlocked,
+                blockReason: users.blockReason,
+              })
               .from(users)
               .where(eq(users.id, userId))
               .limit(1);
+
+            if (account?.isBlocked || isSoftDeletedUser(account ?? {})) {
+              return done(new Error("ACCOUNT_BLOCKED"));
+            }
+
             const user = {
               authVersion: account?.authVersion ?? 0,
               claims: {

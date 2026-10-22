@@ -1,15 +1,19 @@
 import passport from "passport";
 import { Strategy as YandexStrategy } from "passport-yandex";
 import type { Express } from "express";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
 import { oauthLimiter } from "./middleware/rateLimiter";
 import { captureException } from "./lib/sentry";
 import { trackUserLogin } from "./middleware/activity";
+import { isSoftDeletedUser } from "./lib/user-deletion";
 
 function getYandexCredentials(): { clientID: string; clientSecret: string } | null {
-  const clientID = process.env.YANDEX_CLIENT_ID;
-  const clientSecret = process.env.YANDEX_CLIENT_SECRET;
+  const clientID = process.env.YANDEX_CLIENT_ID?.trim();
+  const clientSecret = process.env.YANDEX_CLIENT_SECRET?.trim();
 
   if (!clientID || !clientSecret) {
     return null;
@@ -25,7 +29,12 @@ function getYandexCredentials(): { clientID: string; clientSecret: string } | nu
 function isAllowedRedirect(path?: string): boolean {
   if (!path) return false;
   // Same-origin only: must start with / but not // (protocol-relative), no ://
-  return /^\/[^/]/.test(path) && !path.includes("://");
+  return (
+    path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !/[\\\x00-\x20]/.test(path) &&
+    !path.includes("://")
+  );
 }
 
 export async function setupYandexAuth(app: Express) {
@@ -62,20 +71,26 @@ export async function setupYandexAuth(app: Express) {
   }
 
   const registeredStrategies = new Set<string>();
+  // Fixed production callback; do not derive it from untrusted Host/proxy headers.
+  const callbackURL =
+    process.env.YANDEX_CALLBACK_URL?.trim() ||
+    (process.env.NODE_ENV === "production"
+      ? "https://aurelle.uz/api/auth/yandex/callback"
+      : "http://localhost:5000/api/auth/yandex/callback");
 
   const ensureYandexStrategy = (req: any) => {
-    const hostname = req.hostname;
+    const hostname = "aurelle";
     const strategyName = `yandex:${hostname}`;
     if (!registeredStrategies.has(strategyName)) {
-      const protocol = req.get("X-Forwarded-Proto") || req.protocol || "https";
-      const callbackURL = `${protocol}://${hostname}/api/auth/yandex/callback`;
-
+      // The strategy forwards these options to passport-oauth2; bundled types omit state.
+      const options = {
+        clientID: credentials.clientID,
+        clientSecret: credentials.clientSecret,
+        callbackURL,
+        state: true,
+      };
       const strategy = new YandexStrategy(
-        {
-          clientID: credentials.clientID,
-          clientSecret: credentials.clientSecret,
-          callbackURL,
-        },
+        options,
         async (
           accessToken: string,
           refreshToken: string,
@@ -83,25 +98,48 @@ export async function setupYandexAuth(app: Express) {
           done: (error: any, user?: any) => void,
         ) => {
           try {
-            const email = profile.emails?.[0]?.value || profile._json?.default_email || null;
-            const firstName = profile.name?.givenName || profile.displayName?.split(" ")[0] || null;
-            const lastName =
-              profile.name?.familyName ||
-              profile.displayName?.split(" ").slice(1).join(" ") ||
+            const email =
+              (profile._json?.default_email || profile.emails?.[0]?.value)?.trim().toLowerCase() ||
               null;
-            const profileImageUrl = profile._json?.default_avatar_id
-              ? `https://avatars.yandex.net/get-yapic/${profile._json.default_avatar_id}/islands-200`
-              : undefined;
+            if (!profile.id) {
+              return done(new Error("YANDEX_ID_MISSING"));
+            }
+            const firstName =
+              profile._json?.first_name || profile.name?.givenName || profile.displayName || null;
+            const lastName = profile._json?.last_name || profile.name?.familyName || null;
+            const profileImageUrl = profile._json?.is_avatar_empty
+              ? undefined
+              : profile.photos?.[0]?.value;
 
-            const { userId } = await authStorage.upsertUser({
+            const { userId, isNew } = await authStorage.upsertUser({
               id: `yandex:${profile.id}`,
               email,
               firstName,
               lastName,
               profileImageUrl,
+              oauthProvider: "yandex",
+              // Yandex profile does not provide email_verified; do not merge by email alone.
+              allowEmailLink: false,
             });
 
+            const [account] = await db
+              .select({
+                required: users.roleSelectionRequired,
+                authVersion: users.authVersion,
+                isBlocked: users.isBlocked,
+                blockReason: users.blockReason,
+              })
+              .from(users)
+              .where(eq(users.id, userId))
+              .limit(1);
+
+            if (account?.isBlocked || isSoftDeletedUser(account ?? {})) {
+              return done(new Error("ACCOUNT_BLOCKED"));
+            }
+
             const user = {
+              authVersion: account?.authVersion ?? 0,
+              onboardingPath: account?.required || isNew ? "/choose-role" : undefined,
               claims: {
                 sub: userId,
                 email,
@@ -109,8 +147,6 @@ export async function setupYandexAuth(app: Express) {
                 last_name: lastName,
                 profile_image_url: profileImageUrl,
               },
-              access_token: accessToken,
-              refresh_token: refreshToken,
               expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
             };
 
@@ -133,6 +169,8 @@ export async function setupYandexAuth(app: Express) {
     const role = typeof req.query.role === "string" ? req.query.role : undefined;
     const redirect = typeof req.query.redirect === "string" ? req.query.redirect : undefined;
 
+    delete (req.session as any).oauthRole;
+    delete (req.session as any).oauthRedirect;
     if (role && ["client", "owner", "solo_master"].includes(role)) {
       (req.session as any).oauthRole = role;
     }
@@ -140,18 +178,24 @@ export async function setupYandexAuth(app: Express) {
       (req.session as any).oauthRedirect = redirect;
     }
 
-    passport.authenticate(`yandex:${req.hostname}`)(req, res, next);
+    passport.authenticate("yandex:aurelle", {
+      scope: ["login:info", "login:email", "login:avatar"],
+    })(req, res, next);
   });
 
   app.get("/api/auth/yandex/callback", (req, res, next) => {
     ensureYandexStrategy(req);
-    passport.authenticate(`yandex:${req.hostname}`, (err: any, user: any) => {
+    passport.authenticate("yandex:aurelle", (err: any, user: any) => {
       if (err || !user) {
         logger.warn(`[OAuth] Yandex callback failed: ${err?.message ?? "no user returned"}`, {
           source: "yandex-oauth",
           meta: { error: String(err ?? "no user") },
         });
-        return res.redirect("/auth?error=yandex_auth_failed");
+        return res.redirect(
+          err?.message === "EMAIL_LINK_REQUIRES_LOGIN"
+            ? "/auth?error=email_link_requires_login"
+            : "/auth?error=yandex_auth_failed",
+        );
       }
 
       const role = (req.session as any).oauthRole as string | undefined;
@@ -159,32 +203,36 @@ export async function setupYandexAuth(app: Express) {
       delete (req.session as any).oauthRole;
       delete (req.session as any).oauthRedirect;
 
-      // Persist session the same way localAuth does — passport.initialize() is not used
-      // in this app, so req.logIn() is not available. Write directly to session.
-      (req.session as any).passport = { user };
+      // Rotate the session identifier after successful authentication.
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) return res.redirect("/auth?error=yandex_auth_failed");
+        (req.session as any).passport = { user };
 
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          logger.warn(`[OAuth] Yandex session save failed: ${saveErr.message}`, {
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            logger.warn(`[OAuth] Yandex session save failed: ${saveErr.message}`, {
+              source: "yandex-oauth",
+            });
+            return res.redirect("/auth?error=yandex_auth_failed");
+          }
+
+          // Track login activity
+          const userId = user?.claims?.sub;
+          if (userId) trackUserLogin(userId, req);
+
+          const dest =
+            user.onboardingPath ||
+            (isAllowedRedirect(redirect)
+              ? redirect!
+              : role
+                ? `/auth?role=${encodeURIComponent(role)}`
+                : "/auth");
+
+          logger.info(`[OAuth] Yandex login OK — sub=${userId ?? "unknown"} → ${dest}`, {
             source: "yandex-oauth",
           });
-          return res.redirect("/auth?error=yandex_auth_failed");
-        }
-
-        // Track login activity
-        const userId = user?.claims?.sub;
-        if (userId) trackUserLogin(userId, req);
-
-        const dest = isAllowedRedirect(redirect)
-          ? redirect!
-          : role
-            ? `/auth?role=${encodeURIComponent(role)}`
-            : "/auth";
-
-        logger.info(`[OAuth] Yandex login OK — sub=${userId ?? "unknown"} → ${dest}`, {
-          source: "yandex-oauth",
+          res.redirect(dest);
         });
-        res.redirect(dest);
       });
     })(req, res, next);
   });

@@ -127,8 +127,8 @@ export function setupPhoneAuth(app: Express) {
       const userId = `phone:${phoneNumber.replace(/\+/g, "")}`;
       let [user] = await db.select().from(users).where(eq(users.id, userId));
 
-      if (user && isSoftDeletedUser(user)) {
-        return res.status(403).json({ error: "Account removed by administrator" });
+      if (user && (user.isBlocked || isSoftDeletedUser(user))) {
+        return res.status(403).json({ error: "Account is not available" });
       }
 
       if (!user) {
