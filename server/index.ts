@@ -106,7 +106,10 @@ app.use(
           "https://*.sentry.io",
           "https://www.google-analytics.com",
           "https://www.googletagmanager.com",
-          "wss:",
+          // No "wss:" wildcard: the app's own WebSocket connects to
+          // window.location.host (see client/src/hooks/use-websocket.ts),
+          // which 'self' already covers for the ws:/wss: scheme per the
+          // CSP spec — nothing else in the client opens a WebSocket.
         ],
         "frame-src": ["https://www.googletagmanager.com"],
         // 'self' for our own /sw.js; blob: for Yandex Maps v3 tile workers
