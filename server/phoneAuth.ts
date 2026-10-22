@@ -154,6 +154,7 @@ export function setupPhoneAuth(app: Express) {
 
       // Create session (same pattern as localAuth.ts)
       const sessionUser = {
+        authVersion: user.authVersion,
         claims: {
           sub: userId,
           phone_number: phoneNumber,
@@ -167,14 +168,22 @@ export function setupPhoneAuth(app: Express) {
         expires_at: Math.floor(Date.now() / 1000) + 30 * 24 * 3600, // 30 days
       };
 
-      (req.session as any).passport = { user: sessionUser };
-      req.session.save((err) => {
-        if (err) {
-          logger.error("Session save error", err as Error, { source: "phoneAuth" });
+      // Rotate the session identifier before establishing the authenticated
+      // session, same as every other auth path (local/Google/Yandex).
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) {
+          logger.error("Session regenerate error", regenerateErr as Error, { source: "phoneAuth" });
           return res.status(500).json({ error: "Failed to create session" });
         }
-        trackUserLogin(userId, req);
-        return res.json({ success: true, user: sessionUser.claims });
+        (req.session as any).passport = { user: sessionUser };
+        req.session.save((err) => {
+          if (err) {
+            logger.error("Session save error", err as Error, { source: "phoneAuth" });
+            return res.status(500).json({ error: "Failed to create session" });
+          }
+          trackUserLogin(userId, req);
+          return res.json({ success: true, user: sessionUser.claims });
+        });
       });
     } catch (error) {
       logger.error("Verify code error", error);

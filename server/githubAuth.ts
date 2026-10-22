@@ -1,8 +1,12 @@
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import type { Express } from "express";
 import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
+import { trackUserLogin } from "./middleware/activity";
 
 function getGitHubCredentials() {
   const clientID = process.env.GITHUB_CLIENT_ID;
@@ -59,7 +63,7 @@ export async function setupGitHubAuth(app: Express) {
             const lastName = nameParts.slice(1).join(" ") || null;
             const profileImageUrl = profile.photos?.[0]?.value || undefined;
 
-            await authStorage.upsertUser({
+            const { userId } = await authStorage.upsertUser({
               id: `github:${profile.id}`,
               email,
               firstName,
@@ -67,9 +71,15 @@ export async function setupGitHubAuth(app: Express) {
               profileImageUrl,
             });
 
+            const [account] = await db
+              .select({ authVersion: users.authVersion })
+              .from(users)
+              .where(eq(users.id, userId))
+              .limit(1);
             const user = {
+              authVersion: account?.authVersion ?? 0,
               claims: {
-                sub: `github:${profile.id}`,
+                sub: userId,
                 email,
                 first_name: firstName,
                 last_name: lastName,
@@ -101,9 +111,43 @@ export async function setupGitHubAuth(app: Express) {
 
   app.get("/api/auth/github/callback", (req, res, next) => {
     ensureGitHubStrategy(req);
-    passport.authenticate(`github:${req.hostname}`, {
-      successRedirect: "/auth",
-      failureRedirect: "/auth?error=github_auth_failed",
+    // Custom-callback form: this app never mounts passport.initialize()/
+    // passport.session() (it manages req.session.passport itself, the same
+    // way localAuth.ts/googleAuth.ts/yandexAuth.ts do), so the options-based
+    // form used here before — which relies on Passport calling req.login()
+    // internally — would throw at runtime the first time anyone actually
+    // completed a GitHub login.
+    passport.authenticate(`github:${req.hostname}`, (err: any, user: any) => {
+      if (err || !user) {
+        logger.warn(`[OAuth] GitHub callback failed: ${err?.message ?? "no user returned"}`, {
+          source: "github-oauth",
+          meta: { error: String(err ?? "no user") },
+        });
+        return res.redirect("/auth?error=github_auth_failed");
+      }
+
+      // Rotate the session identifier after successful authentication.
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) return res.redirect("/auth?error=github_auth_failed");
+        (req.session as any).passport = { user };
+
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            logger.warn(`[OAuth] GitHub session save failed: ${saveErr.message}`, {
+              source: "github-oauth",
+            });
+            return res.redirect("/auth?error=github_auth_failed");
+          }
+
+          const userId = user?.claims?.sub;
+          if (userId) trackUserLogin(userId, req);
+
+          logger.info(`[OAuth] GitHub login OK — sub=${userId ?? "unknown"}`, {
+            source: "github-oauth",
+          });
+          res.redirect("/auth");
+        });
+      });
     })(req, res, next);
   });
 
