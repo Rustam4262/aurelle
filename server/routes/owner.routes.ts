@@ -1,4 +1,16 @@
+import {
+  rescheduleInput,
+  lockRescheduleSnapshot,
+  BookingRescheduleConflict,
+} from "../lib/booking-reschedule-guard";
+import { requireFeatureFlag } from "../featureFlags";
+import { changeBookingStatus, bookingStatusError } from "../lib/booking-status";
 import { Router } from "express";
+import {
+  isBookingResourceReferenceError,
+  bookingResourceDeletionError,
+} from "../lib/booking-resource-integrity";
+import { updateServiceSchema } from "@shared/service-input";
 import { randomBytes } from "crypto";
 import { db } from "../db";
 import { sendManagerInvitationEmail } from "../email";
@@ -43,6 +55,7 @@ import {
   rescheduleBookingReminders,
 } from "../lib/reminders";
 import { eq, and, desc, inArray, gte, lte, lt, ne, sql, isNotNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { isAuthenticated } from "../auth";
 import { createNewBookingNotification } from "../notifications";
@@ -377,9 +390,15 @@ router.delete("/salons/:salonId/services/:serviceId", isAuthenticated, async (re
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    await db.delete(services).where(and(eq(services.id, serviceId), eq(services.salonId, salonId)));
+    const [deleted] = await db
+      .delete(services)
+      .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)))
+      .returning({ id: services.id });
+    if (!deleted) return res.status(404).json({ error: "Service not found" });
     return res.json({ success: true });
   } catch (error) {
+    if (isBookingResourceReferenceError(error))
+      return res.status(409).json(bookingResourceDeletionError);
     logger.error("Delete service error:", error);
     return res.status(500).json({ error: "Failed to delete service" });
   }
@@ -400,24 +419,6 @@ router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: 
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    const updateServiceSchema = z.object({
-      name: z.object({
-        en: z.string(),
-        ru: z.string(),
-        uz: z.string(),
-      }),
-      description: z.object({
-        en: z.string(),
-        ru: z.string(),
-        uz: z.string(),
-      }),
-      category: z.string(),
-      priceMin: z.number(),
-      priceMax: z.number(),
-      duration: z.number(),
-      isActive: z.boolean(),
-    });
-
     const parsed = updateServiceSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -430,6 +431,7 @@ router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: 
       .where(and(eq(services.id, serviceId), eq(services.salonId, salonId)))
       .returning();
 
+    if (!updatedService) return res.status(404).json({ error: "Service not found" });
     return res.json(updatedService);
   } catch (error) {
     logger.error("Update service error:", error);
@@ -452,9 +454,15 @@ router.delete("/salons/:salonId/masters/:masterId", isAuthenticated, async (req:
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    await db.delete(masters).where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)));
+    const [deleted] = await db
+      .delete(masters)
+      .where(and(eq(masters.id, masterId), eq(masters.salonId, salonId)))
+      .returning({ id: masters.id });
+    if (!deleted) return res.status(404).json({ error: "Master not found" });
     return res.json({ success: true });
   } catch (error) {
+    if (isBookingResourceReferenceError(error))
+      return res.status(409).json(bookingResourceDeletionError);
     logger.error("Delete master error:", error);
     return res.status(500).json({ error: "Failed to delete master" });
   }
@@ -1020,33 +1028,11 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
     const { status } = req.body;
     const ownerId = req.user.claims.sub;
 
-    // Get booking and verify salon ownership
-    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
+    const result = await changeBookingStatus(id, status, { kind: "owner", userId: ownerId });
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const updated = result.booking;
 
-    // Solo master bookings (salonId is null) cannot be managed by salon owners
-    if (!booking.salonId) {
-      return res.status(403).json({ error: "Not authorized - this is a solo master booking" });
-    }
-
-    const [salon] = await db
-      .select()
-      .from(salons)
-      .where(and(eq(salons.id, booking.salonId), eq(salons.ownerId, ownerId)));
-
-    if (!salon) {
-      return res.status(403).json({ error: "Not authorized" });
-    }
-
-    const [updated] = await db
-      .update(bookings)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(bookings.id, id))
-      .returning();
-
-    if (status === "cancelled") {
+    if (result.changed && status === "cancelled") {
       cancelBookingReminders(updated.id).catch((err) =>
         logger.error("Failed to cancel reminders", {
           source: "owner.routes",
@@ -1904,7 +1890,13 @@ router.get(
       if (dateFrom) conditions.push(gte(bookings.bookingDate, new Date(dateFrom as string)));
       if (dateTo) conditions.push(lte(bookings.bookingDate, new Date(dateTo as string)));
 
-      // Get bookings with joined data
+      // bookings.clientId is historically either users.id (two creation
+      // paths) or user_profiles.id (owner manual-create). The two joins
+      // below only covered the users.id case — resolve the other direction
+      // too (directProfile/directProfileUser), or a manual-create booking's
+      // client name/email/avatar silently came back null.
+      const directProfile = alias(userProfiles, "direct_profile");
+      const directProfileUser = alias(users, "direct_profile_user");
       const query = db
         .select({
           id: bookings.id,
@@ -1926,9 +1918,13 @@ router.get(
           salonName: salons.name,
           masterName: masters.name,
           serviceName: services.name,
-          clientName: userProfiles.fullName,
-          clientEmail: sql<string>`users.email`,
-          clientAvatar: userProfiles.avatarUrl,
+          clientName: sql<
+            string | null
+          >`COALESCE(${userProfiles.fullName}, ${directProfile.fullName})`,
+          clientEmail: sql<string | null>`COALESCE(users.email, ${directProfileUser.email})`,
+          clientAvatar: sql<
+            string | null
+          >`COALESCE(${userProfiles.avatarUrl}, ${directProfile.avatarUrl})`,
         })
         .from(bookings)
         .leftJoin(salons, eq(bookings.salonId, salons.id))
@@ -1936,6 +1932,8 @@ router.get(
         .leftJoin(services, eq(bookings.serviceId, services.id))
         .leftJoin(sql`users`, sql`bookings.client_id = users.id`)
         .leftJoin(userProfiles, sql`bookings.client_id = user_profiles.user_id`)
+        .leftJoin(directProfile, eq(bookings.clientId, directProfile.id))
+        .leftJoin(directProfileUser, eq(directProfile.userId, directProfileUser.id))
         .where(and(...conditions))
         .orderBy(desc(bookings.bookingDate), desc(bookings.startTime))
         .limit(parseInt(limit as string))
@@ -2011,41 +2009,53 @@ router.post(
         return res.status(403).json({ error: "Not authorized to update some bookings" });
       }
 
-      // Update bookings and add to history
-      const updates = await Promise.all(
-        bookingIds.map(async (bookingId) => {
-          const booking = bookingsToUpdate.find((b) => b.id === bookingId);
-          if (!booking) return null;
-
+      const outcome = await db.transaction(async (tx) => {
+        const locked = await tx
+          .select()
+          .from(bookings)
+          .where(and(inArray(bookings.id, bookingIds), inArray(bookings.salonId, salonIds)))
+          .orderBy(bookings.id)
+          .for("update");
+        if (locked.length !== bookingIds.length) return { error: "Booking set changed" };
+        for (const booking of locked) {
+          const error = bookingStatusError(booking, status);
+          if (error) return { error };
+        }
+        const updatedRows = [];
+        for (const booking of locked) {
           const historyEntry = {
             timestamp: new Date().toISOString(),
             action: `Status changed to ${status}`,
             changedBy: ownerId,
-            changes: {
-              status: { from: booking.status, to: status },
-              ...(notes && { notes }),
-            },
+            changes: { status: { from: booking.status, to: status }, ...(notes && { notes }) },
           };
-
-          const currentHistory = (booking.modificationHistory as any[]) || [];
-
-          const [updated] = await db
+          const [updated] = await tx
             .update(bookings)
             .set({
               status,
               ...(notes && { notes }),
               modifiedBy: ownerId,
-              modificationHistory: [...currentHistory, historyEntry],
+              modificationHistory: [
+                ...((booking.modificationHistory as any[]) || []),
+                historyEntry,
+              ],
               updatedAt: new Date(),
             })
-            .where(eq(bookings.id, bookingId))
+            .where(eq(bookings.id, booking.id))
             .returning();
-
-          return updated;
-        }),
-      );
-
-      const successfulUpdates = updates.filter((u): u is NonNullable<typeof u> => Boolean(u));
+          updatedRows.push(updated);
+        }
+        return { updatedRows };
+      });
+      if (outcome.error) return res.status(409).json({ error: outcome.error });
+      const successfulUpdates = outcome.updatedRows!;
+      if (status === "cancelled") {
+        for (const booking of successfulUpdates) {
+          cancelBookingReminders(booking.id).catch((error) =>
+            logger.error("Failed to cancel reminders", error),
+          );
+        }
+      }
 
       // Log audit trail
       await logAudit({
@@ -2140,7 +2150,11 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
     if (dateFrom) conditions.push(gte(bookings.bookingDate, new Date(dateFrom as string)));
     if (dateTo) conditions.push(lte(bookings.bookingDate, new Date(dateTo as string)));
 
-    // Get bookings with joined data
+    // bookings.clientId is historically either users.id (two creation paths)
+    // or user_profiles.id (owner manual-create) — joining only through
+    // user_profiles silently dropped the client's name/email for every
+    // booking created via the users.id path. Resolve both.
+    const directClientUser = alias(users, "direct_client_user");
     const allBookings = await db
       .select({
         id: bookings.id,
@@ -2152,8 +2166,11 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
         salonName: salons.name,
         masterName: masters.name,
         serviceName: services.name,
-        clientName: userProfiles.fullName,
-        clientEmail: users.email,
+        clientName: sql<string | null>`COALESCE(
+          ${userProfiles.fullName},
+          TRIM(CONCAT(${directClientUser.firstName}, ' ', ${directClientUser.lastName}))
+        )`,
+        clientEmail: sql<string | null>`COALESCE(${users.email}, ${directClientUser.email})`,
       })
       .from(bookings)
       .leftJoin(salons, eq(bookings.salonId, salons.id))
@@ -2161,6 +2178,7 @@ router.get("/bookings/export", isAuthenticated, async (req: any, res) => {
       .leftJoin(services, eq(bookings.serviceId, services.id))
       .leftJoin(userProfiles, eq(bookings.clientId, userProfiles.id))
       .leftJoin(users, eq(userProfiles.userId, users.id))
+      .leftJoin(directClientUser, eq(bookings.clientId, directClientUser.id))
       .where(and(...conditions))
       .orderBy(desc(bookings.bookingDate));
 
@@ -3204,13 +3222,16 @@ router.post(
 // Reschedule booking
 router.patch(
   "/bookings/:id/reschedule",
+  requireFeatureFlag("BOOKING_RESCHEDULE"),
   isAuthenticated,
   requirePermission(OWNER_PERMISSIONS.MANAGE_BOOKINGS),
   async (req: any, res) => {
     try {
       const { id } = req.params;
       const ownerId = req.user.claims.sub;
-      const { newBookingDate, newStartTime, reason } = req.body;
+      const input = rescheduleInput.safeParse(req.body);
+      if (!input.success) return res.status(400).json({ error: "Invalid reschedule data" });
+      const { newBookingDate, newStartTime, reason } = input.data;
 
       // newEndTime is intentionally not accepted — it's always derived
       // server-side from the booking's own service duration.
@@ -3282,10 +3303,11 @@ router.patch(
       let updated: typeof bookings.$inferSelect;
       try {
         updated = await db.transaction(async (tx) => {
+          await lockRescheduleSnapshot(tx, booking);
           const [row] = await tx
             .update(bookings)
             .set({
-              bookingDate: new Date(newBookingDate),
+              bookingDate: new Date(newBookingDate + "T00:00:00Z"),
               startTime: newStartTime,
               endTime: newEndTime,
               updatedAt: new Date(),
@@ -3307,6 +3329,8 @@ router.patch(
           return row;
         });
       } catch (updateErr) {
+        if (updateErr instanceof BookingRescheduleConflict)
+          return res.status(409).json({ code: "BOOKING_CHANGED", error: updateErr.message });
         const conflict = getBookingConflictError(updateErr);
         if (conflict) {
           return res.status(409).json(conflict);
