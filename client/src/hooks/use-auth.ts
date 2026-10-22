@@ -3,6 +3,7 @@ import type { User } from "@shared/models/auth";
 import { logger } from "@/lib/logger";
 import { setUser as setSentryUser } from "@/lib/sentry";
 import { clearPendingBooking } from "@/lib/booking-context";
+import { getCsrfToken } from "@/lib/queryClient";
 
 async function fetchUser(): Promise<User | null> {
   try {
@@ -32,6 +33,7 @@ async function doLogout(): Promise<void> {
   const response = await fetch("/api/logout", {
     method: "POST",
     credentials: "include",
+    headers: { "X-CSRF-Token": getCsrfToken() },
   });
 
   if (!response.ok) {

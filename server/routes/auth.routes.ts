@@ -136,7 +136,7 @@ router.get("/auth/user", async (req: any, res) => {
 });
 
 // Logout endpoint (POST)
-router.post("/logout", (req: any, res) => {
+router.post("/logout", verifyCsrf, (req: any, res) => {
   if (req.session) {
     const sessionId = req.sessionID;
 
