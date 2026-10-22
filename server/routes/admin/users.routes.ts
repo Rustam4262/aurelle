@@ -287,7 +287,10 @@ router.get("/:id", requirePermission("users.read"), async (req, res) => {
       db
         .select()
         .from(bookings)
-        .where(eq(bookings.clientId, profile?.id ?? ""))
+        // bookings.clientId is historically either users.id or
+        // user_profiles.id depending on which creation path wrote it —
+        // filtering by only one silently hid this user's bookings.
+        .where(inArray(bookings.clientId, profile ? [id, profile.id] : [id]))
         .orderBy(desc(bookings.bookingDate))
         .limit(10),
     ]);

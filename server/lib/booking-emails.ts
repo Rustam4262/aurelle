@@ -9,26 +9,32 @@ import { users } from "@shared/models/auth";
 import { eq } from "drizzle-orm";
 import { sendBookingConfirmation, sendBookingCancellation } from "../email";
 import { logger } from "./logger";
+import { resolveClientUserId } from "./resolve-client-user";
 
 async function lookupClientEmail(
-  clientProfileId: string,
+  bookingClientId: string,
 ): Promise<{ email: string; fullName: string } | null> {
-  const [profile] = await db
-    .select({ userId: userProfiles.userId, fullName: userProfiles.fullName })
-    .from(userProfiles)
-    .where(eq(userProfiles.userId, clientProfileId))
-    .limit(1);
+  // bookings.clientId is historically either users.id or user_profiles.id
+  // depending on which creation path wrote it — resolving only one form
+  // (as this used to) silently dropped confirmation/cancellation emails
+  // for bookings created via the other path.
+  const userId = await resolveClientUserId(bookingClientId);
+  if (!userId) return null;
 
-  if (!profile) return null;
+  const [profile] = await db
+    .select({ fullName: userProfiles.fullName })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1);
 
   const [user] = await db
     .select({ email: users.email })
     .from(users)
-    .where(eq(users.id, profile.userId))
+    .where(eq(users.id, userId))
     .limit(1);
 
   if (!user?.email) return null;
-  return { email: user.email, fullName: profile.fullName || "Клиент" };
+  return { email: user.email, fullName: profile?.fullName || "Клиент" };
 }
 
 async function resolveBookingMeta(booking: {
