@@ -71,6 +71,14 @@ export async function setupGitHubAuth(app: Express) {
               firstName,
               lastName,
               profileImageUrl,
+              // passport-github2's normalized profile only ever exposes the
+              // account's public profile email (lib/profile.js just reads
+              // json.email) — no verified flag is available to check, the
+              // same reason yandexAuth.ts never allows email-linking either.
+              // Without this, logging in with an account that merely has the
+              // same email set as its GitHub profile email would link into
+              // (and gain full access to) that other, unrelated account.
+              allowEmailLink: false,
             });
 
             const [account] = await db
