@@ -57,7 +57,7 @@ export async function setupGitHubAuth(app: Express) {
           done: (error: any, user?: any) => void,
         ) => {
           try {
-            const email = profile.emails?.[0]?.value || null;
+            const email = profile.emails?.[0]?.value?.trim().toLowerCase() || null;
             const displayName = profile.displayName || profile.username || null;
             const nameParts = displayName?.split(" ") || [];
             const firstName = nameParts[0] || null;
