@@ -8,11 +8,14 @@ import {
   reviews,
   userProfiles,
   masterPortfolio,
+  portfolioItems,
   bookings,
   soloMasterSettings,
   users,
 } from "@shared/schema";
+import { combineDateAndTime } from "../lib/booking-availability";
 import { logger } from "../lib/logger";
+import { CITY_ALIASES } from "@shared/city-aliases";
 
 const router = express.Router();
 
@@ -44,7 +47,16 @@ router.get("/", async (req, res) => {
       );
     }
     if (city && typeof city === "string" && city.trim()) {
-      conditions.push(ilike(masters.city, `%${city.trim()}%`));
+      // Plain ilike for free-typed city names, OR'd with every known
+      // spelling variant for a canonical key (the homepage city chips send
+      // one fixed spelling; masters.city is free text in whatever script
+      // the master themselves used).
+      const aliases = CITY_ALIASES[city.trim().toLowerCase()];
+      conditions.push(
+        aliases
+          ? or(...aliases.map((alias) => ilike(masters.city, `%${alias}%`)))!
+          : ilike(masters.city, `%${city.trim()}%`),
+      );
     }
 
     if (q && typeof q === "string" && q.trim()) {
@@ -59,6 +71,8 @@ router.get("/", async (req, res) => {
         photo: masters.photo,
         city: masters.city,
         address: masters.address,
+        latitude: masters.latitude,
+        longitude: masters.longitude,
         serviceMode: masters.serviceMode,
         specialties: masters.specialties,
         averageRating: masters.averageRating,
@@ -128,15 +142,31 @@ router.get("/:slug", async (req, res) => {
       .orderBy(masterWorkingHours.dayOfWeek);
 
     // Get portfolio images
-    const portfolio = await db
+    const legacyPortfolio = await db
       .select()
       .from(masterPortfolio)
       .where(eq(masterPortfolio.masterId, master.id))
       .orderBy(desc(masterPortfolio.createdAt))
       .limit(20);
 
+    // Dashboard uploads use portfolio_items. Preserve legacy uploads too.
+    const currentPortfolio = await db
+      .select()
+      .from(portfolioItems)
+      .where(eq(portfolioItems.masterId, master.id))
+      .orderBy(portfolioItems.displayOrder, portfolioItems.createdAt);
+    const seenImages = new Set<string>();
+    const portfolio = [...currentPortfolio, ...legacyPortfolio]
+      .filter((item) => {
+        if (seenImages.has(item.imageUrl)) return false;
+        seenImages.add(item.imageUrl);
+        return true;
+      })
+      .map(({ id, imageUrl, description }) => ({ id, imageUrl, description }));
+
     return res.json({
       id: master.id,
+      userId: master.userId,
       name: master.name,
       slug: master.slug,
       bio: master.bio,
@@ -144,7 +174,7 @@ router.get("/:slug", async (req, res) => {
       city: master.city,
       address: master.address,
       serviceMode: master.serviceMode,
-      phone: master.phone,
+      phone: master.phonePublic ? master.phone : null,
       instagram: master.instagram,
       telegram: master.telegram,
       averageRating: parseFloat(reviewStats[0]?.avgRating || "0").toFixed(1),
@@ -234,6 +264,7 @@ router.get("/:slug/reviews", async (req, res) => {
         id: reviews.id,
         rating: reviews.rating,
         comment: reviews.comment,
+        masterResponse: reviews.masterResponse,
         createdAt: reviews.createdAt,
         clientId: reviews.clientId,
       })
@@ -259,6 +290,7 @@ router.get("/:slug/reviews", async (req, res) => {
         id: r.id,
         rating: r.rating,
         comment: r.comment,
+        masterResponse: r.masterResponse,
         createdAt: r.createdAt,
         clientName: clientMap.get(r.clientId) || "Client",
       })),
@@ -302,7 +334,7 @@ router.get("/:slug/availability", async (req, res) => {
     }
 
     const selectedDate = new Date(date);
-    const dayOfWeek = selectedDate.getDay();
+    const dayOfWeek = selectedDate.getUTCDay();
 
     // Get working hours for this day
     const [hours] = await db
@@ -337,14 +369,14 @@ router.get("/:slug/availability", async (req, res) => {
       .from(soloMasterSettings)
       .where(eq(soloMasterSettings.masterId, master.id));
 
-    const bufferMinutes = settings?.bufferMinutes || 10;
+    const bufferMinutes = settings?.bufferMinutes ?? 10;
 
     // Get existing bookings for this date
     const startOfDay = new Date(selectedDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     const existingBookings = await db
       .select()
@@ -389,7 +421,8 @@ router.get("/:slug/availability", async (req, res) => {
 
       slots.push({
         time: slotTime,
-        available: !hasConflict,
+        available:
+          !hasConflict && combineDateAndTime(date.slice(0, 10), slotTime).getTime() > Date.now(),
       });
     }
 

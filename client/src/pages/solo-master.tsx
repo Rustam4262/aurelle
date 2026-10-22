@@ -1,6 +1,8 @@
+import { MessengerLink } from "@/components/messenger-link";
+import { useCabinetTab } from "@/hooks/use-cabinet-tab";
 import { ServiceAudienceField, AudienceSelect } from "@/components/service-audience-field";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Redirect } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -62,7 +64,7 @@ import { PushNotificationSettings } from "@/components/push-notification-setting
 import { CalendarWeekView } from "@/components/calendar-week-view";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getCsrfToken } from "@/lib/queryClient";
 import { goBackOrNavigate } from "@/lib/safe-back";
 
 type LocalizedText = { en?: string; ru?: string; uz?: string } | null | undefined;
@@ -76,6 +78,7 @@ interface MasterData {
   city: string | null;
   address: string | null;
   phone: string | null;
+  phonePublic: boolean | null;
   telegram: string | null;
   instagram: string | null;
   serviceMode: string | null;
@@ -297,7 +300,7 @@ export default function SoloMasterPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useCabinetTab<string>("overview");
   const [settingsSubTab, setSettingsSubTab] = useState("profile");
   const goToTab = (tab: string) => {
     if (SETTINGS_SUBTAB_KEYS.includes(tab)) {
@@ -317,61 +320,61 @@ export default function SoloMasterPage() {
 
   const masterQuery = useQuery<MasterData>({
     queryKey: ["/api/solo-master/me"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 60_000,
   });
   const statsQuery = useQuery<DashboardStats>({
     queryKey: ["/api/solo-master/stats"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
   const servicesQuery = useQuery<SoloService[]>({
     queryKey: ["/api/solo-master/services"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 60_000,
   });
   const bookingsQuery = useQuery<BookingItem[]>({
     queryKey: ["/api/solo-master/bookings"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 20_000,
     refetchInterval: 30_000,
   });
   const scheduleQuery = useQuery<any[]>({
     queryKey: ["/api/solo-master/schedule"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 60_000,
   });
   const settingsQuery = useQuery<MasterSettings>({
     queryKey: ["/api/solo-master/settings"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 60_000,
   });
   const reviewsQuery = useQuery<ReviewItem[]>({
     queryKey: ["/api/solo-master/reviews"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 30_000,
   });
   const clientsQuery = useQuery<ClientDeskItem[]>({
     queryKey: ["/api/solo-master/clients"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 30_000,
   });
   const notificationsQuery = useQuery<NotificationItem[]>({
     queryKey: ["/api/notifications"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 15_000,
     refetchInterval: 30_000,
   });
   const supportTicketsQuery = useQuery<SupportTicket[]>({
     queryKey: ["/api/solo-master/support/tickets"],
-    enabled: !!user,
+    enabled: !!user && user.role !== "master",
     staleTime: 15_000,
     refetchInterval: 30_000,
   });
   const ticketDetailQuery = useQuery<SupportTicketDetail>({
     queryKey: ["/api/solo-master/support/tickets", selectedTicketId],
-    enabled: !!user && !!selectedTicketId,
+    enabled: !!user && user.role !== "master" && !!selectedTicketId,
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/solo-master/support/tickets/${selectedTicketId}`);
       return res.json();
@@ -397,6 +400,7 @@ export default function SoloMasterPage() {
     city: "",
     address: "",
     phone: "",
+    phonePublic: true,
     telegram: "",
     instagram: "",
     slug: "",
@@ -434,6 +438,7 @@ export default function SoloMasterPage() {
       city: masterQuery.data.city || "",
       address: masterQuery.data.address || "",
       phone: masterQuery.data.phone || "",
+      phonePublic: masterQuery.data.phonePublic ?? true,
       telegram: masterQuery.data.telegram || "",
       instagram: masterQuery.data.instagram || "",
       slug: masterQuery.data.slug || "",
@@ -616,6 +621,7 @@ export default function SoloMasterPage() {
         city: profileForm.city.trim() || undefined,
         address: profileForm.address.trim() || undefined,
         phone: profileForm.phone.trim() || undefined,
+        phonePublic: profileForm.phonePublic,
         telegram: profileForm.telegram.trim() || undefined,
         instagram: profileForm.instagram.trim() || undefined,
         slug: profileForm.slug.trim() || undefined,
@@ -825,6 +831,7 @@ export default function SoloMasterPage() {
     const formData = new FormData();
     formData.append("image", file);
     const response = await fetch("/api/upload/master-photo", {
+      headers: { "X-CSRF-Token": getCsrfToken() },
       method: "POST",
       credentials: "include",
       body: formData,
@@ -841,6 +848,7 @@ export default function SoloMasterPage() {
       const formData = new FormData();
       formData.append("image", file);
       const uploadResponse = await fetch("/api/upload/portfolio", {
+        headers: { "X-CSRF-Token": getCsrfToken() },
         method: "POST",
         credentials: "include",
         body: formData,
@@ -861,10 +869,37 @@ export default function SoloMasterPage() {
     statsQuery.isLoading ||
     servicesQuery.isLoading ||
     bookingsQuery.isLoading;
+  if (user?.role === "master") return <Redirect to="/master" />;
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const profileErrorStatus = (masterQuery.error as (Error & { status?: number }) | null)?.status;
+  if (user && masterQuery.isError && profileErrorStatus !== 404) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <EmptyState
+          icon={AlertCircle}
+          title={tr(
+            "Не удалось загрузить кабинет",
+            "Could not load your dashboard",
+            "Kabinetni yuklab bo'lmadi",
+          )}
+          description={tr(
+            "Проверьте соединение и попробуйте ещё раз. Если ошибка повторяется, обратитесь в поддержку.",
+            "Check your connection and try again. If the problem persists, contact support.",
+            "Ulanishni tekshiring va qayta urinib ko'ring. Muammo takrorlansa, yordam xizmatiga murojaat qiling.",
+          )}
+          action={{
+            label: tr("Повторить", "Try again", "Qayta urinish"),
+            onClick: () => void masterQuery.refetch(),
+          }}
+        />
       </div>
     );
   }
@@ -914,6 +949,7 @@ export default function SoloMasterPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
             <Button variant="outline" onClick={() => goToTab("messages")} className="gap-2">
               <Bell className="h-4 w-4" />
@@ -2233,6 +2269,21 @@ export default function SoloMasterPage() {
                                 setProfileForm((prev) => ({ ...prev, phone: e.target.value }))
                               }
                             />
+                            <div className="flex items-center gap-3 pt-1">
+                              <Switch
+                                checked={profileForm.phonePublic}
+                                onCheckedChange={(checked) =>
+                                  setProfileForm((prev) => ({ ...prev, phonePublic: checked }))
+                                }
+                              />
+                              <span className="text-sm text-muted-foreground">
+                                {tr(
+                                  "Показывать номер на публичной странице",
+                                  "Show number on my public page",
+                                  "Ommaviy sahifamda raqamni ko'rsatish",
+                                )}
+                              </span>
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <Label>Telegram</Label>

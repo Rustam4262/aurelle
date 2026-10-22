@@ -1,3 +1,4 @@
+import { changeBookingStatus } from "../lib/booking-status";
 import { verifyCsrf } from "../middleware/csrf";
 import express from "express";
 import { z } from "zod";
@@ -123,6 +124,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
     const updateSchema = z.object({
       name: z.string().min(1).max(200).optional(),
       phone: z.string().max(20).optional(),
+      phonePublic: z.boolean().optional(),
       bio: z.string().max(1000).optional(),
       photo: z.string().max(500).optional(),
       address: z.string().max(500).optional(),
@@ -148,6 +150,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 
     if (data.name !== undefined) updates.name = data.name;
     if (data.phone !== undefined) updates.phone = data.phone;
+    if (data.phonePublic !== undefined) updates.phonePublic = data.phonePublic;
     if (data.photo !== undefined) updates.photo = data.photo;
     if (data.address !== undefined) updates.address = data.address;
     if (data.city !== undefined) updates.city = data.city;
@@ -853,28 +856,11 @@ router.patch("/bookings/:id/status", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Solo master profile not found" });
     }
 
-    const validStatuses = ["pending", "confirmed", "cancelled", "completed"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
+    const result = await changeBookingStatus(id, status, { kind: "solo_master", userId: userId });
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const updated = result.booking;
 
-    // Verify booking belongs to this master
-    const [booking] = await db
-      .select()
-      .from(bookings)
-      .where(and(eq(bookings.id, id), eq(bookings.masterId, master.id)));
-
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    const [updated] = await db
-      .update(bookings)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(bookings.id, id))
-      .returning();
-
-    if (status === "cancelled") {
+    if (result.changed && status === "cancelled") {
       cancelBookingReminders(updated.id).catch((err) =>
         logger.error("Failed to cancel reminders", {
           source: "solo-master-routes",
