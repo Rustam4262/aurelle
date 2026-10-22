@@ -1,28 +1,17 @@
 import { Router } from "express";
-import { ClickProvider } from "../../payments/click";
-import { handlePaymentWebhook } from "./shared";
-import { logger } from "../../lib/logger";
+import { handleClickWebhook } from "../../payments/click-protocol";
 
 const router = Router();
 
-const click = (() => {
-  try {
-    return new ClickProvider();
-  } catch {
-    return null;
-  }
-})();
-
 /**
  * POST /api/webhooks/click
- * Click webhook. No auth middleware — verified by MD5 signature in body.
+ * Click Prepare/Complete webhook. No auth middleware — verified by MD5
+ * signature in the body. The response shape (click_trans_id, merchant_trans_id,
+ * merchant_prepare_id, error, error_note) is Click's own protocol contract,
+ * not a generic {ok} envelope — Click retries indefinitely otherwise.
  */
 router.post("/", async (req, res) => {
-  if (!click) {
-    logger.warn("Click webhook received but provider not configured", { source: "webhooks-click" });
-    return res.status(503).json({ error: "Provider not configured" });
-  }
-  await handlePaymentWebhook(req, res, click, "click");
+  await handleClickWebhook(req.body, res);
 });
 
 export default router;

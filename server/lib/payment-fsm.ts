@@ -14,7 +14,7 @@
 
 import { db } from "../db";
 import { payments } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { logger } from "./logger";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -73,38 +73,44 @@ export async function transitionPayment(
   newStatus: PaymentStatus,
   extra?: TransitionExtra,
 ): Promise<void> {
-  const [payment] = await db
-    .select({ id: payments.id, status: payments.status })
-    .from(payments)
-    .where(eq(payments.id, paymentId));
+  // FOR UPDATE inside a transaction serializes concurrent callers (e.g. a
+  // provider's retried webhook arriving twice) on this row, so only one of
+  // them observes the pre-transition status and performs the write.
+  await db.transaction(async (tx) => {
+    const [payment] = await tx
+      .select({ id: payments.id, status: payments.status })
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .for("update");
 
-  if (!payment) {
-    throw new Error(`Payment not found: ${paymentId}`);
-  }
+    if (!payment) {
+      throw new Error(`Payment not found: ${paymentId}`);
+    }
 
-  const currentStatus = payment.status as PaymentStatus;
+    const currentStatus = payment.status as PaymentStatus;
 
-  if (!canTransition(currentStatus, newStatus)) {
-    logger.warn("Payment transition BLOCKED", {
+    if (!canTransition(currentStatus, newStatus)) {
+      logger.warn("Payment transition BLOCKED", {
+        source: "payment-fsm",
+        meta: { paymentId, from: currentStatus, to: newStatus },
+      });
+      throw new PaymentTransitionError(currentStatus, newStatus);
+    }
+
+    await tx
+      .update(payments)
+      .set({
+        status: newStatus,
+        ...(extra?.externalId != null && { externalId: extra.externalId }),
+        ...(extra?.errorCode !== undefined && { errorCode: extra.errorCode }),
+        ...(extra?.errorMessage !== undefined && { errorMessage: extra.errorMessage }),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(payments.id, paymentId), eq(payments.status, currentStatus)));
+
+    logger.info("Payment transitioned", {
       source: "payment-fsm",
       meta: { paymentId, from: currentStatus, to: newStatus },
     });
-    throw new PaymentTransitionError(currentStatus, newStatus);
-  }
-
-  await db
-    .update(payments)
-    .set({
-      status: newStatus,
-      ...(extra?.externalId != null && { externalId: extra.externalId }),
-      ...(extra?.errorCode !== undefined && { errorCode: extra.errorCode }),
-      ...(extra?.errorMessage !== undefined && { errorMessage: extra.errorMessage }),
-      updatedAt: new Date(),
-    })
-    .where(eq(payments.id, paymentId));
-
-  logger.info("Payment transitioned", {
-    source: "payment-fsm",
-    meta: { paymentId, from: currentStatus, to: newStatus },
   });
 }

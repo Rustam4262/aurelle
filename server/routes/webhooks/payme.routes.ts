@@ -1,28 +1,17 @@
 import { Router } from "express";
-import { PaymeProvider } from "../../payments/payme";
-import { handlePaymentWebhook } from "./shared";
-import { logger } from "../../lib/logger";
+import { handlePaymeWebhook } from "../../payments/payme-protocol";
 
 const router = Router();
 
-const payme = (() => {
-  try {
-    return new PaymeProvider();
-  } catch {
-    return null;
-  }
-})();
-
 /**
  * POST /api/webhooks/payme
- * Payme JSONRPC 2.0 webhook. No auth middleware — verified by Basic Auth header.
+ * Payme JSON-RPC 2.0 webhook, authenticated via HTTP Basic (login "Paycom",
+ * password = PAYME_SECRET_KEY). Dispatches CheckPerformTransaction /
+ * CreateTransaction / PerformTransaction / CancelTransaction / CheckTransaction.
  */
 router.post("/", async (req, res) => {
-  if (!payme) {
-    logger.warn("Payme webhook received but provider not configured", { source: "webhooks-payme" });
-    return res.status(503).json({ error: "Provider not configured" });
-  }
-  await handlePaymentWebhook(req, res, payme, "payme");
+  const { status, json } = await handlePaymeWebhook(req.headers.authorization, req.body);
+  res.status(status).json(json);
 });
 
 export default router;

@@ -5,10 +5,12 @@ import { adminUsers } from "@shared/admin-schema";
 import { eq, inArray, and, gte, sql, desc, isNotNull, count, SQL } from "drizzle-orm";
 import { isAuthenticated } from "../auth";
 import { getPaymentProvider } from "../payments";
+import { ClickProvider } from "../payments/click";
 import { logger } from "../lib/logger";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { calculateFee } from "../lib/billing";
+import { createLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -100,7 +102,7 @@ const createSchema = z.object({
  * POST /api/payments/create
  * Creates a payment record and returns the provider checkout URL.
  */
-router.post("/create", isAuthenticated, async (req: any, res) => {
+router.post("/create", createLimiter, isAuthenticated, async (req: any, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "bookingId and type are required" });
@@ -123,10 +125,30 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
     if (booking.clientId !== userId) {
       return res.status(403).json({ error: "Not your booking" });
     }
+    if (booking.status === "cancelled" || booking.status === "completed") {
+      return res.status(409).json({ error: "This booking can no longer be paid for" });
+    }
 
-    const salon = await db.query.salons?.findFirst?.({
-      where: (s: any, { eq }: any) => eq(s.id, booking.salonId),
-    });
+    // One active (pending or already-succeeded) payment per booking at a time.
+    const [existingPayment] = await db
+      .select({ id: payments.id, status: payments.status })
+      .from(payments)
+      .where(
+        and(eq(payments.bookingId, bookingId), inArray(payments.status, ["pending", "succeeded"])),
+      )
+      .limit(1);
+    if (existingPayment) {
+      return res.status(409).json({
+        error:
+          existingPayment.status === "succeeded"
+            ? "This booking has already been paid for"
+            : "A payment for this booking is already in progress",
+      });
+    }
+
+    const [salon] = booking.salonId
+      ? await db.select().from(salons).where(eq(salons.id, booking.salonId))
+      : [];
     const paymentEnabled = (salon as any)?.paymentEnabled ?? false;
     if (!paymentEnabled) {
       return res.status(422).json({ error: "Payments not enabled for this salon" });
@@ -161,7 +183,7 @@ router.post("/create", isAuthenticated, async (req: any, res) => {
       .insert(payments)
       .values({
         bookingId,
-        provider: process.env.PAYMENT_PROVIDER ?? "payme",
+        provider: provider instanceof ClickProvider ? "click" : "payme",
         externalId: externalId || null,
         orderId,
         amountUzs,

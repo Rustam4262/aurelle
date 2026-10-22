@@ -2,13 +2,7 @@ import type { PaymentProvider } from "./types";
 import { PaymeProvider } from "./payme";
 import { ClickProvider } from "./click";
 
-export type {
-  PaymentProvider,
-  CreatePaymentParams,
-  CreatePaymentResult,
-  WebhookEvent,
-  PaymentStatus,
-} from "./types";
+export type { PaymentProvider, CreatePaymentParams, CreatePaymentResult } from "./types";
 
 /**
  * Returns the configured payment provider, or null if PAYMENT_PROVIDER is not set.
