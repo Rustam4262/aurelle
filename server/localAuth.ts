@@ -123,7 +123,6 @@ export function setupLocalAuth(app: Express) {
             first_name: newUser.firstName,
             last_name: newUser.lastName,
             profile_image_url: newUser.profileImageUrl,
-            role,
           },
           expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
         },
