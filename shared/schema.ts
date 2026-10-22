@@ -1,5 +1,10 @@
 import { sql, relations } from "drizzle-orm";
 import {
+  serviceNumericFields,
+  validServicePriceRange,
+  servicePriceRangeError,
+} from "./service-input";
+import {
   pgTable,
   text,
   varchar,
@@ -9,12 +14,14 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Re-export auth models
 export * from "./models/auth";
+export * from "./messenger-schema";
 
 // ============ SALONS ============
 export const salons = pgTable(
@@ -139,6 +146,10 @@ export const masters = pgTable(
     workRadius: integer("work_radius").default(10), // km for mobile services
     mobileExtraCharge: integer("mobile_extra_charge").default(0), // UZS
     phone: varchar("phone", { length: 20 }),
+    // Public profile shows phone as a clickable tel: link by default (the
+    // point of a freelance-master listing is direct contact) — this lets a
+    // master opt out without losing the number from their own account.
+    phonePublic: boolean("phone_public").notNull().default(true),
     instagram: varchar("instagram", { length: 100 }),
     telegram: varchar("telegram", { length: 100 }),
     status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused
@@ -267,11 +278,14 @@ export const services = pgTable(
 );
 
 export const insertServiceSchema = createInsertSchema(services, {
+  ...serviceNumericFields,
   audience: z.enum(["women", "men", "unisex"]).nullable().optional(),
-}).omit({
-  id: true,
-  createdAt: true,
-});
+})
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .refine(validServicePriceRange, servicePriceRangeError);
 
 export type InsertService = z.infer<typeof insertServiceSchema>;
 export type Service = typeof services.$inferSelect;
@@ -424,6 +438,7 @@ export const reviews = pgTable(
     rating: integer("rating").notNull(), // 1-5
     comment: text("comment"),
     ownerResponse: text("owner_response"),
+    masterResponse: text("master_response"),
     createdAt: timestamp("created_at").defaultNow(),
     // Admin moderation (hidden reviews are excluded from public display and
     // rating averages, but kept for audit purposes rather than deleted).
@@ -436,12 +451,14 @@ export const reviews = pgTable(
     index("idx_reviews_salon").on(table.salonId),
     index("idx_reviews_master").on(table.masterId),
     index("idx_reviews_client").on(table.clientId),
+    uniqueIndex("idx_reviews_booking_unique").on(table.bookingId),
   ],
 );
 
 export const insertReviewSchema = createInsertSchema(reviews).omit({
   id: true,
   ownerResponse: true,
+  masterResponse: true,
   createdAt: true,
   isHidden: true,
   hiddenReason: true,
@@ -697,6 +714,27 @@ export const newsletterSchema = z.object({
 });
 
 export type NewsletterData = z.infer<typeof newsletterSchema>;
+
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  service: varchar("service", { length: 200 }),
+  message: text("message"),
+  emailSent: boolean("email_sent").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export interface NewsletterSubscription extends NewsletterData {
   id: string;
