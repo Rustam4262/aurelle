@@ -63,36 +63,61 @@ export function MasterNotifications({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">
-                      {t("marketplace.notifications.newBooking")}
+                      {notification.type === "booking_cancelled"
+                        ? t("marketplace.notifications.bookingCancelled")
+                        : notification.type === "booking_status_changed"
+                          ? t("marketplace.notifications.bookingStatusChanged")
+                          : t("marketplace.notifications.newBooking")}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                       {(() => {
-                        if (
-                          notification.type === "new_booking" &&
-                          notification.metadata?.bookingDate
-                        ) {
-                          try {
-                            const parsedDate = new Date(notification.metadata.bookingDate);
-                            if (!isNaN(parsedDate.getTime())) {
-                              return t("marketplace.notifications.newBookingMessage", {
-                                date: parsedDate.toLocaleDateString(
-                                  currentLang === "ru"
-                                    ? "ru-RU"
-                                    : currentLang === "uz"
-                                      ? "uz-UZ"
-                                      : "en-US",
-                                ),
-                                time: notification.metadata.startTime || "",
-                              });
-                            }
-                          } catch (error) {
-                            logger.error("Failed to parse notification metadata", error as Error, {
-                              source: "MasterNotifications",
+                        const locale =
+                          currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US";
+                        try {
+                          const bookingDate = notification.metadata?.bookingDate;
+                          const startTime = notification.metadata?.startTime || "";
+                          const parsedDate = bookingDate ? new Date(bookingDate) : null;
+                          const dateStr =
+                            parsedDate && !isNaN(parsedDate.getTime())
+                              ? parsedDate.toLocaleDateString(locale)
+                              : null;
+
+                          if (notification.type === "booking_cancelled" && dateStr) {
+                            return t("marketplace.notifications.bookingCancelledMessage", {
+                              date: dateStr,
+                              time: startTime,
                             });
                           }
+                          if (notification.type === "booking_status_changed" && dateStr) {
+                            const rawStatus = String(notification.metadata?.status ?? "");
+                            return t("marketplace.notifications.bookingStatusChangedMessage", {
+                              date: dateStr,
+                              time: startTime,
+                              status: t(`marketplace.notifications.status.${rawStatus}`, {
+                                defaultValue: rawStatus,
+                              }),
+                            });
+                          }
+                          if (notification.type === "new_booking" && dateStr) {
+                            return t("marketplace.notifications.newBookingMessage", {
+                              date: dateStr,
+                              time: startTime,
+                            });
+                          }
+                        } catch (error) {
+                          logger.error("Failed to parse notification metadata", error as Error, {
+                            source: "MasterNotifications",
+                          });
                         }
                         return (
-                          notification.message || t("marketplace.notifications.newBookingFallback")
+                          notification.message ||
+                          t(
+                            notification.type === "booking_cancelled"
+                              ? "marketplace.notifications.bookingCancelledFallback"
+                              : notification.type === "booking_status_changed"
+                                ? "marketplace.notifications.bookingStatusChangedFallback"
+                                : "marketplace.notifications.newBookingFallback",
+                          )
                         );
                       })()}
                     </p>

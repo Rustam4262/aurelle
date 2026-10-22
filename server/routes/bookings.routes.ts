@@ -1,8 +1,16 @@
+import {
+  rescheduleInput,
+  lockRescheduleSnapshot,
+  BookingRescheduleConflict,
+} from "../lib/booking-reschedule-guard";
+import { requireFeatureFlag } from "../featureFlags";
+import { cancelClientBooking } from "../lib/booking-cancellation";
 import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
-import { bookings, insertBookingSchema, userProfiles } from "@shared/schema";
+import { bookings, userProfiles } from "@shared/schema";
+import { clientBookingInput } from "../lib/booking-create-input";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { createNewBookingNotification } from "../notifications";
 import { logger } from "../lib/logger";
@@ -29,7 +37,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       clientId,
       bookingDate: req.body.bookingDate ? new Date(req.body.bookingDate) : undefined,
     };
-    const parsed = insertBookingSchema.safeParse(body);
+    const parsed = clientBookingInput.safeParse(body);
 
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid booking data", details: parsed.error.errors });
@@ -37,9 +45,8 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     // Duration, working-hours, break and conflict checks live in one shared
     // module used by every booking write path. The client-supplied
-    // endTime/priceSnapshot (still accepted for request-shape compatibility
-    // with existing callers) are never trusted — they're overwritten below
-    // with the server-computed values.
+    // endTime/priceSnapshot are stripped from public input and supplied below
+    // from the server-computed values.
     const dateISO = String(req.body.bookingDate).slice(0, 10);
     const validation = await validateBookingSlot({
       salonId: parsed.data.salonId ?? null,
@@ -58,14 +65,20 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       });
     }
 
-    parsed.data.endTime = validation.endTime;
-    parsed.data.priceSnapshot = validation.priceMin;
-
     let booking: typeof bookings.$inferSelect;
     try {
       [booking] = await db
         .insert(bookings)
-        .values([parsed.data as any])
+        .values({
+          ...parsed.data,
+          clientId,
+          endTime: validation.endTime,
+          priceSnapshot: validation.priceMin,
+          status: "pending",
+          paymentStatus: "not_required",
+          mobileExtraCharge: 0,
+          notificationVersion: 0,
+        })
         .returning();
     } catch (insertErr) {
       const conflict = getBookingConflictError(insertErr);
@@ -115,7 +128,9 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
         .from(userProfiles)
         .where(eq(userProfiles.userId, booking.clientId));
       if (clientProfile?.phone) {
-        const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU");
+        const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU", {
+          timeZone: "Asia/Tashkent",
+        });
         sendBookingCreatedSms(
           clientProfile.phone,
           clientProfile.fullName || "Клиент",
@@ -124,7 +139,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
           booking.startTime,
         ).catch(() => {});
       }
-    })();
+    })().catch((error) => logger.error("Booking SMS notification failed", error));
 
     // WebSocket: notify salon owner + confirm to client
     broadcast(`salon_${booking.salonId}`, "new_booking", {
@@ -134,10 +149,14 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       date: booking.bookingDate,
     });
     if (booking.clientId) {
-      broadcastToUser(booking.clientId, "booking_confirmed", {
+      // The booking is created in "pending" status — nothing has actually
+      // been confirmed yet, so this must not be named/looked like a
+      // confirmation event.
+      broadcastToUser(booking.clientId, "booking_created", {
         bookingId: booking.id,
         salonId: booking.salonId,
         time: booking.startTime,
+        status: booking.status,
       });
     }
 
@@ -183,18 +202,9 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    // clientId has historically been stored as either the auth user id or the
-    // user_profiles row id depending on which creation path wrote it — accept both,
-    // matching the convention already used by DELETE /api/client/bookings/:id.
-    const [booking] = await db
-      .update(bookings)
-      .set({ status: "cancelled", updatedAt: new Date() })
-      .where(and(eq(bookings.id, id), inArray(bookings.clientId, [userId, profile.id])))
-      .returning();
-
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
+    const result = await cancelClientBooking(id, [userId, profile.id]);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const booking = result.booking;
     cancelBookingReminders(booking.id).catch((err) =>
       logger.error("Failed to cancel reminders", {
         source: "bookings-routes",
@@ -204,7 +214,9 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
     // Cancellation email (fire-and-forget)
     fireCancellationEmail(booking.id);
     if (profile.phone) {
-      const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU");
+      const dateStr = new Date(booking.bookingDate).toLocaleDateString("ru-RU", {
+        timeZone: "Asia/Tashkent",
+      });
       sendBookingCancelledSms(profile.phone, profile.fullName || "Клиент", "запись", dateStr).catch(
         () => {},
       );
@@ -217,145 +229,159 @@ router.patch("/:id/cancel", isAuthenticated, async (req: any, res) => {
 });
 
 // Reschedule booking
-router.patch("/:id/reschedule", isAuthenticated, async (req: any, res) => {
-  try {
-    const { id } = req.params;
-    const { newStartTime, newBookingDate, newMasterId, reason } = req.body;
-    const userId = req.user.claims.sub;
-
-    // newEndTime is intentionally not accepted here — it's always derived
-    // server-side from the booking's own service duration (see validation below).
-    if (!newStartTime || !newBookingDate) {
-      return res
-        .status(400)
-        .json({ error: "Missing required fields: newStartTime, newBookingDate" });
-    }
-
-    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
-
-    if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
-    }
-
-    // clientId has historically been stored as either the auth user id or the
-    // user_profiles row id depending on which creation path wrote it — accept both,
-    // matching the convention already used by DELETE /api/client/bookings/:id.
-    const [currentBooking] = await db
-      .select()
-      .from(bookings)
-      .where(and(eq(bookings.id, id), inArray(bookings.clientId, [userId, profile.id])));
-
-    if (!currentBooking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    if (currentBooking.status === "cancelled" || currentBooking.status === "completed") {
-      return res.status(400).json({ error: `Cannot reschedule ${currentBooking.status} booking` });
-    }
-
-    // Same shared validation as booking creation — duration/hours/breaks are
-    // re-derived from the booking's own service, not trusted from the client's
-    // newEndTime.
-    const newMaster = newMasterId || currentBooking.masterId;
-    const dateISO = String(newBookingDate).slice(0, 10);
-    const validation = await validateBookingSlot({
-      salonId: currentBooking.salonId,
-      masterId: newMaster,
-      serviceId: currentBooking.serviceId,
-      soloMasterServiceId: currentBooking.soloMasterServiceId,
-      dateISO,
-      startTime: newStartTime,
-      excludeBookingId: id,
-    });
-
-    if (!validation.ok) {
-      return res.status(409).json({
-        code: validation.code,
-        error: "Time slot not available",
-        message: "This time slot is not available. Please choose a different time.",
-      });
-    }
-
-    const resolvedEndTime = validation.endTime;
-
-    const modificationEntry = {
-      timestamp: new Date().toISOString(),
-      action: "reschedule",
-      changedBy: userId,
-      changes: {
-        oldStartTime: currentBooking.startTime,
-        oldEndTime: currentBooking.endTime,
-        oldBookingDate: currentBooking.bookingDate,
-        oldMasterId: currentBooking.masterId,
-        newStartTime,
-        newEndTime: resolvedEndTime,
-        newBookingDate,
-        newMasterId: newMaster,
-        reason: reason || "No reason provided",
-      },
-    };
-
-    const currentHistory = (currentBooking.modificationHistory || []) as any[];
-
-    let updatedBooking: typeof bookings.$inferSelect;
+router.patch(
+  "/:id/reschedule",
+  requireFeatureFlag("BOOKING_RESCHEDULE"),
+  isAuthenticated,
+  async (req: any, res) => {
     try {
-      updatedBooking = await db.transaction(async (tx) => {
-        const [updated] = await tx
-          .update(bookings)
-          .set({
-            startTime: newStartTime,
-            endTime: resolvedEndTime,
-            bookingDate: new Date(newBookingDate),
-            masterId: newMaster,
-            modifiedBy: userId,
-            modificationHistory: [...currentHistory, modificationEntry],
-            updatedAt: new Date(),
-            notificationVersion: sql`${bookings.notificationVersion} + 1`,
-          })
-          .where(and(eq(bookings.id, id), inArray(bookings.clientId, [userId, profile.id])))
-          .returning();
+      const { id } = req.params;
+      const input = rescheduleInput.safeParse(req.body);
+      if (!input.success) return res.status(400).json({ error: "Invalid reschedule data" });
+      const { newStartTime, newBookingDate, newMasterId, reason } = input.data;
+      const userId = req.user.claims.sub;
 
-        await rescheduleBookingReminders(
-          updated.id,
-          new Date(updated.bookingDate).toISOString(),
-          updated.startTime,
-          updated.notificationVersion,
-          tx,
-        );
+      // newEndTime is intentionally not accepted here — it's always derived
+      // server-side from the booking's own service duration (see validation below).
+      if (!newStartTime || !newBookingDate) {
+        return res
+          .status(400)
+          .json({ error: "Missing required fields: newStartTime, newBookingDate" });
+      }
 
-        return updated;
+      const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      // clientId has historically been stored as either the auth user id or the
+      // user_profiles row id depending on which creation path wrote it — accept both,
+      // matching the convention already used by DELETE /api/client/bookings/:id.
+      const [currentBooking] = await db
+        .select()
+        .from(bookings)
+        .where(and(eq(bookings.id, id), inArray(bookings.clientId, [userId, profile.id])));
+
+      if (!currentBooking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      if (currentBooking.status === "cancelled" || currentBooking.status === "completed") {
+        return res
+          .status(400)
+          .json({ error: `Cannot reschedule ${currentBooking.status} booking` });
+      }
+
+      // Same shared validation as booking creation — duration/hours/breaks are
+      // re-derived from the booking's own service, not trusted from the client's
+      // newEndTime.
+      const newMaster = newMasterId || currentBooking.masterId;
+      const dateISO = String(newBookingDate).slice(0, 10);
+      const validation = await validateBookingSlot({
+        salonId: currentBooking.salonId,
+        masterId: newMaster,
+        serviceId: currentBooking.serviceId,
+        soloMasterServiceId: currentBooking.soloMasterServiceId,
+        dateISO,
+        startTime: newStartTime,
+        excludeBookingId: id,
       });
-    } catch (updateErr) {
-      const conflict = getBookingConflictError(updateErr);
-      if (conflict) {
-        return res.status(409).json(conflict);
+
+      if (!validation.ok) {
+        return res.status(409).json({
+          code: validation.code,
+          error: "Time slot not available",
+          message: "This time slot is not available. Please choose a different time.",
+        });
       }
-      throw updateErr;
+
+      const resolvedEndTime = validation.endTime;
+
+      const modificationEntry = {
+        timestamp: new Date().toISOString(),
+        action: "reschedule",
+        changedBy: userId,
+        changes: {
+          oldStartTime: currentBooking.startTime,
+          oldEndTime: currentBooking.endTime,
+          oldBookingDate: currentBooking.bookingDate,
+          oldMasterId: currentBooking.masterId,
+          newStartTime,
+          newEndTime: resolvedEndTime,
+          newBookingDate,
+          newMasterId: newMaster,
+          reason: reason || "No reason provided",
+        },
+      };
+
+      const currentHistory = (currentBooking.modificationHistory || []) as any[];
+
+      let updatedBooking: typeof bookings.$inferSelect;
+      try {
+        updatedBooking = await db.transaction(async (tx) => {
+          await lockRescheduleSnapshot(tx, currentBooking);
+          const [updated] = await tx
+            .update(bookings)
+            .set({
+              startTime: newStartTime,
+              endTime: resolvedEndTime,
+              bookingDate: new Date(newBookingDate + "T00:00:00Z"),
+              masterId: newMaster,
+              modifiedBy: userId,
+              modificationHistory: [...currentHistory, modificationEntry],
+              updatedAt: new Date(),
+              notificationVersion: sql`${bookings.notificationVersion} + 1`,
+            })
+            .where(and(eq(bookings.id, id), inArray(bookings.clientId, [userId, profile.id])))
+            .returning();
+
+          await rescheduleBookingReminders(
+            updated.id,
+            new Date(updated.bookingDate).toISOString(),
+            updated.startTime,
+            updated.notificationVersion,
+            tx,
+          );
+
+          return updated;
+        });
+      } catch (updateErr) {
+        if (updateErr instanceof BookingRescheduleConflict)
+          return res.status(409).json({ code: "BOOKING_CHANGED", error: updateErr.message });
+        const conflict = getBookingConflictError(updateErr);
+        if (conflict) {
+          return res.status(409).json(conflict);
+        }
+        throw updateErr;
+      }
+
+      // SMS notification for reschedule (fire-and-forget)
+      void (async () => {
+        const [clientProfile] = await db
+          .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
+          .from(userProfiles)
+          .where(eq(userProfiles.userId, updatedBooking.clientId));
+        if (clientProfile?.phone) {
+          const dateStr = new Date(updatedBooking.bookingDate).toLocaleDateString("ru-RU", {
+            timeZone: "Asia/Tashkent",
+          });
+          sendBookingRescheduledSms(
+            clientProfile.phone,
+            clientProfile.fullName || "Клиент",
+            "запись",
+            dateStr,
+            updatedBooking.startTime,
+          ).catch(() => {});
+        }
+      })().catch((error) => logger.error("Reschedule notification failed", error));
+
+      return res.json(updatedBooking);
+    } catch (error) {
+      logger.error("Reschedule booking error:", error);
+      return res.status(500).json({ error: "Failed to reschedule booking" });
     }
-
-    // SMS notification for reschedule (fire-and-forget)
-    void (async () => {
-      const [clientProfile] = await db
-        .select({ phone: userProfiles.phone, fullName: userProfiles.fullName })
-        .from(userProfiles)
-        .where(eq(userProfiles.userId, updatedBooking.clientId));
-      if (clientProfile?.phone) {
-        const dateStr = new Date(updatedBooking.bookingDate).toLocaleDateString("ru-RU");
-        sendBookingRescheduledSms(
-          clientProfile.phone,
-          clientProfile.fullName || "Клиент",
-          "запись",
-          dateStr,
-          updatedBooking.startTime,
-        ).catch(() => {});
-      }
-    })();
-
-    return res.json(updatedBooking);
-  } catch (error) {
-    logger.error("Reschedule booking error:", error);
-    return res.status(500).json({ error: "Failed to reschedule booking" });
-  }
-});
+  },
+);
 
 export default router;

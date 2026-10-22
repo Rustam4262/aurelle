@@ -1,3 +1,4 @@
+import { verifyCsrf } from "../middleware/csrf";
 import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { db } from "../db";
@@ -16,8 +17,38 @@ import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger";
 import { cancelBookingReminders } from "../lib/reminders";
+import { changeBookingStatus } from "../lib/booking-status";
 
 const router = Router();
+
+// A master's response is separate from the salon owner's response.
+router.patch("/reviews/:id/respond", isAuthenticated, verifyCsrf, async (req: any, res) => {
+  try {
+    const result = await getMasterFromUser(req.user.claims.sub);
+    if ("error" in result) return res.status(result.status).json({ error: result.error });
+    const input = z
+      .object({ response: z.string().trim().min(1).max(3000) })
+      .strict()
+      .safeParse(req.body);
+    if (!input.success) return res.status(400).json({ error: "Invalid response" });
+    const [updated] = await db
+      .update(reviews)
+      .set({ masterResponse: input.data.response })
+      .where(
+        and(
+          eq(reviews.id, req.params.id),
+          eq(reviews.masterId, result.master.id),
+          sql`${reviews.isHidden} IS NOT TRUE`,
+        ),
+      )
+      .returning();
+    if (!updated) return res.status(404).json({ error: "Review not found" });
+    return res.json(updated);
+  } catch (error) {
+    logger.error("Master review response error", error);
+    return res.status(500).json({ error: "Failed to save response" });
+  }
+});
 
 // Helper function to verify master role and get master record
 async function getMasterFromUser(
@@ -76,11 +107,19 @@ router.get("/me", isAuthenticated, async (req: any, res) => {
     const masterReviews = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.masterId, master.id))
+      .where(and(eq(reviews.masterId, master.id), sql`${reviews.isHidden} IS NOT TRUE`))
       .orderBy(desc(reviews.createdAt));
 
     return res.json({
-      master,
+      master: {
+        ...master,
+        averageRating: masterReviews.length
+          ? (
+              masterReviews.reduce((sum, review) => sum + review.rating, 0) / masterReviews.length
+            ).toFixed(1)
+          : "0.0",
+        reviewCount: masterReviews.length,
+      },
       salon,
       bookings: masterBookings,
       reviews: masterReviews,
@@ -88,6 +127,48 @@ router.get("/me", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     logger.error("Get master dashboard error:", error);
     return res.status(500).json({ error: "Failed to get master data" });
+  }
+});
+
+// Get master's working hours
+const profileUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    photo: z
+      .string()
+      .max(500)
+      .refine((value) => !value || /^\/uploads\//.test(value) || /^https:\/\//.test(value))
+      .nullable(),
+    phone: z.string().trim().max(20),
+    experience: z.number().int().min(0).max(80),
+    bio: z
+      .object({ ru: z.string().max(3000), uz: z.string().max(3000), en: z.string().max(3000) })
+      .strict(),
+  })
+  .strict();
+
+router.put("/profile", isAuthenticated, async (req: any, res) => {
+  try {
+    const result = await getMasterFromUser(req.user.claims.sub);
+    if ("error" in result) return res.status(result.status).json({ error: result.error });
+    const parsed = profileUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "Invalid profile data" });
+    const updated = await db.transaction(async (tx) => {
+      const [master] = await tx
+        .update(masters)
+        .set(parsed.data)
+        .where(and(eq(masters.id, result.master.id), eq(masters.userId, req.user.claims.sub)))
+        .returning();
+      await tx
+        .update(userProfiles)
+        .set({ fullName: parsed.data.name, avatarUrl: parsed.data.photo, phone: parsed.data.phone })
+        .where(eq(userProfiles.userId, req.user.claims.sub));
+      return master;
+    });
+    return res.json(updated);
+  } catch (error) {
+    logger.error("Update master profile error:", error);
+    return res.status(500).json({ error: "Failed to update profile" });
   }
 });
 
@@ -212,7 +293,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
       clientIds.length > 0
         ? db
             .select({
-              id: userProfiles.id,
+              id: userProfiles.userId,
               fullName: userProfiles.fullName,
               avatarUrl: userProfiles.avatarUrl,
               firstName: users.firstName,
@@ -221,7 +302,7 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
             })
             .from(userProfiles)
             .leftJoin(users, eq(users.id, userProfiles.userId))
-            .where(inArray(userProfiles.id, clientIds))
+            .where(inArray(userProfiles.userId, clientIds))
         : Promise.resolve([]),
     ]);
 
@@ -234,8 +315,8 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
     const enrichedBookings = masterBookings.map((booking) => {
       const clientProfile = clientProfilesMap.get(booking.clientId);
       const clientName =
-        clientProfile?.fullName?.split(" ")[0] ||
-        clientProfile?.firstName ||
+        clientProfile?.fullName?.trim() ||
+        [clientProfile?.firstName, clientProfile?.lastName].filter(Boolean).join(" ") ||
         clientProfile?.email?.split("@")[0] ||
         null;
 
@@ -255,19 +336,17 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Update booking status (confirm/cancel/complete)
+// Update booking status (confirm/cancel/complete) — goes through the same
+// FSM as the owner/solo-master paths, so a master can no longer set a
+// booking to an arbitrary status (e.g. back to "pending", or "completed"
+// before the appointment's own scheduled time).
 router.patch("/bookings/:bookingId/status", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
     const { bookingId } = req.params;
-    const result = await getMasterFromUser(userId);
-
-    if ("error" in result) {
-      return res.status(result.status).json({ error: result.error });
-    }
 
     const statusSchema = z.object({
-      status: z.enum(["pending", "confirmed", "cancelled", "completed"]),
+      status: z.enum(["confirmed", "cancelled", "completed", "in_progress", "no_show"]),
       cancellationReason: z.string().optional(),
     });
 
@@ -276,32 +355,16 @@ router.patch("/bookings/:bookingId/status", isAuthenticated, async (req: any, re
       return res.status(400).json({ error: "Invalid status data", details: parsed.error.errors });
     }
 
-    // Verify the booking belongs to this master
-    const [existingBooking] = await db
-      .select()
-      .from(bookings)
-      .where(and(eq(bookings.id, bookingId), eq(bookings.masterId, result.master.id)));
+    const result = await changeBookingStatus(
+      bookingId,
+      parsed.data.status,
+      { kind: "master", userId },
+      { cancellationReason: parsed.data.cancellationReason },
+    );
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const updated = result.booking;
 
-    if (!existingBooking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    const updateData: any = {
-      status: parsed.data.status,
-      updatedAt: new Date(),
-    };
-
-    if (parsed.data.cancellationReason) {
-      updateData.cancellationReason = parsed.data.cancellationReason;
-    }
-
-    const [updated] = await db
-      .update(bookings)
-      .set(updateData)
-      .where(eq(bookings.id, bookingId))
-      .returning();
-
-    if (parsed.data.status === "cancelled") {
+    if (result.changed && parsed.data.status === "cancelled") {
       cancelBookingReminders(updated.id).catch((err) =>
         logger.error("Failed to cancel reminders", {
           source: "masters.routes",

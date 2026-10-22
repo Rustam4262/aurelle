@@ -10,14 +10,15 @@ import {
   masters,
   soloMasterServices,
   userProfiles,
+  users,
 } from "@shared/schema";
-import { users } from "@shared/models/auth";
 import { eq, and, lte, or, isNull } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { sendBookingReminder } from "../email";
 import { sendBookingReminderSms } from "../sms";
 import { sendBookingReminderNotification } from "../routes/push.routes";
+import { resolveClientUserId } from "../lib/resolve-client-user";
 
 const BATCH_SIZE = 50;
 const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -27,28 +28,6 @@ const MAX_ATTEMPTS = 3;
 function backoffMs(attempts: number): number {
   const steps = [5, 20, 60];
   return (steps[Math.min(attempts, steps.length) - 1] ?? 60) * 60 * 1000;
-}
-
-/**
- * bookings.clientId has historically been written as either the auth users.id
- * or the user_profiles.id, depending on which creation path wrote it — the
- * same inconsistency already handled defensively everywhere else in the app.
- * Resolves whichever form is stored back to the real users.id.
- */
-async function resolveClientUserId(clientId: string): Promise<string | null> {
-  const [asUser] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.id, clientId))
-    .limit(1);
-  if (asUser) return asUser.id;
-
-  const [asProfile] = await db
-    .select({ userId: userProfiles.userId })
-    .from(userProfiles)
-    .where(eq(userProfiles.id, clientId))
-    .limit(1);
-  return asProfile?.userId ?? null;
 }
 
 async function processReminders(): Promise<void> {
@@ -203,6 +182,7 @@ async function sendReminderEmail(booking: Booking, type: string): Promise<void> 
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Tashkent",
   });
 
   await sendBookingReminder(
@@ -236,7 +216,7 @@ async function sendReminderSms(booking: Booking, type: string): Promise<void> {
   const hoursUntil = type === "REMINDER_24H" ? 24 : 2;
   const bookingDate =
     booking.bookingDate instanceof Date ? booking.bookingDate : new Date(booking.bookingDate);
-  const dateStr = bookingDate.toLocaleDateString("ru-RU");
+  const dateStr = bookingDate.toLocaleDateString("ru-RU", { timeZone: "Asia/Tashkent" });
 
   await sendBookingReminderSms(
     clientProfile.phone,
@@ -262,6 +242,7 @@ async function sendReminderPush(booking: Booking, _type: string): Promise<void> 
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Tashkent",
   });
 
   await sendBookingReminderNotification(resolvedUserId, {

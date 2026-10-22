@@ -1,5 +1,8 @@
+import { MessengerLink } from "@/components/messenger-link";
+import { useCabinetTab } from "@/hooks/use-cabinet-tab";
+import { BackButton } from "@/components/back-button";
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -153,15 +156,14 @@ const copy: CopyDictionary = {
     markAllRead: "Прочитать всё",
     unread: "Непрочитано",
     read: "Прочитано",
-    communicationsTitle: "Коммуникации по вашим визитам",
+    communicationsTitle: "Связь с салонами и мастерами",
     communicationsText:
-      "Быстрый доступ к связанным салонам, мастерам и точкам, где может понадобиться поддержка.",
+      "Контакты салонов и мастеров, к которым вы записаны, и обращение в поддержку.",
     bookingLinked: "Связано с записью",
     openSalon: "Открыть салон",
     openBookings: "К записям",
-    noCommunicationItems: "Пока нет активных коммуникаций",
-    noCommunicationItemsText:
-      "После первой записи здесь появятся связанные контакты, быстрые переходы и сценарии помощи.",
+    noCommunicationItems: "Контактов пока нет",
+    noCommunicationItemsText: "После первой записи здесь появятся контакты салона или мастера.",
     securityTitle: "Безопасность и настройки аккаунта",
     securityText:
       "Управляйте доступом, переходите к восстановлению пароля и держите профиль в актуальном состоянии.",
@@ -194,7 +196,7 @@ const copy: CopyDictionary = {
     myBookings: "Мои записи",
     favorites: "Избранное",
     myReviews: "Мои отзывы",
-    messages: "Коммуникации",
+    messages: "Мессенджер",
     support: "Поддержка",
     settings: "Настройки",
   },
@@ -264,7 +266,7 @@ const copy: CopyDictionary = {
     myBookings: "Yozuvlarim",
     favorites: "Sevimlilar",
     myReviews: "Fikrlarim",
-    messages: "Aloqalar",
+    messages: "Messenjer",
     support: "Yordam",
     settings: "Sozlamalar",
   },
@@ -333,7 +335,7 @@ const copy: CopyDictionary = {
     myBookings: "My bookings",
     favorites: "Favorites",
     myReviews: "My reviews",
-    messages: "Communications",
+    messages: "Messenger",
     support: "Support",
     settings: "Settings",
   },
@@ -389,6 +391,14 @@ function profileCompletion(profile: UserProfile | null) {
   return Math.max(25, Math.round((completed / checks.length) * 100));
 }
 
+const BOOKING_STATUS_LABELS: Record<string, Record<string, string>> = {
+  confirmed: { en: "confirmed", ru: "подтверждена", uz: "tasdiqlandi" },
+  cancelled: { en: "cancelled", ru: "отменена", uz: "bekor qilindi" },
+  completed: { en: "completed", ru: "завершена", uz: "yakunlandi" },
+  in_progress: { en: "in progress", ru: "в процессе", uz: "jarayonda" },
+  no_show: { en: "marked as no-show", ru: "отмечена как неявка", uz: "kelmadi deb belgilandi" },
+};
+
 function buildNotificationMessage(notification: Notification, language: string) {
   if (notification.message) return notification.message;
 
@@ -403,6 +413,24 @@ function buildNotificationMessage(notification: Notification, language: string) 
         : language === "uz"
           ? `Yangi yozuv${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""}.`
           : `Новая запись${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""}.`;
+    case "booking_cancelled":
+      return language === "en"
+        ? `Your booking${datePart ? ` on ${datePart}` : ""}${startTime ? ` at ${startTime}` : ""} was cancelled.`
+        : language === "uz"
+          ? `Yozuvingiz${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""} bekor qilindi.`
+          : `Ваша запись${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""} была отменена.`;
+    case "booking_status_changed": {
+      const rawStatus = String(notification.metadata?.status ?? "");
+      const status =
+        BOOKING_STATUS_LABELS[rawStatus]?.[language] ??
+        BOOKING_STATUS_LABELS[rawStatus]?.en ??
+        rawStatus;
+      return language === "en"
+        ? `Your booking${datePart ? ` on ${datePart}` : ""}${startTime ? ` at ${startTime}` : ""} is now ${status}.`
+        : language === "uz"
+          ? `Yozuvingiz${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""} holati: ${status}.`
+          : `Ваша запись${datePart ? `: ${datePart}` : ""}${startTime ? `, ${startTime}` : ""} теперь: ${status}.`;
+    }
     default:
       return notification.type.replace(/_/g, " ");
   }
@@ -700,9 +728,20 @@ export default function ClientPage() {
     redirectTo: "/auth",
   });
 
-  const [activeTab, setActiveTab] = useState<CabinetTab>("overview");
+  const [activeTab, setCabinetTab] = useCabinetTab<CabinetTab>("overview");
+  const [, navigateToMessenger] = useLocation();
+  const setActiveTab = (tab: CabinetTab) =>
+    tab === "messages" ? navigateToMessenger("/messenger") : setCabinetTab(tab);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [bookingForReview, setBookingForReview] = useState<EnrichedBooking | null>(null);
+
+  const messengerQuery = useQuery<{ unread: number }[]>({
+    queryKey: ["messenger", user?.id, "chats"],
+    queryFn: async () => (await apiRequest("GET", "/api/messenger/conversations")).json(),
+    enabled: !!user,
+    refetchInterval: 5000,
+  });
+  const unreadMessages = messengerQuery.data?.reduce((sum, chat) => sum + chat.unread, 0) || 0;
 
   const profileQuery = useQuery<UserProfile | null>({
     queryKey: ["/api/client/profile"],
@@ -861,7 +900,7 @@ export default function ClientPage() {
 
   const heroActions = [
     { id: "find-salon", label: current.findSalon, icon: Search, href: "/search" },
-    { id: "find-master", label: current.findMaster, icon: Sparkles, href: "/search" },
+    { id: "find-master", label: current.findMaster, icon: Sparkles, href: "/search?tab=masters" },
     {
       id: "bookings",
       label: current.myBookings,
@@ -879,7 +918,7 @@ export default function ClientPage() {
     bookings: stats.activeCount,
     favorites: stats.favoritesCount + stats.masterFavoritesCount,
     reviews: stats.pendingReviewBookings.length,
-    messages: stats.unreadSupport,
+    messages: unreadMessages,
     support: stats.openSupportCount,
     notifications: stats.unreadNotifications,
   };
@@ -917,11 +956,7 @@ export default function ClientPage() {
       <div className="border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="shrink-0">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+            <BackButton fallback="/" />
             <div className="min-w-0">
               <h1 className="font-serif text-xl leading-tight text-foreground sm:text-2xl">
                 {current.pageTitle}
@@ -933,6 +968,7 @@ export default function ClientPage() {
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
             <ThemeToggle />
+            <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
             <Button
               variant="outline"
@@ -1018,60 +1054,47 @@ export default function ClientPage() {
           </aside>
           <div className="min-w-0">
             <TabsContent value="overview" className="mt-0 space-y-6">
-              <section className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
+              <section className="grid gap-5">
                 <Card className="overflow-hidden border-border/70 shadow-sm">
                   <div className="bg-card dark:bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs text-muted-foreground">
-                          <Sparkles className="h-3.5 w-3.5 text-primary" />
-                          {current.heroEyebrow}
-                        </div>
-                        <div className="mt-5 flex items-start gap-4">
-                          <Avatar className="h-16 w-16 ring-4 ring-background/80 shadow-md">
-                            <AvatarImage src={profileData.avatarUrl || undefined} />
-                            <AvatarFallback className="bg-primary/10 text-lg text-primary">
-                              {displayName[0]?.toUpperCase() || "C"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <h2 className="text-balance font-serif text-2xl leading-tight text-foreground sm:text-4xl">
-                              {current.heroTitle}
-                            </h2>
-                            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
-                              {current.heroText}
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 ring-4 ring-background/80">
+                          <AvatarImage
+                            src={profileData.avatarUrl || user.profileImageUrl || undefined}
+                            alt={displayName}
+                          />
+                          <AvatarFallback>{displayName[0]?.toUpperCase() || "C"}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {current.heroEyebrow}
+                          </p>
+                          <h2 className="font-serif text-2xl sm:text-3xl leading-tight break-words">
+                            {displayName}
+                          </h2>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {current.pageSubtitle}
+                          </p>
+                          {profileData.city && (
+                            <p className="mt-2 text-sm text-muted-foreground flex items-center gap-1">
+                              <UserCircle2 className="h-3.5 w-3.5" />
+                              {profileData.city}
                             </p>
-                            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                              <span>{user.email || "—"}</span>
-                              {profileData.phone && <span>{profileData.phone}</span>}
-                              {profileData.city && <span>{profileData.city}</span>}
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </div>
-
-                      <div className="grid min-w-full grid-cols-2 gap-3 sm:min-w-[250px]">
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
-                            {current.profileCompletion}
-                          </p>
-                          <p className="mt-3 text-3xl font-semibold text-foreground">
-                            {profileScore}%
-                          </p>
-                          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                            {profileScore < 100 ? current.completeProfile : current.activeStatus}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground sm:tracking-[0.18em]">
-                            {current.inbox}
-                          </p>
-                          <p className="mt-3 text-3xl font-semibold text-foreground">
-                            {stats.unreadNotifications + stats.unreadSupport}
-                          </p>
-                          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                            {current.notificationsLabel} + {current.supportLabel}
-                          </p>
+                      <div className="flex flex-wrap gap-3">
+                        <Button variant="outline" onClick={() => setActiveTab("profile")}>
+                          {current.profileCta}
+                        </Button>
+                        <Button variant="outline" onClick={() => setActiveTab("messages")}>
+                          {current.messages}
+                          {unreadMessages > 0 && <Badge className="ml-2">{unreadMessages}</Badge>}
+                        </Button>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+                          <span>{current.profileCompletion}</span>
+                          <span className="font-semibold text-foreground">{profileScore}%</span>
                         </div>
                       </div>
                     </div>
@@ -1080,29 +1103,33 @@ export default function ClientPage() {
 
                     <div className="space-y-3">
                       <p className="text-sm font-medium text-foreground">{current.quickActions}</p>
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                         {heroActions.map((action) =>
                           action.href ? (
                             <Button
                               key={action.id}
                               asChild
                               variant="outline"
-                              className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
+                              className="h-auto flex-col items-start sm:flex-row sm:items-center gap-2 justify-start rounded-2xl border-border/70 bg-background/70 px-3 py-3 text-left whitespace-normal"
                             >
                               <Link href={action.href}>
-                                <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                                <span className="min-w-0 break-words">{action.label}</span>
+                                <action.icon className="h-4 w-4 shrink-0" />
+                                <span className="min-w-0 break-normal hyphens-none">
+                                  {action.label}
+                                </span>
                               </Link>
                             </Button>
                           ) : (
                             <Button
                               key={action.id}
                               variant="outline"
-                              className="h-auto justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-4 text-left whitespace-normal"
+                              className="h-auto flex-col items-start sm:flex-row sm:items-center gap-2 justify-start rounded-2xl border-border/70 bg-background/70 px-3 py-3 text-left whitespace-normal"
                               onClick={() => action.tab && setActiveTab(action.tab)}
                             >
-                              <action.icon className="mr-3 h-4 w-4 shrink-0" />
-                              <span className="min-w-0 break-words">{action.label}</span>
+                              <action.icon className="h-4 w-4 shrink-0" />
+                              <span className="min-w-0 break-normal hyphens-none">
+                                {action.label}
+                              </span>
                             </Button>
                           ),
                         )}
@@ -1116,7 +1143,7 @@ export default function ClientPage() {
                     <h3 className="text-lg font-semibold text-foreground">{current.whatNow}</h3>
                     <p className="mt-2 text-sm text-muted-foreground">{current.whatNowText}</p>
                   </div>
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-border/70 bg-muted/25 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-muted-foreground">{current.nearestVisit}</p>
@@ -1213,6 +1240,7 @@ export default function ClientPage() {
               <ClientDashboard
                 bookings={bookings}
                 favorites={favorites}
+                hideQuickActions
                 onNavigateToTab={(tab) => setActiveTab(tab as CabinetTab)}
               />
             </TabsContent>
@@ -1253,6 +1281,9 @@ export default function ClientPage() {
             </TabsContent>
 
             <TabsContent value="messages" className="mt-0">
+              <div className="mb-4">
+                <MessengerLink userId={user?.id} />
+              </div>
               <CommunicationsTab
                 bookings={bookings}
                 language={language}
