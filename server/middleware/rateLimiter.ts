@@ -95,6 +95,48 @@ export const oauthLimiter = rateLimit({
   store: makeStore("oauth"),
 });
 
+// Phone verification code send: each hit sends a real SMS via Twilio (real
+// cost) and can be used to harass an arbitrary number with repeated texts.
+// 5/min per IP, plus 3/10min keyed by the target phone number itself so
+// rotating IPs doesn't let an attacker bypass the per-number limit.
+export const phoneSendLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Too many verification code requests. Please try again in 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: makeStore("phone-send"),
+});
+
+export const phoneSendPerNumberLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  message: { error: "Too many verification code requests for this phone number." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const phone = typeof req.body?.phoneNumber === "string" ? req.body.phoneNumber.trim() : "";
+    return phone || req.ip || "unknown";
+  },
+  store: makeStore("phone-send-number"),
+});
+
+// Phone code verify: bounds brute-forcing the 6-digit code at the app layer,
+// on top of whatever Twilio Verify itself enforces server-side.
+export const phoneVerifyLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Too many verification attempts. Please try again in 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const phone = typeof req.body?.phoneNumber === "string" ? req.body.phoneNumber.trim() : "";
+    return phone || req.ip || "unknown";
+  },
+  store: makeStore("phone-verify"),
+});
+
 // General API endpoints (soft limit)
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,

@@ -7,6 +7,11 @@ import { eq } from "drizzle-orm";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
 import { isSoftDeletedUser } from "./lib/user-deletion";
+import {
+  phoneSendLimiter,
+  phoneSendPerNumberLimiter,
+  phoneVerifyLimiter,
+} from "./middleware/rateLimiter";
 
 // Store verification codes temporarily (in production, use Redis)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -37,59 +42,66 @@ export function setupPhoneAuth(app: Express) {
   const router = Router();
 
   // Send verification code
-  router.post("/auth/phone/send-code", async (req: Request, res: Response) => {
-    try {
-      const { phoneNumber } = req.body;
-
-      if (!phoneNumber || !/^\+\d{10,15}$/.test(phoneNumber)) {
-        return res
-          .status(400)
-          .json({ error: "Invalid phone number format. Use E.164 format (+1234567890)" });
-      }
-
-      // Generate 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-      // Store code
-      verificationCodes.set(phoneNumber, { code, expiresAt });
-
-      // Send SMS via Twilio
+  router.post(
+    "/auth/phone/send-code",
+    phoneSendLimiter,
+    phoneSendPerNumberLimiter,
+    async (req: Request, res: Response) => {
       try {
-        await twilioConfig.client.verify.v2.services(twilioConfig.serviceSid).verifications.create({
-          to: phoneNumber,
-          channel: "sms",
-        });
+        const { phoneNumber } = req.body;
 
-        return res.json({
-          success: true,
-          message: "Verification code sent",
-          expiresIn: 600, // seconds
-        });
-      } catch (twilioError: any) {
-        logger.error("Twilio error", twilioError);
-
-        // Fallback for development: just store the code without sending
-        if (process.env.NODE_ENV === "development") {
-          logger.info(`Development mode - verification code for ${phoneNumber}: ${code}`);
-          return res.json({
-            success: true,
-            message: "Development mode - check console for code",
-            devCode: code, // Only in development!
-            expiresIn: 600,
-          });
+        if (!phoneNumber || !/^\+\d{10,15}$/.test(phoneNumber)) {
+          return res
+            .status(400)
+            .json({ error: "Invalid phone number format. Use E.164 format (+1234567890)" });
         }
 
+        // Generate 6-digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+        // Store code
+        verificationCodes.set(phoneNumber, { code, expiresAt });
+
+        // Send SMS via Twilio
+        try {
+          await twilioConfig.client.verify.v2
+            .services(twilioConfig.serviceSid)
+            .verifications.create({
+              to: phoneNumber,
+              channel: "sms",
+            });
+
+          return res.json({
+            success: true,
+            message: "Verification code sent",
+            expiresIn: 600, // seconds
+          });
+        } catch (twilioError: any) {
+          logger.error("Twilio error", twilioError);
+
+          // Fallback for development: just store the code without sending
+          if (process.env.NODE_ENV === "development") {
+            logger.info(`Development mode - verification code for ${phoneNumber}: ${code}`);
+            return res.json({
+              success: true,
+              message: "Development mode - check console for code",
+              devCode: code, // Only in development!
+              expiresIn: 600,
+            });
+          }
+
+          return res.status(500).json({ error: "Failed to send verification code" });
+        }
+      } catch (error) {
+        logger.error("Send code error", error);
         return res.status(500).json({ error: "Failed to send verification code" });
       }
-    } catch (error) {
-      logger.error("Send code error", error);
-      return res.status(500).json({ error: "Failed to send verification code" });
-    }
-  });
+    },
+  );
 
   // Verify code and login
-  router.post("/auth/phone/verify", async (req: Request, res: Response) => {
+  router.post("/auth/phone/verify", phoneVerifyLimiter, async (req: Request, res: Response) => {
     try {
       const { phoneNumber, code } = req.body;
 

@@ -8,6 +8,7 @@ import { authStorage } from "./auth/storage";
 import { logger } from "./lib/logger";
 import { trackUserLogin } from "./middleware/activity";
 import { isSoftDeletedUser } from "./lib/user-deletion";
+import { oauthLimiter } from "./middleware/rateLimiter";
 
 function getGitHubCredentials() {
   const clientID = process.env.GITHUB_CLIENT_ID;
@@ -112,7 +113,7 @@ export async function setupGitHubAuth(app: Express) {
     }
   };
 
-  app.get("/api/auth/github", (req, res, next) => {
+  app.get("/api/auth/github", oauthLimiter, (req, res, next) => {
     ensureGitHubStrategy(req);
     passport.authenticate(`github:${req.hostname}`, {
       scope: ["user:email"],
