@@ -17,6 +17,11 @@ import { payments } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { logger } from "./logger";
 
+// Lets a caller run the transition inside its own already-open transaction
+// (e.g. together with the bookings.paymentStatus update it implies), instead
+// of always committing in isolation.
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "cancelled" | "refunded";
@@ -65,6 +70,11 @@ export function canTransition(from: PaymentStatus, to: PaymentStatus): boolean {
  * table, writes the new status atomically, and logs both the success and any
  * violation attempts.
  *
+ * Pass `dbClient` (an open transaction) to make this part of a larger atomic
+ * write — e.g. together with the bookings.paymentStatus update every caller
+ * otherwise performs as a separate, non-atomic statement right after. Without
+ * it, this still runs in its own transaction exactly as before.
+ *
  * @throws PaymentTransitionError if the transition is not allowed
  * @throws Error if the payment record is not found
  */
@@ -72,11 +82,14 @@ export async function transitionPayment(
   paymentId: string,
   newStatus: PaymentStatus,
   extra?: TransitionExtra,
+  dbClient?: DbClient,
 ): Promise<void> {
-  // FOR UPDATE inside a transaction serializes concurrent callers (e.g. a
-  // provider's retried webhook arriving twice) on this row, so only one of
-  // them observes the pre-transition status and performs the write.
-  await db.transaction(async (tx) => {
+  // FOR UPDATE serializes concurrent callers (e.g. a provider's retried
+  // webhook arriving twice) on this row, so only one of them observes the
+  // pre-transition status and performs the write. The lock is only held for
+  // the life of a transaction, so a client-supplied one must already be in
+  // a transaction — only the no-argument case needs its own wrapper here.
+  const run = async (tx: DbClient) => {
     const [payment] = await tx
       .select({ id: payments.id, status: payments.status })
       .from(payments)
@@ -112,5 +125,11 @@ export async function transitionPayment(
       source: "payment-fsm",
       meta: { paymentId, from: currentStatus, to: newStatus },
     });
-  });
+  };
+
+  if (dbClient) {
+    await run(dbClient);
+  } else {
+    await db.transaction(run);
+  }
 }

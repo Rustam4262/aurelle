@@ -6,6 +6,8 @@ import { broadcast, broadcastToUser } from "../lib/websocket";
 import { transitionPayment, PaymentTransitionError } from "../lib/payment-fsm";
 import { timingSafeEqualStrings } from "../lib/timing-safe";
 
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 /**
  * Payme (paycom.uz) merchant webhook — full JSON-RPC 2.0 protocol.
  *
@@ -59,9 +61,14 @@ function metaOf(payment: { metadata: unknown }): PaymeMeta | null {
   return m ?? null;
 }
 
-async function saveMeta(paymentId: string, existingMetadata: unknown, meta: PaymeMeta) {
+async function saveMeta(
+  paymentId: string,
+  existingMetadata: unknown,
+  meta: PaymeMeta,
+  dbClient: DbClient = db,
+) {
   const base = (existingMetadata as Record<string, unknown> | null) ?? {};
-  await db
+  await dbClient
     .update(payments)
     .set({ metadata: { ...base, payme: meta } })
     .where(eq(payments.id, paymentId));
@@ -218,10 +225,15 @@ async function performTransaction(id: JsonRpcId, params: { id?: string }) {
 
   if (Date.now() - meta.createTime > TRANSACTION_TIMEOUT_MS) {
     const cancelled: PaymeMeta = { ...meta, state: -1, cancelTime: Date.now(), reason: 4 };
-    await saveMeta(payment.id, payment.metadata, cancelled);
     try {
-      await transitionPayment(payment.id, "cancelled", {
-        errorMessage: "Expired before PerformTransaction",
+      await db.transaction(async (tx) => {
+        await saveMeta(payment.id, payment.metadata, cancelled, tx);
+        await transitionPayment(
+          payment.id,
+          "cancelled",
+          { errorMessage: "Expired before PerformTransaction" },
+          tx,
+        );
       });
     } catch {
       /* already in a terminal state — fine */
@@ -231,21 +243,23 @@ async function performTransaction(id: JsonRpcId, params: { id?: string }) {
 
   const performTime = Date.now();
   const performed: PaymeMeta = { ...meta, state: 2, performTime };
-  await saveMeta(payment.id, payment.metadata, performed);
   try {
-    await transitionPayment(payment.id, "succeeded", { externalId: paymeTxId });
+    await db.transaction(async (tx) => {
+      await saveMeta(payment.id, payment.metadata, performed, tx);
+      await transitionPayment(payment.id, "succeeded", { externalId: paymeTxId }, tx);
+      await tx
+        .update(bookings)
+        .set({ paymentStatus: "paid" })
+        .where(eq(bookings.id, payment.bookingId));
+    });
   } catch (err) {
     if (err instanceof PaymentTransitionError) {
       // A concurrent retry already drove this payment to its final state —
-      // the metadata write above is idempotent, so just report success again.
+      // the metadata write is idempotent, so just report success again.
       return resultResponse(id, { transaction: payment.id, perform_time: performTime, state: 2 });
     }
     throw err;
   }
-  await db
-    .update(bookings)
-    .set({ paymentStatus: "paid" })
-    .where(eq(bookings.id, payment.bookingId));
   broadcastPaymentEvent(payment, "succeeded");
 
   return resultResponse(id, { transaction: payment.id, perform_time: performTime, state: 2 });
@@ -282,19 +296,24 @@ async function cancelTransaction(id: JsonRpcId, params: { id?: string; reason?: 
     cancelTime,
     reason: params.reason ?? null,
   };
-  await saveMeta(payment.id, payment.metadata, cancelled);
 
-  try {
-    await transitionPayment(payment.id, newState === -2 ? "refunded" : "cancelled", {
-      errorMessage: `Cancelled via Payme, reason ${params.reason ?? "unknown"}`,
-    });
-  } catch (err) {
-    if (!(err instanceof PaymentTransitionError)) throw err;
-  }
-  await db
-    .update(bookings)
-    .set({ paymentStatus: newState === -2 ? "refunded" : "pending" })
-    .where(eq(bookings.id, payment.bookingId));
+  await db.transaction(async (tx) => {
+    await saveMeta(payment.id, payment.metadata, cancelled, tx);
+    try {
+      await transitionPayment(
+        payment.id,
+        newState === -2 ? "refunded" : "cancelled",
+        { errorMessage: `Cancelled via Payme, reason ${params.reason ?? "unknown"}` },
+        tx,
+      );
+    } catch (err) {
+      if (!(err instanceof PaymentTransitionError)) throw err;
+    }
+    await tx
+      .update(bookings)
+      .set({ paymentStatus: newState === -2 ? "refunded" : "pending" })
+      .where(eq(bookings.id, payment.bookingId));
+  });
   broadcastPaymentEvent(payment, newState === -2 ? "refunded" : "cancelled");
 
   return resultResponse(id, { transaction: payment.id, cancel_time: cancelTime, state: newState });

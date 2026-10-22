@@ -7,6 +7,8 @@ import { broadcast, broadcastToUser } from "../lib/websocket";
 import { transitionPayment, PaymentTransitionError } from "../lib/payment-fsm";
 import { timingSafeEqualStrings } from "../lib/timing-safe";
 
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 /**
  * Click (click.uz) merchant webhook — Prepare/Complete two-step protocol.
  *
@@ -115,8 +117,12 @@ function verifySignature(body: ClickBody, secretKey: string, includePrepareId: b
   return timingSafeEqualStrings(String(body.sign_string ?? ""), expected);
 }
 
-function syncBookingPaymentStatus(bookingId: string, status: "paid" | "pending") {
-  return db.update(bookings).set({ paymentStatus: status }).where(eq(bookings.id, bookingId));
+function syncBookingPaymentStatus(
+  bookingId: string,
+  status: "paid" | "pending",
+  dbClient: DbClient = db,
+) {
+  return dbClient.update(bookings).set({ paymentStatus: status }).where(eq(bookings.id, bookingId));
 }
 
 function broadcastPaymentEvent(
@@ -262,16 +268,25 @@ export async function handleClickWebhook(
 
   try {
     if (clickReportsFailure) {
-      await transitionPayment(payment.id, "failed", {
-        externalId: clickTransId,
-        errorCode: String(body.error),
-        errorMessage: body.error_note ?? "Click reported failure",
+      await db.transaction(async (tx) => {
+        await transitionPayment(
+          payment.id,
+          "failed",
+          {
+            externalId: clickTransId,
+            errorCode: String(body.error),
+            errorMessage: body.error_note ?? "Click reported failure",
+          },
+          tx,
+        );
+        await syncBookingPaymentStatus(payment.bookingId, "pending", tx);
       });
-      await syncBookingPaymentStatus(payment.bookingId, "pending");
       broadcastPaymentEvent(payment, "failed");
     } else {
-      await transitionPayment(payment.id, "succeeded", { externalId: clickTransId });
-      await syncBookingPaymentStatus(payment.bookingId, "paid");
+      await db.transaction(async (tx) => {
+        await transitionPayment(payment.id, "succeeded", { externalId: clickTransId }, tx);
+        await syncBookingPaymentStatus(payment.bookingId, "paid", tx);
+      });
       broadcastPaymentEvent(payment, "succeeded");
     }
   } catch (err) {
