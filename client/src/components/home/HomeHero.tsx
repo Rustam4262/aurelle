@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search, Sparkles } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_beauty_salon__29a49bfb.jpg";
+import { CITY_KEYS } from "@shared/city-aliases";
 
-const cities = ["Tashkent", "Samarkand", "Bukhara"];
+// Canonical keys only — the displayed label is localized per-language below,
+// and the search filter matches every known spelling via CITY_ALIASES.
+const cities = CITY_KEYS;
 
 export function HomeHero() {
   const { t } = useTranslation();
@@ -85,11 +88,11 @@ export function HomeHero() {
               {cities.map((city) => (
                 <button
                   key={city}
-                  onClick={() => navigate(`/search?city=${city.toLowerCase()}`)}
+                  onClick={() => navigate(`/search?city=${city}`)}
                   className="rounded-full border border-border bg-card px-3 py-1.5 text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:text-slate-950 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:hover:text-white"
-                  data-testid={`link-city-${city.toLowerCase()}`}
+                  data-testid={`link-city-${city}`}
                 >
-                  {city}
+                  {t(`marketplace.hero.cities.${city}`)}
                 </button>
               ))}
             </div>

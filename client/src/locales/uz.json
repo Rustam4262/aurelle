@@ -20,6 +20,11 @@
       "searchPlaceholder": "Nom, xizmat yoki joylashuv bo'yicha qidirish...",
       "search": "Qidirish",
       "popularCities": "Mashhur shaharlar",
+      "cities": {
+        "tashkent": "Toshkent",
+        "samarkand": "Samarqand",
+        "bukhara": "Buxoro"
+      },
       "badge": "Premium go'zallik markazi",
       "imageLabel": "Aurelle tanlovi",
       "liveNow": "Jonli",
@@ -90,7 +95,7 @@
       "notes": "Izohlar",
       "optional": "ixtiyoriy",
       "notesPlaceholder": "Maxsus istaklar yoki izohlar...",
-      "cancellationPolicy": "Yozilishni tashrifdan 24 soat oldin bepul bekor qilish yoki ko'chirish mumkin. Kechroq bekor qilish yoki kelmay qolish salonning qoidalariga muvofiq pullik bo'lishi mumkin.",
+      "cancellationPolicy": "Tashrif boshlanishidan oldin istalgan vaqtda hisobingizdan bepul bekor qilishingiz mumkin. Mijoz tomonidan ko'chirish hozircha qo'llab-quvvatlanmaydi.",
       "closedOnThisDay": "Bu kuni salon ishlamaydi. Boshqa sanani tanlang.",
       "workingHoursHint": "Bu kuni salon {{open}} dan {{close}} gacha ishlaydi",
       "slotsLoadFailed": "Bo'sh vaqtlarni yuklab bo'lmadi",
@@ -156,6 +161,7 @@
     },
     "stats": {
       "salons": "Go'zallik salonlari",
+      "publicReviews": "Chop etilgan sharhlar",
       "clients": "Mijozlar",
       "bookings": "Bronlar",
       "cities": "Shaharlar"
@@ -186,10 +192,10 @@
         "client": {
           "q1": "AURELLE orqali ustaga qanday yozilish mumkin?",
           "a1": "Salon yoki ustani tanlang, kalendarda mavjud vaqtlarni ko'ring, qulay vaqtni tanlang va yozilishni tasdiqlang. Sizga email va shaxsiy kabinetda xabar keladi.",
-          "q2": "Yozilishni bekor qilish yoki ko'chirish mumkinmi?",
-          "a2": "Ha, siz shaxsiy kabinetda belgilangan vaqtdan 24 soat oldin yozilishni bekor qilishingiz yoki ko'chirishingiz mumkin. 24 soatdan kamroq vaqt qolganda bekor qilish salon siyosatiga ko'ra jarima to'lashni talab qilishi mumkin.",
+          "q2": "Yozilishni bekor qilish mumkinmi?",
+          "a2": "Ha, siz shaxsiy kabinetdan tashrif boshlanishidan oldin istalgan vaqtda bepul bekor qilishingiz mumkin. Mijoz tomonidan ko'chirish hozircha qo'llab-quvvatlanmaydi.",
           "q3": "Platforma orqali xizmatlar uchun to'lash xavfsizmi?",
-          "a3": "Mutlaqo xavfsiz. Biz himoyalangan to'lov shlyuzlaridan foydalanamiz va sizning karta ma'lumotlaringizni saqlamaymiz. Barcha tranzaksiyalar PCI DSS standartiga muvofiq shifrlangan."
+          "a3": "Ha. To'lovlar sertifikatlangan provayderlar (Payme, Click) orqali amalga oshiriladi — biz sizning karta ma'lumotlaringizni ko'rmaymiz va saqlamaymiz."
         },
         "salon": {
           "q1": "Platformada salonni joylashtirish qancha turadi?",
@@ -372,7 +378,20 @@
       "newBooking": "Yangi bron",
       "newBookingMessage": "{{date}} kuni soat {{time}} ga bron so'rovi",
       "newBookingFallback": "Sizda yangi bron so'rovi bor",
-      "viewBooking": "Bronni ko'rish"
+      "viewBooking": "Bronni ko'rish",
+      "bookingCancelled": "Bron bekor qilindi",
+      "bookingCancelledMessage": "{{date}} kuni soat {{time}} ga bron bekor qilindi",
+      "bookingCancelledFallback": "Bron bekor qilindi",
+      "bookingStatusChanged": "Bron holati o'zgardi",
+      "bookingStatusChangedMessage": "{{date}} kuni soat {{time}} ga bron holati: {{status}}",
+      "bookingStatusChangedFallback": "Bron holati o'zgardi",
+      "status": {
+        "confirmed": "tasdiqlandi",
+        "cancelled": "bekor qilindi",
+        "completed": "yakunlandi",
+        "in_progress": "jarayonda",
+        "no_show": "kelmadi deb belgilandi"
+      }
     },
     "days": {
       "monday": "Dushanba",
@@ -3026,6 +3045,8 @@
   },
   "about": {
     "title": "Platforma haqida",
+    "seoTitle": "AURELLE haqida — O'zbekistondagi go'zallik salonlari marketpleysi",
+    "seoDescription": "AURELLE O'zbekiston bo'ylab mijozlar va go'zallik ustalarini bog'laydi — salon tanlang, xizmatga yoziling va biznesni bir joydan boshqaring.",
     "hero": {
       "title": "AURELLE — Go'zallik yangicha",
       "subtitle": "O'zbekistonda go'zallik salonlarini bron qilish platformasi",
@@ -3262,6 +3283,12 @@
     "manage_bookings": "Bandlovlarni boshqarish",
     "manage_calendar": "Taqvimni boshqarish",
     "view_analytics": "Analitika"
+  },
+  "cookieConsent": {
+    "title": "Cookie-fayllardan foydalanishga rozilik",
+    "text": "Platformani yaxshilash uchun analitika maqsadida cookie-fayllardan foydalanamiz. Rozi bo'lishingiz yoki rad etishingiz mumkin — sayt har qanday holatda ishlaydi.",
+    "accept": "Qabul qilish",
+    "decline": "Rad etish"
   },
   "pwa": {
     "installApp": "Ilovani o'rnatish",
@@ -3508,7 +3535,7 @@
       "intro": "Ma'lumotlaringizni himoya qilish uchun sanoat standartidagi xavfsizlik choralarini qo'llaymiz, jumladan:",
       "items": [
         "Ma'lumotlarni uzatish va saqlash paytida shifrlash",
-        "Xavfsiz to'lovlarni qayta ishlash (PCI DSS talablariga muvofiq)",
+        "Sertifikatlangan to'lov provayderlari (Payme, Click) orqali xavfsiz to'lovlarni qayta ishlash",
         "Muntazam xavfsizlik auditlari va yangilanishlar",
         "Kirishni nazorat qilish va xodimlarni o'qitish",
         "Shubhali faoliyatni kuzatish"
@@ -3655,7 +3682,7 @@
     "empty": "Bu yo‘nalishda hozircha xizmat yo‘q. Barcha xizmatlarni ko‘ring.",
     "catalog": "To‘liq katalog",
     "curated": "Tanlangan yo‘nalish bo‘yicha",
-    "catalogHint": "Yo‘nalishi belgilanmagan xizmatlar to‘liq katalogda mavjud.",
+    "catalogHint": "Auditoriyasi belgilanmagan xizmatlar faqat to‘liq katalogda mavjud.",
     "menTitle": "Soch turmagi, parvarish va hordiq — yaqiningizda",
     "menSubtitle": "Barbershop, salon yoki ustani toping. Xizmat va qulay vaqtni tanlang.",
     "menBadge": "Sizga qulay parvarish",
@@ -3664,6 +3691,29 @@
     "heroAlt": "Salon interyeri",
     "loadError": "Takliflarni yuklab bo‘lmadi",
     "retry": "Qayta urinish",
-    "menPhotoAlt": "Barbershopda ishlayotgan usta"
+    "menPhotoAlt": "Barbershopda ishlayotgan usta",
+    "askSpecialist": "Xizmat kimlar uchun ekanini mutaxassisdan aniqlang",
+    "mapPlaces": "Xaritadagi salonlar va ustalar",
+    "mapEmpty": "Ko‘rsatish uchun manzillar yo‘q",
+    "mapEmptyHint": "Bu tanlovda koordinatalari kiritilgan salonlar va ustalar hozircha yo‘q.",
+    "ownerHint": "Tanlov xizmat va salon yoki usta profilingiz katalogning qaysi bo‘limida ko‘rinishini belgilaydi. “Hamma uchun” ikkala bo‘limda ko‘rinadi.",
+    "needsChoice": "Auditoriyani tanlang. Tanlanmaguncha xizmat faqat to‘liq katalogda ko‘rinadi.",
+    "saving": "Saqlanmoqda…"
+  },
+  "employeeMaster": {
+    "profile": "Profil sozlamalari",
+    "reviews": "Sharhlar va baholar",
+    "name": "Ism va familiya",
+    "phone": "Telefon",
+    "experience": "Ish tajribasi (yil)",
+    "bio": "O‘zim haqimda",
+    "saving": "Saqlanmoqda…",
+    "empty": "Hozircha baholar va sharhlar yo‘q",
+    "reviewCount": "Sharhlar soni: {{count}}",
+    "response": "Usta javobi",
+    "reply": "Sharhga javob berish",
+    "saveReply": "Javobni saqlash",
+    "portfolioHint": "Mijozlar ko‘rishi uchun ishlaringiz rasmlarini qo‘shing.",
+    "about": "Usta haqida"
   }
 }

@@ -1,5 +1,6 @@
+import { goBackOrNavigate } from "@/lib/safe-back";
 import { matchesCategory } from "@shared/service-audience";
-import { AudienceLabel, useAudience } from "@/components/audience-provider";
+import { useAudience } from "@/components/audience-provider";
 import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -21,10 +22,11 @@ import {
   User,
 } from "lucide-react";
 import type { Salon } from "@shared/schema";
+import { cityMatchesKey } from "@shared/city-aliases";
 import { SalonCard } from "@/components/home/HomeSalons";
 import { getLocalizedText } from "@/lib/i18n";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation as useI18nTranslation } from "react-i18next";
 import {
   Select,
@@ -141,6 +143,12 @@ export default function SearchPage() {
   const urlSearch = useSearch();
   const searchParams = new URLSearchParams(urlSearch);
 
+  const audienceParam = searchParams.get("audience");
+  const catalogAudience =
+    audienceParam === "all" || audienceParam === "women" || audienceParam === "men"
+      ? audienceParam
+      : audience;
+
   const initialQuery = searchParams.get("q") || "";
   const initialCity = searchParams.get("city") || "";
   const initialCategory = searchParams.get("category") || "";
@@ -163,10 +171,7 @@ export default function SearchPage() {
     isError: salonsError,
     refetch: refetchSalons,
   } = useQuery<(Salon & { serviceCategories: string[]; serviceNames: string })[]>({
-    queryKey: [
-      "/api/salons",
-      { audience: searchParams.get("audience") === "all" ? "all" : audience },
-    ],
+    queryKey: ["/api/salons", { audience: catalogAudience }],
     queryFn: getQueryFn({ on401: "throw" }),
     staleTime: 5 * 60 * 1000,
   });
@@ -186,12 +191,22 @@ export default function SearchPage() {
           ...(searchQuery ? { q: searchQuery } : {}),
           ...(selectedCity ? { city: selectedCity } : {}),
           limit: "60",
-          audience: searchParams.get("audience") === "all" ? "all" : audience,
+          audience: catalogAudience,
         })}`,
       ).then((r) => r.json()),
     staleTime: 2 * 60 * 1000,
     enabled: activeTab === "masters",
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(urlSearch);
+    setActiveTab(params.get("tab") === "masters" ? "masters" : "salons");
+    setSearchQuery(params.get("q") || "");
+    setSelectedCity(params.get("city") || "");
+    setSelectedCategory(params.get("category") || "");
+    setMinRating(params.get("rating") || "all");
+    setSortBy(params.get("sort") || "relevance");
+  }, [urlSearch]);
 
   const isLoading = activeTab === "salons" ? salonsLoading : mastersLoading;
 
@@ -211,9 +226,13 @@ export default function SearchPage() {
         salonDesc.toLowerCase().includes(queryLower) ||
         (salon.serviceNames || "").toLowerCase().includes(queryLower);
 
-      // City filter
+      // City filter — plain substring match for free-typed city names, plus
+      // alias matching so the homepage's city chips (one fixed spelling)
+      // still find listings stored in a different script.
       const cityMatch =
-        !selectedCity || salonCity.toLowerCase().includes(selectedCity.toLowerCase());
+        !selectedCity ||
+        salonCity.toLowerCase().includes(selectedCity.toLowerCase()) ||
+        cityMatchesKey(salonCity, selectedCity);
 
       // Filter against the actual active services returned for this audience.
       const categoryMatch =
@@ -257,7 +276,7 @@ export default function SearchPage() {
 
   const updateURL = () => {
     const params = new URLSearchParams();
-    if (searchParams.get("audience") === "all") params.set("audience", "all");
+    params.set("audience", catalogAudience);
     if (activeTab !== "salons") params.set("tab", activeTab);
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCity) params.set("city", selectedCity);
@@ -275,13 +294,16 @@ export default function SearchPage() {
     setSelectedCategory("");
     setMinRating("all");
     setSortBy("relevance");
-    navigate(searchParams.get("audience") === "all" ? "/search?audience=all" : "/search");
+    navigate(`/search?audience=all${activeTab === "masters" ? "&tab=masters" : ""}`);
   };
 
   const handleTabChange = (tab: SearchTab) => {
     setActiveTab(tab);
     const params = new URLSearchParams();
-    if (searchParams.get("audience") === "all") params.set("audience", "all");
+    params.set("audience", catalogAudience);
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (minRating !== "all") params.set("rating", minRating);
+    if (sortBy !== "relevance") params.set("sort", sortBy);
     if (tab !== "salons") params.set("tab", tab);
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCity) params.set("city", selectedCity);
@@ -308,26 +330,30 @@ export default function SearchPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/")}
+              onClick={() => goBackOrNavigate(navigate, "/")}
               className="mb-4 hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t("search.backToHome")}
             </Button>
             <div className="flex flex-wrap items-center gap-3">
-              <AudienceLabel />
-              <a
-                className="mb-3 text-sm underline underline-offset-4"
-                href={searchParams.get("audience") === "all" ? "/search" : "/search?audience=all"}
-              >
-                {t(
-                  searchParams.get("audience") === "all" ? "audience.curated" : "audience.catalog",
-                )}
-              </a>
+              {(["all", "women", "men"] as const).map((value) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={catalogAudience === value ? "default" : "outline"}
+                  aria-pressed={catalogAudience === value}
+                  onClick={() => {
+                    const params = new URLSearchParams(urlSearch);
+                    params.set("audience", value);
+                    navigate("/search?" + params.toString());
+                  }}
+                >
+                  {t(value === "all" ? "audience.catalog" : "audience." + value)}
+                </Button>
+              ))}
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">
-              {t(searchParams.get("audience") === "all" ? "audience.catalog" : "audience.curated")}
-            </p>
+            <p className="my-4 text-sm text-muted-foreground">{t("audience.catalogHint")}</p>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="font-serif text-4xl text-foreground mb-2">

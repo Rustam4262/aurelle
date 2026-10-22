@@ -23,6 +23,8 @@
     "test:fsm": "tsx server/lib/payment-fsm.test.ts",
     "test:booking-availability": "tsx server/lib/booking-availability.test.ts",
     "test:reminders": "tsx server/lib/reminders.test.ts",
+    "test:city-aliases": "tsx shared/city-aliases.test.ts",
+    "test:pluralize-ru": "tsx client/src/lib/pluralize-ru.test.ts",
     "smoke": "bash scripts/smoke.sh",
     "smoke:prod": "bash scripts/smoke.sh https://aurelle.uz"
   },

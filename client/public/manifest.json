@@ -1,7 +1,7 @@
 {
-  "name": "AURELLE — Beauty Salons",
+  "name": "AURELLE — салоны красоты",
   "short_name": "Aurelle",
-  "description": "Find and book the best beauty salons across Uzbekistan.",
+  "description": "Найдите и забронируйте лучшие салоны красоты в Узбекистане.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -17,6 +17,11 @@ import {
   Wallet,
 } from "lucide-react";
 import { SalonCreationWizard } from "@/components/salon-creation-wizard";
+import { reviewsWordRu as reviewsWord } from "@/lib/pluralize-ru";
+
+// This file hardcodes Russian text throughout rather than using i18next —
+// matching that existing (non-localized) style here rather than introducing
+// a one-off t() call.
 
 type LocalizedRecord = { en?: string; ru?: string; uz?: string };
 
@@ -398,7 +403,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                           {averageRating > 0 ? averageRating.toFixed(1) : "—"}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                          {reviewCount} отзывов
+                          {reviewCount} {reviewsWord(reviewCount)}
                         </p>
                       </div>
                     </div>
@@ -500,7 +505,9 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4" />
-                          <span>{reviewCount} отзывов</span>
+                          <span>
+                            {reviewCount} {reviewsWord(reviewCount)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <CirclePause className="h-4 w-4" />

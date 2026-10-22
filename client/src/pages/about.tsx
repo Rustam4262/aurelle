@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SEO } from "@/components/SEO";
 import {
   ArrowLeft,
   Search,
@@ -24,6 +25,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title={t("about.seoTitle")} description={t("about.seoDescription")} />
       <div className="border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center">

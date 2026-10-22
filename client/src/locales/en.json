@@ -20,6 +20,11 @@
       "searchPlaceholder": "Search by salon name, service, or location...",
       "search": "Search",
       "popularCities": "Popular cities",
+      "cities": {
+        "tashkent": "Tashkent",
+        "samarkand": "Samarkand",
+        "bukhara": "Bukhara"
+      },
       "badge": "Premium beauty marketplace",
       "imageLabel": "Aurelle selection",
       "liveNow": "Live now",
@@ -91,7 +96,7 @@
       "notes": "Notes",
       "optional": "optional",
       "notesPlaceholder": "Any special requests or comments...",
-      "cancellationPolicy": "You can cancel or reschedule free of charge up to 24 hours before the appointment. Later cancellations or no-shows may be charged according to the salon's policy.",
+      "cancellationPolicy": "You can cancel an upcoming appointment free of charge from your account any time before it starts. Rescheduling by clients isn't supported yet.",
       "closedOnThisDay": "The salon is closed on this day. Please pick another date.",
       "workingHoursHint": "The salon is open from {{open}} to {{close}} on this day",
       "slotsLoadFailed": "Failed to load available times",
@@ -157,6 +162,7 @@
     },
     "stats": {
       "salons": "Beauty Salons",
+      "publicReviews": "Published reviews",
       "clients": "Clients",
       "bookings": "Bookings Made",
       "cities": "Cities"
@@ -187,10 +193,10 @@
         "client": {
           "q1": "How to book a master through AURELLE?",
           "a1": "Choose a salon or master, view available time slots in the calendar, select a convenient slot and confirm the booking. You will receive a notification via email and in your personal account.",
-          "q2": "Can I cancel or reschedule an appointment?",
-          "a2": "Yes, you can cancel or reschedule an appointment in your personal account 24 hours before the appointed time. Cancellation less than 24 hours in advance may incur a penalty fee according to the salon's policy.",
+          "q2": "Can I cancel an appointment?",
+          "a2": "Yes, you can cancel an upcoming appointment from your personal account any time before it starts, free of charge. Rescheduling by clients isn't supported yet.",
           "q3": "Is it safe to pay for services through the platform?",
-          "a3": "Absolutely safe. We use secure payment gateways and do not store your card data. All transactions are encrypted according to PCI DSS standards."
+          "a3": "Yes. Payments are processed through certified payment providers (Payme, Click) — we never see or store your card details."
         },
         "salon": {
           "q1": "How much does it cost to list a salon on the platform?",
@@ -373,7 +379,20 @@
       "newBooking": "New Booking",
       "newBookingMessage": "Booking request for {{date}} at {{time}}",
       "newBookingFallback": "You have a new booking request",
-      "viewBooking": "View booking"
+      "viewBooking": "View booking",
+      "bookingCancelled": "Booking Cancelled",
+      "bookingCancelledMessage": "The booking for {{date}} at {{time}} was cancelled",
+      "bookingCancelledFallback": "A booking was cancelled",
+      "bookingStatusChanged": "Booking Updated",
+      "bookingStatusChangedMessage": "Booking for {{date}} at {{time}} is now {{status}}",
+      "bookingStatusChangedFallback": "A booking's status changed",
+      "status": {
+        "confirmed": "confirmed",
+        "cancelled": "cancelled",
+        "completed": "completed",
+        "in_progress": "in progress",
+        "no_show": "marked as no-show"
+      }
     },
     "days": {
       "monday": "Monday",
@@ -3029,6 +3048,8 @@
   },
   "about": {
     "title": "About",
+    "seoTitle": "About AURELLE — Beauty Salon Marketplace in Uzbekistan",
+    "seoDescription": "AURELLE connects clients and beauty professionals across Uzbekistan — browse salons, book appointments, and manage your business in one place.",
     "hero": {
       "title": "AURELLE — Beauty Reimagined",
       "subtitle": "Beauty salon booking platform in Uzbekistan",
@@ -3265,6 +3286,12 @@
     "manage_bookings": "Manage bookings",
     "manage_calendar": "Manage calendar",
     "view_analytics": "Analytics"
+  },
+  "cookieConsent": {
+    "title": "Cookie consent",
+    "text": "We use cookies for analytics to understand how to improve the platform. You can accept or decline — the site works either way.",
+    "accept": "Accept",
+    "decline": "Decline"
   },
   "pwa": {
     "installApp": "Install App",
@@ -3511,7 +3538,7 @@
       "intro": "We implement industry-standard security measures to protect your data, including:",
       "items": [
         "Encryption of data in transit and at rest",
-        "Secure payment processing (PCI DSS compliant)",
+        "Secure payment processing through certified payment providers (Payme, Click)",
         "Regular security audits and updates",
         "Access controls and employee training",
         "Monitoring for suspicious activity"
@@ -3647,7 +3674,7 @@
     "choose": "Choose your experience",
     "women": "For women",
     "men": "For men",
-    "unisex": "Unisex",
+    "unisex": "For everyone",
     "change": "Change",
     "serviceFor": "Service audience",
     "unclassified": "Not specified",
@@ -3658,7 +3685,7 @@
     "empty": "No matching services yet. View all services here.",
     "catalog": "Full catalogue",
     "curated": "Selected for your audience",
-    "catalogHint": "Unclassified services are available in the full catalogue.",
+    "catalogHint": "Services without a specified audience are available only in the full catalogue.",
     "menTitle": "Haircuts, care and recovery — near you",
     "menSubtitle": "Find a barbershop, salon or specialist. Choose a service and a convenient time.",
     "menBadge": "Care at your pace",
@@ -3667,6 +3694,29 @@
     "heroAlt": "Salon interior",
     "loadError": "Could not load offers",
     "retry": "Try again",
-    "menPhotoAlt": "Barber cutting hair"
+    "menPhotoAlt": "Barber cutting hair",
+    "askSpecialist": "Check the service audience with the specialist",
+    "mapPlaces": "Salons and specialists on the map",
+    "mapEmpty": "No locations to show",
+    "mapEmptyHint": "No salons or specialists with coordinates in this selection yet.",
+    "ownerHint": "This choice determines which catalogue section shows the service and your salon or specialist profile. “For everyone” appears in both.",
+    "needsChoice": "Choose an audience. Until then, this service appears only in the full catalogue.",
+    "saving": "Saving…"
+  },
+  "employeeMaster": {
+    "profile": "Profile settings",
+    "reviews": "Reviews and ratings",
+    "name": "Full name",
+    "phone": "Phone",
+    "experience": "Experience (years)",
+    "bio": "About me",
+    "saving": "Saving…",
+    "empty": "No ratings or reviews yet",
+    "reviewCount": "Reviews: {{count}}",
+    "response": "Master’s response",
+    "reply": "Reply to review",
+    "saveReply": "Save response",
+    "portfolioHint": "Add photos of your work for clients to see.",
+    "about": "About the master"
   }
 }
