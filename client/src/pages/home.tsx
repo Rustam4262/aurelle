@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigationScroll } from "@/hooks/use-navigation-scroll";
 import { useMarketplaceData } from "@/hooks/use-marketplace-data";
 import { HomeSEO } from "@/components/SEO";
+import { PublicDiscoveryLinks } from "@/components/public-document";
 
 // Sub-components
 import { HomeNavigation } from "@/components/home/HomeNavigation";
@@ -34,11 +35,17 @@ export default function Home() {
               <Button onClick={() => salonsQuery.refetch()}>{t("audience.retry")}</Button>
             </div>
           ) : (
-            <HomeSalons salons={salons} isLoading={isLoading} />
+            <>
+              <p className="mx-auto max-w-7xl px-6 pt-6 text-sm text-muted-foreground">
+                {t("audience.catalogHint")}
+              </p>
+              <HomeSalons salons={salons} isLoading={isLoading} />
+            </>
           )}
           <HomeMasters />
           <HomeMap salons={salons} />
           <HomeFAQ />
+          <PublicDiscoveryLinks />
         </main>
 
         <HomeFooter />

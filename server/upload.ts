@@ -1,28 +1,59 @@
+import { mkdir, writeFile, unlink } from "node:fs/promises";
 import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import { Request } from "express";
 import crypto from "crypto";
 
-// Конфигурация хранилища
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Определяем папку в зависимости от типа загрузки
-    const uploadType = (req as any).uploadType || "general";
-    const uploadPath = path.join(process.cwd(), "server", "uploads", uploadType);
-    cb(null, uploadPath);
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const invalidImage = () => Object.assign(new Error("Invalid image. Use JPEG, PNG or WebP."), { status: 400 });
+
+// Decode and re-encode before creating a publicly served file. Neither MIME nor
+// the supplied filename is evidence of the actual image format.
+const storage: multer.StorageEngine = {
+  _handleFile(req, file, cb) {
+    void (async () => {
+      const chunks: Buffer[] = [];
+      let size = 0;
+      for await (const chunk of file.stream) {
+        size += chunk.length;
+        if (size > MAX_FILE_BYTES) throw new multer.MulterError("LIMIT_FILE_SIZE");
+        chunks.push(Buffer.from(chunk));
+      }
+      if ((file.stream as typeof file.stream & { truncated?: boolean }).truncated) {
+        throw new multer.MulterError("LIMIT_FILE_SIZE");
+      }
+      const input = Buffer.concat(chunks);
+      let output: Buffer;
+      try {
+        const image = sharp(input, { limitInputPixels: 20_000_000, failOn: "warning" });
+        const metadata = await image.metadata();
+        if (!metadata.format || !["jpeg", "png", "webp"].includes(metadata.format) || (metadata.pages ?? 1) > 1) {
+          throw invalidImage();
+        }
+        output = await image.rotate().resize(2400, 2400, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 90 }).toBuffer();
+      } catch {
+        throw invalidImage();
+      }
+      const type = (req as any).uploadType || "general";
+      if (!["general", "salons", "masters", "portfolio", "avatars"].includes(type)) throw invalidImage();
+      const destination = path.join(process.cwd(), "server", "uploads", type);
+      const filename = `${crypto.randomBytes(16).toString("hex")}.jpg`;
+      const outputPath = path.join(destination, filename);
+      await mkdir(destination, { recursive: true });
+      try { await writeFile(outputPath, output, { flag: "wx" }); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") await unlink(outputPath).catch(() => {});
+        throw error;
+      }
+      return { destination, filename, path: outputPath, size: output.length };
+    })().then(result => cb(null, result), error => cb(error));
   },
-  filename: (req, file, cb) => {
-    // Генерируем уникальное имя файла
-    const uniqueSuffix = crypto.randomBytes(8).toString("hex");
-    const ext = path.extname(file.originalname);
-    const name = path
-      .basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9]/g, "_")
-      .substring(0, 20);
-    cb(null, `${name}_${uniqueSuffix}${ext}`);
+  _removeFile(_req, file, cb) {
+    unlink(file.path).then(() => cb(null), error => cb(error));
   },
-});
+};
 
 // Фильтр файлов - только изображения
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -31,7 +62,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only JPEG, PNG and WebP images are allowed."));
+    cb(invalidImage());
   }
 };
 
@@ -40,7 +71,8 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB максимум
+    fileSize: MAX_FILE_BYTES,
+    files: 10,
   },
 });
 

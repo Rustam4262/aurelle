@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useRef, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import type { Point, Area } from "react-easy-crop";
@@ -167,11 +168,9 @@ export function AvatarUpload({
       }, 200);
 
       // Upload to server
-      const response = await fetch("/api/upload/avatar", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+      let response: Response;
+      try { response = await apiRequest("POST", "/api/upload/avatar", formData); }
+      finally { clearInterval(progressInterval); }
 
       clearInterval(progressInterval);
 

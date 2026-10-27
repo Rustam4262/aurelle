@@ -1,0 +1,2 @@
+# Yandex login logo — 2026-10-07
+Deployed 20261007-yandex-logo, port 5017. Used user-supplied yandex logo 3.jpg unmodified as client/public/images/yandex-login.jpg, displayed 24px with CSS circular clipping. Replaced custom SVG. Build passed, browser button screenshot inspected, production image hash matches original and health/version checked. No auth behavior or DB schema changes. Rollback: /var/backups/aurelle/20261007-yandex-logo/rollback.sh

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { PublicDiscoveryLinks } from "@/components/public-document";
 import { useParams, useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export default function SalonPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const search = useSearch();
@@ -73,7 +74,16 @@ export default function SalonPage() {
   const restoreAttemptedRef = useRef(false);
   useEffect(() => {
     if (restoreAttemptedRef.current) return;
-    if (!user || !salonQuery.data || !servicesQuery.data || !mastersQuery.data) return;
+    if (authLoading || !salonQuery.data || !servicesQuery.data || !mastersQuery.data) return;
+    if (!user) {
+      const serviceId = new URLSearchParams(search).get("serviceId");
+      const service = servicesQuery.data.find((s) => s.id === serviceId);
+      if (service && salonQuery.data.isActive && salonQuery.data.status === "active") {
+        restoreAttemptedRef.current = true;
+        onBook(service);
+      }
+      return;
+    }
     restoreAttemptedRef.current = true;
 
     const salon = salonQuery.data;
@@ -126,7 +136,7 @@ export default function SalonPage() {
       handleBookService(service, master);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, salonQuery.data, servicesQuery.data, mastersQuery.data, search, id]);
+  }, [user, authLoading, salonQuery.data, servicesQuery.data, mastersQuery.data, search, id]);
 
   if (dataLoading) {
     return (
@@ -159,6 +169,7 @@ export default function SalonPage() {
   return (
     <div className="min-h-screen bg-background">
       <SalonHeader salon={salon} />
+      <PublicDiscoveryLinks />
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

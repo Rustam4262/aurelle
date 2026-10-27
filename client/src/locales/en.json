@@ -1,4 +1,15 @@
 {
+  "ownerBookingActions": {
+  "heading": "Bookings",
+  "confirm": "Confirm",
+  "complete": "Complete",
+  "cancel": "Cancel booking",
+  "cancelPrompt": "Cancel this booking?",
+  "saved": "Booking status updated",
+  "failed": "Could not update booking status",
+  "retry": "The booking list has been refreshed. Check the status and try again.",
+  "afterVisit": "Completion is available after the scheduled end of the visit."
+},
   "home": {
     "masters": {
       "title": "Freelance Masters",

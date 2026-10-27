@@ -80,7 +80,7 @@ app.use(
         ],
         "style-src": [
           "'self'",
-          "'unsafe-inline'",
+          "'unsafe-inline'", // style-src: required for component inline styles
           "https://fonts.googleapis.com",
           "https://yastatic.net",
           "https://*.yastatic.net",

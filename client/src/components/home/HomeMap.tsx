@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAudience } from "@/components/audience-provider";
+import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,28 +35,74 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
 
   const ymapsLang = YMAPS_LANG[i18n.language] ?? "ru_RU";
 
-  const salonsWithCoords = salons?.filter((s) => s.latitude && s.longitude) ?? [];
-
-  const defaultCenter: [number, number] = [41.2995, 69.2401]; // Tashkent
-  const center: [number, number] =
-    salonsWithCoords.length > 0
-      ? [
-          salonsWithCoords.reduce((sum, s) => sum + Number(s.latitude), 0) /
-            salonsWithCoords.length,
-          salonsWithCoords.reduce((sum, s) => sum + Number(s.longitude), 0) /
-            salonsWithCoords.length,
-        ]
-      : defaultCenter;
+  const { audience } = useAudience();
+  type MapMaster = {
+    id: string;
+    slug: string;
+    name: string;
+    city: string | null;
+    address: string | null;
+    latitude: string | null;
+    longitude: string | null;
+    averageRating: string | null;
+    reviewCount: number | null;
+  };
+  const { data: masters = [] } = useQuery<MapMaster[]>({
+    queryKey: ["/api/masters", "map", audience],
+    queryFn: async () => {
+      const rows: MapMaster[] = [];
+      for (let offset = 0; ; offset += 100) {
+        const page: MapMaster[] = await apiRequest(
+          "GET",
+          "/api/masters?limit=100&offset=" + offset + "&audience=" + audience,
+        ).then((r) => r.json());
+        rows.push(...page);
+        if (page.length < 100) return rows;
+      }
+    },
+    staleTime: 120000,
+  });
+  const salonsWithCoords = useMemo(
+    () =>
+      [
+        ...salons.map((s) => ({
+          ...s,
+          href: "/" + i18n.language + "/salon/" + encodeURIComponent(s.id),
+        })),
+        ...masters.map((m) => ({
+          ...m,
+          name: { ru: m.name, en: m.name, uz: m.name },
+          href: "/" + i18n.language + "/master/" + encodeURIComponent(m.slug),
+        })),
+      ].filter(
+        (s) =>
+          s.latitude != null &&
+          s.longitude != null &&
+          !(Number(s.latitude) === 0 && Number(s.longitude) === 0) &&
+          Number.isFinite(Number(s.latitude)) &&
+          Number.isFinite(Number(s.longitude)) &&
+          Math.abs(Number(s.latitude)) <= 90 &&
+          Math.abs(Number(s.longitude)) <= 180,
+      ),
+    [salons, masters, i18n.language],
+  );
+  const center: [number, number] = [41.2995, 69.2401];
+  const escapeHtml = (value: unknown) =>
+    String(value ?? "").replace(
+      /[&<>"']/g,
+      (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!,
+    );
 
   // ── Load Yandex Maps script once ───────────────────────────────────────────
   useEffect(() => {
+    let cancelled = false;
     const SCRIPT_ID = "yandex-maps-api";
     const timeout = setTimeout(() => {
       if (!mapLoaded) setMapError(true);
     }, 12_000);
 
     const initMap = () => {
-      if (!containerRef.current) return;
+      if (cancelled || !containerRef.current) return;
       if (mapRef.current) return; // already initialised
 
       try {
@@ -84,77 +133,6 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
           new ymaps.control.GeolocationControl({ options: { float: "left" } }),
         );
 
-        // Placemarks / clusterer
-        if (salonsWithCoords.length > 0) {
-          const clusterer = new ymaps.Clusterer({
-            preset: "islands#violetClusterIcons",
-            groupByCoordinates: false,
-            clusterDisableClickZoom: false,
-            clusterHideIconOnBalloonOpen: false,
-            geoObjectHideIconOnBalloonOpen: false,
-            clusterBalloonContentLayout: "cluster#balloonCarousel",
-            clusterBalloonPagerSize: 5,
-            clusterBalloonContentLayoutWidth: 300,
-            clusterBalloonContentLayoutHeight: 200,
-          });
-
-          const placemarks = salonsWithCoords.map((salon) => {
-            const name =
-              getLocalizedText(
-                salon.name as { en?: string; ru?: string; uz?: string },
-                i18n.language,
-              ) || "Salon";
-            const city = salon.city ?? "";
-            const hasRating = salon.averageRating && Number(salon.averageRating) > 0;
-
-            return new ymaps.Placemark(
-              [Number(salon.latitude), Number(salon.longitude)],
-              {
-                balloonContentHeader: `
-                  <div style="font-family:system-ui;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
-                    <h3 style="font-size:18px;font-weight:600;margin:0;color:#111827;">${name}</h3>
-                    ${city ? `<p style="font-size:13px;color:#6b7280;margin:4px 0 0 0;">${city}</p>` : ""}
-                  </div>`,
-                balloonContentBody: `
-                  <div style="font-family:system-ui;padding:16px;">
-                    ${
-                      salon.address
-                        ? `<div style="margin-bottom:12px;font-size:14px;color:#374151;">
-                             <strong>${t("marketplace.home.map.address")}:</strong> ${salon.address}
-                           </div>`
-                        : ""
-                    }
-                    ${
-                      hasRating
-                        ? `<div style="margin-bottom:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;border-left:3px solid #f59e0b;">
-                             <div style="display:flex;align-items:center;gap:8px;">
-                               <span style="font-size:24px;">⭐</span>
-                               <div>
-                                 <div style="font-size:18px;font-weight:700;color:#92400e;">${Number(salon.averageRating).toFixed(1)}</div>
-                                 <div style="font-size:12px;color:#78350f;">${salon.reviewCount || 0} ${t("marketplace.salon.reviews")}</div>
-                               </div>
-                             </div>
-                           </div>`
-                        : ""
-                    }
-                    <a href="/salon/${salon.id}"
-                       style="display:block;text-align:center;padding:12px 24px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;">
-                      ${t("marketplace.salon.viewDetails")} →
-                    </a>
-                  </div>`,
-              },
-              {
-                preset: "islands#violetDotIcon",
-                iconColor: "#8b5cf6",
-                hideIconOnBalloonOpen: false,
-              },
-            );
-          });
-
-          clusterer.add(placemarks);
-          mapInstance.geoObjects.add(clusterer);
-        }
-
         clearTimeout(timeout);
         setMapLoaded(true);
       } catch (err) {
@@ -174,7 +152,10 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
     // If script already loaded (e.g. hot-reload), initialise immediately.
     if (window.ymaps) {
       window.ymaps.ready(initMap);
-      return () => clearTimeout(timeout);
+      return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+      };
     }
 
     // Script already in DOM (e.g. StrictMode double-effect): just wait for ready.
@@ -187,6 +168,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
         }
       }, 100);
       return () => {
+        cancelled = true;
         clearTimeout(timeout);
         clearInterval(poll);
       };
@@ -204,10 +186,92 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
     document.head.appendChild(script);
 
     return () => {
+      cancelled = true;
       clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount
+
+  // Refresh markers when API data, audience or language changes.
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || !window.ymaps) return;
+    const mapInstance = mapRef.current;
+    const ymaps = window.ymaps;
+    mapInstance.geoObjects.removeAll();
+    // Placemarks / clusterer
+    if (salonsWithCoords.length > 0) {
+      const clusterer = new ymaps.Clusterer({
+        preset: "islands#violetClusterIcons",
+        groupByCoordinates: false,
+        clusterDisableClickZoom: false,
+        clusterHideIconOnBalloonOpen: false,
+        geoObjectHideIconOnBalloonOpen: false,
+        clusterBalloonContentLayout: "cluster#balloonCarousel",
+        clusterBalloonPagerSize: 5,
+        clusterBalloonContentLayoutWidth: 300,
+        clusterBalloonContentLayoutHeight: 200,
+      });
+
+      const placemarks = salonsWithCoords.map((salon) => {
+        const name = escapeHtml(
+          getLocalizedText(
+            salon.name as { en?: string; ru?: string; uz?: string },
+            i18n.language,
+          ) || "Salon",
+        );
+        const city = escapeHtml(salon.city);
+        const hasRating = salon.averageRating && Number(salon.averageRating) > 0;
+
+        return new ymaps.Placemark(
+          [Number(salon.latitude), Number(salon.longitude)],
+          {
+            balloonContentHeader: `
+                  <div style="font-family:system-ui;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
+                    <h3 style="font-size:18px;font-weight:600;margin:0;color:#111827;">${name}</h3>
+                    ${city ? `<p style="font-size:13px;color:#6b7280;margin:4px 0 0 0;">${city}</p>` : ""}
+                  </div>`,
+            balloonContentBody: `
+                  <div style="font-family:system-ui;padding:16px;">
+                    ${
+                      salon.address
+                        ? `<div style="margin-bottom:12px;font-size:14px;color:#374151;">
+                             <strong>${t("marketplace.home.map.address")}:</strong> ${escapeHtml(salon.address)}
+                           </div>`
+                        : ""
+                    }
+                    ${
+                      hasRating
+                        ? `<div style="margin-bottom:16px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;border-left:3px solid #f59e0b;">
+                             <div style="display:flex;align-items:center;gap:8px;">
+                               <span style="font-size:24px;">⭐</span>
+                               <div>
+                                 <div style="font-size:18px;font-weight:700;color:#92400e;">${Number(salon.averageRating).toFixed(1)}</div>
+                                 <div style="font-size:12px;color:#78350f;">${salon.reviewCount || 0} ${t("marketplace.salon.reviews")}</div>
+                               </div>
+                             </div>
+                           </div>`
+                        : ""
+                    }
+                    <a href="${escapeHtml(salon.href)}"
+                       style="display:block;text-align:center;padding:12px 24px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;">
+                      ${t("marketplace.salon.viewDetails")} →
+                    </a>
+                  </div>`,
+          },
+          {
+            preset: "islands#violetDotIcon",
+            iconColor: "#8b5cf6",
+            hideIconOnBalloonOpen: false,
+          },
+        );
+      });
+
+      clusterer.add(placemarks);
+      mapInstance.geoObjects.add(clusterer);
+      const bounds = clusterer.getBounds();
+      if (bounds) mapInstance.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
+    }
+  }, [mapLoaded, salonsWithCoords, i18n.language, t]);
 
   // ── Fit map to new container size when fullscreen toggles ─────────────────
   useEffect(() => {
@@ -323,12 +387,8 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <Card className="p-6 text-center max-w-sm bg-background/95 backdrop-blur-sm pointer-events-auto">
                   <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                  <h3 className="font-semibold text-base mb-1">
-                    {t("marketplace.home.map.noSalonsOnMap")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t("marketplace.home.map.noSalonsDesc")}
-                  </p>
+                  <h3 className="font-semibold text-base mb-1">{t("audience.mapEmpty")}</h3>
+                  <p className="text-sm text-muted-foreground">{t("audience.mapEmptyHint")}</p>
                 </Card>
               </div>
             )}
@@ -342,7 +402,7 @@ export function HomeMap({ salons }: { salons: Salon[] }) {
           <div className="mt-4 sm:mt-6 flex items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-violet-500" />
-              <span>{t("marketplace.home.map.beautySalon")}</span>
+              <span>{t("audience.mapPlaces")}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center font-bold">

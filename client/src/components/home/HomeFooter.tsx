@@ -88,14 +88,14 @@ export function HomeFooter() {
             </h4>
             <ul className="space-y-4">
               <li>
-                <span className="text-muted-foreground font-light italic opacity-50 cursor-not-allowed">
+                <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors font-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-sm">
                   {t("marketplace.footer.termsOfService")}
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-muted-foreground font-light italic opacity-50 cursor-not-allowed">
+                <Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors font-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-sm">
                   {t("marketplace.footer.privacyPolicy")}
-                </span>
+                </Link>
               </li>
             </ul>
           </div>

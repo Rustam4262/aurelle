@@ -1,170 +1,63 @@
 import { Router } from "express";
-import { db } from "../db";
-import { salons, masters } from "@shared/schema";
-import { and, eq, isNotNull } from "drizzle-orm";
-
+import { globalLimiter } from "../middleware/rateLimiter";
+import { SITE_ORIGIN, xmlEscape } from "@shared/seo-policy";
+import { languages, localizedPath, splitLanguage, isPublicPath } from "@shared/public-seo";
+import { readPublicCatalog, landingLinks, getPublicDocument } from "../lib/public-catalog";
 const router = Router();
-
-// Robots.txt for search engine crawlers
 router.get("/robots.txt", (_req, res) => {
-  const robots = `# AURELLE Marketplace - Beauty Salons Platform
-# https://aurelle.uz
-
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /api/
-Disallow: /owner
-Disallow: /master
-Disallow: /client
-Disallow: /auth
-Crawl-delay: 1
-
-Sitemap: https://aurelle.uz/sitemap.xml
-
-# Google Search Console
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0
-`;
-
-  res.type("text/plain");
-  res.send(robots);
+  res.type("text/plain").send(`User-agent: *\nAllow: /\n\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`);
 });
-
-// Sitemap.xml for search engine indexing (Dynamic with salons and masters)
 router.get("/sitemap.xml", async (_req, res) => {
   try {
-    const baseUrl = process.env.BASE_URL || "https://aurelle.uz";
-    const today = new Date().toISOString().split("T")[0];
-
-    // Only published, publicly visible listings belong in the sitemap —
-    // draft/paused salons and masters shouldn't be offered to crawlers.
-    const allSalons = await db
-      .select({
-        id: salons.id,
-        updatedAt: salons.updatedAt,
-      })
-      .from(salons)
-      .where(and(eq(salons.isActive, true), eq(salons.status, "active")));
-
-    const allMasters = await db
-      .select({
-        slug: masters.slug,
-        updatedAt: masters.createdAt,
-      })
-      .from(masters)
-      .where(
-        and(isNotNull(masters.slug), eq(masters.isActive, true), eq(masters.status, "active")),
+    const listings = await readPublicCatalog("ru");
+    const paths = Array.from(
+      new Set([
+        "/",
+        "/search",
+        ...listings.map((s) => s.path),
+        ...landingLinks(listings, "ru").map((l) => l.path),
+      ]),
+    );
+    const urls = paths.flatMap((path) =>
+      languages.map((lang) => {
+        const alternates = [
+          ...languages.map(
+            (l) =>
+              `<xhtml:link rel="alternate" hreflang="${l}" href="${xmlEscape(SITE_ORIGIN + localizedPath(path, l))}"/>`,
+          ),
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${xmlEscape(SITE_ORIGIN + localizedPath(path, "ru"))}"/>`,
+        ].join("");
+        return `<url><loc>${xmlEscape(SITE_ORIGIN + localizedPath(path, lang))}</loc>${alternates}</url>`;
+      }),
+    );
+    // No invented lastmod: service changes do not necessarily touch salon.updatedAt.
+    res
+      .type("application/xml")
+      .send(
+        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join("\n")}</urlset>`,
       );
-
-    // Build sitemap XML
-    let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Static Pages -->
-  <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <url>
-    <loc>${baseUrl}/about</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>${baseUrl}/search</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>${baseUrl}/auth</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- Cities -->
-  <url>
-    <loc>${baseUrl}/search?city=tashkent</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/search?city=samarkand</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/search?city=bukhara</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Service Categories -->
-  <url>
-    <loc>${baseUrl}/search?q=hair</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/search?q=nails</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/search?q=spa</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Dynamic Salon Pages -->
-`;
-
-    // Add salon URLs
-    for (const salon of allSalons) {
-      const lastmod = salon.updatedAt
-        ? new Date(salon.updatedAt).toISOString().split("T")[0]
-        : today;
-      sitemap += `  <url>
-    <loc>${baseUrl}/salon/${salon.id}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-`;
-    }
-
-    // Add master URLs
-    for (const master of allMasters) {
-      if (master.slug) {
-        const lastmod = master.updatedAt
-          ? new Date(master.updatedAt).toISOString().split("T")[0]
-          : today;
-        sitemap += `  <url>
-    <loc>${baseUrl}/master/${master.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-`;
-      }
-    }
-
-    sitemap += `</urlset>`;
-
-    res.type("application/xml");
-    res.send(sitemap);
-  } catch (error) {
-    console.error("Sitemap generation error:", error);
-    res.status(500).send("Error generating sitemap");
+  } catch {
+    res.status(503).set("Retry-After", "300").send("Sitemap temporarily unavailable");
   }
 });
-
+router.get("/api/public-document", globalLimiter, async (req, res) => {
+  const path = typeof req.query.path === "string" ? req.query.path : "";
+  if (!path.startsWith("/") || path.startsWith("//") || path.length > 2048)
+    return res.status(400).json({ error: "Invalid path" });
+  const data = await getPublicDocument(path);
+  res.set("Cache-Control", "no-store");
+  if (!data) return res.status(404).json({ error: "Not found" });
+  if (data.status === 503) res.set("Retry-After", "300");
+  return res.status(data.status).json(data);
+});
+router.use((req, res, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  const url = new URL(req.originalUrl, SITE_ORIGIN);
+  const normalized = url.pathname.replace(/\/$/, "") || "/";
+  const info = splitLanguage(normalized);
+  if (!isPublicPath(normalized)) return next();
+  const target = localizedPath(info.path === "/salons" ? "/search" : info.path, info.language);
+  if (url.pathname !== target) return res.redirect(301, target + url.search);
+  next();
+});
 export default router;

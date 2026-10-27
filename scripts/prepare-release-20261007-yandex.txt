@@ -1,0 +1,32 @@
+set -euo pipefail
+old=/var/www/aurelle-release-20261007-google-register
+new=/var/www/aurelle-release-20261007-yandex-auth
+backup=/var/backups/aurelle/20261007-yandex-auth
+test ! -e "$new"
+mkdir -p "$new" "$backup"
+chmod 700 "$backup"
+cp /etc/nginx/sites-available/aurelle "$backup/nginx.conf"
+cp "$old/release.config.json" "$backup/previous.config.json"
+cd "$old"
+node <<'NODE'
+require('dotenv').config({quiet:true});const {spawnSync}=require('child_process');const u=new URL(process.env.DATABASE_URL);const r=spawnSync('pg_dump',['-Fc','--no-owner','--no-acl','-f','/var/backups/aurelle/20261007-yandex-auth/database.dump'],{env:{...process.env,PGHOST:u.hostname,PGPORT:u.port||'5432',PGUSER:decodeURIComponent(u.username),PGPASSWORD:decodeURIComponent(u.password),PGDATABASE:u.pathname.slice(1)},encoding:'utf8'});if(r.status!==0)throw new Error('Database backup failed');console.log('Database backup complete');
+NODE
+tar -xzf /var/tmp/aurelle-20261007-yandex-auth.tar.gz -C "$new"
+cp "$old/.env" "$new/.env"
+chmod 600 "$new/.env"
+ln -s "$old/node_modules" "$new/node_modules"
+ln -s /var/www/aurelle/attached_assets "$new/attached_assets"
+mkdir -p "$new/server"
+ln -s /var/www/aurelle/server/uploads "$new/server/uploads"
+cp -an "$old/dist/public/assets/." "$new/dist/public/assets/"
+node <<'NODE'
+const fs=require('fs');const c=require('/var/www/aurelle-release-20261007-google-register/release.config.json');const a=c.apps[0];a.name='aurelle-production-20261007-yandex-auth';a.cwd='/var/www/aurelle-release-20261007-yandex-auth';a.script=a.cwd+'/dist/index.cjs';Object.assign(a.env,{PORT:'5016',APP_VERSION:'20261007-yandex-auth',NODE_APP_INSTANCE:'1'});fs.writeFileSync(a.cwd+'/release.config.json',JSON.stringify(c,null,2),{mode:0o600});
+NODE
+node <<'NODE'
+const fs=require('fs');const p='/var/www/aurelle-release-20261007-yandex-auth/release.config.json';const c=JSON.parse(fs.readFileSync(p));const e=require('/var/www/aurelle-release-20261007-yandex-auth/node_modules/dotenv').parse(fs.readFileSync('/root/aurelle-yandex-20261007/credentials.txt','utf8').replace(/^\uFEFF/,''));if(!e.YANDEX_CLIENT_ID||!e.YANDEX_CLIENT_SECRET)throw new Error('Missing Yandex credentials');Object.assign(c.apps[0].env,{YANDEX_CLIENT_ID:e.YANDEX_CLIENT_ID,YANDEX_CLIENT_SECRET:e.YANDEX_CLIENT_SECRET,YANDEX_CALLBACK_URL:'https://aurelle.uz/api/auth/yandex/callback'});fs.writeFileSync(p,JSON.stringify(c,null,2),{mode:0o600});fs.unlinkSync('/root/aurelle-yandex-20261007/credentials.txt');
+NODE
+cd "$new"
+pm2 start "$new/release.config.json" >/dev/null
+for i in $(seq 1 25); do if curl -fsS --max-time 3 http://127.0.0.1:5016/api/health > "$backup/new-health.json"; then break; fi; sleep 1; done
+node -e "const h=require('$backup/new-health.json');if(h.status!=='healthy'||h.version!=='20261007-yandex-auth')process.exit(1);console.log('New release healthy, database connected')"
+

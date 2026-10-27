@@ -5,16 +5,23 @@ import { createClient } from "redis";
 import { getRedisClient } from "./redis";
 import { getRedisConfig } from "../config/redis";
 import { logger } from "./logger";
+import { mayJoinRoom } from "./ws-room-policy";
+import { roomAccess } from "./ws-room-access";
+import { db } from "../db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AuthedWebSocket extends WebSocket {
   userId?: string;
+  authVersion?: number;
   rooms: Set<string>;
 }
 
 interface WsToken {
   userId: string;
+  authVersion: number;
   expiresAt: number;
 }
 
@@ -54,26 +61,52 @@ const WS_TOKEN_TTL_SECS = 31;
  * Falls back to in-memory Map when Redis is not configured.
  */
 export async function createWsToken(userId: string): Promise<string> {
+  const [account] = await db
+    .select({ authVersion: users.authVersion, blocked: users.isBlocked })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!account || account.blocked) throw new Error("Account unavailable");
+  const identity: WsToken = {
+    userId,
+    authVersion: account.authVersion,
+    expiresAt: Date.now() + 30_000,
+  };
   const token = randomBytes(24).toString("hex");
   const client = getRedisClient();
 
   if (client) {
-    await client.set(`${WS_TOKEN_PREFIX}${token}`, userId, { EX: WS_TOKEN_TTL_SECS });
+    await client.set(`${WS_TOKEN_PREFIX}${token}`, JSON.stringify(identity), {
+      EX: WS_TOKEN_TTL_SECS,
+    });
   } else {
-    wsTokens.set(token, { userId, expiresAt: Date.now() + 30_000 });
+    wsTokens.set(token, identity);
     setTimeout(() => wsTokens.delete(token), 31_000);
   }
 
   return token;
 }
 
-async function consumeWsToken(token: string): Promise<string | null> {
+async function consumeWsToken(token: string): Promise<WsToken | null> {
   const client = getRedisClient();
 
   if (client) {
     // getDel is atomic: get + delete in one round-trip (one-time use guaranteed)
-    const userId = await client.getDel(`${WS_TOKEN_PREFIX}${token}`);
-    return userId ?? null;
+    const raw = await client.getDel(`${WS_TOKEN_PREFIX}${token}`);
+    if (!raw) return null;
+    try {
+      const identity = JSON.parse(raw) as WsToken;
+      if (
+        !identity.userId ||
+        !Number.isInteger(identity.authVersion) ||
+        !Number.isFinite(identity.expiresAt) ||
+        Date.now() > identity.expiresAt
+      )
+        return null;
+      return identity;
+    } catch {
+      return null;
+    }
   }
 
   // In-memory fallback
@@ -81,7 +114,16 @@ async function consumeWsToken(token: string): Promise<string | null> {
   if (!entry) return null;
   wsTokens.delete(token); // one-time use
   if (Date.now() > entry.expiresAt) return null;
-  return entry.userId;
+  return entry;
+}
+
+async function validSocketIdentity(userId: string, authVersion: number | undefined) {
+  const [account] = await db
+    .select({ version: users.authVersion, blocked: users.isBlocked })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return !!account && !account.blocked && account.version === authVersion;
 }
 
 // ─── Room helpers ─────────────────────────────────────────────────────────────
@@ -111,7 +153,32 @@ function send(ws: WebSocket, event: string, data: unknown) {
 function broadcastLocal(room: string, event: string, data: unknown): void {
   const members = rooms.get(room);
   if (!members) return;
-  for (const ws of Array.from(members)) send(ws, event, data);
+  for (const ws of Array.from(members)) {
+    void (async () => {
+      if (!(await validSocketIdentity(ws.userId ?? "", ws.authVersion))) {
+        ws.close(4001, "Session revoked");
+        return;
+      }
+      if (room === "admin" || room.startsWith("salon_")) {
+        // Recheck at delivery, so revoking a role/ownership also affects sockets
+        // that were already connected.
+        void mayJoinRoom(ws.userId ?? "", room, roomAccess)
+          .then((allowed) => {
+            if (allowed && ws.rooms.has(room)) send(ws, event, data);
+            else {
+              members.delete(ws);
+              ws.rooms.delete(room);
+            }
+          })
+          .catch(() => {
+            members.delete(ws);
+            ws.rooms.delete(room);
+          });
+      } else {
+        send(ws, event, data);
+      }
+    })().catch(() => ws.close(4001, "Authorization unavailable"));
+  }
 }
 
 // ─── Redis pub/sub (cross-worker) ─────────────────────────────────────────────
@@ -214,39 +281,44 @@ export async function setupWebSocket(httpServer: HttpServer): Promise<void> {
       return;
     }
 
-    let userId: string | null;
+    let identity: WsToken | null;
     try {
-      userId = await consumeWsToken(token);
+      identity = await consumeWsToken(token);
+      if (identity && !(await validSocketIdentity(identity.userId, identity.authVersion)))
+        identity = null;
     } catch (err) {
       logger.error("WS token validation error", err as Error, { source: "websocket" });
       ws.close(4001, "Token validation failed");
       return;
     }
 
-    if (!userId) {
+    if (!identity) {
       ws.close(4001, "Invalid or expired token");
       return;
     }
 
+    const userId = identity.userId;
     ws.userId = userId;
+    ws.authVersion = identity.authVersion;
 
     // Every authenticated user joins their personal room
     joinRoom(ws, `user_${userId}`);
 
     logger.debug("WS client connected", { meta: { userId } });
 
-    ws.on("message", (raw) => {
+    ws.on("message", async (raw) => {
       try {
         const msg = JSON.parse(String(raw)) as { event?: string; room?: string };
-        // Client can join named rooms by sending { event: "join", room: "salon_123" }
         if (msg.event === "join" && msg.room) {
-          // Only allow joining salon_ and admin rooms
-          if (/^(salon_|admin)/.test(msg.room)) {
+          if (
+            (await mayJoinRoom(userId, msg.room, roomAccess)) &&
+            ws.readyState === WebSocket.OPEN
+          ) {
             joinRoom(ws, msg.room);
           }
         }
       } catch {
-        // Ignore malformed messages
+        // Malformed input or failed permission lookup must never grant access.
       }
     });
 

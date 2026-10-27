@@ -1,11 +1,12 @@
+import { verifyCsrf } from "./middleware/csrf";
 import type { Express, Request, Response } from "express";
 import { upload, setUploadType, optimizeImage, getFileUrl } from "./upload";
 import { isAuthenticated } from "./auth";
-import path from "path";
 import fs from "fs/promises";
 import { logger } from "./lib/logger";
 
 export function registerUploadRoutes(app: Express) {
+  app.use("/api/upload", verifyCsrf);
   // ============ UPLOAD ENDPOINTS ============
 
   // Upload salon photo
@@ -146,39 +147,11 @@ export function registerUploadRoutes(app: Express) {
     },
   );
 
-  // Delete uploaded file (generic)
-  app.delete(
-    "/api/upload/:type/:filename",
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-      try {
-        const { type, filename } = req.params;
-
-        // Валидация типа
-        const allowedTypes = ["salons", "masters", "portfolio", "avatars"];
-        if (!allowedTypes.includes(type)) {
-          return res.status(400).json({ error: "Invalid upload type" });
-        }
-
-        const filePath = path.join(process.cwd(), "server", "uploads", type, filename);
-
-        // Проверяем существование файла
-        try {
-          await fs.access(filePath);
-        } catch {
-          return res.status(404).json({ error: "File not found" });
-        }
-
-        // Удаляем файл
-        await fs.unlink(filePath);
-
-        return res.json({ success: true, message: "File deleted" });
-      } catch (error) {
-        logger.error("Delete file error", error as Error, { source: "uploadRoutes" });
-        return res.status(500).json({ error: "Failed to delete file" });
-      }
-    },
-  );
+  // A public filename cannot establish ownership. UI removal uses the
+  // profile/salon/portfolio routes with resource authorization instead.
+  app.delete("/api/upload/:type/:filename", (_req: Request, res: Response) => {
+    res.status(410).json({ error: "Direct file deletion is unavailable" });
+  });
 
   // Upload multiple salon photos
   app.post(

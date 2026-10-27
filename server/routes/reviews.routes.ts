@@ -1,18 +1,12 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
-import {
-  reviews,
-  insertReviewSchema,
-  bookings,
-  userProfiles,
-  salons,
-  masters,
-} from "@shared/schema";
+import { reviews, bookings, userProfiles, salons, masters } from "@shared/schema";
 import { updateSalonRating, updateMasterRating } from "../helpers/ratings";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { reviewInput, reviewEligibility } from "../lib/review-input";
 
 const router = Router();
 
@@ -53,7 +47,7 @@ router.get("/public/latest", async (req, res) => {
 });
 
 // Create review
-router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
+export async function createReviewHandler(req: any, res: Response) {
   try {
     const userId = req.user.claims.sub;
 
@@ -67,62 +61,76 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const parsed = insertReviewSchema.safeParse({ ...req.body, clientId: userProfile.id });
+    const parsed = reviewInput.safeParse(req.body);
 
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid review data", details: parsed.error.errors });
     }
 
-    // If bookingId provided, verify the booking exists, is completed, and belongs to this client
-    if (parsed.data.bookingId) {
-      const [booking] = await db
+    const outcome = await db.transaction(async (tx): Promise<
+      { review: typeof reviews.$inferSelect } | { status: number; error: string }
+    > => {
+      // Serialize concurrent submissions and status changes for this booking.
+      const [booking] = await tx
         .select()
         .from(bookings)
-        .where(eq(bookings.id, parsed.data.bookingId));
+        .where(eq(bookings.id, parsed.data.bookingId))
+        .for("update");
 
       if (!booking) {
-        return res.status(404).json({ error: "Booking not found" });
+        return { status: 404, error: "Booking not found" } as const;
       }
 
-      if (booking.clientId !== userProfile.id) {
-        return res.status(403).json({ error: "You can only review your own bookings" });
-      }
-
-      if (booking.status !== "completed") {
-        return res.status(400).json({ error: "You can only review completed bookings" });
-      }
+      const denied = reviewEligibility(booking, userId, userProfile.id, parsed.data);
+      if (denied) return denied;
 
       // Check if review already exists for this booking
-      const [existingReview] = await db
+      const [existingReview] = await tx
         .select()
         .from(reviews)
         .where(eq(reviews.bookingId, parsed.data.bookingId));
 
       if (existingReview) {
-        return res.status(400).json({ error: "You have already reviewed this booking" });
+        return { status: 409, error: "You have already reviewed this booking" } as const;
       }
-    }
-
-    const [review] = await db
-      .insert(reviews)
-      .values([parsed.data as any])
-      .returning();
+      const [review] = await tx
+        .insert(reviews)
+        .values({
+          bookingId: booking.id,
+          clientId: userProfile.id,
+          salonId: booking.salonId,
+          masterId: booking.masterId,
+          rating: parsed.data.rating,
+          comment: parsed.data.comment,
+        })
+        .returning();
+      return { review } as const;
+    });
+    if ("error" in outcome) return res.status(outcome.status).json({ error: outcome.error });
+    const { review } = outcome;
 
     // Update salon/master average rating
-    if (parsed.data.salonId) {
-      await updateSalonRating(parsed.data.salonId);
+    if (review.salonId) {
+      await updateSalonRating(review.salonId);
     }
-    if (parsed.data.masterId) {
-      await updateMasterRating(parsed.data.masterId);
+    if (review.masterId) {
+      await updateMasterRating(review.masterId);
     }
 
-    logger.info("[REVIEW] Created: " + JSON.stringify(review));
+    logger.info("[REVIEW] Created", { meta: { reviewId: review.id } });
     return res.status(201).json(review);
   } catch (error) {
+    const code =
+      (error as { code?: string; cause?: { code?: string } })?.code ??
+      (error as { cause?: { code?: string } })?.cause?.code;
+    if (code === "23505")
+      return res.status(409).json({ error: "You have already reviewed this booking" });
     logger.error("Create review error:", error);
     return res.status(500).json({ error: "Failed to create review" });
   }
-});
+}
+
+router.post("/", createLimiter, isAuthenticated, createReviewHandler);
 
 // Get reviews for a salon
 router.get("/salon/:salonId", async (req, res) => {
@@ -141,6 +149,7 @@ router.get("/salon/:salonId", async (req, res) => {
         rating: reviews.rating,
         comment: reviews.comment,
         ownerResponse: reviews.ownerResponse,
+        masterResponse: reviews.masterResponse,
         createdAt: reviews.createdAt,
         clientName: userProfiles.fullName,
         masterName: masters.name,
@@ -177,6 +186,7 @@ router.get("/master/:masterId", async (req, res) => {
         rating: reviews.rating,
         comment: reviews.comment,
         ownerResponse: reviews.ownerResponse,
+        masterResponse: reviews.masterResponse,
         createdAt: reviews.createdAt,
         clientName: userProfiles.fullName,
       })
@@ -218,6 +228,7 @@ router.get("/my-reviews", isAuthenticated, async (req: any, res) => {
         rating: reviews.rating,
         comment: reviews.comment,
         ownerResponse: reviews.ownerResponse,
+        masterResponse: reviews.masterResponse,
         createdAt: reviews.createdAt,
         salonName: salons.name,
         masterName: masters.name,
@@ -225,7 +236,7 @@ router.get("/my-reviews", isAuthenticated, async (req: any, res) => {
       .from(reviews)
       .leftJoin(salons, eq(reviews.salonId, salons.id))
       .leftJoin(masters, eq(reviews.masterId, masters.id))
-      .where(eq(reviews.clientId, userProfile.id))
+      .where(sql`(${reviews.clientId} = ${userProfile.id} OR ${reviews.clientId} = ${userId})`)
       .orderBy(desc(reviews.createdAt));
 
     return res.json(clientReviews);
@@ -242,8 +253,8 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
     const { reviewId } = req.params;
     const { ownerResponse } = req.body;
 
-    if (!ownerResponse) {
-      return res.status(400).json({ error: "Owner response is required" });
+    if (typeof ownerResponse !== "string" || !ownerResponse.trim() || ownerResponse.length > 5000) {
+      return res.status(400).json({ error: "Owner response must contain 1 to 5000 characters" });
     }
 
     // Get review
@@ -280,7 +291,7 @@ router.patch("/:reviewId/respond", isAuthenticated, async (req: any, res) => {
       .where(eq(reviews.id, reviewId))
       .returning();
 
-    logger.info("[REVIEW] Owner responded: " + JSON.stringify(updatedReview));
+    logger.info("[REVIEW] Owner responded", { meta: { reviewId } });
     return res.json(updatedReview);
   } catch (error) {
     logger.error("Respond to review error:", error);

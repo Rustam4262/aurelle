@@ -19,6 +19,7 @@ interface Review {
   rating: number;
   comment: string | null;
   ownerResponse: string | null;
+  masterResponse?: string | null;
   createdAt: string;
   clientName?: string;
   masterName?: string;
@@ -149,6 +150,7 @@ export function ReviewsList({ salonId, masterId, limit = 20 }: ReviewsListProps)
 
             {review.comment && <p className="text-sm mt-2 leading-relaxed">{review.comment}</p>}
 
+            {review.masterResponse && <div className="mt-3 rounded-lg bg-muted p-3"><p className="text-sm font-medium">{t("employeeMaster.response")}</p><p className="whitespace-pre-wrap break-words">{review.masterResponse}</p></div>}
             {review.ownerResponse && (
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p className="text-sm font-medium mb-1">{t("reviews.ownerResponse")}</p>

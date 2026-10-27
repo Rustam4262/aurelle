@@ -8,7 +8,7 @@ export function goBackOrNavigate(navigate: NavigateFn, fallback: string) {
 
   // In our SPA flow, document.referrer often stays stale even when the user
   // actually navigated inside the app. Mirror the browser back button first.
-  if (window.history.length > 1) {
+  if (Number(window.history.state?.aurelleDepth || 0) > 0) {
     window.history.back();
     return;
   }

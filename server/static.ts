@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { logger } from "./lib/logger";
+import { renderPublicDocument } from "./lib/render-public-document";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(process.cwd(), "dist", "public");
@@ -26,6 +27,13 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(distPath, "sw.js"));
   });
 
+  // This standalone page is precached by the Service Worker, not an SPA route.
+  app.get("/offline.html", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Robots-Tag", "noindex");
+    res.sendFile(path.resolve(distPath, "offline.html"));
+  });
+
   // Serve static files (assets only, excluding HTML)
   app.use((req, res, next) => {
     // Skip HTML files - we'll handle them below with cache busting
@@ -37,23 +45,36 @@ export function serveStatic(app: Express) {
   });
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    // Set no-cache headers for HTML
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
+  app.use("*", async (req, res, next) => {
+    try {
+      const htmlPath = path.resolve(distPath, "index.html");
+      const policy = await renderPublicDocument(
+        await fs.promises.readFile(htmlPath, "utf-8"),
+        req.originalUrl,
+      );
+      res.status(policy.status);
+      if (policy.status === 503) res.setHeader("Retry-After", "300");
+      if (policy.noIndex) res.setHeader("X-Robots-Tag", "noindex, follow");
+      // Set no-cache headers for HTML
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
 
-    // Read index.html and inject cache-busting timestamp
-    const htmlPath = path.resolve(distPath, "index.html");
-    const html = fs.readFileSync(htmlPath, "utf-8");
-    const timestamp = Date.now();
+      // Read index.html and inject cache-busting timestamp
+      const html = policy.html;
+      const timestamp = Date.now();
 
-    // Add timestamp to all script and CSS tags
-    const modifiedHtml = html
-      .replace(/src="\/assets\/([^"]+\.js)"/g, 'src="/assets/$1?v=' + timestamp + '"')
-      .replace(/href="\/assets\/([^"]+\.css)"/g, 'href="/assets/$1?v=' + timestamp + '"');
+      // Add timestamp to all script and CSS tags
+      const modifiedHtml = html
+        .replace(/src="\/assets\/([^"]+\.js)"/g, 'src="/assets/$1?v=' + timestamp + '"')
+        .replace(/href="\/assets\/([^"]+\.css)"/g, 'href="/assets/$1?v=' + timestamp + '"');
 
-    logger.info(`[Cache-busting] Serving HTML with timestamp: ${timestamp}`, { source: "static" });
-    res.send(modifiedHtml);
+      logger.info(`[Cache-busting] Serving HTML with timestamp: ${timestamp}`, {
+        source: "static",
+      });
+      res.send(modifiedHtml);
+    } catch (error) {
+      next(error);
+    }
   });
 }

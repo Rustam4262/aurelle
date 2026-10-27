@@ -6,6 +6,8 @@ import {
 import { requireFeatureFlag } from "../featureFlags";
 import { changeBookingStatus, bookingStatusError } from "../lib/booking-status";
 import { Router } from "express";
+import { loadBookingClientDisplays } from "../lib/booking-client-display";
+import { salonHoursInput, replaceSalonHours } from "../lib/salon-working-hours";
 import {
   isBookingResourceReferenceError,
   bookingResourceDeletionError,
@@ -740,11 +742,12 @@ router.post("/salons/:salonId/hours", isAuthenticated, async (req: any, res) => 
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    // Delete existing hours and insert new ones
-    await db.delete(salonWorkingHours).where(eq(salonWorkingHours.salonId, salonId));
-
-    const hoursData = req.body.hours.map((h: any) => ({ ...h, salonId }));
-    const newHours = await db.insert(salonWorkingHours).values(hoursData).returning();
+    const parsed = salonHoursInput.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid working hours", details: parsed.error.errors });
+    }
+    const newHours = await replaceSalonHours(salonId, ownerId, parsed.data);
+    if (!newHours) return res.status(403).json({ error: "Not authorized" });
 
     return res.json(newHours);
   } catch (error) {
@@ -785,36 +788,20 @@ router.get("/salons/:salonId/bookings", isAuthenticated, async (req: any, res) =
     );
     const clientIds = Array.from(new Set(salonBookings.map((b) => b.clientId)));
 
-    const [servicesData, clientsData] = await Promise.all([
+    const [servicesData, clientsMap] = await Promise.all([
       serviceIds.length > 0
         ? db.select().from(services).where(inArray(services.id, serviceIds))
         : Promise.resolve([]),
-      clientIds.length > 0
-        ? db
-            .select({
-              id: userProfiles.id,
-              fullName: userProfiles.fullName,
-              avatarUrl: userProfiles.avatarUrl,
-              firstName: users.firstName,
-              email: users.email,
-            })
-            .from(userProfiles)
-            .leftJoin(users, eq(users.id, userProfiles.userId))
-            .where(inArray(userProfiles.id, clientIds))
-        : Promise.resolve([]),
+      loadBookingClientDisplays(clientIds),
     ]);
 
     const servicesMap = new Map(servicesData.map((s) => [s.id, s]));
-    const clientsMap = new Map(clientsData.map((c) => [c.id, c]));
 
     const enrichedBookings = salonBookings.map((booking) => {
-      const profile = clientsMap.get(booking.clientId);
-      const clientDisplayName =
-        profile?.fullName || profile?.firstName || profile?.email?.split("@")[0] || null;
       return {
         ...booking,
         service: booking.serviceId ? servicesMap.get(booking.serviceId) : null,
-        client: profile ? { fullName: clientDisplayName, avatarUrl: profile.avatarUrl } : null,
+        client: clientsMap.get(booking.clientId) ?? null,
       };
     });
 

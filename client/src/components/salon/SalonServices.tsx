@@ -1,3 +1,4 @@
+import { matchesAudience } from "@shared/service-audience";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AudienceLabel, useAudience } from "@/components/audience-provider";
@@ -36,11 +37,11 @@ export function ServiceCard({
           <h3 className="font-medium text-foreground mb-1 group-hover:text-primary transition-colors">
             {name}
           </h3>
-          {service.audience && (
+          {
             <p className="mb-2 text-xs text-muted-foreground">
-              {t(`audience.${service.audience}`)}
+              {t(service.audience ? `audience.${service.audience}` : "audience.askSpecialist")}
             </p>
-          )}
+          }
           {description && (
             <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{description}</p>
           )}
@@ -78,7 +79,7 @@ export function SalonServices({
   const { audience } = useAudience();
   const [showAll, setShowAll] = useState(false);
   const visible = services?.filter(
-    (service) => showAll || service.audience === audience || service.audience === "unisex",
+    (service) => showAll || matchesAudience(service.audience, audience),
   );
 
   return (

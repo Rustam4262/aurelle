@@ -22,37 +22,20 @@ router.get("/health/ping", (_req, res) => {
 
 /**
  * Health Check Endpoint
- * Returns application health status and system information.
+ * Returns readiness and deployment version, without internal system details.
  * Returns 503 if the database is unreachable.
  */
 router.get("/health", async (req, res) => {
-  const startTime = Date.now();
-
   try {
     // Check database connection
     const dbHealthy = await checkDatabase();
-
-    // Get system info
-    const systemInfo = getSystemInfo();
-
-    // Calculate response time
-    const responseTime = Date.now() - startTime;
 
     // Determine overall status
     const status = dbHealthy ? "healthy" : "unhealthy";
 
     const healthData = {
       status,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      responseTime: `${responseTime}ms`,
-      database: {
-        status: dbHealthy ? "connected" : "disconnected",
-      },
-      system: systemInfo,
       version: process.env.APP_VERSION || "1.0.0",
-      commit: process.env.GIT_COMMIT_SHA || process.env.APP_VERSION || "unknown",
-      environment: process.env.NODE_ENV || "development",
     };
 
     // Return 503 if unhealthy, 200 if healthy
@@ -64,16 +47,14 @@ router.get("/health", async (req, res) => {
 
     res.status(503).json({
       status: "unhealthy",
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : "Unknown error",
-      responseTime: `${Date.now() - startTime}ms`,
+      version: process.env.APP_VERSION || "1.0.0",
     });
   }
 });
 
 /**
  * Email Health Check
- * Returns SMTP config status + live verify (60s cached). Never exposes password.
+ * Returns only SMTP availability; connection/configuration details stay private.
  */
 router.get("/health/email", async (req, res) => {
   const cfg = getEmailConfigStatus();
@@ -81,8 +62,6 @@ router.get("/health/email", async (req, res) => {
   if (!cfg.enabled) {
     return res.status(200).json({
       status: "disabled",
-      ...cfg,
-      smtpVerified: false,
     });
   }
 
@@ -90,8 +69,6 @@ router.get("/health/email", async (req, res) => {
   const status = smtpVerified ? "ok" : "degraded";
   return res.status(smtpVerified ? 200 : 503).json({
     status,
-    ...cfg,
-    smtpVerified,
   });
 });
 
@@ -104,7 +81,6 @@ router.get("/health/sms", (req, res) => {
   const cfg = getSmsConfigStatus();
   return res.status(cfg.enabled ? 200 : 200).json({
     status: cfg.enabled ? "ok" : "disabled",
-    ...cfg,
   });
 });
 
@@ -117,20 +93,11 @@ router.get("/health/redis", (_req, res) => {
   if (!cfg.configured) {
     return res.status(200).json({
       status: "disabled",
-      configured: false,
-      sessionStore: "postgresql",
-      reason: cfg.reason,
     });
   }
   const connected = isRedisConnected();
   return res.status(connected ? 200 : 503).json({
     status: connected ? "ok" : "degraded",
-    configured: true,
-    connected,
-    host: cfg.host,
-    keyPrefix: cfg.keyPrefix,
-    sessionTtlDays: Math.round(cfg.sessionTtlSeconds / 86400),
-    sessionStore: connected ? "redis" : "postgresql (fallback)",
   });
 });
 
@@ -141,12 +108,7 @@ router.get("/health/redis", (_req, res) => {
 router.get("/health/sentry", (_req, res) => {
   const dsnPresent = !!process.env.SENTRY_DSN;
   return res.status(200).json({
-    enabled: dsnPresent,
-    dsnPresent,
-    environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
-    release:
-      process.env.SENTRY_RELEASE ||
-      `aurelle-backend@${process.env.GIT_COMMIT_SHA || process.env.APP_VERSION || "1.0.0"}`,
+    status: dsnPresent ? "configured" : "disabled",
   });
 });
 
@@ -180,28 +142,6 @@ async function checkDatabase(): Promise<boolean> {
     logger.error("Database health check failed", error);
     return false;
   }
-}
-
-/**
- * Get system information
- */
-function getSystemInfo() {
-  const memUsage = process.memoryUsage();
-
-  return {
-    memory: {
-      rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
-      heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
-      heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
-      external: `${Math.round(memUsage.external / 1024 / 1024)}MB`,
-    },
-    cpu: {
-      usage: process.cpuUsage(),
-    },
-    platform: process.platform,
-    nodeVersion: process.version,
-    pid: process.pid,
-  };
 }
 
 export default router;

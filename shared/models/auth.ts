@@ -30,6 +30,7 @@ export const users = pgTable("users", {
     .default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   passwordHash: varchar("password_hash"),
+  authVersion: integer("auth_version").notNull().default(0),
   phoneNumber: varchar("phone_number").unique(),
   provider: varchar("provider").default("local"), // local, google, yandex, github
   providerId: varchar("provider_id"), // OAuth provider user ID
@@ -37,6 +38,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   emailVerified: boolean("email_verified").default(false),
+  roleSelectionRequired: boolean("role_selection_required").notNull().default(false),
   phoneVerified: boolean("phone_verified").default(false),
   isBlocked: boolean("is_blocked").default(false),
   blockReason: varchar("block_reason"),
@@ -53,4 +55,5 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect & {
   isAdmin?: boolean;
   adminRole?: string;
+  role?: "admin" | "owner" | "master" | "solo_master" | "client";
 };

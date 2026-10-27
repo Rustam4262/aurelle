@@ -1,3 +1,4 @@
+import { verifyCsrf } from "../middleware/csrf";
 import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { db } from "../db";
@@ -29,7 +30,7 @@ router.get("/profile", isAuthenticated, async (req: any, res) => {
 });
 
 // Create or update user profile
-router.post("/profile", isAuthenticated, async (req: any, res) => {
+router.post("/profile", verifyCsrf, isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
 

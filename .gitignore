@@ -75,6 +75,9 @@ decode_output.txt
 .tools/
 .ssh_key_codex
 admin-hash.txt
+.ssh_key
+LOGIN_CREDENTIALS.md
+*.dump
 
 # One-off scripts and binary leftovers that must never be committed
 fix-admin-hash.sh

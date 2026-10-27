@@ -1,3 +1,8 @@
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { MessengerLink } from "@/components/messenger-link";
+import { MasterProfileSettings, MasterReviews } from "@/components/master/MasterProfileSettings";
+import { useCabinetTab } from "@/hooks/use-cabinet-tab";
+import { BackButton } from "@/components/back-button";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
@@ -44,7 +49,7 @@ export default function MasterPage() {
   const { t } = useTranslation();
   const { user, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useCabinetTab<string>("overview");
 
   // Custom Hooks
   const {
@@ -105,15 +110,13 @@ export default function MasterPage() {
         <div className="border-b border-border">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
+              <BackButton fallback="/" />
+              
               <h1 className="font-serif text-xl text-foreground">
                 {t("marketplace.master.title")}
               </h1>
             </div>
+            <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
           </div>
         </div>
@@ -142,11 +145,8 @@ export default function MasterPage() {
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
+              <BackButton fallback="/" />
+              <Avatar><AvatarImage src={master.photo || undefined} alt={master.name} /><AvatarFallback>{master.name.slice(0,2)}</AvatarFallback></Avatar>
               <div>
                 <h1 className="font-serif text-xl text-foreground">
                   {t("marketplace.master.title")}
@@ -157,6 +157,7 @@ export default function MasterPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <MessengerLink userId={user?.id} />
               <LanguageSwitcher />
               <MasterNotifications
                 notifications={notificationsQuery.data}
@@ -175,31 +176,33 @@ export default function MasterPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4 gap-1 mb-6">
             <TabsTrigger value="overview">
               <Store className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.master.tabs.overview")}</span>
+              <span className="inline">{t("marketplace.master.tabs.overview")}</span>
             </TabsTrigger>
             <TabsTrigger value="schedule">
               <CalendarDays className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.master.tabs.schedule")}</span>
+              <span className="inline">{t("marketplace.master.tabs.schedule")}</span>
             </TabsTrigger>
             <TabsTrigger value="bookings">
               <Calendar className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.master.tabs.bookings")}</span>
+              <span className="inline">{t("marketplace.master.tabs.bookings")}</span>
             </TabsTrigger>
             <TabsTrigger value="calendar">
               <CalendarCheck className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.calendar.title")}</span>
+              <span className="inline">{t("marketplace.calendar.title")}</span>
             </TabsTrigger>
             <TabsTrigger value="portfolio">
               <ImageIcon className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.master.tabs.portfolio")}</span>
+              <span className="inline">{t("marketplace.master.tabs.portfolio")}</span>
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart3 className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{t("marketplace.master.tabs.analytics")}</span>
+              <span className="inline">{t("marketplace.master.tabs.analytics")}</span>
             </TabsTrigger>
+            <TabsTrigger value="reviews">{t("employeeMaster.reviews")}</TabsTrigger>
+            <TabsTrigger value="profile">{t("employeeMaster.profile")}</TabsTrigger>
           </TabsList>
 
           <TabsContent
@@ -267,7 +270,7 @@ export default function MasterPage() {
               masterName={master.name}
               portfolio={portfolioQuery.data}
               isLoading={portfolioQuery.isLoading}
-              onRefresh={() => masterQuery.refetch()}
+              onRefresh={() => { void portfolioQuery.refetch(); }}
             />
           </TabsContent>
 
@@ -277,6 +280,12 @@ export default function MasterPage() {
           >
             <MasterAnalytics stats={statsQuery.data} isLoading={statsQuery.isLoading} />
             <PaymentHealthWidget scope="master" />
+          </TabsContent>
+          <TabsContent value="reviews">
+            <MasterReviews reviews={reviews} />
+          </TabsContent>
+          <TabsContent value="profile">
+            <MasterProfileSettings master={master} />
           </TabsContent>
         </Tabs>
       </div>

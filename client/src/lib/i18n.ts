@@ -1,6 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { logger } from "@/lib/logger";
+import { splitLanguage, localizedPath, isPublicPath, type Language } from "@shared/public-seo";
 
 // Import translations with explicit JSON type
 import en from "../locales/en.json";
@@ -19,7 +20,11 @@ if (typeof window !== "undefined") {
 }
 
 const savedLanguage =
-  typeof window !== "undefined" ? localStorage.getItem("language") || "ru" : "ru";
+  typeof window !== "undefined"
+    ? splitLanguage(window.location.pathname).localized
+      ? splitLanguage(window.location.pathname).language
+      : localStorage.getItem("language") || "ru"
+    : "ru";
 
 if (typeof window !== "undefined") {
   logger.debug("[i18n] Selected language:", { meta: { lang: savedLanguage } });
@@ -79,8 +84,16 @@ export function getLocalizedText(
 }
 
 export const changeLanguage = (lang: string) => {
-  i18n.changeLanguage(lang);
   localStorage.setItem("language", lang);
+  if (isPublicPath(window.location.pathname) && ["ru", "uz", "en"].includes(lang)) {
+    window.location.assign(
+      localizedPath(window.location.pathname, lang as Language) +
+        window.location.search +
+        window.location.hash,
+    );
+    return;
+  }
+  i18n.changeLanguage(lang);
 };
 
 export default i18n;

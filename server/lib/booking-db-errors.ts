@@ -1,3 +1,5 @@
+import { isBookingResourceReferenceError } from "./booking-resource-integrity";
+
 const BOOKING_CONFLICT_CONSTRAINTS = new Set([
   "uidx_bookings_master_exact_active_slot",
   "uidx_bookings_salon_exact_active_slot",
@@ -7,8 +9,16 @@ const BOOKING_CONFLICT_CONSTRAINTS = new Set([
 
 export function getBookingConflictError(
   error: unknown,
-): { code: "BOOKING_TIME_UNAVAILABLE"; error: string; message: string } | null {
+): { code: "BOOKING_TIME_UNAVAILABLE" | "BOOKING_RESOURCE_UNAVAILABLE"; error: string; message: string } | null {
   const pgError = error as { code?: string; constraint?: string } | null;
+
+  if (isBookingResourceReferenceError(error)) {
+    return {
+      code: "BOOKING_RESOURCE_UNAVAILABLE",
+      error: "Service or master no longer available",
+      message: "Please refresh the available services and masters before booking again.",
+    };
+  }
 
   if (!pgError?.code) {
     return null;

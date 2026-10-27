@@ -1,0 +1,38 @@
+set -euo pipefail
+old=/var/www/aurelle-release-20261005-fixes
+new=/var/www/aurelle-release-20261006-messenger
+backup=/var/backups/aurelle/20261006-messenger
+test ! -e "$new"
+mkdir -p "$new" "$backup"
+chmod 700 "$backup"
+cp /etc/nginx/sites-available/aurelle "$backup/nginx.conf"
+cp "$old/release.config.json" "$backup/previous.config.json"
+cd "$old"
+node <<'NODE'
+require('dotenv').config({quiet:true});const {spawnSync}=require('child_process');const u=new URL(process.env.DATABASE_URL);const r=spawnSync('pg_dump',['-Fc','--no-owner','--no-acl','-f','/var/backups/aurelle/20261006-messenger/database.dump'],{env:{...process.env,PGHOST:u.hostname,PGPORT:u.port||'5432',PGUSER:decodeURIComponent(u.username),PGPASSWORD:decodeURIComponent(u.password),PGDATABASE:u.pathname.slice(1)},encoding:'utf8'});if(r.status!==0)throw new Error('Database backup failed');console.log('Database backup complete');
+NODE
+tar -xzf /var/tmp/aurelle-20261006-messenger.tar.gz -C "$new"
+cp "$old/.env" "$new/.env"
+chmod 600 "$new/.env"
+ln -s "$old/node_modules" "$new/node_modules"
+ln -s /var/www/aurelle/attached_assets "$new/attached_assets"
+mkdir -p "$new/server"
+ln -s /var/www/aurelle/server/uploads "$new/server/uploads"
+cp -an "$old/dist/public/assets/." "$new/dist/public/assets/"
+node <<'NODE'
+const fs=require('fs');const c=require('/var/www/aurelle-release-20261005-fixes/release.config.json');const a=c.apps[0];a.name='aurelle-production-20261006-messenger';a.cwd='/var/www/aurelle-release-20261006-messenger';a.script=a.cwd+'/dist/index.cjs';Object.assign(a.env,{PORT:'5008',APP_VERSION:'20261006-messenger',NODE_APP_INSTANCE:'1'});fs.writeFileSync(a.cwd+'/release.config.json',JSON.stringify(c,null,2),{mode:0o600});
+NODE
+cd "$new"
+node <<'MIGRATE'
+require('dotenv').config({quiet:true});const fs=require('fs');const {Client}=require('pg');
+(async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try {
+const existing=await c.query("SELECT to_regclass('public.messenger_conversations') AS existing");if(existing.rows[0].existing)throw new Error('Messenger tables already exist: inspect migration state before proceeding');
+await c.query('BEGIN');
+for(const file of ['0039_messenger.sql','0040_messenger_attachments.sql','0041_messenger_groups.sql']){const sql=fs.readFileSync('migrations/'+file,'utf8').replace(/^BEGIN;\s*/m,'').replace(/^COMMIT;\s*/m,'');await c.query(sql);console.log('Applied '+file);}
+await c.query('COMMIT');
+}catch(e){await c.query('ROLLBACK');throw e;}finally{await c.end();}})().catch(e=>{console.error(e.message);process.exit(1)});
+MIGRATE
+pm2 start "$new/release.config.json" >/dev/null
+for i in $(seq 1 25); do if curl -fsS --max-time 3 http://127.0.0.1:5008/api/health > "$backup/new-health.json"; then break; fi; sleep 1; done
+node -e "const h=require('$backup/new-health.json');if(h.status!=='healthy'||h.version!=='20261006-messenger')process.exit(1);console.log('New release healthy, database connected')"
+

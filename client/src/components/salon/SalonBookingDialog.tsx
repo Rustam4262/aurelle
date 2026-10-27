@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -113,7 +114,7 @@ export function SalonBookingDialog({
               className="rounded-lg"
               value={bookingDate}
               onChange={(e) => setBookingDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
+              min={format(new Date(), "yyyy-MM-dd")}
             />
           </div>
           {bookingDate && (

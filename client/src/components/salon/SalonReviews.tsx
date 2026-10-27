@@ -5,6 +5,7 @@ import { Star } from "lucide-react";
 import type { Review } from "@shared/schema";
 
 export function ReviewCard({ review }: { review: Review }) {
+  const { t } = useTranslation();
   return (
     <Card className="p-4 transition-all hover:bg-muted/30" data-testid={`card-review-${review.id}`}>
       <div className="flex items-start gap-4">
@@ -25,6 +26,7 @@ export function ReviewCard({ review }: { review: Review }) {
               {review.createdAt && new Date(review.createdAt).toLocaleDateString()}
             </span>
           </div>
+          {review.masterResponse && <div className="bg-muted rounded-lg p-3 mb-3"><p className="text-sm font-medium">{t("employeeMaster.response")}</p><p className="whitespace-pre-wrap break-words">{review.masterResponse}</p></div>}
           {review.comment && (
             <p className="text-foreground text-sm leading-relaxed">{review.comment}</p>
           )}

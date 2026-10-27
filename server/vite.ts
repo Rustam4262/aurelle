@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
 import { logger } from "./lib/logger";
+import { renderPublicDocument } from "./lib/render-public-document";
 
 logger.info("Loading vite.ts...");
 
@@ -48,7 +49,10 @@ export async function setupVite(server: Server, app: Express) {
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      const policy = await renderPublicDocument(page, url);
+      if (policy.status === 503) res.setHeader("Retry-After", "300");
+      if (policy.noIndex) res.setHeader("X-Robots-Tag", "noindex, follow");
+      res.status(policy.status).set({ "Content-Type": "text/html" }).end(policy.html);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);

@@ -1,3 +1,4 @@
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -57,25 +58,31 @@ export function MasterOverview({ master, salon, bookings, reviews, stats }: Mast
 
   return (
     <div className="space-y-6">
+      <Card className="p-6 space-y-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Avatar className="h-20 w-20"><AvatarImage src={master.photo || undefined} alt={master.name} /><AvatarFallback>{master.name.slice(0,2)}</AvatarFallback></Avatar>
+          <div className="flex-1 min-w-[120px]"><h2 className="text-xl font-semibold">{master.name}</h2><p className="text-sm text-muted-foreground">{t("employeeMaster.experience")}: {master.experience || 0}</p></div>
+          <Link href="/master?tab=profile" className="w-full sm:w-auto"><Button variant="outline" className="w-full">{t("employeeMaster.profile")}</Button></Link>
+        </div>
+        {master.bio && <p className="whitespace-pre-wrap break-words">{getLocalizedText(master.bio,currentLang)}</p>}
+      </Card>
       <Card className="p-6 transition-all hover:shadow-md hover:border-primary/20">
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-            <Store className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
+          <Avatar className="h-16 w-16"><AvatarImage src={salon?.photos?.[0]} alt={salonName} /><AvatarFallback><Store className="h-8 w-8" /></AvatarFallback></Avatar>
+          <div className="flex-1 min-w-[120px]">
             <h2 className="font-medium text-foreground">{t("marketplace.master.yourSalon")}</h2>
             <p className="text-lg text-foreground font-serif truncate">{salonName}</p>
             <p className="text-sm text-muted-foreground">{salon?.city}</p>
           </div>
-          <Link href={`/salon/${salon?.id}`}>
-            <Button variant="outline" size="sm">
+          <Link href={`/salon/${salon?.id}`} className="w-full sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full">
               {t("marketplace.master.viewSalon")}
             </Button>
           </Link>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
             icon: DollarSign,
@@ -99,10 +106,10 @@ export function MasterOverview({ master, salon, bookings, reviews, stats }: Mast
         ].map((item, idx) => (
           <Card
             key={idx}
-            className="p-6 text-center transition-all hover:shadow-md hover:scale-[1.02] duration-300"
+            className="p-4 text-center transition-all hover:shadow-md hover:scale-[1.02] duration-300"
           >
             <item.icon className={`h-8 w-8 ${item.color} mx-auto mb-2`} />
-            <p className="text-2xl font-bold text-foreground">{item.value}</p>
+            <p className="text-xl font-bold text-foreground break-words">{item.value}</p>
             <p className="text-sm text-muted-foreground">{t(`marketplace.master.${item.label}`)}</p>
           </Card>
         ))}

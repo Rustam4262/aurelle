@@ -1,14 +1,14 @@
 /* eslint-env serviceworker */
 // Service Worker — AURELLE
-// Version: 3.0.0
+// Version: 3.2.0
 // Caching strategy:
 //   - index.html        → network-first (never serve stale HTML)
 //   - /assets/*         → cache-first   (content-hashed, immutable)
 //   - /icons/*, /images → cache-first   (static assets)
-//   - /api/*            → stale-while-revalidate (fresh data, fast response)
+//   - /api/*            → network-only (never retain account or availability data)
 //   - push notifications → always handled
 
-const VERSION = "3.1.0";
+const VERSION = "3.2.0";
 const CACHE_STATIC = `aurelle-static-v${VERSION}`;
 const CACHE_DYNAMIC = `aurelle-dynamic-v${VERSION}`;
 
@@ -32,7 +32,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k !== CACHE_STATIC && k !== CACHE_DYNAMIC)
+            .filter((k) => k.startsWith("aurelle-") && k !== CACHE_STATIC && k !== CACHE_DYNAMIC)
             .map((k) => caches.delete(k)),
         ),
       )
@@ -57,12 +57,17 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (url.origin !== self.location.origin) return;
 
-  // Auth endpoints: never cache — always network (session state must be fresh)
-  if (url.pathname.startsWith("/api/auth/") || url.pathname === "/api/logout") return;
-
-  // 1. API: stale-while-revalidate
+  // API responses must be current, including after login, logout and deployments.
+  // Never fall back to a cached empty catalogue or another session's private data.
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(staleWhileRevalidate(request, CACHE_DYNAMIC));
+    event.respondWith(
+      fetch(request, { cache: "no-store" }).catch(() =>
+        new Response(JSON.stringify({ error: "offline", message: "No internet connection" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+        }),
+      ),
+    );
     return;
   }
 
@@ -97,20 +102,6 @@ async function cacheFirst(request, cacheName) {
   const response = await fetch(request);
   if (response.ok) cache.put(request, response.clone());
   return response;
-}
-
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-
-  const fetchPromise = fetch(request)
-    .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => null);
-
-  return cached || (await fetchPromise) || offlineFallback(request);
 }
 
 async function networkFirst(request) {

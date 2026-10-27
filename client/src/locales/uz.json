@@ -1,4 +1,15 @@
 {
+  "ownerBookingActions": {
+  "heading": "Yozuvlar",
+  "confirm": "Tasdiqlash",
+  "complete": "Yakunlash",
+  "cancel": "Yozuvni bekor qilish",
+  "cancelPrompt": "Ushbu yozuv bekor qilinsinmi?",
+  "saved": "Yozuv holati yangilandi",
+  "failed": "Yozuv holatini yangilab bo‘lmadi",
+  "retry": "Yozuvlar ro‘yxati yangilandi. Holatini tekshirib, qayta urinib ko‘ring.",
+  "afterVisit": "Tashrifning rejalashtirilgan tugash vaqtidan keyin yakunlash mumkin."
+},
   "home": {
     "masters": {
       "title": "Frilanser masterlar",

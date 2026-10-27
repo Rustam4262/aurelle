@@ -48,8 +48,17 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     const { salonId } = parsed.data;
 
-    const [favorite] = await db.insert(favorites).values([{ userId, salonId }]).returning();
-    return res.status(201).json(favorite);
+    const result = await db.transaction(async (tx) => {
+      // Serialize add/toggle for this salon and keep it present until commit.
+      const [salon] = await tx.select({ id: salons.id }).from(salons).where(eq(salons.id, salonId)).for("update");
+      if (!salon) return null;
+      const [existing] = await tx.select().from(favorites).where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
+      if (existing) return { favorite: existing, created: false };
+      const [favorite] = await tx.insert(favorites).values({ userId, salonId }).returning();
+      return { favorite, created: true };
+    });
+    if (!result) return res.status(404).json({ error: "Salon not found" });
+    return res.status(result.created ? 201 : 200).json(result.favorite);
   } catch (error) {
     logger.error("Add favorite error:", error);
     return res.status(500).json({ error: "Failed to add favorite" });
@@ -78,20 +87,19 @@ router.post("/:salonId", isAuthenticated, async (req: any, res) => {
     const { salonId } = req.params;
     const userId = req.user.claims.sub;
 
-    const existing = await db
-      .select()
-      .from(favorites)
-      .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
-
-    if (existing.length > 0) {
-      await db
-        .delete(favorites)
-        .where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
-      return res.json({ favorited: false });
-    } else {
-      await db.insert(favorites).values({ userId, salonId });
-      return res.json({ favorited: true });
-    }
+    const result = await db.transaction(async (tx) => {
+      const [salon] = await tx.select({ id: salons.id }).from(salons).where(eq(salons.id, salonId)).for("update");
+      if (!salon) return null;
+      const [existing] = await tx.select().from(favorites).where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
+      if (existing) {
+        await tx.delete(favorites).where(and(eq(favorites.userId, userId), eq(favorites.salonId, salonId)));
+        return { favorited: false };
+      }
+      await tx.insert(favorites).values({ userId, salonId });
+      return { favorited: true };
+    });
+    if (!result) return res.status(404).json({ error: "Salon not found" });
+    return res.json(result);
   } catch (error) {
     logger.error("Toggle favorite error:", error);
     return res.status(500).json({ error: "Failed to toggle favorite" });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { verifyCsrf } from "../middleware/csrf";
 import { requireAdminIp } from "../middleware/adminIp";
 import authRoutes from "./auth.routes";
+import messengerRoutes from "./messenger.routes";
 import usersRoutes from "./users.routes";
 import salonsRoutes from "./salons.routes";
 import mastersRoutes from "./masters.routes";
@@ -37,7 +38,7 @@ router.use("/feature-flags", featureFlagsRoutes);
 // Public routes (no /api prefix needed, added in main routes.ts)
 router.use("/", authRoutes);
 router.use("/", contactRoutes);
-router.use("/invitations", invitationsRoutes);
+router.use("/invitations", verifyCsrf, invitationsRoutes);
 
 // User routes
 router.use("/", usersRoutes);
@@ -48,28 +49,29 @@ router.use("/masters", publicMasterRoutes);
 
 // Authenticated user routes
 router.use("/bookings", verifyCsrf, bookingsRoutes);
-router.use("/favorites", favoritesRoutes);
-router.use("/reviews", reviewsRoutes);
-router.use("/push", pushRoutes);
-router.use("/notifications", notificationsRoutes);
-router.use("/calendar", calendarRoutes);
-router.use("/waitlist", waitlistRoutes);
-router.use("/portfolio", portfolioRoutes);
+router.use("/messenger", verifyCsrf, messengerRoutes);
+router.use("/favorites", verifyCsrf, favoritesRoutes);
+router.use("/reviews", verifyCsrf, reviewsRoutes);
+router.use("/push", verifyCsrf, pushRoutes);
+router.use("/notifications", verifyCsrf, notificationsRoutes);
+router.use("/calendar", verifyCsrf, calendarRoutes);
+router.use("/waitlist", verifyCsrf, waitlistRoutes);
+router.use("/portfolio", verifyCsrf, portfolioRoutes);
 
 // Role-specific dashboards
-router.use("/master", mastersRoutes);
+router.use("/master", verifyCsrf, mastersRoutes);
 router.use("/owner", verifyCsrf, ownerRoutes);
-router.use("/client", clientRoutes);
-router.use("/solo-master", soloMasterRoutes);
+router.use("/client", verifyCsrf, clientRoutes);
+router.use("/solo-master", verifyCsrf, soloMasterRoutes);
 
 // Admin panel — IP whitelist check first, then CSRF, then auth
 router.use("/admin", requireAdminIp, verifyCsrf, adminRoutes);
 
 // Client complaint submission
-router.use("/complaints", complaintsRoutes);
+router.use("/complaints", verifyCsrf, complaintsRoutes);
 
 // Payments
-router.use("/payments", paymentsRoutes);
+router.use("/payments", verifyCsrf, paymentsRoutes);
 router.use("/webhooks/payme", paymeWebhookRoutes);
 router.use("/webhooks/click", clickWebhookRoutes);
 

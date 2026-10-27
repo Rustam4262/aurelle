@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getCsrfToken } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +62,7 @@ export default function AcceptInvitation() {
     try {
       const res = await fetch("/api/invitations/accept", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
         credentials: "include",
         body: JSON.stringify({ token }),
       });

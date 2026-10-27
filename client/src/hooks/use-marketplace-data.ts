@@ -7,8 +7,6 @@ export interface MarketplaceStats {
   citiesCount: number;
   reviewsCount: number;
   averageRating: number;
-  bookingsCount: number;
-  clientsCount: number;
 }
 
 export interface PublicReview {

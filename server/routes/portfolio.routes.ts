@@ -2,7 +2,7 @@ import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { createLimiter } from "../middleware/rateLimiter";
 import { db } from "../db";
-import { portfolioItems, insertPortfolioItemSchema, masters } from "@shared/schema";
+import { portfolioItems, masterPortfolio, insertPortfolioItemSchema, masters } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { logAudit } from "../lib/audit";
@@ -20,7 +20,8 @@ router.get("/master/:masterId", async (req, res) => {
       .where(eq(portfolioItems.masterId, masterId))
       .orderBy(portfolioItems.displayOrder, portfolioItems.createdAt);
 
-    return res.json(items);
+    const legacy = await db.select().from(masterPortfolio).where(eq(masterPortfolio.masterId, masterId));
+    return res.json(Array.from(new Map([...items, ...legacy].map(item => [item.imageUrl, item])).values()));
   } catch (error) {
     logger.error("Get portfolio error:", error);
     return res.status(500).json({ error: "Failed to get portfolio" });

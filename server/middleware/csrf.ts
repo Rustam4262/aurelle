@@ -14,22 +14,24 @@
  *   Read `document.cookie` for `csrf-token` and attach it as `X-CSRF-Token` header
  *   on all mutating apiRequest() calls. (See client/src/lib/queryClient.ts)
  *
- * Applied to:
- *   /api/admin/*    /api/bookings/*    /api/salons/*    /api/owner/*
+ * Applied to route groups in server/routes/index.ts and selected route handlers.
+ * Coverage is explicit; installing setCsrfCookie alone does not protect a route.
  *
  * Excluded:
- *   /api/auth/*     (login / OAuth / password reset don't have the cookie yet)
+ *   Authentication endpoints and payment-provider webhooks use their own policies.
  *   GET / HEAD / OPTIONS  (safe methods, no state change)
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { randomBytes } from "crypto";
+import { randomBytes, timingSafeEqual } from "crypto";
 import { logger } from "../lib/logger";
 
 const COOKIE_NAME = "csrf-token";
 const HEADER_NAME = "x-csrf-token";
 const TOKEN_LENGTH = 32; // bytes → 64 hex chars
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const isToken = (value: unknown): value is string =>
+  typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 
 /** Parse a single cookie value from a `Cookie:` header string. */
 function parseCookie(cookieHeader: string | undefined, name: string): string | undefined {
@@ -38,7 +40,11 @@ function parseCookie(cookieHeader: string | undefined, name: string): string | u
   for (const part of cookieHeader.split(";")) {
     const trimmed = part.trim();
     if (trimmed.startsWith(prefix)) {
-      return decodeURIComponent(trimmed.slice(prefix.length));
+      try {
+        return decodeURIComponent(trimmed.slice(prefix.length));
+      } catch {
+        return undefined;
+      }
     }
   }
   return undefined;
@@ -66,7 +72,7 @@ function generateToken(res: Response): string {
  */
 export function setCsrfCookie(req: Request, res: Response, next: NextFunction): void {
   const existing = parseCookie(req.headers.cookie, COOKIE_NAME);
-  if (!existing) {
+  if (!isToken(existing)) {
     generateToken(res);
   }
   next();
@@ -74,7 +80,7 @@ export function setCsrfCookie(req: Request, res: Response, next: NextFunction): 
 
 /**
  * Middleware: Verify that X-CSRF-Token header matches the csrf-token cookie.
- * Apply to route groups that require CSRF protection (admin, bookings, salons, owner).
+ * Apply to route groups that require CSRF protection.
  */
 export function verifyCsrf(req: Request, res: Response, next: NextFunction): void {
   // Safe methods are exempt
@@ -84,9 +90,10 @@ export function verifyCsrf(req: Request, res: Response, next: NextFunction): voi
   }
 
   const cookieToken = parseCookie(req.headers.cookie, COOKIE_NAME);
-  const headerToken = req.headers[HEADER_NAME] as string | undefined;
+  const headerToken = req.headers[HEADER_NAME];
 
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  if (!isToken(cookieToken) || !isToken(headerToken) ||
+      !timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken))) {
     logger.warn("CSRF validation failed", {
       source: "csrf",
       meta: {

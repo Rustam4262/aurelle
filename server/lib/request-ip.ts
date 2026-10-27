@@ -1,21 +1,17 @@
 import type { Request } from "express";
+import { isIP } from "node:net";
+
+export function normalizeIp(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const ip = value.trim().replace(/^::ffff:/i, "");
+  if (!isIP(ip)) return undefined;
+  return isIP(ip) === 6 ? new URL(`http://[${ip}]/`).hostname.slice(1, -1) : ip;
+}
 
 export function getClientIp(req: Request): string | undefined {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  const firstForwarded =
-    typeof forwardedFor === "string"
-      ? forwardedFor.split(",")[0]?.trim()
-      : Array.isArray(forwardedFor)
-        ? forwardedFor[0]?.split(",")[0]?.trim()
-        : "";
-
-  return (
-    firstForwarded ||
-    (typeof req.headers["x-real-ip"] === "string" ? req.headers["x-real-ip"] : "") ||
-    req.ip ||
-    req.socket.remoteAddress ||
-    undefined
-  );
+  // Express resolves the proxy chain using the application's trusted-proxy
+  // policy. Never independently trust headers supplied by the client.
+  return normalizeIp(req.ip) ?? normalizeIp(req.socket.remoteAddress);
 }
 
 export function isLocalIp(ip: string | null | undefined): boolean {

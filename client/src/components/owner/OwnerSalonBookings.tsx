@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Calendar, Clock, Scissors, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -27,6 +29,26 @@ interface OwnerSalonBookingsProps {
 export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ bookingId, status }: { bookingId: string; status: "confirmed" | "completed" | "cancelled" }) => {
+      await apiRequest("PATCH", `/api/owner/bookings/${bookingId}/status`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/bookings"] });
+      toast({ title: t("ownerBookingActions.saved") });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owner/salons", salonId, "bookings"] });
+      toast({ title: t("ownerBookingActions.failed"), description: t("ownerBookingActions.retry"), variant: "destructive" });
+    },
+  });
 
   const { data: bookings } = useQuery<EnrichedOwnerBooking[]>({
     queryKey: ["/api/owner/salons", salonId, "bookings"],
@@ -56,12 +78,18 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
   return (
     <Card className="p-6">
       <h3 className="font-medium text-foreground mb-4">
-        {t("marketplace.owner.upcomingBookings")}
+        {t("ownerBookingActions.heading")}
       </h3>
       {bookings && bookings.length > 0 ? (
         <div className="space-y-3">
           {bookings.map((booking) => {
             const assignedMaster = masters?.find((m) => m.id === booking.masterId);
+            const active = ["pending", "confirmed", "in_progress"].includes(booking.status || "");
+            const date = new Date(booking.bookingDate);
+            const end = Number.isFinite(date.getTime()) && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(booking.endTime)
+              ? new Date(`${date.toISOString().slice(0, 10)}T${booking.endTime}:00+05:00`).getTime() : NaN;
+            const canComplete = Number.isFinite(end) && end <= now;
+            const busy = statusMutation.isPending || assignMasterMutation.isPending;
             return (
               <div
                 key={booking.id}
@@ -127,6 +155,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                     {booking.priceSnapshot?.toLocaleString()} UZS
                   </span>
                   <Select
+                    disabled={!active || busy}
                     value={booking.masterId || "unassigned"}
                     onValueChange={(value) => {
                       const masterId = value === "unassigned" ? null : value;
@@ -145,6 +174,30 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                       ))}
                     </SelectContent>
                   </Select>
+                  {active && (
+                    <div className="flex flex-wrap gap-2" data-testid={`booking-actions-${booking.id}`}>
+                      {booking.status === "pending" && (
+                        <Button size="sm" disabled={busy} onClick={() => statusMutation.mutate({ bookingId: booking.id, status: "confirmed" })}>
+                          {t("ownerBookingActions.confirm")}
+                        </Button>
+                      )}
+                      {(booking.status === "confirmed" || booking.status === "in_progress") && (
+                        <Button size="sm" disabled={busy || !canComplete} onClick={() => statusMutation.mutate({ bookingId: booking.id, status: "completed" })}>
+                          {t("ownerBookingActions.complete")}
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" disabled={busy} onClick={() => {
+                        if (window.confirm(t("ownerBookingActions.cancelPrompt"))) {
+                          statusMutation.mutate({ bookingId: booking.id, status: "cancelled" });
+                        }
+                      }}>
+                        {t("ownerBookingActions.cancel")}
+                      </Button>
+                    </div>
+                  )}
+                  {active && booking.status !== "pending" && !canComplete && (
+                    <p className="max-w-xs text-xs text-muted-foreground">{t("ownerBookingActions.afterVisit")}</p>
+                  )}
                 </div>
               </div>
             );

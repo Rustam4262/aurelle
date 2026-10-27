@@ -1,0 +1,33 @@
+set -euo pipefail
+backup=/var/backups/aurelle/20261021-booking-cancellation
+cat > "$backup/rollback.sh" <<'ROLLBACK'
+#!/bin/bash
+set -euo pipefail
+pm2 stop aurelle-production-20261021-booking-cancellation >/dev/null || true
+pm2 start /var/backups/aurelle/20261021-booking-cancellation/previous.config.json >/dev/null
+for i in $(seq 1 25); do if curl -fsS --max-time 3 http://127.0.0.1:5025/api/health >/dev/null; then break; fi; sleep 1; done
+curl -fsS --max-time 5 http://127.0.0.1:5025/api/health >/dev/null
+cp /var/backups/aurelle/20261021-booking-cancellation/nginx.conf /etc/nginx/sites-available/aurelle
+nginx -t
+systemctl reload nginx
+pm2 save >/dev/null
+ROLLBACK
+chmod 700 "$backup/rollback.sh"
+trap 'bash /var/backups/aurelle/20261021-booking-cancellation/rollback.sh' ERR
+sed -e 's/127.0.0.1:5025/127.0.0.1:5026/g' -e 's/$proxy_add_x_forwarded_for/$remote_addr/g' "$backup/nginx.conf" > /etc/nginx/sites-available/aurelle
+nginx -t
+systemctl reload nginx
+sleep 2
+curl -fsS --max-time 10 --resolve aurelle.uz:443:127.0.0.1 https://aurelle.uz/api/health > "$backup/live-health.json"
+node -e "if(require('$backup/live-health.json').version!=='20261021-booking-cancellation')process.exit(1)"
+pm2 stop aurelle-production-20261021-csrf-coverage >/dev/null
+node <<'NODE'
+const fs=require('fs');const p='/var/www/aurelle-release-20261021-booking-cancellation/release.config.json';const c=JSON.parse(fs.readFileSync(p));c.apps[0].env.NODE_APP_INSTANCE='0';fs.writeFileSync(p,JSON.stringify(c,null,2),{mode:0o600});
+NODE
+pm2 reload /var/www/aurelle-release-20261021-booking-cancellation/release.config.json --update-env >/dev/null
+curl -fsS --max-time 10 --resolve aurelle.uz:443:127.0.0.1 https://aurelle.uz/api/health > "$backup/live-health.json"
+node -e "const h=require('$backup/live-health.json');if(h.status!=='healthy'||h.version!=='20261021-booking-cancellation')process.exit(1);console.log('Live release healthy: '+h.version)"
+pm2 save >/dev/null
+trap - ERR
+
+

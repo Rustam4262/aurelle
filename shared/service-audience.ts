@@ -2,6 +2,7 @@ export type ServiceAudience = "women" | "men" | "unisex";
 export type CatalogueAudience = "women" | "men" | "all";
 
 export function matchesAudience(service: string | null | undefined, selected: CatalogueAudience) {
+  // Unclassified services belong only to the all-audiences catalogue.
   return selected === "all" || service === "unisex" || service === selected;
 }
 

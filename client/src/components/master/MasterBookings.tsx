@@ -4,7 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Calendar, Check, X, Loader2 } from "lucide-react";
+import { MessengerLink } from "@/components/messenger-link";
 import type { EnrichedBooking } from "@/hooks/use-master-data";
 
 interface MasterBookingsProps {
@@ -33,6 +41,7 @@ export function MasterBookings({
 }: MasterBookingsProps) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState("all");
+  const [selectedClient, setSelectedClient] = useState<EnrichedBooking | null>(null);
 
   const filteredBookings =
     filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
@@ -81,12 +90,16 @@ export function MasterBookings({
                           : (booking.clientName?.[0] ?? "?")}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="font-medium text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedClient(booking)}
+                      className="font-medium text-foreground text-left hover:underline focus-visible:outline focus-visible:outline-primary"
+                    >
                       {booking.client
                         ? `${booking.client.firstName} ${booking.client.lastName}`
                         : (booking.clientName ??
                           `${t("marketplace.master.client")} #${booking.clientId.slice(-6)}`)}
-                    </p>
+                    </button>
                     <Badge
                       className={STATUS_COLORS[booking.status || "pending"] || ""}
                       variant="secondary"
@@ -136,6 +149,33 @@ export function MasterBookings({
           {t("marketplace.master.noBookings")}
         </p>
       )}
+      <Dialog open={!!selectedClient} onOpenChange={(open) => !open && setSelectedClient(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedClient?.clientName || t("marketplace.master.client")}
+            </DialogTitle>
+            <DialogDescription>{t("marketplace.master.manageBookings")}</DialogDescription>
+          </DialogHeader>
+          {selectedClient && <MessengerLink recipientId={selectedClient.clientId} />}
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={selectedClient?.clientAvatar || undefined} />
+            <AvatarFallback>{selectedClient?.clientName?.[0] || "?"}</AvatarFallback>
+          </Avatar>
+          <div className="max-h-64 overflow-y-auto space-y-3">
+            {bookings
+              .filter((b) => b.clientId === selectedClient?.clientId)
+              .map((b) => (
+                <div key={b.id} className="rounded-md border p-3 text-sm">
+                  <p>
+                    {new Date(b.bookingDate).toLocaleDateString()} · {b.startTime}–{b.endTime}
+                  </p>
+                  <p>{t(`marketplace.master.status.${b.status || "pending"}`)}</p>
+                </div>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -28,8 +28,8 @@ function StatItem({ end, suffix = "", labelKey }: StatItemProps) {
 export function HomeStats({ stats }: { stats?: MarketplaceStats }) {
   const statItems = [
     { end: stats?.salonsCount ?? 0, labelKey: "marketplace.stats.salons", delay: 0 },
-    { end: stats?.clientsCount ?? 0, labelKey: "marketplace.stats.clients", delay: 100 },
-    { end: stats?.bookingsCount ?? 0, labelKey: "marketplace.stats.bookings", delay: 200 },
+    { end: stats?.reviewsCount ?? 0, labelKey: "marketplace.stats.publicReviews", delay: 100 },
+    { end: stats?.averageRating ?? 0, labelKey: "marketplace.home.testimonials.stats.avgRating", delay: 200 },
     { end: stats?.citiesCount ?? 0, labelKey: "marketplace.stats.cities", delay: 300 },
   ];
 

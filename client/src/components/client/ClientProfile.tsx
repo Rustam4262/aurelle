@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { ru, uz, enUS } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { Loader2, User, Calendar, Bell } from "lucide-react";
@@ -56,7 +57,12 @@ interface ClientProfileProps {
 }
 
 export function ClientProfile({ profileData }: ClientProfileProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const calendarLocale = i18n.language.startsWith("uz")
+    ? uz
+    : i18n.language.startsWith("en")
+      ? enUS
+      : ru;
   const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
@@ -245,7 +251,7 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
                         >
                           <Calendar className="mr-2 h-4 w-4" />
                           {field.value ? (
-                            format(new Date(field.value), "dd.MM.yyyy")
+                            format(parseISO(field.value), "dd.MM.yyyy")
                           ) : (
                             <span className="text-muted-foreground">
                               {t("marketplace.client.birthdayPlaceholder")}
@@ -257,11 +263,13 @@ export function ClientProfile({ profileData }: ClientProfileProps) {
                     <PopoverContent className="w-auto p-0" align="start">
                       <CalendarComponent
                         mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={(date) => field.onChange(date?.toISOString().split("T")[0])}
+                        selected={field.value ? parseISO(field.value) : undefined}
+                        onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                         disabled={(date) => date > new Date()}
                         initialFocus
-                        captionLayout="dropdown-buttons"
+                        captionLayout="dropdown"
+                        locale={calendarLocale}
+                        defaultMonth={field.value ? parseISO(field.value) : undefined}
                         fromYear={1930}
                         toYear={new Date().getFullYear()}
                       />

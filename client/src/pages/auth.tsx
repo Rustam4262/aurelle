@@ -29,6 +29,7 @@ import {
 import { SiGoogle } from "react-icons/si";
 
 type AuthUser = {
+  roleSelectionRequired?: boolean;
   id: string;
   email?: string | null;
   firstName?: string | null;
@@ -110,11 +111,7 @@ function Logo({ className }: { className?: string }) {
 }
 
 function YandexIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.272 19.636h-2.182V9.454l-2.363 4.636H8.363l-2.363-4.636v10.182H3.818V4.363h2.182l3.636 7.273 3.636-7.273h2.182v15.273h-1.182z" />
-    </svg>
-  );
+  return <img src="/images/yandex-login.jpg" alt="" aria-hidden="true" width={24} height={24} className={className} />;
 }
 
 async function submitJson(event: React.FormEvent<HTMLFormElement>, url: string) {
@@ -153,12 +150,14 @@ async function fetchCurrentUser(): Promise<AuthUser | null> {
 async function fetchProvidersStatus(): Promise<ProvidersStatus> {
   const response = await fetch("/api/auth/providers", { credentials: "include" });
   if (!response.ok) {
-    return { local: true, google: true, yandex: true };
+    return { local: true, google: false, yandex: false };
   }
   return response.json();
 }
 
 async function resolvePostLoginPath(): Promise<string> {
+  const currentUser = await fetchCurrentUser();
+  if (currentUser?.roleSelectionRequired) return "/choose-role";
   const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
   if (savedRedirect) {
     sessionStorage.removeItem("redirectAfterLogin");
@@ -169,7 +168,8 @@ async function resolvePostLoginPath(): Promise<string> {
   if (!user) return "/auth";
   if (user.isAdmin || user.role === "admin") return "/admin";
   if (user.role === "owner") return "/owner";
-  if (user.role === "solo_master" || user.role === "master") return "/solo-master";
+  if (user.role === "solo_master") return "/solo-master";
+  if (user.role === "master") return "/master";
   return "/client";
 }
 
@@ -213,9 +213,10 @@ const authCopy: Record<Locale, Copy> = {
       "Выберите быстрый путь: вернуться в кабинет или создать новый аккаунт под свою роль.",
     socialTitle: "Продолжить через соцсеть",
     socialRegisterHint:
-      "Для регистрации через соцсеть сначала выберите роль, чтобы мы подготовили правильный кабинет.",
+      "При первом входе через Google или Яндекс вы выберете роль на следующем шаге.",
     temporaryTitle: "Телефон временно недоступен",
-    temporaryDescription: "SMS-авторизацию вернём позже. Сейчас доступны email, Google и Яндекс.",
+    temporaryDescription:
+      "SMS-авторизацию вернём позже. Используйте email или доступный способ входа ниже.",
     loginTab: "Вход",
     registerTab: "Регистрация",
     emailLabel: "Email",
@@ -287,10 +288,10 @@ const authCopy: Record<Locale, Copy> = {
       "Choose the fastest path: return to your workspace or create a new account for your role.",
     socialTitle: "Continue with social login",
     socialRegisterHint:
-      "For social registration, choose your role first so we can prepare the right workspace.",
+      "On your first Google or Yandex sign-in, you will choose your role in the next step.",
     temporaryTitle: "Phone sign-in is unavailable",
     temporaryDescription:
-      "SMS authorization will return later. Email, Google, and Yandex are available now.",
+      "SMS authorization will return later. Use email or an available sign-in option below.",
     loginTab: "Sign in",
     registerTab: "Register",
     emailLabel: "Email",
@@ -361,10 +362,10 @@ const authCopy: Record<Locale, Copy> = {
       "Eng qulay yo'lni tanlang: kabinetga qaytish yoki o'z rolingiz uchun yangi akkaunt yaratish.",
     socialTitle: "Ijtimoiy tarmoq orqali davom eting",
     socialRegisterHint:
-      "Ijtimoiy tarmoq orqali ro'yxatdan o'tishdan oldin rolni tanlang, shunda to'g'ri kabinet tayyorlanadi.",
+      "Google yoki Yandex orqali birinchi kirishda keyingi bosqichda rolingizni tanlaysiz.",
     temporaryTitle: "Telefon orqali kirish vaqtincha yopiq",
     temporaryDescription:
-      "SMS avtorizatsiya keyinroq qaytadi. Hozir email, Google va Yandex mavjud.",
+      "SMS avtorizatsiya keyinroq qaytadi. Email yoki quyidagi mavjud kirish usulidan foydalaning.",
     loginTab: "Kirish",
     registerTab: "Ro'yxatdan o'tish",
     emailLabel: "Email",
@@ -421,8 +422,8 @@ export default function AuthPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [providers, setProviders] = useState<ProvidersStatus>({
     local: true,
-    google: true,
-    yandex: true,
+    google: false,
+    yandex: false,
   });
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -432,7 +433,20 @@ export default function AuthPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loginError, setLoginError] = useState("");
+  const [loginError, setLoginError] = useState(() => {
+    const error = new URLSearchParams(window.location.search).get("error");
+    if (error === "email_link_requires_login")
+      return currentLocale === "ru"
+        ? "Этот email уже зарегистрирован. Войдите прежним способом: по паролю или через Google."
+        : currentLocale === "uz"
+          ? "Bu email allaqachon ro‘yxatdan o‘tgan. Parol yoki Google orqali kiring."
+          : "This email is already registered. Sign in using your existing password or Google account.";
+    return error
+      ? error === "provider_not_configured"
+        ? copy.providerUnavailable
+        : copy.loginError
+      : "";
+  });
   const [registerError, setRegisterError] = useState("");
 
   const roles: RoleMeta[] = useMemo(
@@ -508,7 +522,7 @@ export default function AuthPage() {
       try {
         const [user, providerState] = await Promise.all([
           fetchCurrentUser(),
-          fetchProvidersStatus().catch(() => ({ local: true, google: true, yandex: true })),
+          fetchProvidersStatus().catch(() => ({ local: true, google: false, yandex: false })),
         ]);
         if (!cancelled) setProviders(providerState);
         if (!user || cancelled) {
@@ -545,18 +559,7 @@ export default function AuthPage() {
       });
       return;
     }
-    if (activeTab === "register" && !registrationRole) {
-      setRegisterError(copy.completeRoleBeforeSocial);
-      toast({
-        title: copy.roleRequired,
-        description: copy.completeRoleBeforeSocial,
-        variant: "destructive",
-      });
-      return;
-    }
-    const role = activeTab === "register" ? registrationRole : undefined;
     const params = new URLSearchParams();
-    if (role) params.set("role", role);
     // Same sessionStorage key the email login/register flow already reads via
     // resolvePostLoginPath — OAuth previously never sent this, so it always
     // dropped a guest back to /auth instead of the page they came from.
@@ -738,11 +741,7 @@ export default function AuthPage() {
                     size="lg"
                     variant="outline"
                     onClick={() => loginWithProvider("google")}
-                    disabled={
-                      isSubmitting ||
-                      !providers.google ||
-                      (activeTab === "register" && !registrationRole)
-                    }
+                    disabled={isSubmitting || !providers.google}
                   >
                     <SiGoogle className="mr-3 mt-0.5 h-5 w-5 shrink-0 text-[#4285F4] sm:mt-0" />
                     <span className="min-w-0 flex-1 text-left">
@@ -762,13 +761,9 @@ export default function AuthPage() {
                     size="lg"
                     variant="outline"
                     onClick={() => loginWithProvider("yandex")}
-                    disabled={
-                      isSubmitting ||
-                      !providers.yandex ||
-                      (activeTab === "register" && !registrationRole)
-                    }
+                    disabled={isSubmitting || !providers.yandex}
                   >
-                    <YandexIcon className="mr-3 mt-0.5 h-5 w-5 shrink-0 text-[#FF0000] sm:mt-0" />
+                    <YandexIcon className="mr-3 mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover sm:mt-0" />
                     <span className="min-w-0 flex-1 text-left">
                       <span className="block break-words text-sm leading-5">
                         {copy.yandexButton}
@@ -782,6 +777,22 @@ export default function AuthPage() {
                   </Button>
                 </div>
               </div>
+
+              <p className="mb-4 text-xs leading-5 text-muted-foreground">
+                {currentLocale === "ru"
+                  ? "Продолжая через Google или Яндекс, вы принимаете "
+                  : currentLocale === "uz"
+                    ? "Google yoki Yandex orqali davom etib, quyidagilarga rozilik bildirasiz: "
+                    : "By continuing with Google or Yandex, you accept the "}
+                <Link href="/terms" className="underline">
+                  {copy.termsLink}
+                </Link>
+                {currentLocale === "ru" ? " и " : currentLocale === "uz" ? " va " : " and "}
+                <Link href="/privacy" className="underline">
+                  {copy.privacyLink}
+                </Link>
+                .
+              </p>
 
               <Tabs
                 value={activeTab}

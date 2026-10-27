@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { getCsrfToken } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,6 +104,7 @@ export function ImageUpload({
       }`;
 
       const response = await fetch(endpoint, {
+        headers: { "X-CSRF-Token": getCsrfToken() },
         method: "POST",
         body: formData,
         credentials: "include",
@@ -290,6 +292,7 @@ export function MultiImageUpload({
       });
 
       const response = await fetch("/api/upload/salon-photos", {
+        headers: { "X-CSRF-Token": getCsrfToken() },
         method: "POST",
         body: formData,
         credentials: "include",

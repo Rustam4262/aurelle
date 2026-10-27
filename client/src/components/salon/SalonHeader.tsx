@@ -1,3 +1,5 @@
+import { MessengerLink } from "@/components/messenger-link";
+import { BackButton } from "@/components/back-button";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -35,17 +37,9 @@ export function SalonHeader({ salon }: { salon: Salon }) {
       </div>
 
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white transition-all hover:scale-105"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
+        <BackButton fallback="/search" className="bg-white/80 backdrop-blur-sm hover:bg-white" />
         <div className="flex gap-2">
+          <MessengerLink recipientId={salon.ownerId} />
           <LanguageSwitcher
             variant="ghost"
             className="bg-white/80 backdrop-blur-sm hover:bg-white text-foreground"

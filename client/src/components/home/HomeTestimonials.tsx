@@ -204,10 +204,10 @@ export function HomeTestimonials({
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">
-              {formatCount(stats?.clientsCount)}
+              {formatCount(stats?.reviewsCount)}
             </div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.happyClients", "Happy clients")}
+              {t("marketplace.stats.publicReviews", "Published reviews")}
             </div>
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
@@ -228,10 +228,10 @@ export function HomeTestimonials({
           </div>
           <div className="text-center p-4 rounded-xl bg-background/50 border border-border/50">
             <div className="text-3xl font-bold text-primary mb-1">
-              {formatCount(stats?.bookingsCount)}
+              {formatCount(stats?.citiesCount)}
             </div>
             <div className="text-sm text-muted-foreground">
-              {t("marketplace.home.testimonials.stats.bookingsCompleted", "Bookings completed")}
+              {t("marketplace.stats.cities", "Cities")}
             </div>
           </div>
         </div>

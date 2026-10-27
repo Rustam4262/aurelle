@@ -60,6 +60,7 @@ async function main() {
     const body={salonId:salonIds[0],serviceId:serviceIds[0],bookingDate,startTime:'10:00',endTime:'99:99',priceSnapshot:1};
     const booked=await request('/api/bookings','POST',body);
     assert.equal(booked.status,201,JSON.stringify(booked.data));
+    assert.equal(booked.data.bookingDate.slice(0,10),bookingDate,'stored booking keeps selected calendar day');
     assert.equal(booked.data.endTime,'10:30'); assert.equal(booked.data.priceSnapshot,50000);
     assert.equal((await request('/api/bookings','POST',body)).status,409,'overlap rejected');
     assert.equal((await request('/api/bookings','POST',{...body,startTime:'17:45'})).status,409,'closing hours');
@@ -95,3 +96,4 @@ async function main() {
   }
 }
 main().catch(error=>{ console.error(error.message); process.exitCode=1; });
+

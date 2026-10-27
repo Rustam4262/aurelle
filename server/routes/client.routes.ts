@@ -1,3 +1,7 @@
+import { cancelClientBooking } from "../lib/booking-cancellation";
+import { createReviewHandler } from "./reviews.routes";
+import { verifyCsrf } from "../middleware/csrf";
+import { createLimiter } from "../middleware/rateLimiter";
 ﻿import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import { db } from "../db";
@@ -383,6 +387,22 @@ router.get("/bookings", isAuthenticated, async (req: any, res) => {
   }
 });
 
+/**
+ * DELETE /api/client/bookings/draft
+ * Clear the user's booking draft (e.g. user cancelled the booking flow).
+ */
+router.delete("/bookings/draft", isAuthenticated, async (req: any, res) => {
+  const userId: string = req.user.claims.sub;
+  try {
+    await db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId));
+    return res.json({ ok: true });
+
+  } catch (err) {
+    logger.error("Delete booking draft error", err as Error);
+    return res.status(500).json({ error: "Failed to delete draft" });
+  }
+});
+
 // Cancel client booking
 router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
   try {
@@ -398,34 +418,10 @@ router.delete("/bookings/:id", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    const [booking] = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.id, id),
-          inArray(bookings.clientId, result.profile ? [userId, result.profile.id] : [userId]),
-        ),
-      );
-
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    const bookingDate = new Date(booking.bookingDate);
-    if (bookingDate < new Date()) {
-      return res.status(400).json({ error: "Cannot cancel past bookings" });
-    }
-
-    if (booking.status === "cancelled" || booking.status === "completed") {
-      return res.status(400).json({ error: "Booking is already cancelled or completed" });
-    }
-
-    const [updated] = await db
-      .update(bookings)
-      .set({ status: "cancelled", updatedAt: new Date() })
-      .where(eq(bookings.id, id))
-      .returning();
+    const cancellation = await cancelClientBooking(id, [userId, result.profile.id]);
+    if (!cancellation.ok) return res.status(cancellation.status).json({ error: cancellation.error });
+    const booking = cancellation.booking;
+    const updated = booking;
 
     cancelBookingReminders(updated.id).catch((err) =>
       logger.error("Failed to cancel reminders", {
@@ -668,7 +664,7 @@ router.get("/reviews", isAuthenticated, async (req: any, res) => {
     const clientReviews = await db
       .select()
       .from(reviews)
-      .where(eq(reviews.clientId, userId))
+      .where(inArray(reviews.clientId, result.profile ? [userId, result.profile.id] : [userId]))
       .orderBy(desc(reviews.createdAt));
 
     // Get salon and master info for each review
@@ -692,87 +688,10 @@ router.get("/reviews", isAuthenticated, async (req: any, res) => {
 });
 
 // Create a new review
-router.post("/reviews", isAuthenticated, async (req: any, res) => {
-  try {
-    const userId = req.user.claims.sub;
-    const result = await getClientFromUser(userId);
-
-    if ("error" in result) {
-      return res.status(result.status).json({ error: result.error });
-    }
-
-    const reviewSchema = z.object({
-      bookingId: z.string().uuid(),
-      rating: z.number().min(1).max(5),
-      comment: z.string().max(1000).optional(),
-    });
-
-    const parsed = reviewSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid review data", details: parsed.error.errors });
-    }
-
-    const { bookingId, rating, comment } = parsed.data;
-
-    // Get the booking to verify it belongs to this user and is completed
-    const [booking] = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.id, bookingId),
-          inArray(bookings.clientId, result.profile ? [userId, result.profile.id] : [userId]),
-        ),
-      );
-
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    if (booking.status !== "completed") {
-      return res.status(400).json({ error: "Can only review completed bookings" });
-    }
-
-    // Check if review already exists for this booking
-    const [existingReview] = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.bookingId, bookingId));
-
-    if (existingReview) {
-      return res.status(400).json({ error: "You have already reviewed this booking" });
-    }
-
-    // Create the review
-    const [newReview] = await db
-      .insert(reviews)
-      .values({
-        clientId: userId,
-        salonId: booking.salonId,
-        masterId: booking.masterId,
-        bookingId: bookingId,
-        rating,
-        comment: comment || null,
-      })
-      .returning();
-
-    // Update salon and master ratings
-    if (booking.salonId) {
-      await updateSalonRating(booking.salonId);
-    }
-    if (booking.masterId) {
-      await updateMasterRating(booking.masterId);
-    }
-
-    return res.status(201).json(newReview);
-  } catch (error) {
-    logger.error("Create review error:", error);
-    return res.status(500).json({ error: "Failed to create review" });
-  }
-});
+router.post("/reviews", verifyCsrf, createLimiter, isAuthenticated, createReviewHandler);
 
 // Edit review (within 30 minutes)
-router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
+router.put("/reviews/:id", verifyCsrf, isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
     const { id } = req.params;
@@ -785,7 +704,7 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
     const [review] = await db
       .select()
       .from(reviews)
-      .where(and(eq(reviews.id, id), eq(reviews.clientId, userId)));
+      .where(and(eq(reviews.id, id), inArray(reviews.clientId, result.profile ? [userId, result.profile.id] : [userId])));
 
     if (!review) {
       return res.status(404).json({ error: "Review not found" });
@@ -801,7 +720,7 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
     }
 
     const reviewSchema = z.object({
-      rating: z.number().min(1).max(5).optional(),
+      rating: z.number().int().min(1).max(5).optional(),
       comment: z.string().max(1000).optional(),
     });
 
@@ -832,7 +751,7 @@ router.put("/reviews/:id", isAuthenticated, async (req: any, res) => {
 });
 
 // Delete review (within 30 minutes)
-router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
+router.delete("/reviews/:id", verifyCsrf, isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.user.claims.sub;
     const { id } = req.params;
@@ -845,7 +764,7 @@ router.delete("/reviews/:id", isAuthenticated, async (req: any, res) => {
     const [review] = await db
       .select()
       .from(reviews)
-      .where(and(eq(reviews.id, id), eq(reviews.clientId, userId)));
+      .where(and(eq(reviews.id, id), inArray(reviews.clientId, result.profile ? [userId, result.profile.id] : [userId])));
 
     if (!review) {
       return res.status(404).json({ error: "Review not found" });
@@ -1154,19 +1073,6 @@ router.post("/bookings/draft", isAuthenticated, async (req: any, res) => {
   }
 });
 
-/**
- * DELETE /api/bookings/draft
- * Clear the user's booking draft (e.g. user cancelled the booking flow).
- */
-router.delete("/bookings/draft", isAuthenticated, async (req: any, res) => {
-  const userId: string = req.user.claims.sub;
-  try {
-    await db.delete(bookingDrafts).where(eq(bookingDrafts.userId, userId));
-    return res.json({ ok: true });
-  } catch (err) {
-    logger.error("Delete booking draft error", err as Error);
-    return res.status(500).json({ error: "Failed to delete draft" });
-  }
-});
+
 
 export default router;

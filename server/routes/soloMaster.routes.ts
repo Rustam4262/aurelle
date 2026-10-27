@@ -599,6 +599,52 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
   }
 });
 
+// Reorder services
+router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const master = await getSoloMaster(userId);
+
+    if (!master) {
+      return res.status(404).json({ error: "Solo master profile not found" });
+    }
+
+    const reorderSchema = z.object({
+      serviceIds: z.array(z.string().min(1).max(200)).min(1).max(1000)
+        .refine(ids => new Set(ids).size === ids.length, "Service IDs must be unique"),
+    });
+
+    const parsed = reorderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+    }
+
+    const reordered = await db.transaction(async tx => {
+      // Serialize reorder operations for this master, then lock the selected rows.
+      const [ownedMaster] = await tx.select({ id: masters.id }).from(masters)
+        .where(and(eq(masters.id, master.id), eq(masters.userId, userId), eq(masters.isSoloMaster, true)))
+        .for("update");
+      if (!ownedMaster) return false;
+      const ownedServices = await tx.select({ id: soloMasterServices.id }).from(soloMasterServices)
+        .where(and(eq(soloMasterServices.masterId, master.id), inArray(soloMasterServices.id, parsed.data.serviceIds)))
+        .orderBy(soloMasterServices.id).for("update");
+      if (ownedServices.length !== parsed.data.serviceIds.length) return false;
+      for (let index = 0; index < parsed.data.serviceIds.length; index++) {
+        const id = parsed.data.serviceIds[index];
+        await tx.update(soloMasterServices).set({ displayOrder: index })
+          .where(and(eq(soloMasterServices.id, id), eq(soloMasterServices.masterId, master.id)));
+      }
+      return true;
+    });
+    if (!reordered) return res.status(404).json({ error: "Service not found" });
+
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error("Reorder services error:", error);
+    return res.status(500).json({ error: "Failed to reorder services" });
+  }
+});
+
 // Update service
 router.put("/services/:id", isAuthenticated, async (req: any, res) => {
   try {
@@ -712,42 +758,6 @@ router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
   } catch (error) {
     logger.error("Delete service error:", error);
     return res.status(500).json({ error: "Failed to delete service" });
-  }
-});
-
-// Reorder services
-router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
-  try {
-    const userId = req.user.claims.sub;
-    const master = await getSoloMaster(userId);
-
-    if (!master) {
-      return res.status(404).json({ error: "Solo master profile not found" });
-    }
-
-    const reorderSchema = z.object({
-      serviceIds: z.array(z.string()),
-    });
-
-    const parsed = reorderSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
-    }
-
-    // Update display order for each service
-    await Promise.all(
-      parsed.data.serviceIds.map((id, index) =>
-        db
-          .update(soloMasterServices)
-          .set({ displayOrder: index })
-          .where(and(eq(soloMasterServices.id, id), eq(soloMasterServices.masterId, master.id))),
-      ),
-    );
-
-    return res.json({ success: true });
-  } catch (error) {
-    logger.error("Reorder services error:", error);
-    return res.status(500).json({ error: "Failed to reorder services" });
   }
 });
 

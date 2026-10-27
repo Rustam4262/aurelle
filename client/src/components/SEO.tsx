@@ -1,4 +1,6 @@
 import { Helmet } from "react-helmet-async";
+import { canonicalUrl as getCanonicalUrl, documentPolicy } from "@shared/seo-policy";
+import { splitLanguage } from "@shared/public-seo";
 
 export interface SEOProps {
   title?: string;
@@ -31,6 +33,9 @@ const defaultProps: Partial<SEOProps> = {
 };
 
 export function SEO(props: SEOProps) {
+  // Localized public documents have a shared server/client metadata owner.
+  if (typeof window !== "undefined" && splitLanguage(window.location.pathname).localized)
+    return null;
   const {
     title,
     description = defaultProps.description,
@@ -53,7 +58,7 @@ export function SEO(props: SEOProps) {
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const currentUrl =
     url || (typeof window !== "undefined" ? window.location.href : "https://aurelle.uz");
-  const canonicalUrl = canonical || currentUrl;
+  const canonicalUrl = getCanonicalUrl(canonical || currentUrl);
 
   return (
     <Helmet>
@@ -65,13 +70,15 @@ export function SEO(props: SEOProps) {
       <link rel="canonical" href={canonicalUrl} />
 
       {/* Robots */}
-      {noIndex && <meta name="robots" content="noindex, nofollow" />}
+      {(noIndex || documentPolicy(currentUrl).noIndex) && (
+        <meta name="robots" content="noindex, follow" />
+      )}
 
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={currentUrl} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:image" content={image} />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content={locale} />

@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/queryClient";
 import { useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -228,11 +229,9 @@ export function PortfolioUpload({
         if (image.description) formData.append("description", image.description);
         if (image.category) formData.append("category", image.category);
 
-        const response = await fetch(`/api/portfolio/master/${masterId}`, {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
+        let response: Response;
+        try { response = await apiRequest("POST", "/api/upload/portfolio", formData); }
+        finally { clearInterval(progressInterval); }
 
         clearInterval(progressInterval);
 
@@ -241,6 +240,7 @@ export function PortfolioUpload({
         }
 
         const data = await response.json();
+        await apiRequest("POST", "/api/master/portfolio", { imageUrl: data.url, description: {ru: image.description || image.title || "", uz: "", en: ""} });
         uploadedUrls.push(data.url);
 
         // Mark as uploaded

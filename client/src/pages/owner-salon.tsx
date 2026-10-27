@@ -1,3 +1,6 @@
+import { getCsrfToken } from "@/lib/queryClient";
+import { MessengerLink } from "@/components/messenger-link";
+import { BackButton } from "@/components/back-button";
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
 import { Link, useLocation, useParams, useSearch } from "wouter";
@@ -202,7 +205,7 @@ async function patchJson<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "PATCH",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
     body: JSON.stringify(body),
   });
   if (response.status === 401) throw new Error("unauthorized");
@@ -654,7 +657,7 @@ export default function OwnerSalonPage() {
       const response = await fetch("/api/owner/support/tickets", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
         body: JSON.stringify({
           subject: `${supportDraft.subject.trim()} · ${salonName}`,
           category: supportDraft.category.trim(),
@@ -697,7 +700,7 @@ export default function OwnerSalonPage() {
       const response = await fetch(`/api/owner/support/tickets/${selectedTicketId}/messages`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
         body: JSON.stringify({ message: supportReply.trim() }),
       });
       if (response.status === 401) throw new Error("unauthorized");
@@ -812,11 +815,7 @@ export default function OwnerSalonPage() {
       <div className="border-b border-border/70 bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/owner">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+            <BackButton fallback="/owner" />
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
                 Рабочее пространство салона
@@ -825,6 +824,7 @@ export default function OwnerSalonPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
             <Button
               variant="outline"

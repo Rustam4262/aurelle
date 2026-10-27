@@ -6,8 +6,8 @@
  * Config (in .env):
  *   ADMIN_ALLOWED_IPS=1.2.3.4,5.6.7.8,::1
  *
- * If ADMIN_ALLOWED_IPS is empty or not set → restriction is DISABLED (all IPs allowed).
- * This lets the feature be toggled without a code deploy.
+ * ADMIN_IP_RESTRICTION=false explicitly disables the IP gate.
+ * When enabled, missing/invalid configuration fails closed.
  *
  * Blocked attempts are logged to audit_logs for visibility.
  */
@@ -16,32 +16,8 @@ import type { Request, Response, NextFunction } from "express";
 import { logger } from "../lib/logger";
 import { db } from "../db";
 import { auditLogs } from "@shared/admin-schema";
-
-let _allowedIps: Set<string> | null = null;
-
-/** Parse ADMIN_ALLOWED_IPS at most once per process. */
-function getAllowedIps(): Set<string> | null {
-  if (_allowedIps !== null) return _allowedIps;
-
-  const raw = process.env.ADMIN_ALLOWED_IPS ?? "";
-  const ips = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  _allowedIps = ips.length > 0 ? new Set(ips) : new Set<string>();
-  return _allowedIps;
-}
-
-/** Extract the real client IP, accounting for proxies (X-Forwarded-For). */
-function getClientIp(req: Request): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (forwarded) {
-    const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(",")[0].trim();
-    if (first) return first;
-  }
-  return req.socket.remoteAddress ?? req.ip ?? "unknown";
-}
+import { getClientIp } from "../lib/request-ip";
+import { adminIpPolicy } from "../lib/admin-ip-policy";
 
 /**
  * Middleware: block requests to /api/admin/* from non-whitelisted IPs.
@@ -52,17 +28,20 @@ export async function requireAdminIp(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const allowed = getAllowedIps();
+  const policy = adminIpPolicy(process.env);
 
-  // Feature disabled — no IPs configured
-  if (!allowed || allowed.size === 0) {
+  if (!policy.valid) {
+    res.status(503).json({ error: "Admin access configuration unavailable" });
+    return;
+  }
+  if (!policy.enabled) {
     next();
     return;
   }
 
-  const clientIp = getClientIp(req);
+  const clientIp = getClientIp(req) ?? "unknown";
 
-  if (allowed.has(clientIp)) {
+  if (policy.allowed.has(clientIp)) {
     next();
     return;
   }

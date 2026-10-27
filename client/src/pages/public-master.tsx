@@ -1,6 +1,9 @@
+import { MessengerLink } from "@/components/messenger-link";
+import { goBackOrNavigate } from "@/lib/safe-back";
+import { matchesAudience } from "@shared/service-audience";
 import { AudienceLabel, useAudience } from "@/components/audience-provider";
-import { useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -45,6 +48,7 @@ import { ru, enUS, uz } from "date-fns/locale";
 
 interface MasterData {
   id: string;
+  userId?: string | null;
   name: string;
   slug: string;
   bio: { en: string; ru: string; uz: string } | null;
@@ -84,6 +88,7 @@ interface ServiceData {
 }
 
 interface ReviewData {
+  masterResponse?: string | null;
   id: string;
   rating: number;
   comment: string | null;
@@ -103,11 +108,15 @@ export default function PublicMasterPage() {
   const { slug } = useParams<{ slug: string }>();
   const { audience } = useAudience();
   const [showAllServices, setShowAllServices] = useState(false);
+  const [activeTab, setActiveTab] = useState("services");
+  const servicesTabsRef = useRef<HTMLDivElement>(null);
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language as "en" | "ru" | "uz";
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const restoredService = useRef(false);
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceData | null>(null);
@@ -147,7 +156,7 @@ export default function PublicMasterPage() {
     enabled: !!slug && !!master,
   });
   const primaryService = services?.find(
-    (service) => showAllServices || service.audience === audience || service.audience === "unisex",
+    (service) => showAllServices || matchesAudience(service.audience, audience),
   );
 
   // Fetch reviews
@@ -162,16 +171,20 @@ export default function PublicMasterPage() {
   });
 
   // Fetch availability for selected date
-  const { data: availability, isLoading: availabilityLoading } = useQuery<AvailabilityData>({
+  const {
+    data: availability,
+    isFetching: availabilityLoading,
+    isError: availabilityError,
+  } = useQuery<AvailabilityData>({
     queryKey: [
       `/api/masters/${slug}/availability`,
-      selectedDate?.toISOString(),
+      selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
       selectedService?.id,
     ],
     queryFn: async () => {
       const res = await apiRequest(
         "GET",
-        `/api/masters/${slug}/availability?date=${selectedDate?.toISOString()}&serviceId=${selectedService?.id || ""}`,
+        `/api/masters/${slug}/availability?date=${selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined}&serviceId=${selectedService?.id || ""}`,
       );
       if (!res.ok) throw new Error("Failed to fetch availability");
       return res.json();
@@ -196,7 +209,7 @@ export default function PublicMasterPage() {
       const res = await apiRequest("POST", "/api/bookings", {
         masterId: master?.id,
         soloMasterServiceId: selectedService.id,
-        bookingDate: selectedDate.toISOString(),
+        bookingDate: format(selectedDate, "yyyy-MM-dd"),
         startTime: selectedTime,
         endTime,
         priceSnapshot:
@@ -227,10 +240,24 @@ export default function PublicMasterPage() {
       setBookingNotes("");
       queryClient.invalidateQueries({ queryKey: [`/api/masters/${slug}/availability`] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error & { code?: string }) => {
+      const bookingCodes = [
+        "BOOKING_SERVICE_UNAVAILABLE",
+        "BOOKING_SCHEDULE_UNAVAILABLE",
+        "BOOKING_DATE_IN_PAST",
+        "BOOKING_OUTSIDE_WORKING_HOURS",
+        "BOOKING_TIME_UNAVAILABLE",
+      ];
+      const knownError = !!error.code && bookingCodes.includes(error.code);
+      if (knownError) {
+        setSelectedTime(null);
+        queryClient.invalidateQueries({ queryKey: [`/api/masters/${slug}/availability`] });
+      }
       toast({
-        title: t("common.error", "Error"),
-        description: error.message,
+        title: t("marketplace.salon.bookingFailed"),
+        description: knownError
+          ? t(`marketplace.salon.errors.${error.code}`)
+          : t("marketplace.client.error"),
         variant: "destructive",
       });
     },
@@ -283,11 +310,12 @@ export default function PublicMasterPage() {
 
   const handleBookService = (service: ServiceData) => {
     if (!user) {
-      // Full service/master/date-time restoration is only wired up for the
-      // salon booking flow (client/src/pages/salon.tsx); this at least
-      // returns the guest to this master's own page instead of a bare /auth.
+      // Preserve the selected service and language through the guest login flow.
       try {
-        sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+        sessionStorage.setItem(
+          "redirectAfterLogin",
+          `${window.location.pathname}?serviceId=${encodeURIComponent(service.id)}`,
+        );
       } catch {
         // sessionStorage unavailable — fall back to the default post-login route.
       }
@@ -300,6 +328,38 @@ export default function PublicMasterPage() {
     setIsMobileBooking(false);
     setDistanceInfo({ status: "idle" });
     setBookingDialogOpen(true);
+  };
+
+  useEffect(() => {
+    if (restoredService.current || authLoading || !master || !services) return;
+    const serviceId = new URLSearchParams(search).get("serviceId");
+    if (!serviceId) return;
+    restoredService.current = true;
+    const service = services.find((s) => s.id === serviceId);
+    if (service) {
+      setShowAllServices(true);
+      handleBookService(service);
+      if (user) navigate(window.location.pathname, { replace: true });
+    }
+    // A URL service is restored once, after account and service data are available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user, master, services, search]);
+
+  const handleBookNow = () => {
+    if (primaryService) {
+      handleBookService(primaryService);
+      return;
+    }
+    // Let the client explicitly choose from all services when the audience filter
+    // hides them; never silently book an unrelated service or disable this entry point.
+    setShowAllServices(true);
+    setActiveTab("services");
+    requestAnimationFrame(() => {
+      servicesTabsRef.current
+        ?.querySelector<HTMLElement>('[role="tab"]')
+        ?.focus({ preventScroll: true });
+      servicesTabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const getDateLocale = () => {
@@ -329,7 +389,7 @@ export default function PublicMasterPage() {
           <h2 className="font-serif text-2xl text-foreground mb-4">
             {t("publicMaster.notFound", "Master not found")}
           </h2>
-          <Button onClick={() => navigate("/")} className="w-full">
+          <Button onClick={() => goBackOrNavigate(navigate, "/")} className="w-full">
             {t("publicMaster.goHome", "Go Home")}
           </Button>
         </Card>
@@ -407,12 +467,13 @@ export default function PublicMasterPage() {
 
               {/* Primary CTA — always visible */}
               <div className="flex flex-wrap gap-3 mt-4">
+                {master.userId && <MessengerLink recipientId={master.userId} />}
                 {services && services.length > 0 ? (
                   <Button
                     size="lg"
                     className="gap-2 shadow-lg shadow-primary/20"
-                    onClick={() => primaryService && handleBookService(primaryService)}
-                    disabled={!primaryService}
+                    onClick={handleBookNow}
+                    disabled={authLoading}
                   >
                     <CalendarIcon className="h-5 w-5" />
                     {t("publicMaster.bookNow", "Book Now")}
@@ -449,7 +510,12 @@ export default function PublicMasterPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Tabs defaultValue="services" className="w-full">
+            <Tabs
+              ref={servicesTabsRef}
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full scroll-mt-4"
+            >
               <TabsList className="w-full justify-start mb-6 bg-transparent border-b rounded-none h-auto p-0">
                 <TabsTrigger
                   value="services"
@@ -483,17 +549,14 @@ export default function PublicMasterPage() {
                 </div>
                 {!showAllServices &&
                   services &&
-                  !services.some((s) => s.audience === audience || s.audience === "unisex") && (
+                  !services.some((s) => matchesAudience(s.audience, audience)) && (
                     <p className="mb-4 text-muted-foreground">{t("audience.empty")}</p>
                   )}
                 {services && services.length > 0 ? (
                   <div className="space-y-4">
                     {services
                       .filter(
-                        (service) =>
-                          showAllServices ||
-                          service.audience === audience ||
-                          service.audience === "unisex",
+                        (service) => showAllServices || matchesAudience(service.audience, audience),
                       )
                       .map((service) => (
                         <Card key={service.id} className="overflow-hidden">
@@ -503,6 +566,13 @@ export default function PublicMasterPage() {
                                 <h3 className="font-semibold text-lg">
                                   {getLocalizedText(service.name, currentLang)}
                                 </h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {t(
+                                    service.audience
+                                      ? `audience.${service.audience}`
+                                      : "audience.askSpecialist",
+                                  )}
+                                </p>
                                 {service.description && (
                                   <p className="text-muted-foreground text-sm mt-1">
                                     {getLocalizedText(service.description, currentLang)}
@@ -632,6 +702,7 @@ export default function PublicMasterPage() {
                               })}
                             </div>
                           </div>
+                          {review.masterResponse && <div className="mt-3 rounded-lg bg-muted p-3"><p className="font-medium text-sm">{t("employeeMaster.response")}</p><p className="whitespace-pre-wrap break-words">{review.masterResponse}</p></div>}
                           {review.comment && (
                             <p className="mt-3 text-muted-foreground">{review.comment}</p>
                           )}
@@ -655,8 +726,8 @@ export default function PublicMasterPage() {
                 <Button
                   className="w-full mb-6 font-medium shadow-lg shadow-primary/20"
                   size="lg"
-                  onClick={() => primaryService && handleBookService(primaryService)}
-                  disabled={!primaryService}
+                  onClick={handleBookNow}
+                  disabled={authLoading}
                 >
                   <CalendarIcon className="h-5 w-5 mr-2" />
                   {t("publicMaster.bookNow", "Book Now")}
@@ -895,7 +966,9 @@ export default function PublicMasterPage() {
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
-                ) : availability?.available && availability.slots.length > 0 ? (
+                ) : !availabilityError &&
+                  availability?.available &&
+                  availability.slots.some((slot) => slot.available) ? (
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {availability.slots
                       .filter((slot) => slot.available)
@@ -913,7 +986,9 @@ export default function PublicMasterPage() {
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">
-                    {availability?.message || t("publicMaster.noSlots", "No available time slots")}
+                    {availabilityError
+                      ? t("marketplace.client.error")
+                      : t("publicMaster.noSlots", "No available time slots")}
                   </p>
                 )}
               </div>
@@ -987,6 +1062,8 @@ export default function PublicMasterPage() {
               disabled={
                 !selectedDate ||
                 !selectedTime ||
+                availabilityLoading ||
+                availabilityError ||
                 createBookingMutation.isPending ||
                 (isMobileBooking && distanceInfo.status === "out_of_range")
               }

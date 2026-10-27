@@ -1,7 +1,9 @@
+import { MessengerLink } from "@/components/messenger-link";
+import { BackButton } from "@/components/back-button";
 import { useEffect, useMemo, useState } from "react";
 import i18n from "@/lib/i18n";
 import { getCsrfToken } from "@/lib/queryClient";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -231,7 +233,7 @@ async function patchJson<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "PATCH",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
     body: JSON.stringify(body),
   });
   if (response.status === 401) throw new Error("unauthorized");
@@ -243,7 +245,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
     body: JSON.stringify(body),
   });
   if (response.status === 401) throw new Error("unauthorized");
@@ -307,6 +309,7 @@ export default function OwnerPage() {
   const { toast } = useToast();
   const { user, isLoading, logout, isLoggingOut } = useAuth({ requireAuth: true });
   const [location, setLocation] = useLocation();
+  const search = useSearch();
   const t = i18n.t.bind(i18n);
   const language = i18n.language || "ru";
 
@@ -341,7 +344,7 @@ export default function OwnerPage() {
 
   useEffect(() => {
     setActiveSection(readOwnerSection());
-  }, [location]);
+  }, [location, search]);
 
   const loadOwnerWorkspace = async () => {
     setError(null);
@@ -673,11 +676,7 @@ export default function OwnerPage() {
       <div className="border-b border-border/70 bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+            <BackButton fallback="/" />
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">AURELLE</p>
               <h1 className="truncate font-serif text-2xl text-foreground">
@@ -686,6 +685,7 @@ export default function OwnerPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
             <Button
               variant="outline"

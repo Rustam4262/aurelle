@@ -1,3 +1,4 @@
+import { MessengerLink } from "@/components/messenger-link";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -490,6 +491,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="mb-2 flex items-center gap-2">
+              <MessengerLink userId={user?.id} />
               <LanguageSwitcher variant="outline" className="h-8 flex-1 text-xs" />
               <ThemeToggle />
             </div>
@@ -598,6 +600,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="hidden items-center gap-2 lg:flex">
+                  <MessengerLink userId={user?.id} />
                   <LanguageSwitcher variant="outline" className="h-10" />
                   <ThemeToggle />
                   <Button

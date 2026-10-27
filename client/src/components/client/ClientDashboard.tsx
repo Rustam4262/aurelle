@@ -28,12 +28,13 @@ function getLocalizedName(name: LocalizedName | undefined, lang: string): string
 }
 
 interface ClientDashboardProps {
+  hideQuickActions?: boolean;
   bookings?: EnrichedBooking[];
   favorites?: EnrichedFavorite[];
   onNavigateToTab: (tab: string) => void;
 }
 
-export function ClientDashboard({ bookings, favorites, onNavigateToTab }: ClientDashboardProps) {
+export function ClientDashboard({ bookings, favorites, onNavigateToTab, hideQuickActions = false }: ClientDashboardProps) {
   const { t, i18n } = useTranslation();
 
   const getLocale = () => {
@@ -81,7 +82,7 @@ export function ClientDashboard({ bookings, favorites, onNavigateToTab }: Client
   return (
     <div className="space-y-6">
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {!hideQuickActions && <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link href="/">
           <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group">
             <div className="flex items-center gap-3">
@@ -117,7 +118,7 @@ export function ClientDashboard({ bookings, favorites, onNavigateToTab }: Client
             </div>
           </div>
         </Card>
-      </div>
+      </div>}
 
       {/* Upcoming Bookings */}
       {upcomingBookings && upcomingBookings.length > 0 && (

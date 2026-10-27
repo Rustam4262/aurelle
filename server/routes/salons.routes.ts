@@ -97,23 +97,14 @@ router.get("/stats/public", async (_req, res) => {
         averageRating: sql<string>`COALESCE(ROUND(AVG(${reviews.rating})::numeric, 1), 0)::text`,
       })
       .from(reviews)
-      .where(sql`(${reviews.isHidden} IS NOT TRUE)`);
-
-    const [bookingStats] = await db
-      .select({
-        bookingsCount: sql<number>`COUNT(*)`,
-        clientsCount: sql<number>`COUNT(DISTINCT ${bookings.clientId})`,
-      })
-      .from(bookings)
-      .where(ne(bookings.status, "cancelled"));
+      .innerJoin(salons, eq(reviews.salonId, salons.id))
+      .where(and(publicSalonWhere, sql`(${reviews.isHidden} IS NOT TRUE)`));
 
     return res.json({
       salonsCount: Number(stats?.salonsCount ?? 0),
       citiesCount: Number(stats?.citiesCount ?? 0),
       reviewsCount: Number(reviewStats?.reviewsCount ?? 0),
       averageRating: Number(reviewStats?.averageRating ?? 0),
-      bookingsCount: Number(bookingStats?.bookingsCount ?? 0),
-      clientsCount: Number(bookingStats?.clientsCount ?? 0),
     });
   } catch (error) {
     logger.error("Get public marketplace stats error:", error);

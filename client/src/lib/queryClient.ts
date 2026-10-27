@@ -18,7 +18,11 @@ let _adminRedirectInProgress = false;
 export function getCsrfToken(): string {
   if (typeof document === "undefined") return "";
   const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : "";
+  try {
+    return match ? decodeURIComponent(match[1]) : "";
+  } catch {
+    return "";
+  }
 }
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -83,8 +87,8 @@ export async function apiRequest(
   try {
     const res = await fetch(`${BASE_URL}${url}`, {
       method,
-      headers: buildHeaders(method, !!data),
-      body: data ? JSON.stringify(data) : undefined,
+      headers: buildHeaders(method, !!data && !(data instanceof FormData)),
+      body: data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
       credentials: "include",
       signal: controller.signal,
     });

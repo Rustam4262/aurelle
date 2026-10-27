@@ -30,7 +30,7 @@ export function MasterPortfolioTab({
             <Plus className="h-5 w-5" />
             {t("marketplace.master.addPhoto")}
           </h3>
-          <p className="text-sm text-muted-foreground">Upload your work to showcase your skills</p>
+          <p className="text-sm text-muted-foreground">{t("employeeMaster.portfolioHint")}</p>
         </div>
         <PortfolioUpload masterId={masterId} maxImages={10} onUploadSuccess={onRefresh} />
       </Card>

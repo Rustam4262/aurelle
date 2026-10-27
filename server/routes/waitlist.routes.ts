@@ -6,6 +6,7 @@ import { waitlist, insertWaitlistSchema, userProfiles, salons, services } from "
 import { eq, and, or } from "drizzle-orm";
 import { sendPushToUser } from "./push.routes";
 import { logger } from "../lib/logger";
+import { isValidWaitlistDate } from "../lib/waitlist-date";
 
 const router = Router();
 
@@ -28,6 +29,10 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid waitlist data", details: parsed.error.errors });
+    }
+
+    if (!isValidWaitlistDate(parsed.data.preferredDate)) {
+      return res.status(400).json({ error: "Preferred date must be a valid date today or later" });
     }
 
     // Check if already in waitlist for this slot
