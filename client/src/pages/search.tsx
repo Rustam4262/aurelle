@@ -95,18 +95,25 @@ function MasterCard({ master }: { master: PublicMaster }) {
 
   return (
     <Card
-      className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+      className="lift group cursor-pointer overflow-hidden rounded-[1.75rem] p-2"
       onClick={() => navigate(`/master/${master.slug}`)}
     >
-      <div className="relative h-40 bg-muted flex items-center justify-center">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-[1.4rem] bg-[radial-gradient(120%_80%_at_20%_10%,hsl(var(--primary)/0.35),transparent_60%),radial-gradient(100%_70%_at_90%_90%,hsl(15_90%_62%/0.25),transparent_60%)] bg-muted">
         {master.photo ? (
-          <img src={master.photo} alt={master.name} className="w-full h-full object-cover" />
+          <img
+            src={master.photo}
+            alt={master.name}
+            className="h-full w-full object-cover transition-transform [transition-duration:1200ms] ease-out-expo group-hover:scale-110"
+          />
         ) : (
-          <User className="h-16 w-16 text-muted-foreground opacity-40" />
+          <span className="font-serif text-7xl font-light text-foreground/30">
+            {master.name.charAt(0).toUpperCase()}
+          </span>
         )}
+        {!master.photo && <User className="absolute bottom-4 right-4 h-5 w-5 text-foreground/25" />}
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-foreground truncate">{master.name}</h3>
+      <div className="px-3 pb-2 pt-4">
+        <h3 className="font-serif text-xl text-foreground truncate">{master.name}</h3>
         {master.city && (
           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
             <MapPin className="h-3 w-3 flex-shrink-0" />
@@ -323,45 +330,30 @@ export default function SearchPage() {
   return (
     <>
       <SearchSEO />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         {/* Header */}
-        <div className="border-b border-border bg-gradient-to-r from-background to-primary/5">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <Button
-              variant="ghost"
-              size="sm"
+        <div className="relative isolate overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-dots [mask-image:radial-gradient(60%_80%_at_30%_0%,#000,transparent)]" />
+          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
+          <div className="max-w-7xl mx-auto px-6 pb-8 pt-8">
+            <button
               onClick={() => goBackOrNavigate(navigate, "/")}
-              className="mb-4 hover:bg-primary/10"
+              className="group mb-8 inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-card/60 py-1.5 pl-2 pr-4 text-sm font-medium text-muted-foreground backdrop-blur transition-colors hover:text-foreground"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-foreground/5 transition-transform duration-300 group-hover:-translate-x-0.5">
+                <ArrowLeft className="h-4 w-4" />
+              </span>
               {t("search.backToHome")}
-            </Button>
-            <div className="flex flex-wrap items-center gap-3">
-              {(["all", "women", "men"] as const).map((value) => (
-                <Button
-                  key={value}
-                  size="sm"
-                  variant={catalogAudience === value ? "default" : "outline"}
-                  aria-pressed={catalogAudience === value}
-                  onClick={() => {
-                    const params = new URLSearchParams(urlSearch);
-                    params.set("audience", value);
-                    navigate("/search?" + params.toString());
-                  }}
-                >
-                  {t(value === "all" ? "audience.catalog" : "audience." + value)}
-                </Button>
-              ))}
-            </div>
-            <p className="my-4 text-sm text-muted-foreground">{t("audience.catalogHint")}</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-serif text-4xl text-foreground mb-2">
+            </button>
+
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="animate-fade-up">
+                <h1 className="font-serif text-5xl font-light tracking-[-0.02em] text-foreground sm:text-6xl">
                   {activeTab === "masters"
                     ? t("search.mastersTitle") || "Мастера"
                     : t("marketplace.hero.search") || "Search Salons"}
                 </h1>
-                <p className="text-muted-foreground">{t("search.subtitle")}</p>
+                <p className="mt-3 text-lg text-muted-foreground">{t("search.subtitle")}</p>
               </div>
               <Button
                 variant="outline"
@@ -369,41 +361,64 @@ export default function SearchPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className="lg:hidden"
               >
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                <SlidersHorizontal className="h-4 w-4" />
                 {t("search.filters")}
                 {activeFiltersCount > 0 && (
-                  <Badge variant="default" className="ml-2 rounded-full px-2">
+                  <Badge variant="default" className="ml-1 px-2">
                     {activeFiltersCount}
                   </Badge>
                 )}
               </Button>
             </div>
 
-            {/* Tab switcher */}
-            <div className="flex gap-2 mt-4">
-              <Button
-                variant={activeTab === "salons" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTabChange("salons")}
-              >
-                {t("search.tabSalons") || "Салоны"}
-              </Button>
-              <Button
-                variant={activeTab === "masters" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTabChange("masters")}
-              >
-                {t("search.tabMasters") || "Мастера"}
-              </Button>
+            {/* Segmented controls: what to look for + for whom */}
+            <div className="mt-8 flex flex-wrap items-center gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
+              <div className="glass inline-flex rounded-full p-1">
+                {(["salons", "masters"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => handleTabChange(tab)}
+                    className={`rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ease-out-expo ${
+                      activeTab === tab
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                        : "text-foreground/70 hover:text-foreground"
+                    }`}
+                  >
+                    {tab === "salons"
+                      ? t("search.tabSalons") || "Салоны"
+                      : t("search.tabMasters") || "Мастера"}
+                  </button>
+                ))}
+              </div>
+              <div className="glass inline-flex rounded-full p-1">
+                {(["all", "women", "men"] as const).map((value) => (
+                  <button
+                    key={value}
+                    aria-pressed={catalogAudience === value}
+                    onClick={() => {
+                      const params = new URLSearchParams(urlSearch);
+                      params.set("audience", value);
+                      navigate("/search?" + params.toString());
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-out-expo ${
+                      catalogAudience === value
+                        ? "bg-card text-foreground shadow-md"
+                        : "text-foreground/60 hover:text-foreground"
+                    }`}
+                  >
+                    {t(value === "all" ? "audience.catalog" : "audience." + value)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto px-6 pb-16">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Filters Sidebar */}
             <div className={`lg:block ${showFilters ? "block" : "hidden"}`}>
-              <Card className="p-6 sticky top-6">
+              <Card className="glass sticky top-6 rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Filter className="h-5 w-5 text-primary" />

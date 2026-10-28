@@ -92,7 +92,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 
     const parsed = profileSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid profile data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid profile data", details: parsed.error.issues });
     }
 
     const normalizedData = {
@@ -155,7 +155,7 @@ router.post("/bookings", isAuthenticated, async (req: any, res) => {
 
     const parsed = bookingSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid booking data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid booking data", details: parsed.error.issues });
     }
 
     const { salonId, serviceId, masterId, bookingDate, startTime, notes } = parsed.data;
@@ -599,7 +599,7 @@ router.post("/master-favorites", isAuthenticated, async (req: any, res) => {
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
     }
 
     const { masterId } = parsed.data;
@@ -726,7 +726,7 @@ router.put("/reviews/:id", verifyCsrf, isAuthenticated, async (req: any, res) =>
 
     const parsed = reviewSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid review data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid review data", details: parsed.error.issues });
     }
 
     const [updated] = await db
@@ -846,7 +846,7 @@ router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
 
     const parsed = ticketSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.issues });
     }
 
     const { subject, category, message } = parsed.data;
@@ -942,7 +942,7 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
 
     const parsed = messageSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid message", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid message", details: parsed.error.issues });
     }
 
     const [newMessage] = await db
@@ -1007,7 +1007,7 @@ const draftSchema = z.object({
     .string()
     .regex(/^\d{2}:\d{2}$/)
     .optional(),
-  properties: z.record(z.unknown()).optional(),
+  properties: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
@@ -1042,7 +1042,7 @@ router.post("/bookings/draft", isAuthenticated, async (req: any, res) => {
   const userId: string = req.user.claims.sub;
   const parsed = draftSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid draft data", details: parsed.error.errors });
+    return res.status(400).json({ error: "Invalid draft data", details: parsed.error.issues });
   }
 
   try {

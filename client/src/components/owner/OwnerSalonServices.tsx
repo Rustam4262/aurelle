@@ -126,8 +126,8 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.addService")}</h3>
+      <Card className="rounded-3xl p-6 sm:p-7">
+        <h3 className="mb-5 font-serif text-2xl text-foreground">{t("marketplace.owner.addService")}</h3>
         <form onSubmit={handleAddService} className="space-y-4">
           <AudienceSelect
             value={newService.audience}
@@ -170,7 +170,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
               <select
                 value={newService.category}
                 onChange={(e) => setNewService({ ...newService, category: e.target.value })}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                className="h-11 w-full rounded-xl border border-input bg-card/70 px-4 text-sm shadow-xs transition-[border-color,box-shadow] duration-300 focus-visible:border-primary/60 focus-visible:outline-none focus-visible:shadow-[0_0_0_4px_hsl(var(--primary)/0.14)]"
                 data-testid="select-service-category"
               >
                 {SERVICE_CATEGORIES.map((cat) => (
@@ -229,12 +229,12 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
         </form>
       </Card>
 
-      <Card className="p-6">
-        <h3 className="font-medium text-foreground mb-4">{t("marketplace.owner.servicesList")}</h3>
+      <Card className="rounded-3xl p-6 sm:p-7">
+        <h3 className="mb-5 font-serif text-2xl text-foreground">{t("marketplace.owner.servicesList")}</h3>
         {servicesLoading ? (
           <div className="animate-pulse space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-muted rounded" />
+              <div key={i} className="shimmer h-16 rounded-2xl" />
             ))}
           </div>
         ) : services && services.length > 0 ? (
@@ -242,7 +242,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
             {services.map((service) => (
               <div
                 key={service.id}
-                className="flex flex-col gap-4 rounded-md bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-2xl border border-foreground/[0.06] bg-card/60 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                 data-testid={`service-item-${service.id}`}
               >
                 <div className="min-w-0">
@@ -263,7 +263,7 @@ export function OwnerSalonServices({ salonId }: OwnerSalonServicesProps) {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                  <span className="break-words font-medium text-foreground">
+                  <span className="break-words rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold tabular-nums text-primary">
                     {service.priceMin.toLocaleString()}{" "}
                     {service.priceMax ? `- ${service.priceMax.toLocaleString()}` : ""} UZS
                   </span>

@@ -952,13 +952,13 @@ export default function ClientPage() {
     notificationsQuery.isLoading;
 
   return (
-    <div className="audience-client-surface min-h-screen dark:bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.10),transparent_28%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_26%),linear-gradient(180deg,rgba(17,24,39,0.02),transparent_42%)] bg-background">
-      <div className="border-b border-border/70 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="audience-client-surface min-h-screen">
+      <div className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+        <div className="cabinet-topbar flex flex-col gap-4 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <BackButton fallback="/" />
             <div className="min-w-0">
-              <h1 className="font-serif text-xl leading-tight text-foreground sm:text-2xl">
+              <h1 className="font-serif text-2xl leading-tight tracking-[-0.01em] text-foreground sm:text-[1.7rem]">
                 {current.pageTitle}
               </h1>
               <p className="mt-1 text-sm leading-6 text-muted-foreground sm:max-w-2xl">
@@ -1006,13 +1006,10 @@ export default function ClientPage() {
           value={activeTab === "notifications" ? "messages" : activeTab}
           onValueChange={(value) => setActiveTab(value as CabinetTab)}
           orientation="vertical"
-          className="grid w-full items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]"
+          className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]"
         >
-          <aside
-            className="rounded-2xl border border-border/70 bg-card p-3 lg:sticky lg:top-6"
-            aria-label={current.pageTitle}
-          >
-            <TabsList className="flex h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
+          <aside className="cabinet-sidebar min-w-0 lg:sticky lg:top-28" aria-label={current.pageTitle}>
+            <TabsList className="flex h-auto w-full flex-row items-stretch justify-start gap-1 overflow-x-auto no-scrollbar bg-transparent p-0 lg:flex-col lg:overflow-visible">
               {[
                 ["overview", language === "ru" ? "Личный кабинет" : current.pageTitle, UserCircle2],
                 ["profile", current.profileCta, UserCircle2],
@@ -1035,15 +1032,15 @@ export default function ClientPage() {
                     key={id}
                     value={id}
                     className={
-                      "w-full justify-start gap-3 whitespace-normal rounded-xl px-3 py-3 text-left data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none " +
-                      (nested ? "pl-7 text-sm" : "font-semibold") +
-                      (id === "messages" ? " mt-3 border-t border-border/70" : "")
+                      "cabinet-nav-item w-auto shrink-0 justify-start whitespace-nowrap data-[state=active]:bg-transparent lg:w-full lg:whitespace-normal " +
+                      (nested ? "lg:pl-8" : "font-semibold") +
+                      (id === "messages" ? " lg:mt-3" : "")
                     }
                   >
                     <NavIcon className="h-4 w-4 shrink-0" />
                     <span className="flex-1">{label as string}</span>
                     {count ? (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                      <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground shadow-sm shadow-primary/40">
                         {count}
                       </span>
                     ) : null}
@@ -1055,11 +1052,11 @@ export default function ClientPage() {
           <div className="min-w-0">
             <TabsContent value="overview" className="mt-0 space-y-6">
               <section className="grid gap-5">
-                <Card className="overflow-hidden border-border/70 shadow-sm">
-                  <div className="bg-card dark:bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
-                    <div className="flex flex-col gap-5">
+                <Card className="overflow-hidden rounded-[2rem] border-0 bg-transparent p-0 shadow-none">
+                  <div className="cabinet-hero">
+                    <div className="relative flex flex-col gap-5">
                       <div className="flex items-center gap-4 min-w-0">
-                        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 ring-4 ring-background/80">
+                        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 ring-4 ring-primary/25 ring-offset-4 ring-offset-card shadow-glow">
                           <AvatarImage
                             src={profileData.avatarUrl || user.profileImageUrl || undefined}
                             alt={displayName}
@@ -1070,7 +1067,7 @@ export default function ClientPage() {
                           <p className="text-xs text-muted-foreground mb-1">
                             {current.heroEyebrow}
                           </p>
-                          <h2 className="font-serif text-2xl sm:text-3xl leading-tight break-words">
+                          <h2 className="font-serif text-3xl sm:text-4xl font-light leading-tight tracking-[-0.01em] break-words">
                             {displayName}
                           </h2>
                           <p className="mt-2 text-sm text-muted-foreground">
@@ -1110,7 +1107,7 @@ export default function ClientPage() {
                               key={action.id}
                               asChild
                               variant="outline"
-                              className="h-auto flex-col items-start sm:flex-row sm:items-center gap-2 justify-start rounded-2xl border-border/70 bg-background/70 px-3 py-3 text-left whitespace-normal"
+                              className="group h-auto flex-col items-start sm:flex-row sm:items-center gap-2.5 justify-start rounded-2xl border-foreground/10 bg-card/70 px-3.5 py-3.5 text-left whitespace-normal hover:-translate-y-0.5 hover:shadow-md"
                             >
                               <Link href={action.href}>
                                 <action.icon className="h-4 w-4 shrink-0" />
@@ -1123,7 +1120,7 @@ export default function ClientPage() {
                             <Button
                               key={action.id}
                               variant="outline"
-                              className="h-auto flex-col items-start sm:flex-row sm:items-center gap-2 justify-start rounded-2xl border-border/70 bg-background/70 px-3 py-3 text-left whitespace-normal"
+                              className="group h-auto flex-col items-start sm:flex-row sm:items-center gap-2.5 justify-start rounded-2xl border-foreground/10 bg-card/70 px-3.5 py-3.5 text-left whitespace-normal hover:-translate-y-0.5 hover:shadow-md"
                               onClick={() => action.tab && setActiveTab(action.tab)}
                             >
                               <action.icon className="h-4 w-4 shrink-0" />

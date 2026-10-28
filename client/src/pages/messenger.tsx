@@ -122,16 +122,16 @@ export default function MessengerPage() {
       </main>
     );
   return (
-    <main className="h-[100dvh] flex flex-col bg-background">
-      <header className="flex items-center gap-3 border-b px-4 py-3 shrink-0 bg-card">
+    <main className="page-backdrop h-[100dvh] flex flex-col gap-3 p-3 sm:p-4">
+      <header className="cabinet-topbar flex w-full max-w-none shrink-0 items-center gap-3 px-4 py-3">
         <BackButton />
         <MessageCircle className="text-primary" />
         <h1 className="text-xl font-semibold flex-1">{c.title}</h1>
         <LanguageSwitcher />
       </header>
-      <div className="flex flex-1 min-h-0 w-full max-w-[1440px] mx-auto border-x">
+      <div className="flex flex-1 min-h-0 w-full max-w-[1440px] mx-auto gap-3">
         <aside
-          className={`${selected && !creating ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 shrink-0 border-r min-h-0 bg-card/60`}
+          className={`${selected && !creating ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 shrink-0 min-h-0 glass rounded-[1.75rem] overflow-hidden`}
         >
           <div className="p-3">
             <Button
@@ -235,7 +235,7 @@ export default function MessengerPage() {
           </div>
         </aside>
         <section
-          className={`${!selected || creating ? "hidden md:flex" : "flex"} flex-col flex-1 min-w-0 min-h-0`}
+          className={`${!selected || creating ? "hidden md:flex" : "flex"} flex-col flex-1 min-w-0 min-h-0 glass rounded-[1.75rem] overflow-hidden`}
         >
           {chat && !creating ? (
             <Conversation
@@ -423,7 +423,7 @@ function Conversation({
           const e = viewport.current;
           if (e) stick.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100;
         }}
-        className="flex-1 min-h-0 overflow-y-auto p-4 md:px-8 space-y-3 bg-muted/10"
+        className="flex-1 min-h-0 overflow-y-auto p-4 md:px-8 space-y-3"
         aria-label={c.title}
       >
         {history.isPending && <p>{c.loading}</p>}
@@ -448,7 +448,7 @@ function Conversation({
         {messages.map((m) => (
           <article
             key={m.id}
-            className={`rounded-2xl p-3 w-fit max-w-[88%] md:max-w-[75%] ${m.senderId === me ? "ml-auto bg-primary text-primary-foreground" : "bg-muted"}`}
+            className={`w-fit max-w-[88%] rounded-3xl px-4 py-3 shadow-sm animate-fade-up md:max-w-[75%] ${m.senderId === me ? "ml-auto rounded-br-lg bg-primary bg-[linear-gradient(160deg,rgb(255_255_255/0.14),rgb(0_0_0/0.12))] text-primary-foreground shadow-md shadow-primary/25" : "rounded-bl-lg border border-foreground/[0.07] bg-card/80 backdrop-blur"}`}
           >
             {chat.kind === "group" && <p className="text-xs font-semibold mb-1">{m.senderName}</p>}
             <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{m.body}</p>

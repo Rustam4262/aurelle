@@ -3,7 +3,6 @@ import { matchesCategory } from "@shared/service-audience";
 import { useLocation } from "wouter";
 import { useAudience } from "@/components/audience-provider";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { LayoutGrid, Scissors, Paintbrush, Flower2, Brush } from "lucide-react";
 
 export const categories = [
@@ -36,45 +35,44 @@ export function HomeCategories() {
           )
       : categories;
 
+  const visible = ordered.filter(
+    (c) => c.id === "all" || available.some((category) => matchesCategory(category, c.id)),
+  );
+
+  // A lone "All" chip adds noise without helping anyone choose — hide the bar then.
+  if (visible.length <= 1) return null;
+
   return (
-    <section
-      className="py-4 sm:py-6 bg-background/80 backdrop-blur-md border-b border-border sticky top-nav z-40 shadow-sm"
-      data-testid="section-categories"
-    >
-      <div className="max-w-7xl mx-auto">
-        {/*
-         * The scroll container spans the full viewport width (no px on max-w wrapper).
-         * no-scrollbar hides the scrollbar (defined in index.css @layer utilities).
-         * Inner flex row uses px-4 sm:px-6 for edge breathing room and w-max to
-         * prevent wrapping — this gives clean horizontal scroll on mobile.
-         */}
-        <div className="overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 w-max pb-1">
-            {ordered
-              .filter(
-                (c) =>
-                  c.id === "all" || available.some((category) => matchesCategory(category, c.id)),
-              )
-              .map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  className={`flex-shrink-0 rounded-full gap-1.5 transition-all duration-300 ${
-                    selectedCategory === category.id
-                      ? "shadow-md scale-105"
-                      : "hover:bg-muted hover:border-primary/50"
+    <section className="sticky top-[calc(4.6rem+env(safe-area-inset-top,0px))] z-40 px-3 py-3 sm:px-5" data-testid="section-categories">
+      <div className="mx-auto max-w-fit overflow-x-auto no-scrollbar rounded-full glass p-1.5 shadow-lg shadow-black/5">
+        <div className="flex w-max items-center gap-1">
+          {visible.map((category, i) => {
+            const active = selectedCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                className={`group flex flex-shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-out-expo animate-fade-up ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                    : "text-foreground/75 hover:bg-card hover:text-foreground hover:shadow-sm"
+                }`}
+                style={{ animationDelay: `${i * 50}ms` }}
+                onClick={() =>
+                  navigate(category.id === "all" ? "/search" : `/search?category=${category.id}`)
+                }
+                data-testid={`button-category-${category.id}`}
+              >
+                <span
+                  className={`grid h-7 w-7 place-items-center rounded-full transition-transform duration-500 group-hover:rotate-12 ${
+                    active ? "bg-white/20" : "bg-primary/10 text-primary"
                   }`}
-                  onClick={() =>
-                    navigate(category.id === "all" ? "/search" : `/search?category=${category.id}`)
-                  }
-                  data-testid={`button-category-${category.id}`}
                 >
-                  <category.icon className="h-4 w-4" strokeWidth={1.75} />
-                  <span className="font-medium">{t(category.labelKey)}</span>
-                </Button>
-              ))}
-          </div>
+                  <category.icon className="h-3.5 w-3.5" strokeWidth={2} />
+                </span>
+                {t(category.labelKey)}
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -30,15 +30,30 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <Card className={className}>
-      <CardContent className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center">
-        <div className="rounded-full bg-muted p-4 mb-4">
-          <Icon className="h-8 w-8 text-muted-foreground" />
+    <Card
+      className={`relative overflow-hidden rounded-3xl border-2 border-dashed border-foreground/10 bg-card/50 ${className ?? ""}`}
+    >
+      {/* Glow via gradient (no filter/infinite animation: those broke text painting in Chromium) */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(40%_70%_at_50%_20%,hsl(var(--primary)/0.18),transparent_70%)]" />
+      <CardContent className="relative flex min-h-[300px] flex-col items-center justify-center p-8 text-center">
+        {/* Icon with a soft halo ring */}
+        <div className="relative mb-6">
+          <span className="absolute -inset-3 rounded-full bg-primary/10 ring-1 ring-primary/15" />
+          <span className="relative grid h-16 w-16 place-items-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/25 shadow-glow">
+            <Icon className="h-7 w-7" />
+          </span>
         </div>
 
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <h3 className="mb-2 font-serif text-2xl font-light tracking-[-0.01em]">
+          {title}
+        </h3>
 
-        <p className="text-sm text-muted-foreground mb-6 max-w-md">{description}</p>
+        <p
+          className="mb-6 max-w-md text-sm leading-relaxed text-muted-foreground"
+          style={{ animationDelay: "80ms" }}
+        >
+          {description}
+        </p>
 
         {children}
 

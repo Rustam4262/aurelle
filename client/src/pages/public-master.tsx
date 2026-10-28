@@ -375,7 +375,7 @@ export default function PublicMasterPage() {
 
   if (masterLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="page-backdrop min-h-screen flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -383,7 +383,7 @@ export default function PublicMasterPage() {
 
   if (!master) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="page-backdrop min-h-screen flex items-center justify-center">
         <Card className="p-8 text-center max-w-md mx-auto">
           <Briefcase className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="font-serif text-2xl text-foreground mb-4">
@@ -402,28 +402,41 @@ export default function PublicMasterPage() {
   const telegramLabel = formatTelegramLabel(master.telegram);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="page-backdrop min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className="px-3 pt-3 sm:px-5 sm:pt-5">
+        <div className="cabinet-hero mx-auto max-w-5xl !p-6 sm:!p-10">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.history.back()}
+            className="relative mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
             {t("common.back", "Back")}
           </Button>
 
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="h-32 w-32 rounded-full bg-card border-4 border-background shadow-xl overflow-hidden flex-shrink-0">
-              {master.photo ? (
-                <img src={master.photo} alt={master.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center bg-primary/10">
-                  <Briefcase className="h-12 w-12 text-primary" />
-                </div>
-              )}
+          <div className="relative flex flex-col items-start gap-7 md:flex-row">
+            <div className="relative h-36 w-36 flex-shrink-0 animate-scale-in">
+              <div className="absolute -inset-1.5 rounded-[2.4rem] bg-gradient-to-br from-primary to-[hsl(15_90%_62%)] opacity-80 blur-[2px]" />
+              <div className="relative h-full w-full overflow-hidden rounded-[2.2rem] border-4 border-card bg-card shadow-2xl">
+                {master.photo ? (
+                  <img src={master.photo} alt={master.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/10">
+                    <span className="font-serif text-6xl font-light text-primary">
+                      {master.name.charAt(0).toUpperCase()}
+                    </span>
+                    <Briefcase className="absolute bottom-3 right-3 h-5 w-5 text-primary/40" />
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground mb-2">{master.name}</h1>
+            <div className="flex-1 animate-fade-up">
+              <h1 className="mb-3 font-serif text-4xl font-light leading-tight tracking-[-0.02em] text-foreground sm:text-5xl">
+                {master.name}
+              </h1>
 
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 {master.averageRating && Number(master.averageRating) > 0 && (
@@ -507,7 +520,7 @@ export default function PublicMasterPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Tabs
@@ -516,7 +529,7 @@ export default function PublicMasterPage() {
               onValueChange={setActiveTab}
               className="w-full scroll-mt-4"
             >
-              <TabsList className="w-full justify-start mb-6 bg-transparent border-b rounded-none h-auto p-0">
+              <TabsList className="mb-6 h-auto w-full justify-start gap-1 rounded-none border-b border-foreground/10 bg-transparent p-0 backdrop-blur-none">
                 <TabsTrigger
                   value="services"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"

@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Calendar, Clock, Scissors, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/status-pill";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -76,8 +76,8 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
   });
 
   return (
-    <Card className="p-6">
-      <h3 className="font-medium text-foreground mb-4">
+    <Card className="rounded-3xl p-6">
+      <h3 className="mb-5 font-serif text-2xl text-foreground">
         {t("ownerBookingActions.heading")}
       </h3>
       {bookings && bookings.length > 0 ? (
@@ -93,12 +93,12 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
             return (
               <div
                 key={booking.id}
-                className="flex flex-col gap-4 rounded-md bg-muted/50 p-5 lg:flex-row lg:items-start lg:justify-between"
+                className="flex flex-col gap-4 rounded-2xl border border-foreground/[0.06] bg-card/60 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md lg:flex-row lg:items-start lg:justify-between"
                 data-testid={`booking-item-${booking.id}`}
               >
                 <div className="flex-1 space-y-2.5">
                   <div className="flex flex-wrap gap-3 items-center">
-                    <Avatar className="h-8 w-8 shrink-0">
+                    <Avatar className="h-10 w-10 shrink-0 ring-2 ring-primary/20">
                       <AvatarImage src={booking.client?.avatarUrl ?? undefined} />
                       <AvatarFallback className="text-xs">
                         {booking.client?.fullName?.[0] ?? "?"}
@@ -129,17 +129,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                       <Clock className="h-4 w-4" />
                       {booking.startTime}
                     </span>
-                    <Badge
-                      variant={
-                        booking.status === "confirmed"
-                          ? "default"
-                          : booking.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                      }
-                    >
-                      {t(`marketplace.booking.status.${booking.status}`)}
-                    </Badge>
+                    <StatusPill status={booking.status} />
                   </div>
 
                   {assignedMaster && (
@@ -151,7 +141,7 @@ export function OwnerSalonBookings({ salonId }: OwnerSalonBookingsProps) {
                 </div>
 
                 <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
-                  <span className="text-lg font-semibold text-foreground">
+                  <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground">
                     {booking.priceSnapshot?.toLocaleString()} UZS
                   </span>
                   <Select

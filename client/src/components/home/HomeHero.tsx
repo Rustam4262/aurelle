@@ -3,16 +3,27 @@ import { AudienceSwitch, useAudience } from "@/components/audience-provider";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MapPin, Search, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarCheck, MapPin, Search, Sparkles, Star } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_beauty_salon__29a49bfb.jpg";
 import { CITY_KEYS } from "@shared/city-aliases";
 
 // Canonical keys only — the displayed label is localized per-language below,
 // and the search filter matches every known spelling via CITY_ALIASES.
 const cities = CITY_KEYS;
+
+/** Renders the last two words of a headline in the animated brand gradient. */
+function AccentTitle({ text }: { text: string }) {
+  const words = text.trim().split(/\s+/);
+  if (words.length < 3) return <span className="text-gradient">{text}</span>;
+  const head = words.slice(0, -2).join(" ");
+  const tail = words.slice(-2).join(" ");
+  return (
+    <>
+      {head} <span className="text-gradient italic">{tail}</span>
+    </>
+  );
+}
 
 export function HomeHero() {
   const { t } = useTranslation();
@@ -23,65 +34,86 @@ export function HomeHero() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
   return (
     <section
-      className="relative overflow-hidden px-4 pb-8 pt-[88px] sm:px-6 lg:px-8 lg:pb-10 lg:pt-[104px]"
+      className="relative isolate overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8 lg:pb-24 lg:pt-36"
       data-testid="section-hero"
     >
-      <div className="absolute inset-0 audience-hero-background" />
+      {/* Ambient decoration */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-dots [mask-image:radial-gradient(70%_60%_at_50%_30%,#000,transparent)]" />
+      <div className="pointer-events-none absolute -left-24 top-16 -z-10 h-72 w-72 rounded-full bg-[hsl(340_85%_60%/0.28)] blur-3xl animate-float" />
+      <div className="pointer-events-none absolute right-[-6rem] top-40 -z-10 h-80 w-80 rounded-full bg-[hsl(15_90%_62%/0.22)] blur-3xl animate-float-slow" />
+      <div className="pointer-events-none absolute bottom-0 left-1/3 -z-10 h-64 w-64 rounded-full bg-[hsl(280_70%_60%/0.16)] blur-3xl animate-float" />
 
       <div className="relative mx-auto max-w-7xl">
-        <AudienceSwitch />
-        <div className="grid items-center gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
-          <div className="max-w-3xl">
-            <Badge className="rounded-full border border-primary/15 bg-card/85 px-4 py-1.5 text-foreground shadow-sm backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white">
-              <Sparkles className="mr-2 h-3.5 w-3.5" />
+        <div className="flex justify-center animate-fade-up">
+          <AudienceSwitch />
+        </div>
+
+        <div className="mt-8 grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          {/* Copy + search */}
+          <div className="text-center lg:text-left">
+            <span
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary animate-fade-up"
+              style={{ animationDelay: "60ms" }}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
               {t(men ? "audience.menBadge" : "marketplace.hero.badge")}
-            </Badge>
+            </span>
 
             <h1
               data-testid="hero-title"
-              className="mt-4 font-serif text-4xl font-light leading-[1.08] tracking-tight text-slate-950 sm:text-5xl lg:text-5xl xl:text-6xl dark:text-white"
+              className="mt-6 font-serif text-[2.75rem] font-light leading-[1.02] tracking-[-0.02em] text-foreground sm:text-6xl xl:text-7xl animate-fade-up"
+              style={{ animationDelay: "120ms" }}
             >
-              {t(men ? "audience.menTitle" : "marketplace.hero.title")}
+              <AccentTitle text={t(men ? "audience.menTitle" : "marketplace.hero.title")} />
             </h1>
 
-            <p className="mt-3 max-w-2xl text-base leading-6 text-slate-600 dark:text-zinc-300">
+            <p
+              className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0 animate-fade-up"
+              style={{ animationDelay: "180ms" }}
+            >
               {t(men ? "audience.menSubtitle" : "marketplace.hero.subtitle")}
             </p>
 
-            <form onSubmit={handleSearch} className="mt-5 max-w-2xl">
-              <div className="rounded-[2rem] border border-border/70 bg-card p-2 shadow-2xl shadow-primary/10 transition-all focus-within:border-primary/25 dark:border-white/15 dark:bg-white/10 dark:shadow-black/20">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-white/55" />
-                    <Input
-                      placeholder={t("marketplace.hero.searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-12 rounded-full border-0 bg-transparent pl-12 text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white dark:placeholder:text-white/40 sm:h-14"
-                      data-testid="input-search-hero"
-                    />
-                  </div>
+            <form
+              onSubmit={handleSearch}
+              className="mx-auto mt-9 max-w-2xl lg:mx-0 animate-fade-up"
+              style={{ animationDelay: "240ms" }}
+            >
+              <div className="ring-gradient glass rounded-full p-1.5 shadow-xl shadow-primary/10 transition-shadow duration-500 focus-within:shadow-2xl focus-within:shadow-primary/25">
+                <div className="flex items-center gap-2">
+                  <Search className="ml-4 h-5 w-5 shrink-0 text-primary" />
+                  <input
+                    placeholder={t("marketplace.hero.searchPlaceholder")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/80 sm:h-14 sm:text-base"
+                    aria-label={t("marketplace.hero.searchPlaceholder")}
+                    data-testid="input-search-hero"
+                  />
                   <Button
                     type="submit"
                     size="lg"
-                    className="h-12 rounded-full px-7 text-base shadow-lg shadow-primary/20 sm:h-14 sm:px-9"
+                    className="h-12 shrink-0 px-6 sm:h-14 sm:px-8"
+                    aria-label={t("marketplace.hero.search")}
                     data-testid="button-search-hero"
                   >
-                    {t("marketplace.hero.search")}
+                    <span className="hidden sm:inline">{t("marketplace.hero.search")}</span>
+                    <ArrowRight className="!size-5" />
                   </Button>
                 </div>
               </div>
             </form>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-white/70">
-              <span className="flex items-center gap-2 pr-2 font-medium text-slate-900 dark:text-white">
+            <div
+              className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm lg:justify-start animate-fade-up"
+              style={{ animationDelay: "300ms" }}
+            >
+              <span className="mr-1 flex items-center gap-1.5 font-medium text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
                 {t("marketplace.hero.popularCities")}
               </span>
@@ -89,7 +121,7 @@ export function HomeHero() {
                 <button
                   key={city}
                   onClick={() => navigate(`/search?city=${city}`)}
-                  className="rounded-full border border-border bg-card px-3 py-1.5 text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:text-slate-950 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:hover:text-white"
+                  className="rounded-full border border-foreground/10 bg-card/60 px-4 py-1.5 font-medium text-foreground/80 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
                   data-testid={`link-city-${city}`}
                 >
                   {t(`marketplace.hero.cities.${city}`)}
@@ -98,34 +130,49 @@ export function HomeHero() {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-2xl shadow-primary/10 dark:border-white/10 dark:shadow-black/25">
-              <div className="relative h-[200px] overflow-hidden sm:h-[260px] lg:h-[340px]">
-                <img
-                  key={audience}
-                  src={men ? menHeroImage : heroImage}
-                  alt={t(men ? "audience.menPhotoAlt" : "audience.heroAlt")}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/5" />
-
-                <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
-                  <div className="rounded-full border border-white/20 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.24em] text-white/75 backdrop-blur">
-                    {t(men ? "audience.menImage" : "marketplace.hero.imageLabel")}
-                  </div>
-                  <div className="rounded-full border border-emerald-400/25 bg-emerald-400/12 px-3 py-1 text-xs text-emerald-100 backdrop-blur">
-                    {t("marketplace.hero.liveNow")}
-                  </div>
-                </div>
-
-                <div className="absolute bottom-5 left-5 right-5">
-                  <div className="rounded-[1.75rem] border border-white/15 bg-black/40 p-5 text-white backdrop-blur-xl">
-                    <p className="font-serif text-2xl leading-tight sm:text-3xl">
-                      {t(men ? "audience.menCard" : "marketplace.hero.cardTitle")}
-                    </p>
-                  </div>
-                </div>
+          {/* Visual */}
+          <div
+            className="relative mx-auto w-full max-w-xl animate-scale-in"
+            style={{ animationDelay: "200ms" }}
+          >
+            <div className="absolute -inset-4 -z-10 rounded-[2.75rem] bg-gradient-to-br from-[hsl(340_85%_60%/0.35)] via-transparent to-[hsl(15_90%_62%/0.3)] blur-2xl" />
+            <div className="relative overflow-hidden rounded-[2.25rem] border border-white/10 shadow-2xl">
+              <img
+                key={audience}
+                src={men ? menHeroImage : heroImage}
+                alt={t(men ? "audience.menPhotoAlt" : "audience.heroAlt")}
+                className="aspect-[4/5] w-full object-cover transition-transform [transition-duration:2000ms] ease-out-expo hover:scale-105 sm:aspect-[5/5]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+              <div className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/30 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 backdrop-blur-md">
+                {t(men ? "audience.menImage" : "marketplace.hero.imageLabel")}
               </div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <p className="font-serif text-3xl leading-tight text-white sm:text-4xl">
+                  {t(men ? "audience.menCard" : "marketplace.hero.cardTitle")}
+                </p>
+              </div>
+            </div>
+
+            {/* Floating proof cards */}
+            <div className="glass absolute -left-4 top-1/3 hidden items-center gap-3 rounded-2xl px-4 py-3 shadow-xl sm:flex animate-float">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
+                <CalendarCheck className="h-5 w-5" />
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-foreground">
+                  {t("marketplace.hero.liveNow")}
+                </p>
+                <p className="text-xs text-muted-foreground">24/7</p>
+              </div>
+            </div>
+            <div className="glass absolute -right-4 top-10 hidden items-center gap-2 rounded-2xl px-4 py-3 shadow-xl sm:flex animate-float-slow">
+              <div className="flex">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-foreground">5.0</span>
             </div>
           </div>
         </div>

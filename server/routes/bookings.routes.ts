@@ -40,7 +40,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const parsed = clientBookingInput.safeParse(body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid booking data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid booking data", details: parsed.error.issues });
     }
 
     // Duration, working-hours, break and conflict checks live in one shared

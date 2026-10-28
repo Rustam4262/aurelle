@@ -173,9 +173,9 @@ export default function SalonPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2">
             <Tabs defaultValue="services" className="w-full">
-              <TabsList className="w-full justify-start mb-6 bg-transparent border-b rounded-none h-auto p-0">
+              <TabsList className="w-full overflow-x-auto justify-start mb-6 bg-transparent border-b rounded-none h-auto p-0">
                 <TabsTrigger
                   value="services"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"

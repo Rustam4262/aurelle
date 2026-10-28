@@ -24,7 +24,7 @@ router.post("/contact", createLimiter, async (req, res) => {
   try {
     const parsed = contactSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid form data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid form data", details: parsed.error.issues });
     }
 
     const [submission] = await db.insert(contactSubmissions).values(parsed.data).returning();
@@ -66,7 +66,7 @@ router.post("/newsletter", createLimiter, async (req, res) => {
   try {
     const parsed = newsletterSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid email", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid email", details: parsed.error.issues });
     }
 
     await db.insert(newsletterSubscribers).values(parsed.data).onConflictDoNothing();

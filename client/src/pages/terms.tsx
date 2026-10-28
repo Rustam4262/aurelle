@@ -16,12 +16,12 @@ export default function TermsPage() {
   const s11Items = items("terms.s11.items");
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+    <div className="page-backdrop min-h-screen">
+      <div className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+        <div className="cabinet-topbar flex max-w-4xl items-center justify-between gap-4 px-3 py-2.5">
           <div className="flex items-center">
             <Link href="/">
-              <Button variant="ghost" size="icon">
+              <Button variant="outline" size="icon" aria-label="AURELLE">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
@@ -35,15 +35,15 @@ export default function TermsPage() {
         <div className="space-y-8">
           {/* Hero */}
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-4">
+            <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/15 text-primary shadow-glow animate-scale-in">
               <FileText className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="font-serif text-4xl text-foreground">{t("terms.pageTitle")}</h2>
+            <h2 className="font-serif text-5xl font-light tracking-[-0.02em] text-foreground md:text-6xl animate-fade-up">{t("terms.pageTitle")}</h2>
             <p className="text-muted-foreground">{t("terms.lastUpdated")}</p>
           </div>
 
           {/* Content */}
-          <Card className="p-8 space-y-6">
+          <Card className="prose-aurelle space-y-8 [&_h3]:text-3xl [&_h3]:font-light [&_section]:border-b [&_section]:border-foreground/[0.06] [&_section]:pb-8 [&_section:last-child]:border-0">
             <section className="space-y-3">
               <h3 className="text-2xl font-serif text-foreground">{t("terms.s1.title")}</h3>
               <p className="text-muted-foreground leading-relaxed">{t("terms.s1.body")}</p>

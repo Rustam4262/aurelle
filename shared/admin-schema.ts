@@ -102,7 +102,7 @@ export const insertSanctionSchema = z.object({
   targetType: z.enum(["user", "salon", "master", "client"]),
   targetId: z.string(),
   sanctionType: z.enum(["temp_block", "perm_block", "feature_restrict"]),
-  features: z.record(z.boolean()).optional(),
+  features: z.record(z.string(), z.boolean()).optional(),
   reasonCodeId: z.string().optional(),
   reasonText: z.string().min(1),
   commentToUser: z.string().optional(),

@@ -64,46 +64,59 @@ export default function PricingPage() {
   const [, navigate] = useLocation();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="page-backdrop min-h-screen">
       {/* Header */}
-      <div className="py-16 px-4 text-center">
-        <Badge variant="secondary" className="mb-4">
+      <div className="px-4 py-20 text-center sm:py-28">
+        <Badge className="mb-6 border-primary/20 bg-primary/10 px-4 py-1.5 text-primary animate-fade-up">
           {t("pricing.badge")}
         </Badge>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">{t("pricing.title")}</h1>
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto">{t("pricing.subtitle")}</p>
+        <h1
+          className="mx-auto max-w-3xl font-serif text-5xl font-light leading-[1.05] tracking-[-0.02em] md:text-7xl animate-fade-up"
+          style={{ animationDelay: "80ms" }}
+        >
+          <span className="text-gradient">{t("pricing.title")}</span>
+        </h1>
+        <p
+          className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground animate-fade-up"
+          style={{ animationDelay: "140ms" }}
+        >
+          {t("pricing.subtitle")}
+        </p>
       </div>
 
       {/* Plans grid */}
-      <div className="max-w-5xl mx-auto px-4 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PLANS.map((plan) => (
+      <div className="mx-auto max-w-6xl px-4 pb-20">
+        <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3">
+          {PLANS.map((plan, i) => (
             <Card
               key={plan.slug}
-              className={
+              className={`lift relative flex flex-col rounded-[2rem] animate-fade-up ${
                 plan.highlighted
-                  ? "border-primary shadow-lg ring-2 ring-primary relative"
-                  : "border"
-              }
+                  ? "ring-gradient border-transparent bg-gradient-to-b from-primary/15 to-card/80 shadow-2xl shadow-primary/20"
+                  : "border-foreground/[0.07]"
+              }`}
+              style={{ animationDelay: `${i * 100}ms` }}
             >
               {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="px-3 py-1">{t("pricing.popular")}</Badge>
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <Badge className="px-4 py-1 shadow-glow">{t("pricing.popular")}</Badge>
                 </div>
               )}
 
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2 mb-3">
+              <CardHeader className="pb-4 pt-8">
+                <div className="mb-5 flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-lg ${plan.highlighted ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+                    className={`grid h-11 w-11 place-items-center rounded-2xl ${plan.highlighted ? "bg-primary text-primary-foreground shadow-glow" : "bg-primary/10 text-primary"}`}
                   >
                     {plan.icon}
                   </div>
-                  <h2 className="text-xl font-semibold">{t(plan.nameKey)}</h2>
+                  <h2 className="font-serif text-2xl">{t(plan.nameKey)}</h2>
                 </div>
 
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold">{formatPrice(plan.priceMonthly)}</span>
+                <div className="flex items-end gap-1.5">
+                  <span className="text-4xl font-semibold tracking-[-0.03em] tabular-nums">
+                    {formatPrice(plan.priceMonthly)}
+                  </span>
                   {plan.priceMonthly !== null && plan.priceMonthly > 0 && (
                     <span className="text-muted-foreground mb-1">{t("pricing.perMonth")}</span>
                   )}
@@ -119,19 +132,22 @@ export default function PricingPage() {
                 )}
               </CardHeader>
 
-              <CardContent className="pb-6">
-                <ul className="space-y-2.5">
+              <CardContent className="flex-1 pb-6">
+                <ul className="space-y-3 border-t border-foreground/[0.07] pt-5">
                   {plan.featuresKeys.map((key) => (
-                    <li key={key} className="flex items-start gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    <li key={key} className="flex items-start gap-3 text-sm">
+                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                        <Check className="h-3 w-3" />
+                      </span>
                       <span>{t(key)}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
 
-              <CardFooter>
+              <CardFooter className="pb-8">
                 <Button
+                  size="lg"
                   className="w-full"
                   variant={plan.highlighted ? "default" : "outline"}
                   onClick={() => navigate("/auth")}
@@ -148,10 +164,10 @@ export default function PricingPage() {
         </div>
 
         {/* Enterprise */}
-        <Card className="mt-8 bg-muted/30">
-          <CardContent className="flex flex-col md:flex-row items-center justify-between gap-4 py-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-background border">
+        <Card className="glass mt-10 rounded-[2rem]">
+          <CardContent className="flex flex-col items-center justify-between gap-4 py-7 md:flex-row">
+            <div className="flex items-center gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>

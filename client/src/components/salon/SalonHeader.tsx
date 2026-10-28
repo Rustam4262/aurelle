@@ -1,11 +1,9 @@
 import { MessengerLink } from "@/components/messenger-link";
 import { BackButton } from "@/components/back-button";
 import { useTranslation } from "react-i18next";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { ArrowLeft, Star, MapPin, Share2, Heart, CheckCircle, Scissors } from "lucide-react";
+import { Star, MapPin, Share2, Heart, CheckCircle, Scissors } from "lucide-react";
 import { getLocalizedText } from "@/lib/i18n";
 import type { Salon } from "@shared/schema";
 
@@ -20,74 +18,84 @@ export function SalonHeader({ salon }: { salon: Salon }) {
   const city = salon.city ?? "";
 
   return (
-    <div className="relative">
-      <div className="h-64 md:h-80 overflow-hidden">
-        {salon.photos && (salon.photos as string[])[0] ? (
-          <img
-            src={(salon.photos as string[])[0]}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <Scissors className="h-24 w-24 text-muted-foreground" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      </div>
-
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-        <BackButton fallback="/search" className="bg-white/80 backdrop-blur-sm hover:bg-white" />
-        <div className="flex gap-2">
-          <MessengerLink recipientId={salon.ownerId} />
-          <LanguageSwitcher
-            variant="ghost"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white text-foreground"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white transition-all hover:scale-105"
-            data-testid="button-share"
-          >
-            <Share2 className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white transition-all hover:scale-105 text-rose-500 hover:text-rose-600"
-            data-testid="button-favorite"
-          >
-            <Heart className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="bg-white/90 text-foreground">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              {t("marketplace.salon.verified")}
-            </Badge>
-          </div>
-          <h1 className="font-serif text-3xl md:text-4xl font-light mb-2">
-            {name || t("marketplace.salon.unnamed")}
-          </h1>
-          <div className="flex flex-wrap items-center gap-4 text-white/90">
-            <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              <span>{city}</span>
+    // Inset, rounded cover with a frosted toolbar and an editorial title block
+    <div className="px-3 pt-3 sm:px-5 sm:pt-5">
+      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] shadow-2xl">
+        <div className="h-[22rem] md:h-[28rem]">
+          {salon.photos && (salon.photos as string[])[0] ? (
+            <img
+              src={(salon.photos as string[])[0]}
+              alt={name}
+              className="h-full w-full object-cover animate-scale-in"
+            />
+          ) : (
+            <div className="relative flex h-full w-full items-center justify-center bg-[radial-gradient(90%_80%_at_15%_10%,hsl(var(--primary)/0.55),transparent_60%),radial-gradient(80%_70%_at_90%_90%,hsl(15_90%_62%/0.45),transparent_60%)] bg-[hsl(330_16%_10%)]">
+              <div className="absolute inset-0 bg-dots opacity-60" />
+              <span className="font-serif text-[9rem] font-light leading-none text-white/15 animate-float-slow">
+                {(name || "A").charAt(0)}
+              </span>
+              <Scissors className="absolute right-10 top-24 h-10 w-10 text-white/15" />
             </div>
-            {salon.averageRating && Number(salon.averageRating) > 0 && (
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{Number(salon.averageRating).toFixed(1)}</span>
-                <span className="text-white/70">
-                  ({salon.reviewCount || 0} {t("marketplace.salon.reviews")})
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
+        </div>
+
+        <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
+          <BackButton
+            fallback="/search"
+            className="rounded-full border border-white/20 bg-white/15 text-white backdrop-blur-md hover:bg-white/25"
+          />
+          <div className="flex gap-2 rounded-full border border-white/15 bg-black/25 p-1 backdrop-blur-md">
+            <MessengerLink compact recipientId={salon.ownerId} />
+            <LanguageSwitcher
+              variant="ghost"
+              className="rounded-full text-white hover:bg-white/15"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/15"
+              aria-label="share"
+              data-testid="button-share"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white hover:text-rose-500"
+              aria-label="favorite"
+              data-testid="button-favorite"
+            >
+              <Heart className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-10">
+          <div className="animate-fade-up">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-100 backdrop-blur-md">
+              <CheckCircle className="h-3.5 w-3.5" />
+              {t("marketplace.salon.verified")}
+            </span>
+            <h1 className="mt-4 font-serif text-4xl font-light leading-[1.05] tracking-[-0.02em] md:text-6xl">
+              {name || t("marketplace.salon.unnamed")}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur-md">
+                <MapPin className="h-4 w-4" />
+                {city}
+              </span>
+              {salon.averageRating && Number(salon.averageRating) > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur-md">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <b>{Number(salon.averageRating).toFixed(1)}</b>
+                  <span className="text-white/70">
+                    · {salon.reviewCount || 0} {t("marketplace.salon.reviews")}
+                  </span>
                 </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

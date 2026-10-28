@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { Master, Salon, Review } from "@shared/schema";
 import type { EnrichedBooking, MasterStats } from "@/hooks/use-master-data";
+import { StatusPill } from "@/components/status-pill";
 
 interface MasterOverviewProps {
   master: Master;
@@ -147,17 +148,7 @@ export function MasterOverview({ master, salon, bookings, reviews, stats }: Mast
                       <Clock className="h-4 w-4" />
                       {booking.startTime} - {booking.endTime}
                     </span>
-                    <Badge
-                      variant={
-                        booking.status === "confirmed"
-                          ? "default"
-                          : booking.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                      }
-                    >
-                      {t(`marketplace.booking.status.${booking.status}`)}
-                    </Badge>
+                    <StatusPill status={booking.status} />
                   </div>
                 </div>
                 <div className="text-right">

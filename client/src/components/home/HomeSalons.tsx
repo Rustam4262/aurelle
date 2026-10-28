@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { OptimizedImage } from "@/components/optimized-image";
 import { getLocalizedText } from "@/lib/i18n";
+import { pluralRu } from "@/lib/plural";
 import { MapPin, Star, Heart, Scissors, ChevronRight } from "lucide-react";
 import type { Salon } from "@shared/schema";
 
@@ -26,71 +27,77 @@ export const SalonCard = memo(({ salon }: { salon: Salon }) => {
   return (
     <Link href={`/salon/${salon.id}`}>
       <Card
-        className="group overflow-hidden cursor-pointer border-border/50 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-2 transition-all duration-500 ease-out"
+        className="lift group relative cursor-pointer overflow-hidden rounded-[1.75rem] border-foreground/[0.06] p-2"
         data-testid={`card-salon-${salon.id}`}
       >
-        <div className="aspect-[4/3] relative overflow-hidden">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.4rem]">
           {salon.photos && (salon.photos as string[])[0] ? (
             <OptimizedImage
               src={(salon.photos as string[])[0]}
               alt={name}
-              fallback="/images/placeholder-salon.jpg"
-              className="w-full h-full transition-transform duration-700 group-hover:scale-110"
+              fallback="/images/placeholder-salon.svg"
+              className="h-full w-full transition-transform [transition-duration:1200ms] ease-out-expo group-hover:scale-110"
             />
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors">
-              <Scissors className="h-12 w-12 text-muted-foreground opacity-50" />
+            // Branded placeholder instead of a flat grey box
+            <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(120%_80%_at_20%_10%,hsl(340_80%_60%/0.35),transparent_60%),radial-gradient(100%_70%_at_90%_90%,hsl(15_90%_62%/0.3),transparent_60%)] bg-muted">
+              <span className="font-serif text-7xl font-light text-foreground/25 transition-transform duration-700 group-hover:scale-110">
+                {(name || "A").charAt(0)}
+              </span>
             </div>
           )}
-          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+
+          <div className="absolute left-3 right-3 top-3 flex items-center justify-between">
+            {salon.averageRating && Number(salon.averageRating) > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-slate-900 shadow-sm backdrop-blur">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                {Number(salon.averageRating).toFixed(1)}
+              </span>
+            ) : (
+              <span />
+            )}
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 bg-white/90 backdrop-blur-sm hover:bg-white text-rose-500 rounded-full"
+              className="h-9 w-9 rounded-full bg-white/15 text-white backdrop-blur-md hover:bg-white hover:text-rose-500"
               onClick={(e) => {
                 e.preventDefault();
               }}
+              aria-label="favorite"
               data-testid={`button-favorite-${salon.id}`}
             >
               <Heart className="h-4 w-4" />
             </Button>
           </div>
-          {salon.averageRating && Number(salon.averageRating) > 0 && (
-            <div className="absolute bottom-3 left-3 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-              <Badge
-                variant="secondary"
-                className="bg-white/95 backdrop-blur-sm shadow-sm py-1 font-semibold text-primary"
-              >
-                <Star className="h-3 w-3 fill-primary text-primary mr-1" />
-                {Number(salon.averageRating).toFixed(1)}
-              </Badge>
+
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            <h3 className="font-serif text-2xl leading-tight text-white line-clamp-2">
+              {name || t("marketplace.salon.unnamed")}
+            </h3>
+            <div className="mt-1.5 flex items-center gap-1.5 text-sm text-white/75">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="line-clamp-1">
+                {city || t("marketplace.salon.unknownLocation")}
+              </span>
             </div>
-          )}
+          </div>
         </div>
-        <div className="p-5">
-          <h3 className="font-serif text-lg text-foreground mb-1.5 line-clamp-1 group-hover:text-primary transition-colors">
-            {name || t("marketplace.salon.unnamed")}
-          </h3>
-          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-3">
-            <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary/60" />
-            <span className="line-clamp-1 italic">
-              {city || t("marketplace.salon.unknownLocation")}
+        <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-4">
+          <div className="min-w-0">
+            {description && (
+              <p className="line-clamp-1 text-sm text-muted-foreground">{description}</p>
+            )}
+            <span className="text-xs font-medium text-muted-foreground/80">
+              {salon.reviewCount || 0}{" "}
+              {i18n.language === "ru"
+                ? pluralRu(salon.reviewCount || 0, ["отзыв", "отзыва", "отзывов"])
+                : t("marketplace.salon.reviews")}
             </span>
           </div>
-          {description && (
-            <p className="text-muted-foreground text-sm line-clamp-2 mb-4 h-10 leading-relaxed font-light">
-              {description}
-            </p>
-          )}
-          <div className="flex items-center justify-between pt-3 border-t border-border/50">
-            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              {salon.reviewCount || 0} {t("marketplace.salon.reviews")}
-            </span>
-            <span className="text-primary flex items-center gap-1 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-              {t("marketplace.salon.viewDetails")}
-              <ChevronRight className="h-4 w-4" />
-            </span>
-          </div>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition-all duration-500 ease-out-expo group-hover:rotate-[-45deg] group-hover:bg-primary group-hover:text-primary-foreground">
+            <ChevronRight className="h-5 w-5" />
+          </span>
         </div>
       </Card>
     </Link>
@@ -134,7 +141,10 @@ export function HomeSalons({ salons, isLoading }: { salons: Salon[]; isLoading: 
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between gap-6 flex-wrap mb-12">
           <div className="animate-in fade-in slide-in-from-left duration-700">
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3 font-light">
+            <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+              AURELLE · {t("marketplace.salons.sortRating")}
+            </span>
+            <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-3 font-light tracking-[-0.01em]">
               {t("marketplace.salons.title")}
             </h2>
             <p className="text-muted-foreground text-lg font-light">
@@ -156,9 +166,15 @@ export function HomeSalons({ salons, isLoading }: { salons: Salon[]; isLoading: 
         </div>
 
         {salons.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            {salons.map((salon) => (
-              <SalonCard key={salon.id} salon={salon} />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {salons.map((salon, i) => (
+              <div
+                key={salon.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${Math.min(i, 8) * 90}ms` }}
+              >
+                <SalonCard salon={salon} />
+              </div>
             ))}
           </div>
         ) : (

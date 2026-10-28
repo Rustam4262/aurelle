@@ -126,7 +126,7 @@ export default function AdminServices() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-semibold">Услуги</h1>
+          <h1 className="font-serif text-4xl font-light tracking-[-0.02em] animate-fade-up">Услуги</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             Все услуги платформы: салонные позиции владельцев и услуги фриланс-мастеров в одном
             контрольном списке.

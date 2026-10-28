@@ -254,7 +254,7 @@ export default function SoloMasterOnboarding() {
 
   if (authLoading || masterLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="page-backdrop min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -644,11 +644,14 @@ export default function SoloMasterOnboarding() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-8">
+    <div className="page-backdrop min-h-screen py-8">
       <div className="container max-w-lg mx-auto px-4">
-        <Card>
+        <Card className="glass ring-gradient rounded-[2rem] shadow-2xl shadow-primary/10 animate-scale-in">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">
+            <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-primary font-serif text-2xl font-semibold text-white shadow-glow">
+              A
+            </span>
+            <CardTitle className="font-serif text-4xl font-light tracking-[-0.02em]">
               {t("soloMaster.onboarding.title", "Set Up Your Profile")}
             </CardTitle>
             <CardDescription>

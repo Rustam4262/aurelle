@@ -43,7 +43,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
 
     const parsed = favSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
     }
 
     const { salonId } = parsed.data;

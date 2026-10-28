@@ -95,7 +95,7 @@ export default function AdminActivity() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-semibold">{t("admin.activity.title")}</h1>
+        <h1 className="font-serif text-4xl font-light tracking-[-0.02em] animate-fade-up">{t("admin.activity.title")}</h1>
         <p className="text-muted-foreground mt-2">{t("admin.activity.subtitle")}</p>
       </div>
 

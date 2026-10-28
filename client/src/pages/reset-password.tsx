@@ -75,13 +75,13 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="page-backdrop min-h-screen flex items-center justify-center p-4">
+        <Card className="glass ring-gradient w-full max-w-md rounded-[2rem] p-2 shadow-2xl shadow-primary/10 animate-scale-in">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <CardTitle>{t("auth.passwordResetSuccess", "Password Reset Successful")}</CardTitle>
+            <CardTitle className="font-serif text-3xl font-light tracking-[-0.01em]">{t("auth.passwordResetSuccess", "Password Reset Successful")}</CardTitle>
             <CardDescription>
               {t(
                 "auth.passwordResetSuccessDescription",
@@ -99,13 +99,13 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
+      <div className="page-backdrop min-h-screen flex items-center justify-center p-4">
+        <Card className="glass ring-gradient w-full max-w-md rounded-[2rem] p-2 shadow-2xl shadow-primary/10 animate-scale-in">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
-            <CardTitle>{t("auth.invalidResetLink", "Invalid Reset Link")}</CardTitle>
+            <CardTitle className="font-serif text-3xl font-light tracking-[-0.01em]">{t("auth.invalidResetLink", "Invalid Reset Link")}</CardTitle>
             <CardDescription>
               {t(
                 "auth.invalidResetLinkDescription",
@@ -124,10 +124,10 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="page-backdrop min-h-screen flex items-center justify-center p-4">
+      <Card className="glass ring-gradient w-full max-w-md rounded-[2rem] p-2 shadow-2xl shadow-primary/10 animate-scale-in">
         <CardHeader>
-          <CardTitle>{t("auth.resetPassword", "Reset Password")}</CardTitle>
+          <CardTitle className="font-serif text-3xl font-light tracking-[-0.01em]">{t("auth.resetPassword", "Reset Password")}</CardTitle>
           <CardDescription>
             {t("auth.resetPasswordDescription", "Enter your new password below.")}
           </CardDescription>
