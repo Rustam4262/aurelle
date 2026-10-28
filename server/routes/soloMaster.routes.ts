@@ -356,11 +356,17 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
     const scheduleSchema = z.object({
       hours: z.array(
         z.object({
-          dayOfWeek: z.number().min(0).max(6),
+          dayOfWeek: z.number().int().min(0).max(6),
           isOpen: z.boolean(),
-          openTime: z.string().regex(/^\d{2}:\d{2}$/),
-          closeTime: z.string().regex(/^\d{2}:\d{2}$/),
+          openTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+          closeTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+        }).refine((day) => !day.isOpen || day.closeTime > day.openTime, {
+          message: "Closing time must be after opening time",
+          path: ["closeTime"],
         }),
+      ).min(1).max(7).refine(
+        (hours) => new Set(hours.map((day) => day.dayOfWeek)).size === hours.length,
+        { message: "Each weekday must appear only once" },
       ),
     });
 
@@ -368,9 +374,6 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid schedule", details: parsed.error.issues });
     }
-
-    // Delete existing hours and insert new ones
-    await db.delete(masterWorkingHours).where(eq(masterWorkingHours.masterId, master.id));
 
     const hoursToInsert = parsed.data.hours.map((h) => ({
       masterId: master.id,
@@ -380,15 +383,20 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
       closeTime: h.closeTime,
     }));
 
-    if (hoursToInsert.length > 0) {
-      await db.insert(masterWorkingHours).values(hoursToInsert);
-    }
-
-    const updatedHours = await db
-      .select()
-      .from(masterWorkingHours)
-      .where(eq(masterWorkingHours.masterId, master.id))
-      .orderBy(masterWorkingHours.dayOfWeek);
+    const updatedHours = await db.transaction(async (tx) => {
+      // Serialize replacement even when the master has no existing hours.
+      // Lock and recheck ownership before deleting anything.
+      const [lockedMaster] = await tx.select({ id: masters.id }).from(masters)
+        .where(and(eq(masters.id, master.id), eq(masters.userId, userId), eq(masters.isSoloMaster, true)))
+        .for("update");
+      if (!lockedMaster) return null;
+      await tx.delete(masterWorkingHours).where(eq(masterWorkingHours.masterId, master.id));
+      await tx.insert(masterWorkingHours).values(hoursToInsert);
+      return tx.select().from(masterWorkingHours)
+        .where(eq(masterWorkingHours.masterId, master.id))
+        .orderBy(masterWorkingHours.dayOfWeek);
+    });
+    if (!updatedHours) return res.status(404).json({ error: "Solo master profile not found" });
 
     logAudit({
       actorId: userId,
