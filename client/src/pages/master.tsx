@@ -93,7 +93,7 @@ export default function MasterPage() {
 
   if (authLoading || dataLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="page-backdrop min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -106,7 +106,7 @@ export default function MasterPage() {
 
   if (!masterQuery.data) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="page-backdrop min-h-screen">
         <div className="border-b border-border">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -140,15 +140,20 @@ export default function MasterPage() {
   const unreadCount = notificationsQuery.data?.filter((n) => !n.isRead).length || 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 py-4">
+    <div className="page-backdrop min-h-screen">
+      <div className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+        <div className="cabinet-topbar max-w-5xl px-4 py-3.5 sm:px-5">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <BackButton fallback="/" />
-              <Avatar><AvatarImage src={master.photo || undefined} alt={master.name} /><AvatarFallback>{master.name.slice(0,2)}</AvatarFallback></Avatar>
+              <Avatar className="h-11 w-11 ring-2 ring-primary/30 ring-offset-2 ring-offset-card">
+                <AvatarImage src={master.photo || undefined} alt={master.name} />
+                <AvatarFallback className="bg-primary/15 font-serif text-primary">
+                  {master.name.slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
               <div>
-                <h1 className="font-serif text-xl text-foreground">
+                <h1 className="font-serif text-2xl tracking-[-0.01em] text-foreground">
                   {t("marketplace.master.title")}
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -176,7 +181,7 @@ export default function MasterPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4 gap-1 mb-6">
+          <TabsList className="glass mb-6 grid h-auto w-full grid-cols-2 gap-1 rounded-3xl p-1.5 shadow-md sm:grid-cols-4">
             <TabsTrigger value="overview">
               <Store className="h-4 w-4 mr-2" />
               <span className="inline">{t("marketplace.master.tabs.overview")}</span>

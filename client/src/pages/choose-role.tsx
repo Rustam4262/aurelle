@@ -100,13 +100,13 @@ export default function ChooseRolePage() {
     }
   }
   return (
-    <main className="min-h-screen bg-background px-4 py-8 sm:py-14">
+    <main className="page-backdrop min-h-screen px-4 py-8 sm:py-14">
       <div className="mx-auto max-w-xl">
         <header className="flex items-center justify-between mb-10">
-          <span className="font-serif text-2xl">AURELLE</span>
+          <span className="flex items-center gap-2.5"><span className="grid h-9 w-9 place-items-center rounded-full bg-primary bg-[linear-gradient(135deg,rgb(255_255_255/0.25),rgb(0_0_0/0.15))] font-serif text-lg font-semibold text-white shadow-glow">A</span><span className="font-serif text-xl font-semibold tracking-[0.12em]">AURELLE</span></span>
           <LanguageSwitcher />
         </header>
-        <h1 className="text-3xl font-semibold mb-3">{c.title}</h1>
+        <h1 className="mb-3 font-serif text-5xl font-light tracking-[-0.02em] animate-fade-up">{c.title}</h1>
         <p className="text-muted-foreground mb-7">{c.hint}</p>
         {!ready && !error && <p role="status">{c.checking}</p>}
         <div className="space-y-3">
@@ -117,9 +117,9 @@ export default function ChooseRolePage() {
                 key={role}
                 disabled={!ready || !!busy}
                 onClick={() => choose(role)}
-                className="w-full flex items-center gap-4 rounded-2xl border p-5 text-left bg-card hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60"
+                className="glass lift group flex w-full items-center gap-4 rounded-3xl p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60"
               >
-                <Icon className="h-6 w-6 shrink-0 text-primary" />
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110"><Icon className="h-6 w-6" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{c[role]}</span>
                   <span className="block mt-1 text-sm text-muted-foreground">
@@ -129,7 +129,7 @@ export default function ChooseRolePage() {
                 {busy === role ? (
                   <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
                 ) : (
-                  <ArrowRight className="h-5 w-5 shrink-0" />
+                  <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform duration-300 group-hover:translate-x-1" />
                 )}
               </button>
             );

@@ -3348,8 +3348,8 @@
     "sortNewest": "Avval yangilari"
   },
   "notFound": {
-    "title": "404 — Sahifa topilmadi",
-    "description": "Sahifani routerga qo'shishni unutdingizmi?"
+    "title": "Sahifa topilmadi",
+    "description": "Bunday sahifa mavjud emas yoki ko‘chirilgan. Bosh sahifaga qayting yoki salon toping."
   },
   "upload": {
     "uploadImage": "Rasm yuklash",

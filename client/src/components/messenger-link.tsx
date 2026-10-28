@@ -8,7 +8,9 @@ import { apiRequest } from "@/lib/queryClient";
 export function MessengerLink({
   userId,
   recipientId,
+  compact = false,
 }: {
+  compact?: boolean;
   userId?: string;
   recipientId?: string | null;
 }) {
@@ -31,7 +33,7 @@ export function MessengerLink({
       }
     >
       <MessageCircle className="h-4 w-4" />
-      <span>{recipientId ? c.write : c.title}</span>
+      <span className={compact ? "sr-only sm:not-sr-only" : undefined}>{recipientId ? c.write : c.title}</span>
       {unread > 0 && (
         <span className="rounded-full bg-primary text-primary-foreground px-1.5 text-xs">
           {unread}

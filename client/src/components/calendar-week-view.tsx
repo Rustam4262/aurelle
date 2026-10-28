@@ -61,11 +61,21 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_BORDER_COLORS: Record<string, string> = {
-  pending: "border-l-yellow-500",
-  confirmed: "border-l-blue-500",
-  completed: "border-l-green-500",
-  cancelled: "border-l-red-400",
+  // Same palette as StatusPill: amber / emerald / brand / muted
+  pending: "border-l-amber-500 bg-amber-500/10",
+  confirmed: "border-l-emerald-500 bg-emerald-500/10",
+  completed: "border-l-primary bg-primary/10",
+  cancelled: "border-l-foreground/30 bg-foreground/[0.04] opacity-60",
 };
+
+/** Russian plural form: 1 запись, 2 записи, 5 записей. */
+function pluralRu(n: number, forms: [string, string, string]) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
+  return forms[2];
+}
 
 function getLocalizedText(
   obj: { en?: string; ru?: string; uz?: string } | null | undefined,
@@ -244,37 +254,47 @@ export function CalendarWeekView({
       {/* Legend */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-yellow-400" />
+          <div className="h-2.5 w-2.5 rounded-full bg-amber-500 shadow-[0_0_8px] shadow-amber-500/60" />
           <span>{t("marketplace.booking.status.pending")}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-blue-400" />
+          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px] shadow-emerald-500/60" />
           <span>{t("marketplace.booking.status.confirmed")}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-green-400" />
+          <div className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px] shadow-primary/60" />
           <span>{t("marketplace.booking.status.completed")}</span>
         </div>
       </div>
 
       {/* Week grid */}
-      <Card className="overflow-hidden">
+      <Card className="glass overflow-hidden rounded-3xl">
         <ScrollArea className="w-full">
           <div className="min-w-[800px]">
             {/* Day headers */}
-            <div className="grid grid-cols-8 border-b bg-muted/50">
+            <div className="grid grid-cols-8 border-b border-foreground/[0.07]">
               <div className="p-3 text-center text-sm font-medium text-muted-foreground border-r">
                 <Clock className="h-4 w-4 mx-auto" />
               </div>
               {weekDays.map((day) => (
                 <div
                   key={day.toISOString()}
-                  className={`p-3 text-center border-r last:border-r-0 ${
-                    isToday(day) ? "bg-primary/10 text-primary font-bold" : "text-foreground"
-                  }`}
+                  className="border-r border-foreground/[0.06] p-3 text-center last:border-r-0"
                 >
-                  <div className="text-sm font-medium">{format(day, "EEE", { locale })}</div>
-                  <div className={`text-lg ${isToday(day) ? "text-primary" : ""}`}>
+                  <div
+                    className={`text-xs font-semibold uppercase tracking-wider ${
+                      isToday(day) ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {format(day, "EEEEEE", { locale })}
+                  </div>
+                  <div
+                    className={`mx-auto mt-1 grid h-9 w-9 place-items-center rounded-full text-lg font-semibold tabular-nums ${
+                      isToday(day)
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/40"
+                        : "text-foreground"
+                    }`}
+                  >
                     {format(day, "d")}
                   </div>
                 </div>
@@ -282,11 +302,11 @@ export function CalendarWeekView({
             </div>
 
             {/* Time slots */}
-            <div className="divide-y">
+            <div className="divide-y divide-foreground/[0.05]">
               {hourSlots.map((hour) => (
                 <div key={hour} className="grid grid-cols-8 min-h-[60px]">
                   {/* Hour label */}
-                  <div className="p-2 text-center text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center">
+                  <div className="flex items-start justify-center border-r border-foreground/[0.06] p-2 text-xs font-medium tabular-nums text-muted-foreground">
                     {hour}
                   </div>
 
@@ -297,16 +317,16 @@ export function CalendarWeekView({
                     return (
                       <div
                         key={`${day.toISOString()}-${hour}`}
-                        className={`p-1 border-r last:border-r-0 min-h-[60px] ${
-                          isToday(day) ? "bg-primary/5" : ""
+                        className={`min-h-[60px] border-r border-foreground/[0.05] p-1 transition-colors last:border-r-0 hover:bg-foreground/[0.02] ${
+                          isToday(day) ? "bg-primary/[0.04]" : ""
                         }`}
                       >
                         {dayBookings.map((booking) => (
                           <div
                             key={booking.id}
-                            className={`text-xs p-1.5 rounded mb-1 cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${
+                            className={`mb-1 cursor-pointer rounded-lg border-l-[3px] p-1.5 text-xs transition-all duration-300 hover:-translate-y-px hover:shadow-md ${
                               STATUS_BORDER_COLORS[booking.status || "pending"]
-                            } bg-card shadow-sm`}
+                            }`}
                             onClick={() => onBookingClick?.(booking)}
                             title={`${booking.startTime} - ${booking.endTime}`}
                           >
@@ -345,9 +365,10 @@ export function CalendarWeekView({
 
       {/* Summary */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-        <span>
-          {filteredBookings.length} {t("marketplace.calendar.bookings")}{" "}
-          {t("marketplace.calendar.scheduleFor").toLowerCase()} {weekRange}
+        <span className="rounded-full bg-foreground/[0.04] px-3 py-1">
+          {currentLang === "en" || currentLang === "uz"
+            ? `${filteredBookings.length} ${t("marketplace.calendar.bookings")} · ${weekRange}`
+            : `${filteredBookings.length} ${pluralRu(filteredBookings.length, ["запись", "записи", "записей"])} · ${weekRange}`}
         </span>
       </div>
     </div>

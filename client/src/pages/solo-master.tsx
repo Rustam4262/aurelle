@@ -66,6 +66,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getCsrfToken } from "@/lib/queryClient";
 import { goBackOrNavigate } from "@/lib/safe-back";
+import { StatusPill, useStatusLabels } from "@/components/status-pill";
+import { countRu, pluralRu } from "@/lib/plural";
 
 type LocalizedText = { en?: string; ru?: string; uz?: string } | null | undefined;
 
@@ -269,18 +271,17 @@ function StatCard({
   hint: string;
 }) {
   return (
-    <Card className="border-border/70 shadow-sm">
-      <CardContent className="flex items-start justify-between gap-3 p-5">
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="mt-3 break-words text-3xl font-semibold leading-none text-foreground">
-            {value}
-          </p>
-          <p className="mt-2 break-words text-sm text-muted-foreground">{hint}</p>
-        </div>
-        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+    <Card className="lift group relative overflow-hidden rounded-3xl border-foreground/[0.07] animate-fade-up">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_60%_at_100%_0%,hsl(var(--primary)/0.14),transparent_70%)]" />
+      <CardContent className="relative p-5">
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/20 transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110">
           <Icon className="h-5 w-5" />
-        </div>
+        </span>
+        <p className="mt-4 break-words text-3xl font-semibold tabular-nums leading-none tracking-[-0.03em] text-foreground">
+          {value}
+        </p>
+        <p className="mt-2 text-sm font-medium text-foreground/80">{label}</p>
+        <p className="mt-0.5 break-words text-xs text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>
   );
@@ -291,6 +292,7 @@ const SETTINGS_SUBTAB_KEYS = ["profile", "publicPage", "schedule", "services", "
 export default function SoloMasterPage() {
   const { i18n } = useTranslation();
   const lang = i18n.language || "ru";
+  const statusLabels = useStatusLabels();
   const tr = (ru: string, en?: string, uz?: string) =>
     lang === "en" ? en || ru : lang === "uz" ? uz || ru : ru;
   const locale = lang === "en" ? "en-US" : lang === "uz" ? "uz-UZ" : "ru-RU";
@@ -573,7 +575,7 @@ export default function SoloMasterPage() {
     if (unreadNotifications > 0)
       result.push({
         title: tr("Разберите уведомления", "Review notifications"),
-        description: `${unreadNotifications} ${tr("обновлений ждут внимания", "updates need attention")}`,
+        description: `${unreadNotifications} ${tr(pluralRu(unreadNotifications, ["обновление ждёт", "обновления ждут", "обновлений ждут"]) + " внимания", "updates need attention")}`,
         tab: "messages",
       });
     if (profileCompletion < 100)
@@ -924,9 +926,9 @@ export default function SoloMasterPage() {
   const nextBookings = upcomingBookings.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/70 bg-card/90 p-4 shadow-sm">
+        <div className="cabinet-topbar sticky top-3 z-40 flex w-full max-w-none flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <Button
               variant="outline"
@@ -937,10 +939,10 @@ export default function SoloMasterPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                {tr("Кабинет фриланс-мастера", "Solo master workspace")}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
+                {tr("Кабинет фриланс-мастера", "Solo master cabinet")}
               </p>
-              <h1 className="break-words text-2xl font-semibold text-foreground">
+              <h1 className="break-words font-serif text-2xl tracking-[-0.01em] text-foreground">
                 {tr(
                   "Управляйте услугами, расписанием и клиентами в одном кабинете",
                   "Run services, schedule and clients from one place",
@@ -967,27 +969,33 @@ export default function SoloMasterPage() {
         </div>
 
         <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex min-w-0 gap-4">
-                  <Avatar className="h-20 w-20 shrink-0 rounded-[22px] border border-border/70">
+          <Card className="overflow-hidden rounded-[2rem] border-0 bg-transparent p-0 shadow-none">
+            <CardContent className="cabinet-hero">
+              <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex min-w-0 gap-5">
+                  <Avatar className="h-24 w-24 shrink-0 rounded-[28px] ring-4 ring-primary/25 ring-offset-4 ring-offset-card shadow-glow">
                     <AvatarImage src={master.photo || undefined} />
-                    <AvatarFallback className="rounded-[22px] text-lg">
+                    <AvatarFallback className="rounded-[28px] bg-primary/15 font-serif text-3xl text-primary">
                       {master.name?.slice(0, 1)?.toUpperCase() || "M"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge className="border-primary/20 bg-primary/10 text-primary">
-                        {tr("Solo master", "Solo master")}
+                        {tr("Фриланс-мастер", "Solo master")}
                       </Badge>
                       <Badge variant="outline" className={statusTone(master.status || "draft")}>
-                        {master.status || "draft"}
+                        {(
+                          {
+                            active: tr("Активен", "Active"),
+                            draft: tr("Черновик", "Draft"),
+                            paused: tr("На паузе", "Paused"),
+                          } as Record<string, string>
+                        )[master.status || "draft"] ?? master.status}
                       </Badge>
                     </div>
                     <div className="space-y-1">
-                      <h2 className="break-words text-3xl font-semibold text-foreground">
+                      <h2 className="break-words font-serif text-4xl font-light tracking-[-0.02em] text-foreground sm:text-5xl">
                         {master.name}
                       </h2>
                       <p className="break-words text-sm text-muted-foreground">
@@ -1002,11 +1010,11 @@ export default function SoloMasterPage() {
                       </span>
                       <span className="inline-flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        {clients.length} {tr("клиентов", "clients")}
+                        {clients.length} {tr(pluralRu(clients.length, ["клиент", "клиента", "клиентов"]), "clients")}
                       </span>
                       <span className="inline-flex items-center gap-2">
                         <CalendarDays className="h-4 w-4 text-primary" />
-                        {services.length} {tr("услуг", "services")}
+                        {services.length} {tr(pluralRu(services.length, ["услуга", "услуги", "услуг"]), "services")}
                       </span>
                     </div>
                   </div>
@@ -1145,9 +1153,7 @@ export default function SoloMasterPage() {
                           <p className="break-words font-medium text-foreground">
                             {booking.clientName || tr("Клиент", "Client")}
                           </p>
-                          <Badge variant="outline" className={statusTone(booking.status)}>
-                            {booking.status}
-                          </Badge>
+                          <StatusPill status={booking.status} />
                         </div>
                         <p className="mt-1 break-words text-sm text-muted-foreground">
                           {localize(booking.service?.name, lang) ||
@@ -1258,8 +1264,8 @@ export default function SoloMasterPage() {
         </section>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-start">
-            <TabsList className="flex h-auto w-full shrink-0 justify-start gap-2 overflow-x-auto rounded-[22px] border border-border/70 bg-card/90 p-2 lg:w-56 lg:flex-col lg:overflow-visible">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+            <TabsList className="cabinet-sidebar flex h-auto w-full shrink-0 justify-start gap-1 overflow-x-auto no-scrollbar lg:sticky lg:top-28 lg:w-60 lg:flex-col lg:items-stretch lg:overflow-visible">
               {[
                 ["overview", tr("Обзор", "Overview")],
                 ["calendar", tr("Календарь", "Calendar")],
@@ -1276,7 +1282,7 @@ export default function SoloMasterPage() {
                 <TabsTrigger
                   key={key}
                   value={key}
-                  className="shrink-0 rounded-2xl px-4 py-2.5 lg:w-full lg:justify-start"
+                  className="cabinet-nav-item w-auto shrink-0 justify-start data-[state=active]:bg-transparent lg:w-full"
                 >
                   {label}
                 </TabsTrigger>
@@ -1384,7 +1390,7 @@ export default function SoloMasterPage() {
                     <CardTitle>{tr("Рабочий календарь", "Working calendar")}</CardTitle>
                     <CardDescription>
                       {tr(
-                        "Текущие записи без прыжков между экранами.",
+                        "Все ваши записи на неделю.",
                         "Current bookings without jumping between screens.",
                       )}
                     </CardDescription>
@@ -1448,9 +1454,7 @@ export default function SoloMasterPage() {
                                   <p className="break-words font-medium text-foreground">
                                     {booking.clientName || tr("Клиент", "Client")}
                                   </p>
-                                  <Badge variant="outline" className={statusTone(booking.status)}>
-                                    {booking.status}
-                                  </Badge>
+                                  <StatusPill status={booking.status} />
                                 </div>
                                 <p className="break-words text-sm text-muted-foreground">
                                   {localize(booking.service?.name, lang) ||
@@ -1570,12 +1574,7 @@ export default function SoloMasterPage() {
                                     .join(" • ") || "—"}
                                 </p>
                                 <div className="mt-2 flex flex-wrap gap-2">
-                                  <Badge
-                                    variant="outline"
-                                    className={statusTone(client.latestStatus || "pending")}
-                                  >
-                                    {client.latestStatus || "pending"}
-                                  </Badge>
+                                  <StatusPill status={client.latestStatus || "pending"} />
                                   {client.favoriteService && (
                                     <Badge variant="outline">{client.favoriteService}</Badge>
                                   )}
@@ -1614,8 +1613,8 @@ export default function SoloMasterPage() {
                         icon={Users}
                         title={tr("Пока нет клиентской базы", "No clients yet")}
                         description={tr(
-                          "Как только пойдут записи, этот раздел превратится в ваш mini CRM.",
-                          "As soon as bookings arrive, this section will become your mini CRM.",
+                          "Как только появятся записи, здесь соберётся ваша клиентская база.",
+                          "Once bookings arrive, your client base will appear here.",
                         )}
                         action={{
                           label: tr("Открыть страницу", "Open page"),
@@ -1635,7 +1634,7 @@ export default function SoloMasterPage() {
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {tr(
-                        "Портфолио должно продавать, а не просто лежать.",
+                        "Лучшие работы помогают клиентам выбрать вас.",
                         "Portfolio should sell, not just exist.",
                       )}
                     </p>
@@ -1666,27 +1665,33 @@ export default function SoloMasterPage() {
                   />
                 </div>
                 {portfolio.length ? (
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {portfolio.map((item) => (
-                      <Card key={item.id} className="overflow-hidden border-border/70 shadow-sm">
-                        <div className="aspect-[4/3] overflow-hidden bg-muted">
-                          <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-                        </div>
-                        <CardContent className="space-y-3 p-4">
-                          <p className="break-words text-sm text-muted-foreground">
-                            {localize(item.description, lang) ||
-                              tr("Работа без подписи", "Work without caption")}
-                          </p>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deletePortfolioMutation.mutate(item.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {tr("Удалить", "Remove")}
-                          </Button>
-                        </CardContent>
-                      </Card>
+                  // Gallery tiles: caption and delete action float over the photo on hover
+                  <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+                    {portfolio.map((item, i) => (
+                      <div
+                        key={item.id}
+                        className="group relative aspect-[4/5] overflow-hidden rounded-3xl bg-muted shadow-md animate-fade-up"
+                        style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
+                      >
+                        <img
+                          src={item.imageUrl}
+                          alt={localize(item.description, lang) || ""}
+                          className="h-full w-full object-cover transition-transform [transition-duration:1200ms] ease-out-expo group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
+                        <p className="absolute bottom-3 left-3 right-14 line-clamp-2 text-sm text-white/90">
+                          {localize(item.description, lang) ||
+                            tr("Работа без подписи", "Work without caption")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => deletePortfolioMutation.mutate(item.id)}
+                          aria-label={tr("Удалить", "Remove")}
+                          className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white backdrop-blur-md transition-all duration-300 hover:bg-destructive sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -1739,12 +1744,7 @@ export default function SoloMasterPage() {
                                 {date(client.lastVisit, locale)}
                               </p>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={statusTone(client.latestStatus || "pending")}
-                            >
-                              {client.latestStatus || "pending"}
-                            </Badge>
+                            <StatusPill status={client.latestStatus || "pending"} />
                           </div>
                         </div>
                       ))}
@@ -1852,13 +1852,11 @@ export default function SoloMasterPage() {
                                   {ticket.subject}
                                 </p>
                                 <p className="mt-1 break-words text-sm text-muted-foreground">
-                                  {ticket.category} •{" "}
+                                  {statusLabels.category(ticket.category)} •{" "}
                                   {dateTime(ticket.updatedAt || ticket.createdAt, locale)}
                                 </p>
                               </div>
-                              <Badge variant="outline" className={statusTone(ticket.status)}>
-                                {ticket.status}
-                              </Badge>
+                              <StatusPill status={ticket.status} kind="ticket" />
                             </div>
                           </button>
                         ))
@@ -2078,7 +2076,7 @@ export default function SoloMasterPage() {
                     icon={PieChart}
                     label={tr("Повторные клиенты", "Repeat clients")}
                     value={clients.filter((item) => item.totalBookings > 1).length}
-                    hint={tr("Хороший прокси для удержания", "Good proxy for retention")}
+                    hint={tr("Клиенты, которые вернулись снова", "Clients who came back")}
                   />
                   <StatCard
                     icon={Star}
@@ -2164,7 +2162,7 @@ export default function SoloMasterPage() {
                           <CardTitle>{tr("Лицо мастера", "Identity and visuals")}</CardTitle>
                           <CardDescription>
                             {tr(
-                              "Аватар, статус и первый слой доверия.",
+                              "Фото и имя — первое, что видит клиент.",
                               "Avatar, status and the first layer of trust.",
                             )}
                           </CardDescription>
@@ -2304,7 +2302,7 @@ export default function SoloMasterPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>Slug / URL</Label>
+                            <Label>{tr("Адрес страницы", "Page address")}</Label>
                             <Input
                               value={profileForm.slug}
                               onChange={(e) =>
@@ -2776,7 +2774,7 @@ export default function SoloMasterPage() {
                             <AlertDescription>
                               {tr(
                                 "Кабинет уже собирает клиентов, контекст записей, обращения и уведомления в одном месте.",
-                                "The workspace already pulls clients, booking context, support and notifications into one place.",
+                                "Clients, bookings, support and notifications are all in one place.",
                               )}
                             </AlertDescription>
                           </Alert>

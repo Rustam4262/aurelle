@@ -35,12 +35,7 @@ export default function Home() {
               <Button onClick={() => salonsQuery.refetch()}>{t("audience.retry")}</Button>
             </div>
           ) : (
-            <>
-              <p className="mx-auto max-w-7xl px-6 pt-6 text-sm text-muted-foreground">
-                {t("audience.catalogHint")}
-              </p>
-              <HomeSalons salons={salons} isLoading={isLoading} />
-            </>
+            <HomeSalons salons={salons} isLoading={isLoading} />
           )}
           <HomeMasters />
           <HomeMap salons={salons} />

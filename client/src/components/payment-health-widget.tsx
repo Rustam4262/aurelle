@@ -276,12 +276,14 @@ export function PaymentHealthWidget({
   if (data && !data.enabled) {
     return (
       <div
-        className={`rounded-xl border border-dashed border-muted-foreground/30 p-8 text-center ${className ?? ""}`}
+        className={`relative overflow-hidden rounded-3xl border border-foreground/[0.07] bg-gradient-to-br from-primary/10 to-transparent p-8 text-center ${className ?? ""}`}
       >
-        <CreditCard className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
-        <p className="text-sm font-medium text-muted-foreground">Платёжный провайдер не настроен</p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          Задайте PAYMENT_PROVIDER в .env для включения приёма платежей
+        <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary shadow-glow">
+          <CreditCard className="h-6 w-6" />
+        </span>
+        <p className="font-serif text-xl text-foreground">Онлайн-оплата скоро появится</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+          Мы подключаем приём платежей. Как только он заработает, здесь появятся выручка, оплаты и транзакции.
         </p>
       </div>
     );

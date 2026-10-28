@@ -402,10 +402,10 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
                   return (
                     <Link key={item.path} href={item.path}>
                       <div
-                        className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${
+                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-300 ${
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            ? "bg-primary bg-[linear-gradient(135deg,rgb(255_255_255/0.14),rgb(0_0_0/0.1))] text-primary-foreground shadow-md shadow-primary/30"
+                            : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                         } ${collapsed ? "justify-center px-2" : ""}`}
                       >
                         <div className="relative shrink-0">
@@ -525,9 +525,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground md:flex">
+    <div className="page-backdrop min-h-screen text-foreground md:flex">
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 border-r border-border/70 bg-card/95 backdrop-blur md:flex md:flex-col ${
+        className={`glass sticky top-3 m-3 hidden h-[calc(100vh-1.5rem)] shrink-0 rounded-[1.75rem] shadow-lg md:flex md:flex-col ${
           collapsed ? "md:w-20" : "md:w-80"
         } md:transition-all md:duration-200`}
       >

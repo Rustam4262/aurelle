@@ -21,7 +21,7 @@ export function OwnerSalonTeam({ salonId }: OwnerSalonTeamProps) {
           <div className="grid gap-3 sm:grid-cols-3 lg:w-[520px]">
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
               <Users className="h-4 w-4 text-primary" />
-              <p className="mt-3 text-sm font-medium text-foreground">Единый контур команды</p>
+              <p className="mt-3 text-sm font-medium text-foreground">Вся команда в одном месте</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Все приглашения и рабочие доступы в одном месте.
               </p>

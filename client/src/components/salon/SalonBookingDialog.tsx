@@ -69,18 +69,19 @@ export function SalonBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1rem)] max-w-[425px] flex-col overflow-hidden p-0">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1rem)] max-w-[460px] flex-col overflow-hidden rounded-[2rem] p-0">
         <DialogHeader>
-          <div className="px-4 pt-4 sm:px-6 sm:pt-6">
-            <DialogTitle className="font-serif text-2xl">
+          <div className="relative overflow-hidden px-5 pb-2 pt-6 sm:px-7">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_120%_at_100%_0%,hsl(var(--primary)/0.22),transparent_70%)]" />
+            <DialogTitle className="relative font-serif text-3xl font-light tracking-[-0.01em]">
               {t("marketplace.salon.bookService")}
             </DialogTitle>
           </div>
         </DialogHeader>
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-7">
           {selectedService && (
-            <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-              <p className="font-medium text-foreground">
+            <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5">
+              <p className="font-serif text-xl text-foreground">
                 {getLocalizedText(
                   selectedService.name as { en?: string; ru?: string; uz?: string },
                   currentLang,
@@ -91,15 +92,15 @@ export function SalonBookingDialog({
                   {selectedService.duration} {t("marketplace.salon.minutes")}
                 </span>
                 <span>•</span>
-                <span className="font-semibold text-primary">
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/30">
                   {formatCurrency(selectedService.priceMin)}
                 </span>
               </p>
             </div>
           )}
           {selectedMaster && (
-            <div className="p-3 bg-muted/50 rounded-lg flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <div className="flex items-center gap-2.5 rounded-2xl border border-foreground/[0.07] bg-card/60 px-4 py-3">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px] shadow-emerald-500/70 animate-pulse" />
               <p className="text-sm font-medium">
                 {t("marketplace.salon.withMaster")}: {selectedMaster.name}
               </p>
@@ -111,7 +112,7 @@ export function SalonBookingDialog({
             </Label>
             <Input
               type="date"
-              className="rounded-lg"
+
               value={bookingDate}
               onChange={(e) => setBookingDate(e.target.value)}
               min={format(new Date(), "yyyy-MM-dd")}
@@ -123,7 +124,7 @@ export function SalonBookingDialog({
                 {t("marketplace.salon.time")}
               </Label>
               {selectedMaster ? (
-                <div className="rounded-lg border border-input p-1">
+                <div className="rounded-2xl border border-foreground/10 bg-card/50 p-2">
                   <TimeSlotPicker
                     masterId={selectedMaster.id}
                     serviceId={selectedService?.id || null}
@@ -141,7 +142,7 @@ export function SalonBookingDialog({
                 <>
                   <Input
                     type="time"
-                    className="rounded-lg"
+
                     value={bookingTime}
                     onChange={(e) => setBookingTime(e.target.value)}
                     min={dayHours?.openTime || undefined}
@@ -167,7 +168,7 @@ export function SalonBookingDialog({
               {t("marketplace.salon.notes")} ({t("marketplace.salon.optional")})
             </Label>
             <Textarea
-              className="rounded-lg resize-none"
+              className="resize-none rounded-2xl"
               value={bookingNotes}
               onChange={(e) => setBookingNotes(e.target.value)}
               placeholder={t("marketplace.salon.notesPlaceholder")}
@@ -178,8 +179,8 @@ export function SalonBookingDialog({
             {t("marketplace.salon.cancellationPolicy")}
           </p>
         </div>
-        <DialogFooter className="sticky bottom-0 flex-col gap-3 border-t bg-background px-4 py-4 sm:flex-row sm:px-6">
-          <div className="flex-1 w-full">
+        <DialogFooter className="glass sticky bottom-0 flex-col gap-3 border-x-0 border-b-0 px-5 py-4 sm:flex-col sm:space-x-0 sm:px-7">
+          <div className="w-full [&_button]:w-full [&_button]:whitespace-normal">
             {selectedService && salonId && (
               <WaitlistButton
                 salonId={salonId}
@@ -188,16 +189,18 @@ export function SalonBookingDialog({
               />
             )}
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
             <Button
-              variant="ghost"
-              className="flex-1 sm:flex-none"
+              variant="outline"
+              size="lg"
+              className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               {t("marketplace.salon.cancel")}
             </Button>
             <Button
-              className="flex-1 sm:flex-none min-w-[100px]"
+              size="lg"
+              className="flex-[2]"
               onClick={onSubmit}
               disabled={
                 isSubmitting ||

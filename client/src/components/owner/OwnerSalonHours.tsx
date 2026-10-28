@@ -90,9 +90,9 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
+      <Card className="rounded-3xl p-6 sm:p-7">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="font-medium text-foreground">{t("marketplace.owner.workingHours")}</h3>
+          <h3 className="font-serif text-2xl text-foreground">{t("marketplace.owner.workingHours")}</h3>
           <Button
             onClick={handleSaveHours}
             disabled={saveHoursMutation.isPending}
@@ -109,7 +109,7 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
           {DAYS_OF_WEEK.map((day) => (
             <div
               key={day.value}
-              className="flex flex-col gap-4 rounded-md bg-muted/50 p-4 lg:flex-row lg:items-center"
+              className="flex flex-col gap-4 rounded-2xl border border-foreground/[0.06] bg-card/60 p-4 transition-colors duration-300 hover:border-primary/25 lg:flex-row lg:items-center"
               data-testid={`hours-day-${day.value}`}
             >
               <div className="lg:w-32">
@@ -128,7 +128,7 @@ export function OwnerSalonHours({ salonId }: OwnerSalonHoursProps) {
                       [day.value]: { ...workingHours[day.value], closed: e.target.checked },
                     })
                   }
-                  className="h-4 w-4"
+                  className="h-4 w-4 accent-[hsl(var(--primary))]"
                   data-testid={`checkbox-closed-${day.value}`}
                 />
                 <span className="text-sm text-muted-foreground">

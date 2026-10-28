@@ -48,6 +48,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { StatusPill } from "@/components/status-pill";
 
 type LocalizedText = { en?: string; ru?: string; uz?: string };
 
@@ -397,16 +398,44 @@ ID: ${booking.id.slice(0, 8)}
             return (
               <Card
                 key={booking.id}
-                className="p-4 transition-all hover:shadow-md hover:border-primary/50"
+                className={`lift relative overflow-hidden rounded-3xl p-4 sm:p-5 ${
+                  isUpcoming
+                    ? "before:absolute before:inset-y-4 before:left-0 before:w-1 before:rounded-r-full before:bg-primary before:shadow-[0_0_12px_hsl(var(--primary)/0.7)]"
+                    : "opacity-90"
+                }`}
                 data-testid={`booking-card-${booking.id}`}
               >
                 <div className="flex items-start justify-between gap-4 flex-wrap">
+                  {/* Calendar tile */}
+                  <div
+                    className={`grid w-16 shrink-0 place-items-center rounded-2xl py-2 text-center ${
+                      isUpcoming
+                        ? "bg-primary bg-[linear-gradient(160deg,rgb(255_255_255/0.18),rgb(0_0_0/0.12))] text-primary-foreground shadow-md shadow-primary/30"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+                      {bookingDate.toLocaleDateString(
+                        currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+                        { month: "short" },
+                      )}
+                    </span>
+                    <span className="text-2xl font-semibold leading-none tabular-nums">
+                      {bookingDate.getDate()}
+                    </span>
+                    <span className="mt-0.5 text-[10px] opacity-80">
+                      {bookingDate.toLocaleDateString(
+                        currentLang === "ru" ? "ru-RU" : currentLang === "uz" ? "uz-UZ" : "en-US",
+                        { weekday: "short" },
+                      )}
+                    </span>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <h3 className="break-words font-medium text-foreground">{serviceName}</h3>
-                      <Badge className={STATUS_COLORS[booking.status || "pending"]}>
-                        {t(`marketplace.client.status.${booking.status}`)}
-                      </Badge>
+                      <h3 className="break-words font-serif text-xl text-foreground">
+                        {serviceName}
+                      </h3>
+                      <StatusPill status={booking.status || "pending"} />
                       {isBookingSoon(booking) && (
                         <Badge
                           variant="outline"
@@ -425,11 +454,18 @@ ID: ${booking.id.slice(0, 8)}
                       <div className="flex items-start gap-2">
                         <Avatar className="h-6 w-6 shrink-0">
                           <AvatarImage src={booking.master?.photo ?? undefined} />
-                          <AvatarFallback className="text-xs">
-                            {booking.master?.name?.[0] ?? "?"}
+                          <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                            {booking.master?.name?.[0] ?? "★"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="break-words">{booking.master?.name}</span>
+                        <span className="break-words">
+                          {booking.master?.name ??
+                            (currentLang === "uz"
+                              ? "Istalgan usta"
+                              : currentLang === "en"
+                                ? "Any master"
+                                : "Любой свободный мастер")}
+                        </span>
                       </div>
                       <div className="flex items-start gap-2">
                         <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
@@ -450,7 +486,7 @@ ID: ${booking.id.slice(0, 8)}
                         </span>
                       </div>
                     </div>
-                    <p className="mt-2 font-medium text-foreground">
+                    <p className="mt-3 inline-flex rounded-full bg-foreground/[0.05] px-3 py-1 text-sm font-semibold tabular-nums text-foreground">
                       {booking.priceSnapshot?.toLocaleString()} UZS
                     </p>
                   </div>

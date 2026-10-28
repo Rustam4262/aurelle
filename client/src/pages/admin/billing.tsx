@@ -336,7 +336,7 @@ export default function AdminBilling() {
                 </Badge>
               </div>
               <div>
-                <h1 className="text-3xl font-serif font-semibold">Финансы и биллинг</h1>
+                <h1 className="font-serif text-4xl font-light tracking-[-0.02em] animate-fade-up">Финансы и биллинг</h1>
                 <p className="mt-2 text-muted-foreground">
                   Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых
                   несоответствий.
@@ -381,7 +381,7 @@ export default function AdminBilling() {
 
       <div className="hidden flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-semibold">Финансы и биллинг</h1>
+          <h1 className="font-serif text-4xl font-light tracking-[-0.02em] animate-fade-up">Финансы и биллинг</h1>
           <p className="mt-2 text-muted-foreground">
             Контроль GMV, комиссии платформы, индивидуальных ставок и финансовых несоответствий.
           </p>

@@ -430,7 +430,7 @@ export default function AdminDashboard() {
                 Фокус на действиях
               </Badge>
             </div>
-            <h2 className="mt-4 text-3xl font-serif font-semibold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 font-serif text-4xl font-light tracking-[-0.02em] sm:text-5xl">
               Вот твой бизнес сегодня
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">

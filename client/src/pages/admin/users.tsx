@@ -627,7 +627,7 @@ export default function AdminUsers() {
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-serif font-semibold text-foreground">
+              <h1 className="font-serif text-4xl font-light tracking-[-0.02em] text-foreground animate-fade-up">
                 {t("admin.users.title")}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">

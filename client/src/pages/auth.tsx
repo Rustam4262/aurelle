@@ -27,6 +27,8 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { Check } from "lucide-react";
+import authHeroImage from "@assets/stock_images/luxury_beauty_salon__29a49bfb.jpg";
 
 type AuthUser = {
   roleSelectionRequired?: boolean;
@@ -646,81 +648,133 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="audience-client-surface min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.11),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.08),transparent_20%),linear-gradient(180deg,#dacdd1_0%,#d7c7cd_48%,#dacdd1_100%)] text-foreground dark:bg-[radial-gradient(circle_at_top_left,rgba(227,54,116,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_18%),linear-gradient(180deg,#08080b_0%,#111117_46%,#09090b_100%)] dark:text-white">
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex items-start justify-between gap-3 py-2 sm:items-center">
-          <div className="flex min-w-0 items-center gap-2">
-            <Link href="/">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="border border-border bg-card/85 text-foreground shadow-sm hover:bg-accent hover:text-foreground dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                aria-label={copy.backToHome}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/" className="hidden items-center gap-3 sm:flex">
-              <div className="rounded-2xl border border-primary/10 bg-card/90 p-2 shadow-sm dark:border-white/10 dark:bg-white/5">
-                <Logo className="h-10 w-10 rounded-xl object-cover" />
-              </div>
-              <div>
-                <div className="font-serif text-xl font-semibold tracking-wide text-foreground dark:text-white">
-                  AURELLE
-                </div>
-                <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground dark:text-white/45">
-                  beauty marketplace
-                </div>
-              </div>
-            </Link>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <ThemeToggle />
-            <LanguageSwitcher
-              variant="outline"
-              className="border-border bg-card/85 text-foreground hover:bg-accent dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-            />
-          </div>
-        </header>
+    // Split layout: editorial brand panel on large screens, frosted form card everywhere.
+    <div className="audience-client-surface relative isolate min-h-screen overflow-x-hidden text-foreground">
+      <div className="pointer-events-none absolute -left-24 top-24 -z-10 h-80 w-80 rounded-full bg-primary/25 blur-3xl animate-float" />
+      <div className="pointer-events-none absolute -right-24 bottom-10 -z-10 h-96 w-96 rounded-full bg-[hsl(15_90%_62%/0.18)] blur-3xl animate-float-slow" />
 
-        <main className="flex flex-1 items-center py-6 lg:py-10">
-          <div className="mx-auto w-full max-w-xl">
-            <section className="order-1 min-w-0 rounded-[28px] border border-white/55 bg-card/88 p-4 shadow-[0_32px_90px_rgba(227,54,116,0.12)] backdrop-blur-2xl [overflow-wrap:anywhere] dark:border-white/10 dark:bg-[#141418]/96 dark:shadow-black/35 sm:rounded-[32px] sm:p-7 lg:order-2 lg:p-8">
+      <div className="mx-auto grid min-h-screen max-w-[1400px] gap-6 p-3 sm:p-5 lg:grid-cols-[1.05fr_1fr]">
+        {/* Brand panel */}
+        <aside className="relative hidden overflow-hidden rounded-[2.25rem] shadow-2xl lg:block">
+          <img
+            src={authHeroImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover animate-scale-in"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/55 via-black/60 to-[hsl(340_70%_18%/0.9)]" />
+          <div className="absolute inset-0 bg-dots opacity-30" />
+
+          <div className="relative flex h-full flex-col justify-between p-10 text-white xl:p-12">
+            <Link href="/" className="group inline-flex w-fit items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-primary bg-[linear-gradient(135deg,rgb(255_255_255/0.25),rgb(0_0_0/0.15))] font-serif text-xl font-semibold shadow-glow transition-transform duration-500 group-hover:rotate-[-8deg]">
+                A
+              </span>
+              <span className="font-serif text-2xl font-semibold tracking-[0.14em]">AURELLE</span>
+            </Link>
+
+            <div className="max-w-lg">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] backdrop-blur-md animate-fade-up">
+                <WandSparkles className="h-3.5 w-3.5" />
+                {copy.trustTitle}
+              </span>
+              <h1
+                className="mt-6 font-serif text-5xl font-light leading-[1.05] tracking-[-0.02em] xl:text-6xl animate-fade-up"
+                style={{ animationDelay: "80ms" }}
+              >
+                {copy.headline}
+              </h1>
+              <p
+                className="mt-5 text-lg leading-relaxed text-white/75 animate-fade-up"
+                style={{ animationDelay: "140ms" }}
+              >
+                {copy.subtitle}
+              </p>
+              <ul className="mt-8 space-y-3">
+                {copy.benefits.map((benefit, i) => (
+                  <li
+                    key={benefit}
+                    className="flex items-center gap-3 text-white/90 animate-fade-up"
+                    style={{ animationDelay: `${200 + i * 70}ms` }}
+                  >
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/15 backdrop-blur">
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {copy.trustStats.map((stat, i) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md animate-fade-up"
+                  style={{ animationDelay: `${480 + i * 80}ms` }}
+                >
+                  <p className="text-2xl font-semibold tracking-[-0.02em]">{stat.value}</p>
+                  <p className="mt-1 text-xs leading-snug text-white/65">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Form side */}
+        <div className="flex min-w-0 flex-col">
+          <header className="flex items-center justify-between gap-3 px-1 py-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Link href="/">
+                <Button variant="outline" size="icon" aria-label={copy.backToHome}>
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Link href="/" className="flex items-center gap-2.5 lg:hidden">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary bg-[linear-gradient(135deg,rgb(255_255_255/0.25),rgb(0_0_0/0.15))] font-serif text-lg font-semibold text-white shadow-glow">
+                  A
+                </span>
+                <span className="font-serif text-xl font-semibold tracking-[0.12em]">AURELLE</span>
+              </Link>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <ThemeToggle />
+              <LanguageSwitcher variant="outline" />
+            </div>
+          </header>
+
+        <main className="flex flex-1 items-center py-6 lg:py-8">
+          <div className="mx-auto w-full max-w-[34rem]">
+            <section className="glass ring-gradient min-w-0 rounded-[2rem] p-5 shadow-2xl shadow-primary/10 [overflow-wrap:anywhere] animate-scale-in sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <Badge className="rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-foreground/80 dark:border-white/10 dark:bg-white/5 dark:text-white/75">
-                  <LockKeyhole className="mr-2 h-3.5 w-3.5" />
+                <Badge className="border-primary/20 bg-primary/10 px-3 py-1 text-primary">
+                  <LockKeyhole className="mr-1.5 h-3.5 w-3.5" />
                   {copy.secureBadge}
                 </Badge>
-                <Link
-                  href="/"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground dark:text-white/55 dark:hover:text-white"
-                >
-                  AURELLE
-                </Link>
               </div>
 
               <div className="mt-5">
-                <h2 className="font-serif text-3xl text-slate-950 dark:text-white">
+                <h2 className="font-serif text-4xl font-light tracking-[-0.02em] text-foreground">
                   {copy.formTitle}
                 </h2>
-                <p className="mt-2 max-w-xl break-words text-sm leading-7 text-muted-foreground dark:text-white/62">
+                <p className="mt-2 max-w-xl break-words text-sm leading-6 text-muted-foreground">
                   {copy.formSubtitle}
                 </p>
               </div>
 
-              <Alert className="mt-5 border-primary/15 bg-primary/[0.045] text-foreground dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
-                <AlertTitle className="text-foreground dark:text-white">
-                  {copy.temporaryTitle}
-                </AlertTitle>
-                <AlertDescription className="break-words text-muted-foreground dark:text-white/65">
+              {/* Compact notice instead of a full alert box */}
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.07] px-4 py-3">
+                <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-amber-500 shadow-[0_0_10px] shadow-amber-500/70" />
+                <p className="text-xs leading-5 text-muted-foreground">
+                  <b className="font-semibold text-foreground">{copy.temporaryTitle}.</b>{" "}
                   {copy.temporaryDescription}
-                </AlertDescription>
-              </Alert>
+                </p>
+              </div>
 
-              <div className="mt-6 rounded-[26px] border border-border/70 bg-muted/25 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="mt-6">
                 <div className="flex items-start justify-between gap-3 sm:items-center">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-slate-950 dark:text-white">
+                    <div className="text-sm font-semibold text-foreground">
                       {copy.socialTitle}
                     </div>
                     {activeTab === "register" && (
@@ -729,14 +783,14 @@ export default function AuthPage() {
                       </div>
                     )}
                   </div>
-                  <div className="hidden h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:flex dark:bg-white/10 dark:text-white">
+                  <div className="hidden">
                     <Star className="h-4 w-4" />
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <Button
-                    className="h-auto min-h-12 items-start justify-start rounded-2xl border-border bg-card px-4 py-3 text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06] sm:items-center"
+                    className="h-auto min-h-[3.25rem] items-start justify-start rounded-2xl px-4 py-3 text-foreground hover:-translate-y-0.5 hover:shadow-md sm:items-center"
                     type="button"
                     size="lg"
                     variant="outline"
@@ -756,7 +810,7 @@ export default function AuthPage() {
                     </span>
                   </Button>
                   <Button
-                    className="h-auto min-h-12 items-start justify-start rounded-2xl border-border bg-card px-4 py-3 text-slate-950 hover:bg-accent dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:hover:bg-white/[0.06] sm:items-center"
+                    className="h-auto min-h-[3.25rem] items-start justify-start rounded-2xl px-4 py-3 text-foreground hover:-translate-y-0.5 hover:shadow-md sm:items-center"
                     type="button"
                     size="lg"
                     variant="outline"
@@ -799,11 +853,11 @@ export default function AuthPage() {
                 onValueChange={(value) => setActiveTab(value as "login" | "register")}
                 className="mt-7 w-full"
               >
-                <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl bg-muted p-1 dark:bg-white/[0.05]">
-                  <TabsTrigger value="login" className="min-w-0 rounded-xl px-2 text-sm">
+                <TabsList className="grid h-12 w-full grid-cols-2 bg-muted/70">
+                  <TabsTrigger value="login" className="min-w-0 px-2 text-sm font-semibold">
                     {copy.loginTab}
                   </TabsTrigger>
-                  <TabsTrigger value="register" className="min-w-0 rounded-xl px-2 text-sm">
+                  <TabsTrigger value="register" className="min-w-0 px-2 text-sm font-semibold">
                     {copy.registerTab}
                   </TabsTrigger>
                 </TabsList>
@@ -826,7 +880,7 @@ export default function AuthPage() {
                         placeholder="email@example.com"
                         required
                         autoComplete="email"
-                        className="h-12 rounded-2xl border-border bg-card text-slate-950 placeholder:text-slate-400 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:placeholder:text-white/28"
+                        className="h-12 rounded-2xl"
                       />
                     </div>
 
@@ -848,7 +902,7 @@ export default function AuthPage() {
                           required
                           minLength={8}
                           autoComplete="current-password"
-                          className="h-12 rounded-2xl border-border bg-card pr-12 text-slate-950 placeholder:text-slate-400 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:placeholder:text-white/28"
+                          className="h-12 rounded-2xl pr-12"
                         />
                         <button
                           type="button"
@@ -924,7 +978,7 @@ export default function AuthPage() {
                                 setRegistrationRole(role.value);
                                 setRegisterError("");
                               }}
-                              className={`min-w-0 rounded-[24px] border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${selected ? "border-primary bg-primary/[0.08] shadow-[0_0_0_1px_rgba(227,54,116,0.28),0_18px_32px_rgba(227,54,116,0.10)] dark:border-primary dark:bg-primary/[0.12]" : "border-border bg-card hover:border-primary/25 hover:bg-primary/[0.03] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"}`}
+                              className={`min-w-0 rounded-[24px] border p-4 text-left transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${selected ? "border-primary bg-primary/[0.08] shadow-[0_0_0_1px_rgba(227,54,116,0.28),0_18px_32px_rgba(227,54,116,0.10)] dark:border-primary dark:bg-primary/[0.12]" : "border-border bg-card hover:border-primary/25 hover:bg-primary/[0.03] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"}`}
                               aria-pressed={selected}
                             >
                               <div className="flex items-start gap-3">
@@ -935,7 +989,7 @@ export default function AuthPage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center justify-between gap-2">
-                                    <div className="min-w-0 break-words text-sm font-semibold text-slate-950 dark:text-white">
+                                    <div className="min-w-0 break-words text-sm font-semibold text-foreground">
                                       {role.title}
                                     </div>
                                     {selected && (
@@ -981,7 +1035,7 @@ export default function AuthPage() {
                         placeholder="email@example.com"
                         required
                         autoComplete="email"
-                        className="h-12 rounded-2xl border-border bg-card text-slate-950 placeholder:text-slate-400 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:placeholder:text-white/28"
+                        className="h-12 rounded-2xl"
                       />
                     </div>
 
@@ -1003,7 +1057,7 @@ export default function AuthPage() {
                           required
                           minLength={8}
                           autoComplete="new-password"
-                          className="h-12 rounded-2xl border-border bg-card pr-12 text-slate-950 placeholder:text-slate-400 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:placeholder:text-white/28"
+                          className="h-12 rounded-2xl pr-12"
                         />
                         <button
                           type="button"
@@ -1038,7 +1092,7 @@ export default function AuthPage() {
                           required
                           minLength={8}
                           autoComplete="new-password"
-                          className="h-12 rounded-2xl border-border bg-card pr-12 text-slate-950 placeholder:text-slate-400 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.02] dark:text-white dark:placeholder:text-white/28"
+                          className="h-12 rounded-2xl pr-12"
                         />
                         <button
                           type="button"
@@ -1097,6 +1151,7 @@ export default function AuthPage() {
             </section>
           </div>
         </main>
+        </div>
       </div>
     </div>
   );

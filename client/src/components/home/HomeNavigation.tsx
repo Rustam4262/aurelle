@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Globe, ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useTheme } from "@/components/theme-provider";
 import { changeLanguage } from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -61,102 +60,63 @@ export function LanguageSwitcher({
 
 export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
-  const { theme } = useTheme();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkTheme = !mounted
-    ? true
-    : theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  const navTextClass = scrolled ? "text-foreground" : isDarkTheme ? "text-white" : "text-slate-950";
-  const navMutedTextClass = scrolled
-    ? "text-foreground"
-    : isDarkTheme
-      ? "text-white/90"
-      : "text-slate-900";
-  const navGhostButtonClass = scrolled
-    ? ""
-    : isDarkTheme
-      ? "text-white hover:bg-white/20"
-      : "text-slate-950 hover:bg-primary/10";
-  const navPrimaryButtonClass = scrolled
-    ? "shadow-sm"
-    : isDarkTheme
-      ? "bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30"
-      : "border border-primary/20 bg-primary/10 text-slate-950 hover:bg-primary/15";
+  // Floating glass pill: transparent at the top, frosted and lifted once the page scrolls.
+  const navLinks = [
+    { href: "/", label: t("marketplace.nav.explore") },
+    { href: "/search?tab=masters", label: t("home.masters.navLink") || "Мастера" },
+    { href: "/about", label: t("about.title") },
+    { href: "/owner", label: t("marketplace.nav.forOwners") },
+  ];
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 pt-safe transition-all duration-300 ${
-        scrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2" data-testid="link-logo">
-            <span className={`font-serif text-2xl font-semibold tracking-tight ${navTextClass}`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 pt-safe px-3 sm:px-5">
+      <div
+        className={`mx-auto mt-3 max-w-6xl rounded-full px-3 pl-5 transition-all duration-500 ease-out-expo ${
+          scrolled
+            ? "glass shadow-lg shadow-black/10"
+            : "border border-transparent bg-transparent"
+        }`}
+      >
+        <div className="flex h-14 items-center justify-between gap-4">
+          <Link href="/" className="group flex items-center gap-2.5" data-testid="link-logo">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary bg-[linear-gradient(135deg,rgb(255_255_255/0.25),rgb(0_0_0/0.15))] font-serif text-lg font-semibold text-white shadow-glow transition-transform duration-500 group-hover:rotate-[-8deg]">
+              A
+            </span>
+            <span className="font-serif text-xl font-semibold tracking-[0.12em] text-foreground">
               AURELLE
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
-              >
-                {t("marketplace.nav.explore")}
-              </span>
-            </Link>
-            <Link href="/search?tab=masters">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
-              >
-                {t("home.masters.navLink") || "Мастера"}
-              </span>
-            </Link>
-            <Link href="/about">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
-              >
-                {t("about.title")}
-              </span>
-            </Link>
-            <Link href="/owner">
-              <span
-                className={`text-sm font-medium transition-colors hover:opacity-80 cursor-pointer ${navMutedTextClass}`}
-              >
-                {t("marketplace.nav.forOwners")}
-              </span>
-            </Link>
+          <div className="hidden lg:flex items-center gap-1 rounded-full bg-foreground/[0.04] p-1">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <span className="block cursor-pointer whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium text-foreground/75 transition-all duration-300 hover:bg-card hover:text-foreground hover:shadow-sm">
+                  {link.label}
+                </span>
+              </Link>
+            ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1.5">
             <ThemeToggle />
-            <LanguageSwitcher scrolled={scrolled} textClass={navGhostButtonClass} />
+            <LanguageSwitcher scrolled textClass="" />
             <Link href="/auth">
-              <Button variant="ghost" className={navGhostButtonClass} data-testid="button-login">
+              <Button variant="ghost" size="sm" className="px-4" data-testid="button-login">
                 {t("marketplace.nav.login")}
               </Button>
             </Link>
             <Link href="/owner">
-              <Button
-                className={`rounded-full px-6 transition-all hover:scale-105 active:scale-95 ${navPrimaryButtonClass}`}
-                data-testid="button-register-salon"
-              >
+              <Button size="sm" className="px-5" data-testid="button-register-salon">
                 {t("marketplace.nav.registerSalon")}
               </Button>
             </Link>
           </div>
 
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1">
             <ThemeToggle />
-            <LanguageSwitcher scrolled={scrolled} textClass={navGhostButtonClass} />
+            <LanguageSwitcher scrolled textClass="" />
             <button
               className="p-2 transition-transform active:scale-90"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -167,7 +127,11 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
             >
-              {mobileMenuOpen ? <X className={navTextClass} /> : <Menu className={navTextClass} />}
+              {mobileMenuOpen ? (
+                <X className="text-foreground" />
+              ) : (
+                <Menu className="text-foreground" />
+              )}
             </button>
           </div>
         </div>
@@ -176,7 +140,7 @@ export function HomeNavigation({ scrolled }: { scrolled: boolean }) {
       {mobileMenuOpen && (
         <div
           id="mobile-menu"
-          className="md:hidden bg-background border-t border-border animate-in slide-in-from-top duration-300"
+          className="md:hidden glass mx-auto mt-2 max-w-6xl rounded-3xl shadow-xl animate-in fade-in slide-in-from-top-2 duration-300"
         >
           <div className="px-6 py-6 flex flex-col gap-4">
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { SalonCreationWizard } from "@/components/salon-creation-wizard";
 import { reviewsWordRu as reviewsWord } from "@/lib/pluralize-ru";
+import { countRu, pluralRu } from "@/lib/plural";
 
 // This file hardcodes Russian text throughout rather than using i18next —
 // matching that existing (non-localized) style here rather than introducing
@@ -511,7 +512,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                         </div>
                         <div className="flex items-center gap-2">
                           <CirclePause className="h-4 w-4" />
-                          <span>{status === "active" ? "В витрине" : "Нужен owner-апрув"}</span>
+                          <span>{status === "active" ? "В витрине" : "Не опубликован"}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4" />
@@ -740,7 +741,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
-                {ownerClients.length} клиентов
+                {countRu(ownerClients.length, ["клиент", "клиента", "клиентов"])}
               </Badge>
             </div>
           </Card>
@@ -892,7 +893,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
-                {ownerReviews.length} отзывов
+                {countRu(ownerReviews.length, ["отзыв", "отзыва", "отзывов"])}
               </Badge>
             </div>
           </Card>
@@ -975,7 +976,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
-                {salons.length} салонов в аналитике
+                {countRu(salons.length, ["салон", "салона", "салонов"])} в аналитике
               </Badge>
             </div>
           </Card>
@@ -1030,7 +1031,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                         </h3>
                         <p className="mt-2 text-sm text-muted-foreground">
                           Внутри карточки салона уже доступна детальная аналитика по записям,
-                          отзывам и состоянию workspace.
+                          отзывам и заполненности карточки.
                         </p>
                       </div>
                       <Badge variant="outline" className="border-border/70">
@@ -1141,7 +1142,7 @@ export function OwnerWorkspaceSections(props: OwnerWorkspaceSectionsProps) {
                 </p>
               </div>
               <Badge variant="outline" className="border-border/70">
-                {tickets.length} тикетов
+                {countRu(tickets.length, ["обращение", "обращения", "обращений"])}
               </Badge>
             </div>
             <div className="mt-5 space-y-3">

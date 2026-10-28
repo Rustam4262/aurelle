@@ -41,6 +41,8 @@ import { OwnerSalonStaff } from "@/components/owner/OwnerSalonStaff";
 import { OwnerSalonHours } from "@/components/owner/OwnerSalonHours";
 import { OwnerSalonBookings } from "@/components/owner/OwnerSalonBookings";
 import { OwnerSalonTeam } from "@/components/owner/OwnerSalonTeam";
+import { StatusPill, useStatusLabels } from "@/components/status-pill";
+import { countRu, pluralRu } from "@/lib/plural";
 
 type LocalizedRecord = { en?: string; ru?: string; uz?: string };
 
@@ -215,6 +217,7 @@ async function patchJson<T>(url: string, body: unknown): Promise<T> {
 
 export default function OwnerSalonPage() {
   const { toast } = useToast();
+  const statusLabels = useStatusLabels();
   const { user, isLoading } = useAuth({ requireAuth: true });
   const [, setLocation] = useLocation();
   const search = useSearch();
@@ -451,7 +454,7 @@ export default function OwnerSalonPage() {
         tab: "masters",
       },
       {
-        title: "Записи и CRM",
+        title: "Записи и клиенты",
         description: "Бронирования, клиенты и операционный поток салона.",
         tab: "bookings",
       },
@@ -489,7 +492,7 @@ export default function OwnerSalonPage() {
         description:
           unreadNotifications > 0
             ? "В ленте есть новые сигналы по бронированиям, ответам и системным событиям."
-            : "Новых системных сигналов нет, контур уведомлений под контролем.",
+            : "Новых уведомлений нет — всё под контролем.",
         icon: Clock3,
         tone: unreadNotifications > 0 ? "warning" : "good",
       },
@@ -501,18 +504,18 @@ export default function OwnerSalonPage() {
         description:
           reviewSummary.unanswered > 0
             ? "Ответы на отзывы стоит закрывать быстро, чтобы не терять доверие и повторные визиты."
-            : "У репутационного контура нет хвостов, можно сфокусироваться на росте.",
+            : "На все отзывы есть ответы — можно сосредоточиться на росте.",
         icon: Star,
         tone: reviewSummary.unanswered > 0 ? "warning" : "good",
       },
       {
         id: "clients",
-        title: "Клиентский контур",
-        value: `${clients.length} клиентов`,
+        title: "Клиенты",
+        value: countRu(clients.length, ["клиент", "клиента", "клиентов"]),
         description:
           clients.length > 0
             ? "База уже собрана: можно возвращаться к клиентам через записи, отзывы и историю визитов."
-            : "Как только появятся первые клиенты, здесь начнётся живая CRM-работа салона.",
+            : "Как только появятся первые клиенты, здесь появится ваша клиентская база.",
         icon: Users,
         tone: "neutral",
       },
@@ -528,7 +531,7 @@ export default function OwnerSalonPage() {
         description:
           openTickets > 0
             ? "Есть тикеты, которые лучше не оставлять без движения."
-            : "Проверьте, всё ли спокойно в support-контуре и нет ли новых запросов.",
+            : "Проверьте, нет ли новых ответов от поддержки.",
         tab: "support" as const,
         cta: openTickets > 0 ? "Открыть тикеты" : "Открыть поддержку",
         active: openTickets > 0,
@@ -558,7 +561,7 @@ export default function OwnerSalonPage() {
         title: topClient ? `Вернуться к клиенту: ${topClient.name}` : "Открыть клиентскую базу",
         description: topClient
           ? "У салона уже есть самый ценный клиент по выручке. Его историю полезно держать под рукой."
-          : "Как только база заполнится, отсюда будет удобно идти в CRM и повторные продажи.",
+          : "Как только база заполнится, отсюда будет удобно возвращать клиентов на повторные визиты.",
         tab: "clients" as const,
         cta: "Открыть клиентов",
         active: Boolean(topClient),
@@ -794,7 +797,7 @@ export default function OwnerSalonPage() {
             <Store className="mx-auto h-12 w-12 text-muted-foreground" />
             <h1 className="mt-4 font-serif text-3xl text-foreground">Салон не найден</h1>
             <p className="mt-3 text-muted-foreground">
-              Проверьте доступ или вернитесь к общему owner-списку.
+              Проверьте доступ или вернитесь к списку ваших салонов.
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <Button asChild>
@@ -811,19 +814,21 @@ export default function OwnerSalonPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.05),transparent_36%)] bg-background">
-      <div className="border-b border-border/70 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <div className="min-h-screen">
+      <div className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+        <div className="cabinet-topbar flex flex-col items-start sm:flex-row sm:items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <BackButton fallback="/owner" />
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
                 Рабочее пространство салона
               </p>
-              <h1 className="truncate font-serif text-2xl text-foreground">{salonName}</h1>
+              <h1 className="truncate font-serif text-2xl tracking-[-0.01em] text-foreground">
+                {salonName}
+              </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex max-w-full flex-wrap items-center gap-2">
             <MessengerLink userId={user?.id} />
             <LanguageSwitcher />
             <Button
@@ -856,16 +861,18 @@ export default function OwnerSalonPage() {
         )}
 
         <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <div className="bg-[linear-gradient(135deg,rgba(190,24,93,0.10),rgba(14,165,233,0.08))] p-6 sm:p-7">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <Card className="overflow-hidden rounded-[2rem] border-0 bg-transparent p-0 shadow-none">
+            <div className="cabinet-hero">
+              <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Управление конкретным салоном без битых переходов
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Ваш салон на AURELLE
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <h2 className="break-words font-serif text-3xl text-foreground">{salonName}</h2>
+                    <h2 className="break-words font-serif text-4xl font-light tracking-[-0.02em] text-foreground sm:text-5xl">
+                      {salonName}
+                    </h2>
                     <Badge variant="outline" className={ownerStatusBadgeClass(salon.status)}>
                       {ownerStatusLabel(salon.status)}
                     </Badge>
@@ -889,7 +896,7 @@ export default function OwnerSalonPage() {
                     )}
                     <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1">
                       <Shield className="h-4 w-4" />
-                      Owner-доступ активен
+                      Вы владелец салона
                     </span>
                   </div>
                   <div className="mt-6 flex flex-wrap gap-3">
@@ -975,8 +982,8 @@ export default function OwnerSalonPage() {
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {reviewWithoutResponse
-                    ? `Свежий отзыв от ${reviewWithoutResponse.clientName || "клиента"} ждёт owner-ответа.`
-                    : "Все отзывы сейчас закрыты owner-ответом или ещё не поступили."}
+                    ? `Свежий отзыв от ${reviewWithoutResponse.clientName || "клиента"} ждёт вашего ответа.`
+                    : "На все отзывы есть ответ, или их пока нет."}
                 </p>
               </div>
             </div>
@@ -1006,7 +1013,7 @@ export default function OwnerSalonPage() {
               <Clock3 className="h-5 w-5 text-amber-500" />
             </div>
             <p className="mt-4 text-3xl font-semibold text-foreground">{unreadNotifications}</p>
-            <p className="mt-2 text-sm text-muted-foreground">уведомления по owner-потоку</p>
+            <p className="mt-2 text-sm text-muted-foreground">непрочитанных уведомлений</p>
           </Card>
           <Card className="border-border/70 p-5 shadow-sm">
             <div className="flex items-center justify-between">
@@ -1025,8 +1032,8 @@ export default function OwnerSalonPage() {
           }
           className="space-y-6"
         >
-          <div className="overflow-x-auto pb-2">
-            <TabsList className="inline-flex min-w-max gap-2">
+          <div className="sticky top-[5.75rem] z-30 -mx-1 overflow-x-auto no-scrollbar px-1 pb-2">
+            <TabsList className="glass inline-flex min-w-max gap-1 shadow-lg shadow-black/5">
               <TabsTrigger value="overview">Обзор салона</TabsTrigger>
               <TabsTrigger value="profile">Профиль</TabsTrigger>
               <TabsTrigger value="public">Публичная страница</TabsTrigger>
@@ -1162,7 +1169,7 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Последние клиенты</h3>
                     <p className="text-sm text-muted-foreground">
-                      Живой срез CRM салона: визиты, частота возвратов и наиболее активные гости.
+                      Кто приходит чаще всего и как давно был последний визит.
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => openSalonTab("clients")}>
@@ -1197,7 +1204,7 @@ export default function OwnerSalonPage() {
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
                       Как только начнутся реальные записи, здесь появятся последние клиенты, частота
-                      визитов и полезный CRM-контекст.
+                      визитов и история каждого гостя.
                     </div>
                   )}
                 </div>
@@ -1262,7 +1269,7 @@ export default function OwnerSalonPage() {
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">
                       {reviewSummary.unanswered > 0
-                        ? `${reviewSummary.unanswered} отзыв(ов) без owner-ответа.`
+                        ? `${reviewSummary.unanswered} отзыв(ов) ждут вашего ответа.`
                         : "Все отзывы сейчас закрыты ответом или новых пока нет."}
                     </div>
                   </div>
@@ -1279,7 +1286,7 @@ export default function OwnerSalonPage() {
                         Ещё не подключены
                       </p>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Показываем owner-friendly сценарий вместо мёртвой пустоты.
+                        Появятся, как только заработает онлайн-оплата.
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
@@ -1310,7 +1317,7 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Статус витрины</h3>
                     <p className="text-sm text-muted-foreground">
-                      Понять за 10 секунд, можно ли уже лить трафик на карточку салона.
+                      Всё, что видят клиенты на странице вашего салона.
                     </p>
                   </div>
                   <Badge
@@ -1479,11 +1486,11 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Клиенты салона</h3>
                     <p className="text-sm text-muted-foreground">
-                      Мини-CRM владельца по реальным бронированиям
+                      Ваши клиенты по реальным записям
                     </p>
                   </div>
                   <Badge variant="outline" className="border-border/70">
-                    {clients.length} клиентов
+                    {countRu(clients.length, ["клиент", "клиента", "клиентов"])}
                   </Badge>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
@@ -1602,13 +1609,13 @@ export default function OwnerSalonPage() {
               <Card className="border-border/70 p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Отзывы и owner-ответы</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Отзывы и ваши ответы</h3>
                     <p className="text-sm text-muted-foreground">
                       Свежая репутация салона и реакции владельца
                     </p>
                   </div>
                   <Badge variant="outline" className="border-border/70">
-                    {reviewSummary.total} отзывов
+                    {countRu(reviewSummary.total, ["отзыв", "отзыва", "отзывов"])}
                   </Badge>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-4">
@@ -1745,8 +1752,7 @@ export default function OwnerSalonPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">Аналитика салона</h3>
                     <p className="text-sm text-muted-foreground">
-                      Сводка по клиентам, отзывам и качеству карточки без тяжёлых отчётов и хрупких
-                      запросов.
+                      Клиенты, отзывы и заполненность карточки салона — коротко и наглядно.
                     </p>
                   </div>
                   <Badge className="border-primary/25 bg-primary/10 text-primary">
@@ -1814,7 +1820,7 @@ export default function OwnerSalonPage() {
                       {unreadNotifications}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Новые сигналы, которые owner-команда ещё не разобрала.
+                      Новые события, которые вы ещё не просмотрели.
                     </p>
                   </div>
                 </div>
@@ -1861,10 +1867,10 @@ export default function OwnerSalonPage() {
                     Статус платежей
                   </p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
-                    Платёжный контур ещё не подключён
+                    Онлайн-оплата скоро появится
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Вместо пустоты показываем понятный сценарий: когда провайдер будет подключён,
+                    Мы подключаем приём платежей. Когда он заработает,
                     здесь появятся выручка, оплаты и транзакции салона.
                   </p>
                 </div>
@@ -1876,8 +1882,7 @@ export default function OwnerSalonPage() {
                     Реквизиты и правила оплаты
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Салонный workspace уже готов к будущему подключению финансового слоя без
-                    сломанных переходов.
+                    Заранее подготовьте реквизиты и правила оплаты для клиентов.
                   </p>
                 </div>
               </div>
@@ -1901,8 +1906,7 @@ export default function OwnerSalonPage() {
                         Командный центр коммуникаций салона
                       </h3>
                       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                        Здесь собраны все живые сигналы owner-контура: поддержка платформы, отзывы,
-                        уведомления и клиентская база.
+                        Поддержка платформы, отзывы, уведомления и клиенты — в одном месте.
                       </p>
                     </div>
                     <Badge variant="outline" className="border-border/70">
@@ -1953,8 +1957,7 @@ export default function OwnerSalonPage() {
                         Что сделать сейчас
                       </h3>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Вместо чтения пустых карточек владелец сразу видит, куда идти дальше и какой
-                        контур требует реакции.
+                        Самое важное, на что стоит обратить внимание сейчас.
                       </p>
                     </div>
                     <Sparkles className="h-5 w-5 text-primary" />
@@ -2002,8 +2005,7 @@ export default function OwnerSalonPage() {
                         Канал с платформой
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Открытых owner-обращений: {openTickets}. Этот блок уже живой и связан с
-                        support tickets.
+                        Открытых обращений в поддержку: {openTickets}.
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
@@ -2012,8 +2014,7 @@ export default function OwnerSalonPage() {
                         Канал с клиентами
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Прямой универсальный чат ещё не развёрнут на owner API, поэтому рабочим
-                        центром остаются брони, клиентская база и support-контур платформы.
+                        Переписка с клиентами — в мессенджере. Здесь — записи, клиенты и поддержка платформы.
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
@@ -2022,8 +2023,7 @@ export default function OwnerSalonPage() {
                         Финансовые сигналы
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Платёжный модуль ещё не активирован, но owner workspace уже готов для
-                        подключения этого контура.
+                        Онлайн-оплата скоро появится — мы сообщим, когда её можно будет включить.
                       </p>
                     </div>
                   </div>
@@ -2100,12 +2100,10 @@ export default function OwnerSalonPage() {
                                   {ticket.subject}
                                 </p>
                                 <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                  {ticket.category}
+                                  {statusLabels.category(ticket.category)}
                                 </p>
                               </div>
-                              <Badge variant="outline" className="border-border/70">
-                                {ticket.status}
-                              </Badge>
+                              <StatusPill status={ticket.status} kind="ticket" />
                             </div>
                             <p className="mt-3 text-sm text-muted-foreground">
                               Обновлено: {formatDate(ticket.updatedAt)}
@@ -2114,8 +2112,8 @@ export default function OwnerSalonPage() {
                         ))
                       ) : (
                         <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
-                          Пока нет сообщений к платформе. При первом owner-обращении история
-                          появится здесь.
+                          Пока нет сообщений к платформе. Когда вы напишете в поддержку,
+                          история появится здесь.
                         </div>
                       )}
                     </div>

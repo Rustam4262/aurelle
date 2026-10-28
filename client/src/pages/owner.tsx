@@ -672,14 +672,14 @@ export default function OwnerPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen dark:bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.12),transparent_24%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.05),transparent_36%)] bg-background">
-      <div className="border-b border-border/70 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen">
+      <div className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+        <div className="cabinet-topbar flex flex-col gap-4 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <BackButton fallback="/" />
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">AURELLE</p>
-              <h1 className="truncate font-serif text-2xl text-foreground">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">AURELLE</p>
+              <h1 className="truncate font-serif text-2xl tracking-[-0.01em] text-foreground sm:text-[1.7rem]">
                 Кабинет владельца салона
               </h1>
             </div>
@@ -725,9 +725,9 @@ export default function OwnerPage() {
           </Card>
         )}
 
-        <div className="grid items-start gap-6 lg:grid-cols-[224px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-border/70 bg-card p-3 lg:sticky lg:top-6">
-            <nav aria-label="Разделы кабинета владельца" className="space-y-4">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="cabinet-sidebar min-w-0 lg:sticky lg:top-28">
+            <nav aria-label="Разделы кабинета владельца" className="flex gap-1 overflow-x-auto no-scrollbar lg:block lg:space-y-4 lg:overflow-visible">
               {[
                 {
                   label: "Управление",
@@ -737,8 +737,8 @@ export default function OwnerPage() {
                 { label: "Дополнительно", ids: ["analytics", "support"] },
                 { label: "Настройки", ids: ["settings"] },
               ].map((group) => (
-                <div key={group.label}>
-                  <p className="px-3 pb-2 text-xs font-medium text-muted-foreground">
+                <div key={group.label} className="contents lg:block">
+                  <p className="hidden px-3.5 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70 lg:block">
                     {group.label}
                   </p>
                   {group.ids.map((id) => {
@@ -749,11 +749,9 @@ export default function OwnerPage() {
                         key={id}
                         onClick={() => openOwnerSection(id)}
                         aria-current={activeSection === id ? "page" : undefined}
+                        data-active={activeSection === id}
                         className={
-                          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors " +
-                          (activeSection === id
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                          "cabinet-nav-item w-auto shrink-0 whitespace-nowrap lg:w-full " + (activeSection === id ? "font-semibold" : "")
                         }
                       >
                         <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
@@ -771,7 +769,10 @@ export default function OwnerPage() {
           <main id="main-content" className="min-w-0 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-semibold">
+                <h2
+                  key={activeSection}
+                  className="font-serif text-4xl font-light tracking-[-0.01em] animate-fade-up"
+                >
                   {sectionTabs.find((tab) => tab.value === activeSection)?.label || "Обзор"}
                 </h2>
                 {activeSection === "overview" && (
@@ -789,7 +790,7 @@ export default function OwnerPage() {
             </div>
             {activeSection === "overview" && (
               <>
-                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
                   {[
                     {
                       label: "Записи сегодня",
@@ -805,17 +806,21 @@ export default function OwnerPage() {
                     },
                     { label: "Мои салоны", value: salons.length, tab: "salons", Icon: Store },
                     { label: "Отзывы", value: stats.totalReviews, tab: "reviews", Icon: Star },
-                  ].map(({ label, value, tab, Icon }) => (
+                  ].map(({ label, value, tab, Icon }, i) => (
                     <button
                       key={tab}
                       onClick={() => openOwnerSection(tab)}
-                      className="rounded-2xl border border-border/70 bg-card p-4 text-left transition-colors hover:border-primary/40"
+                      className="lift group relative overflow-hidden rounded-3xl border border-foreground/[0.07] bg-card/80 p-5 text-left shadow-sm backdrop-blur animate-fade-up"
+                      style={{ animationDelay: `${i * 70}ms` }}
                     >
-                      <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-                        {label}
-                        <Icon className="h-4 w-4 shrink-0" />
-                      </div>
-                      <p className="mt-3 break-words text-2xl font-semibold">{value}</p>
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_60%_at_100%_0%,hsl(var(--primary)/0.14),transparent_70%)]" />
+                      <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/20 transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <p className="mt-4 break-words text-3xl font-semibold tabular-nums leading-none tracking-[-0.03em]">
+                        {value}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">{label}</p>
                     </button>
                   ))}
                 </div>
