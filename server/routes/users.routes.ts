@@ -43,7 +43,7 @@ router.post("/profile", verifyCsrf, isAuthenticated, async (req: any, res) => {
 
     const parsed = profilePayloadSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid profile data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid profile data", details: parsed.error.issues });
     }
 
     const { role, fullName, phone, city } = parsed.data;

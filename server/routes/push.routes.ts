@@ -80,7 +80,7 @@ router.post("/subscribe", createLimiter, isAuthenticated, async (req: any, res) 
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: "Invalid subscription data", details: parsed.error.errors });
+        .json({ error: "Invalid subscription data", details: parsed.error.issues });
     }
 
     const [subscription] = await db

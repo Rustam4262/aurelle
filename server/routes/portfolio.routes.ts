@@ -37,7 +37,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: "Invalid portfolio data", details: parsed.error.errors });
+        .json({ error: "Invalid portfolio data", details: parsed.error.issues });
     }
 
     // Verify master ownership

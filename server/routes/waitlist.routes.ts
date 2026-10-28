@@ -28,7 +28,7 @@ router.post("/", createLimiter, isAuthenticated, async (req: any, res) => {
     const parsed = insertWaitlistSchema.safeParse({ ...req.body, clientId: userProfile.id });
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid waitlist data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid waitlist data", details: parsed.error.issues });
     }
 
     if (!isValidWaitlistDate(parsed.data.preferredDate)) {

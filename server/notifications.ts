@@ -40,7 +40,7 @@ export async function createNewBookingNotification(
 
   const parsed = newBookingNotificationSchema.safeParse(notificationPayload);
   if (!parsed.success) {
-    logger.error("Notification validation failed", new Error(JSON.stringify(parsed.error.errors)), {
+    logger.error("Notification validation failed", new Error(JSON.stringify(parsed.error.issues)), {
       source: "notifications",
     });
     return null;

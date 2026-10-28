@@ -233,11 +233,11 @@ router.post(
       if (!parsed.success) {
         logger.error("Salon validation failed", undefined, {
           source: "owner.routes",
-          meta: { errors: parsed.error.errors },
+          meta: { errors: parsed.error.issues },
         });
         return res.status(400).json({
           error: "Invalid salon data",
-          details: parsed.error.errors,
+          details: parsed.error.issues,
         });
       }
 
@@ -424,7 +424,7 @@ router.put("/salons/:salonId/services/:serviceId", isAuthenticated, async (req: 
     const parsed = updateServiceSchema.safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid service data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid service data", details: parsed.error.issues });
     }
 
     const [updatedService] = await db
@@ -510,7 +510,7 @@ router.patch("/salons/:id", isAuthenticated, async (req: any, res) => {
 
     const parsed = updateSalonSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid salon data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid salon data", details: parsed.error.issues });
     }
 
     const [salon] = await db
@@ -712,7 +712,7 @@ router.post("/salons/:salonId/services", isAuthenticated, async (req: any, res) 
 
     const parsed = insertServiceSchema.safeParse({ ...req.body, salonId });
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid service data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid service data", details: parsed.error.issues });
     }
 
     const [service] = await db
@@ -744,7 +744,7 @@ router.post("/salons/:salonId/hours", isAuthenticated, async (req: any, res) => 
 
     const parsed = salonHoursInput.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid working hours", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid working hours", details: parsed.error.issues });
     }
     const newHours = await replaceSalonHours(salonId, ownerId, parsed.data);
     if (!newHours) return res.status(403).json({ error: "Not authorized" });
@@ -1325,6 +1325,7 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
       isActive: z.boolean().optional(),
       workingHours: z
         .record(
+          z.string(),
           z.object({
             start: z.string(),
             end: z.string(),
@@ -1387,7 +1388,7 @@ router.put("/salons/:salonId/masters/:masterId", isAuthenticated, async (req: an
     return res.json(updatedMaster);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: "Invalid request data", details: error.issues });
     }
     logger.error("Update master error:", error);
     return res.status(500).json({ error: "Failed to update master" });
@@ -1581,7 +1582,7 @@ router.patch(
 
       const parsed = assignMastersSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+        return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
       }
 
       const { masterIds } = parsed.data;
@@ -1664,7 +1665,7 @@ router.patch(
 
       const parsed = toggleSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+        return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
       }
 
       const { isActive } = parsed.data;
@@ -1729,7 +1730,7 @@ router.post(
 
       const parsed = bulkToggleSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+        return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
       }
 
       const { serviceIds, isActive } = parsed.data;
@@ -1800,7 +1801,7 @@ router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
 
     const parsed = reorderSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
     }
 
     const { services: servicesToReorder } = parsed.data;
@@ -2076,7 +2077,7 @@ router.post(
       return res.json({ success: true, updated: successfulUpdates });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+        return res.status(400).json({ error: "Invalid request data", details: error.issues });
       }
       logger.error("Bulk update bookings error:", error);
       return res.status(500).json({ error: "Failed to update bookings" });
@@ -3396,7 +3397,7 @@ router.post(
 
       const parsed = insertSalonBreakSchema.safeParse({ ...req.body, salonId });
       if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid break data", details: parsed.error.errors });
+        return res.status(400).json({ error: "Invalid break data", details: parsed.error.issues });
       }
 
       const [breakEntry] = await db
@@ -3568,7 +3569,7 @@ router.post(
       if (!parsed.success) {
         return res
           .status(400)
-          .json({ error: "Invalid exception data", details: parsed.error.errors });
+          .json({ error: "Invalid exception data", details: parsed.error.issues });
       }
 
       const [exception] = await db
@@ -3747,7 +3748,7 @@ router.post(
       if (!parsed.success) {
         return res
           .status(400)
-          .json({ error: "Invalid invitation data", details: parsed.error.errors });
+          .json({ error: "Invalid invitation data", details: parsed.error.issues });
       }
 
       const { email, permissions } = parsed.data;
@@ -4072,7 +4073,7 @@ router.patch("/reviews/:reviewId/respond", isAuthenticated, async (req: any, res
       .safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid response", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid response", details: parsed.error.issues });
     }
 
     const [review] = await db.select().from(reviews).where(eq(reviews.id, reviewId));
@@ -4244,7 +4245,7 @@ router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: "Invalid ticket payload", details: parsed.error.errors });
+        .json({ error: "Invalid ticket payload", details: parsed.error.issues });
     }
 
     const [ticket] = await db
@@ -4313,7 +4314,7 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: "Invalid message payload", details: parsed.error.errors });
+        .json({ error: "Invalid message payload", details: parsed.error.issues });
     }
 
     const [ticket] = await db

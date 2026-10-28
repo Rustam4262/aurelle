@@ -141,7 +141,7 @@ router.put("/profile", isAuthenticated, async (req: any, res) => {
 
     const parsed = updateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
     }
 
     // Build update object dynamically
@@ -280,7 +280,7 @@ router.put("/settings", isAuthenticated, async (req: any, res) => {
 
     const parsed = settingsSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid settings", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid settings", details: parsed.error.issues });
     }
 
     const [existing] = await db
@@ -366,7 +366,7 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
 
     const parsed = scheduleSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid schedule", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid schedule", details: parsed.error.issues });
     }
 
     // Delete existing hours and insert new ones
@@ -568,7 +568,7 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
 
     const parsed = serviceSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid service data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid service data", details: parsed.error.issues });
     }
 
     const [created] = await db
@@ -616,7 +616,7 @@ router.put("/services/reorder", isAuthenticated, async (req: any, res) => {
 
     const parsed = reorderSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid data", details: parsed.error.issues });
     }
 
     const reordered = await db.transaction(async tx => {
@@ -693,7 +693,7 @@ router.put("/services/:id", isAuthenticated, async (req: any, res) => {
 
     const parsed = updateSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid service data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid service data", details: parsed.error.issues });
     }
 
     const [updated] = await db
@@ -938,7 +938,7 @@ router.patch("/reviews/:id/respond", isAuthenticated, async (req: any, res) => {
     }
 
     if (!payload.success) {
-      return res.status(400).json({ error: "Invalid response", details: payload.error.errors });
+      return res.status(400).json({ error: "Invalid response", details: payload.error.issues });
     }
 
     const [review] = await db
@@ -1120,7 +1120,7 @@ router.post("/support/tickets", isAuthenticated, async (req: any, res) => {
       .safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid ticket data", details: parsed.error.issues });
     }
 
     const [ticket] = await db
@@ -1201,7 +1201,7 @@ router.post("/support/tickets/:id/messages", isAuthenticated, async (req: any, r
       .safeParse(req.body);
 
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid message data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid message data", details: parsed.error.issues });
     }
 
     const [ticket] = await db

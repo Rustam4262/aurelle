@@ -1,15 +1,12 @@
 name: CI
 
-# Runs on every PR to main/develop and on pushes to non-main branches.
-# main is handled by deploy-production.yml (which runs its own checks first).
+# Validate PRs and all pushed branches, including manually deployed main.
 on:
   pull_request:
     branches:
       - main
       - develop
   push:
-    branches-ignore:
-      - main  # main deploys via deploy-production.yml
 
 jobs:
   # ── 1. TypeScript type-check (BLOCKING — PR cannot merge without this) ──────

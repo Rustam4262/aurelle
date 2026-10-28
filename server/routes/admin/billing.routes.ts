@@ -92,7 +92,7 @@ router.put("/fee-config", requirePermission("billing.write"), async (req, res) =
   try {
     const parsed = feeConfigSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid input", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
     }
 
     const { feePercent, description } = parsed.data;
@@ -150,7 +150,7 @@ router.put("/fee-config/salon/:salonId", requirePermission("billing.write"), asy
     const { salonId } = req.params;
     const parsed = feeConfigSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid input", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
     }
 
     const { feePercent, description } = parsed.data;

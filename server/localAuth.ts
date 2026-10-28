@@ -75,7 +75,7 @@ export function setupLocalAuth(app: Express) {
     try {
       const parsed = registerSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+        return res.status(400).json({ message: "Invalid input", errors: parsed.error.issues });
       }
 
       const { email, password, firstName, lastName, role } = parsed.data;
@@ -173,7 +173,7 @@ export function setupLocalAuth(app: Express) {
       try {
         const parsed = loginSchema.safeParse(req.body);
         if (!parsed.success) {
-          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.issues });
         }
 
         const { email, password } = parsed.data;
@@ -243,7 +243,7 @@ export function setupLocalAuth(app: Express) {
       try {
         const parsed = requestResetSchema.safeParse(req.body);
         if (!parsed.success) {
-          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.issues });
         }
 
         const { email } = parsed.data;
@@ -313,7 +313,7 @@ export function setupLocalAuth(app: Express) {
       try {
         const parsed = confirmResetSchema.safeParse(req.body);
         if (!parsed.success) {
-          return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+          return res.status(400).json({ message: "Invalid input", errors: parsed.error.issues });
         }
 
         const { token, newPassword } = parsed.data;

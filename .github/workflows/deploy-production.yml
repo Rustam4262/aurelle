@@ -1,11 +1,9 @@
 name: Deploy to Production
 
-# Triggers on every push to main (after PR is merged).
-# Can also be triggered manually via workflow_dispatch.
+# Legacy in-place deploy. Production now runs from isolated release directories.
+# Keep manual-only until this workflow supports the release/cutover procedure;
+# automatic pushes must not reset the shared checkout or reload the old process.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       reason:

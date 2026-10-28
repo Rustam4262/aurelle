@@ -215,7 +215,7 @@ router.put("/schedule", isAuthenticated, async (req: any, res) => {
 
     const parsed = hoursSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid schedule data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid schedule data", details: parsed.error.issues });
     }
 
     // Delete existing hours and insert new ones
@@ -352,7 +352,7 @@ router.patch("/bookings/:bookingId/status", isAuthenticated, async (req: any, re
 
     const parsed = statusSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid status data", details: parsed.error.errors });
+      return res.status(400).json({ error: "Invalid status data", details: parsed.error.issues });
     }
 
     const result = await changeBookingStatus(
@@ -428,7 +428,7 @@ router.post("/portfolio", isAuthenticated, async (req: any, res) => {
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: "Invalid portfolio data", details: parsed.error.errors });
+        .json({ error: "Invalid portfolio data", details: parsed.error.issues });
     }
 
     const [portfolioItem] = await db
