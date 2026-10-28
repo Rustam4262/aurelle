@@ -28,6 +28,11 @@ jobs:
         run: npm run check
         # NO continue-on-error — this is a hard gate
 
+      - name: Dependency integration regressions
+        run: |
+          npx tsx scripts/verify-dependency-upgrades.ts
+          npx tsx scripts/verify-monitoring-upgrade.ts
+
   # ── 2. Security audit (BLOCKING — high-severity CVEs block the PR) ──────────
   security:
     name: Security audit
